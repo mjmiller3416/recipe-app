@@ -1,0 +1,6 @@
+{
+    //** File settings **//
+    "files.exclude": { // Exclude certain files and folders from the file explorer
+    "**/.vscode": true
+    }
+}
