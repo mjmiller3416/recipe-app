@@ -1,6 +1,50 @@
 {
-    //** File settings **//
-    "files.exclude": { // Exclude certain files and folders from the file explorer
-    "**/.vscode": true
-    }
+  "files.exclude": {
+    // Build outputs
+    "**/.next": true,
+    "**/node_modules": true,
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/venv": true,
+    "**/env": true,
+    "**/frontend/next-env.d.ts": true,
+    "**/.vscode": true,
+    
+    // Build artifacts
+    "**/out": true,
+    "**/build": true,
+    "**/dist": true,
+    "**/.turbo": true,
+    
+    // TypeScript build info
+    "**/*.tsbuildinfo": true,
+    "**/.tsbuildinfo": true,
+    
+    // Cache directories
+    "**/.cache": true,
+    "**/coverage": true,
+    "**/.pytest_cache": true,
+    "**/.mypy_cache": true,
+    
+    // OS files
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    
+    // IDE files (if you don't need them visible)
+    "**/.idea": true,
+    
+    // Less commonly needed config
+    "**/.mcp.json": false,  // Keep visible for now
+    "**/.claude": false     // Keep visible for now
+  },
+  
+  "search.exclude": {
+    // Same as above, plus:
+    "**/package-lock.json": true,
+    "**/yarn.lock": true,
+    "**/pnpm-lock.yaml": true
+  },
+
+  "window.restoreWindows": "all",
+  "workbench.restoreViewState": true
 }
