@@ -1,17 +1,17 @@
 "use client";
 
 import { GripVertical, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/src/public/components/ui/input";
+import { Label } from "@/src/public/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { INGREDIENT_UNITS, INGREDIENT_CATEGORIES } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+} from "@/src/public/components/ui/select";
+import { INGREDIENT_UNITS, INGREDIENT_CATEGORIES } from "@/src/lib/constants";
+import { cn } from "@/src/lib/utils";
 
 export interface Ingredient {
   id: string;

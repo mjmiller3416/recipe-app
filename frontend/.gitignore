@@ -3,6 +3,8 @@
 cat >> frontend/.gitignore << EOF
 # dependencies
 /node_modules
+/.vscode
+/.claude
 /.pnp
 .pnp.*
 .yarn/*
