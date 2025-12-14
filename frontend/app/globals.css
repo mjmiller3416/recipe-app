@@ -1,27 +1,87 @@
 @import "tailwindcss";
 
 :root {
+  /* Backgrounds */
   --background: #1a1a1a;
   --sidebar: #252525;
   --elevated: #2f2f2f;
   --hover: #3d3d3d;
+  
+  /* Text */
   --foreground: #f5f5f5;
   --muted: #b3b3b3;
+  
+  /* Primary colors */
   --primary: #14b8a6;
   --primary-dark: #0d9488;
   --primary-light: #2dd4bf;
+  --primary-foreground: #1a1a1a;
+  
+  /* Secondary colors */
+  --secondary: #8b5cf6;
+  --secondary-foreground: #ffffff;
+  
+  /* Status colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --destructive: #ef4444;
+  
+  /* UI elements */
+  --accent: #3d3d3d;
+  --accent-foreground: #f5f5f5;
+  --border: #3d3d3d;
+  --input: #2f2f2f;
+  --ring: #14b8a6;
+  
+  /* Semantic status indicators */
+  --status-online: #10b981;
+  --status-offline: #6b7280;
+  --status-busy: #ef4444;
+  --status-away: #f59e0b;
 }
 
 @theme inline {
+  /* Backgrounds */
   --color-background: var(--background);
   --color-sidebar: var(--sidebar);
   --color-elevated: var(--elevated);
   --color-hover: var(--hover);
+  
+  /* Text */
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
+  
+  /* Primary */
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
   --color-primary-light: var(--primary-light);
+  --color-primary-foreground: var(--primary-foreground);
+  
+  /* Secondary */
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  
+  /* Status */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-destructive: var(--destructive);
+  
+  /* UI */
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  
+  /* Status indicators */
+  --color-status-online: var(--status-online);
+  --color-status-offline: var(--status-offline);
+  --color-status-busy: var(--status-busy);
+  --color-status-away: var(--status-away);
+  
+  /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

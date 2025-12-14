@@ -255,13 +255,12 @@ export default function AddRecipePage() {
                 </div>
 
                 <div className="space-y-2">
-                  {ingredients.map((ingredient, index) => (
+                  {ingredients.map((ingredient) => (
                     <IngredientRow
                       key={ingredient.id}
                       ingredient={ingredient}
                       onUpdate={updateIngredient}
                       onDelete={deleteIngredient}
-                      showLabels={index === 0}
                     />
                   ))}
                 </div>

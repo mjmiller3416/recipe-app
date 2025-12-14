@@ -62,11 +62,11 @@ export function Sidebar() {
           <div className="relative flex-shrink-0">
             <Avatar className="h-10 w-10">
               <AvatarImage src={appConfig.user.avatar} />
-              <AvatarFallback className="bg-primary text-[#1a1a1a]">
+              <AvatarFallback className="bg-primary text-primary-foreground">
                 {appConfig.user.name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-sidebar" />
+            <div className="absolute bottom-0 right-0 h-3 w-3 bg-status-online rounded-full border-2 border-sidebar" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">
