@@ -9,11 +9,11 @@ import {
   Plus,
   Settings,
 } from "lucide-react";
-import { Logo } from "@/src/public/components/logo";
-import { NavButton } from "@/src/public/components/NavButton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/src/public/components/ui/avatar";
-import { Separator } from "@/src/public/components/ui/separator";
-import { appConfig } from "@/src/lib/config";
+import { Logo } from "@/components/logo";
+import { NavButton } from "@/components/NavButton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { appConfig } from "@/lib/config";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },

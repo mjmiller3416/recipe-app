@@ -3,35 +3,35 @@
 import { useState } from "react";
 import { ArrowLeft, Plus, Upload, ImageIcon, Info, Clock, Users, Tag, ChefHat, Leaf, ListOrdered, FileText } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/src/public/components/ui/button";
-import { Input } from "@/src/public/components/ui/input";
-import { Label } from "@/src/public/components/ui/label";
-import { Textarea } from "@/src/public/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/src/public/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/src/public/components/ui/tabs";
-import { Card, CardContent } from "@/src/public/components/ui/card";
-import { Separator } from "@/src/public/components/ui/separator";
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
   PageHeader,
   PageHeaderContent,
   PageHeaderTitle,
   PageHeaderActions,
-} from "@/src/public/components/PageHeader";
+} from "@/components/PageHeader";
 import {
   IngredientRow,
   Ingredient,
-} from "@/src/public/components/IngredientRow";
+} from "@/components/IngredientRow";
 import {
   MEAL_TYPES,
   RECIPE_CATEGORIES,
   DIETARY_PREFERENCES,
-} from "@/src/lib/constants";
+} from "@/lib/constants";
 
 export default function AddRecipePage() {
   // Recipe basic info state
