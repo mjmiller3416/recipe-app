@@ -90,8 +90,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 6. Quickly stir in egg mixture, adding pasta water as needed to create a creamy sauce.
 7. Serve immediately with extra Parmesan and black pepper.`,
     notes: "Use freshly grated Parmesan for best results. The key is to work quickly so the eggs don't scramble.",
-    reference_image_path: null,
-    banner_image_path: null,
+    reference_image_path: "/mock/recipes/spaghetti-carbonara.png",
+    banner_image_path: "/mock/recipes/spaghetti-carbonara.png",
     is_favorite: true,
     created_at: "2024-01-15T10:30:00Z",
     ingredients: [
@@ -117,8 +117,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 5. Bake for 12-15 minutes until salmon flakes easily.
 6. Brush with remaining glaze and broil for 2 minutes.`,
     notes: "Don't overcook! Salmon should be slightly translucent in the center.",
-    reference_image_path: null,
-    banner_image_path: null,
+    reference_image_path: "/mock/recipes/honey-garlic-glazed-salmon.png",
+    banner_image_path: "/mock/recipes/honey-garlic-glazed-salmon.png",
     is_favorite: true,
     created_at: "2024-02-20T14:15:00Z",
     ingredients: [
@@ -143,8 +143,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 4. Warm tortillas in a dry pan.
 5. Assemble tacos with meat and toppings.`,
     notes: "Great with fresh salsa, sour cream, and lime wedges.",
-    reference_image_path: null,
-    banner_image_path: null,
+    reference_image_path: "/mock/recipes/beef-tacos.png",
+    banner_image_path: "/mock/recipes/beef-tacos.png",
     is_favorite: false,
     created_at: "2024-03-05T18:45:00Z",
     ingredients: [
@@ -170,8 +170,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 4. Add soy sauce and seasonings.
 5. Serve over rice.`,
     notes: "Have all ingredients prepped before starting - stir fry goes fast!",
-    reference_image_path: null,
-    banner_image_path: null,
+    reference_image_path: "/mock/recipes/vegetable-stir-fry.png",
+    banner_image_path: "/mock/recipes/vegetable-stir-fry.png",
     is_favorite: false,
     created_at: "2024-03-10T12:00:00Z",
     ingredients: [
@@ -197,8 +197,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 4. Drizzle with olive oil.
 5. Season with salt and pepper.`,
     notes: "Use the freshest tomatoes and mozzarella you can find.",
-    reference_image_path: null,
-    banner_image_path: null,
+    reference_image_path: "/mock/recipes/caprese-salad.png",
+    banner_image_path: "/mock/recipes/caprese-salad.png",
     is_favorite: true,
     created_at: "2024-03-15T09:30:00Z",
     ingredients: [
@@ -223,8 +223,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 4. Cook 2-3 minutes per side until pink.
 5. Season and serve immediately.`,
     notes: "Don't overcook the shrimp - they cook quickly!",
-    reference_image_path: null,
-    banner_image_path: null,
+    reference_image_path: "/mock/recipes/garlic-butter-shrimp.png",
+    banner_image_path: "/mock/recipes/garlic-butter-shrimp.png",
     is_favorite: false,
     created_at: "2024-04-01T19:00:00Z",
     ingredients: [
@@ -249,8 +249,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 4. Toss romaine with Caesar dressing.
 5. Top with chicken and Parmesan.`,
     notes: "Homemade Caesar dressing makes a big difference.",
-    reference_image_path: null,
-    banner_image_path: null,
+    reference_image_path: "/mock/recipes/grilled-chicken-caesar-salad.png",
+    banner_image_path: "/mock/recipes/grilled-chicken-caesar-salad.png",
     is_favorite: true,
     created_at: "2024-04-10T12:30:00Z",
     ingredients: [
@@ -275,8 +275,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 4. Add broth one ladle at a time, stirring constantly.
 5. Fold in mushrooms, Parmesan, and butter.`,
     notes: "Patience is key - don't rush the broth additions.",
-    reference_image_path: null,
-    banner_image_path: null,
+    reference_image_path: "/mock/recipes/placeholder.png",
+    banner_image_path: "/mock/recipes/placeholder.png",
     is_favorite: false,
     created_at: "2024-04-20T18:00:00Z",
     ingredients: [
@@ -302,8 +302,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 4. Add teriyaki sauce and coat well.
 5. Serve over rice with vegetables.`,
     notes: "Great for meal prep - keeps well in the fridge.",
-    reference_image_path: null,
-    banner_image_path: null,
+    reference_image_path: "/mock/recipes/placeholder.png",
+    banner_image_path: "/mock/recipes/placeholder.png",
     is_favorite: false,
     created_at: "2024-05-01T17:30:00Z",
     ingredients: [
@@ -330,8 +330,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 5. Top with vegetables and chickpeas.
 6. Drizzle with tahini dressing.`,
     notes: "Customize with whatever vegetables you have on hand.",
-    reference_image_path: null,
-    banner_image_path: null,
+    reference_image_path: "/mock/recipes/placeholder.png",
+    banner_image_path: "/mock/recipes/placeholder.png",
     is_favorite: true,
     created_at: "2024-05-15T11:00:00Z",
     ingredients: [
@@ -357,8 +357,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 4. Sauté apples and onions in same pan.
 5. Return pork to pan and finish cooking.`,
     notes: "Use a meat thermometer - pork is done at 145°F.",
-    reference_image_path: null,
-    banner_image_path: null,
+    reference_image_path: "/mock/recipes/placeholder.png",
+    banner_image_path: "/mock/recipes/placeholder.png",
     is_favorite: false,
     created_at: "2024-05-25T18:30:00Z",
     ingredients: [
@@ -383,8 +383,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 4. Roast chicken until cooked through.
 5. Serve with tzatziki and vegetables.`,
     notes: "Longer marinating time = more flavor.",
-    reference_image_path: null,
-    banner_image_path: null,
+    reference_image_path: "/mock/recipes/placeholder.png",
+    banner_image_path: "/mock/recipes/placeholder.png",
     is_favorite: false,
     created_at: "2024-06-01T17:00:00Z",
     ingredients: [
