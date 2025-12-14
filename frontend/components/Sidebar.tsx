@@ -20,7 +20,7 @@ const navigation = [
   { name: "Meal Planner", href: "/meal-planner", icon: CalendarDays },
   { name: "Recipe Browser", href: "/recipes", icon: BookOpen },
   { name: "Shopping List", href: "/shopping-list", icon: ShoppingCart },
-  { name: "Add Recipe", href: "/recipes/new", icon: Plus },
+  { name: "Add Recipe", href: "/recipes/add", icon: Plus },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
