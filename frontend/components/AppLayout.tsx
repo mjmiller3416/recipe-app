@@ -3,17 +3,18 @@
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
 
+// Initialize from localStorage during module load (client-side only)
+function getInitialCollapsedState() {
+  if (typeof window === 'undefined') return false;
+  const saved = localStorage.getItem("sidebar-collapsed");
+  return saved !== null ? JSON.parse(saved) : false;
+}
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(getInitialCollapsedState);
 
-  // Sync with localStorage
+  // Listen for localStorage changes
   useEffect(() => {
-    const saved = localStorage.getItem("sidebar-collapsed");
-    if (saved !== null) {
-      setIsCollapsed(JSON.parse(saved));
-    }
-
-    // Listen for changes to localStorage
     const handleStorageChange = () => {
       const saved = localStorage.getItem("sidebar-collapsed");
       if (saved !== null) {
@@ -22,8 +23,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     };
 
     window.addEventListener("storage", handleStorageChange);
-
-    // Custom event for same-window updates
     window.addEventListener("sidebar-toggle", handleStorageChange as EventListener);
 
     return () => {
