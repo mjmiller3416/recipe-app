@@ -7,7 +7,8 @@
       "Bash(cat:*)",
       "Bash(npm install:*)",
       "Bash(npx shadcn@latest add:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(curl -I http://localhost:3000)"
     ]
   },
   "enableAllProjectMcpServers": true,
