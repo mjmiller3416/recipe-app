@@ -30,16 +30,16 @@ export function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-screen w-[280px] bg-sidebar flex flex-col overflow-x-hidden overflow-y-auto">
       {/* Top Section - App Branding */}
-      <div className="flex items-center p-4 min-h-[72px]">
+      <div className="flex items-center px-4 py-6 pb-8">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <Logo className="w-10 h-10 text-primary flex-shrink-0" />
-          <h1 className="text-xl font-semibold text-foreground whitespace-nowrap">
-            {appConfig.appName}
-          </h1>
+          <div className="flex-1">
+            <h1 className="text-xl font-semibold text-foreground whitespace-nowrap">
+              {appConfig.appName}
+            </h1>
+          </div>
         </div>
       </div>
-
-      <Separator className="bg-elevated" />
 
       {/* Middle Section - Navigation Menu */}
       <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
@@ -54,10 +54,8 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <Separator className="bg-elevated" />
-
       {/* Bottom Section - User Profile */}
-      <div className="p-4">
+      <div className="p-4 border-t border-border">
         <div className="flex items-center gap-3 rounded-lg p-3 bg-elevated">
           <div className="relative flex-shrink-0">
             <Avatar className="h-10 w-10">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Plus, Upload, ImageIcon } from "lucide-react";
+import { ArrowLeft, Plus, Upload, ImageIcon, Info, Clock, Users, Tag, ChefHat, Leaf, ListOrdered, FileText } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  PageHeader,
+  PageHeaderContent,
+  PageHeaderTitle,
+  PageHeaderActions,
+} from "@/components/PageHeader";
 import {
   IngredientRow,
   Ingredient,
@@ -101,29 +107,25 @@ export default function AddRecipePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-border bg-card">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Link href="/recipes">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-            </Link>
-            <div className="flex-1">
-              <h1 className="text-2xl font-semibold text-foreground">
-                Add New Recipe
-              </h1>
-              <p className="text-sm text-muted mt-0.5">
-                Create a new recipe for your collection
-              </p>
-            </div>
+      <PageHeader>
+        <PageHeaderContent>
+          <Link href="/recipes">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </Link>
+          <PageHeaderTitle 
+            title="Add New Recipe"
+            description="Create a new recipe for your collection"
+          />
+          <PageHeaderActions>
             <Button className="gap-2">
               Save Recipe
             </Button>
-          </div>
-        </div>
-      </div>
+          </PageHeaderActions>
+        </PageHeaderContent>
+      </PageHeader>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -133,13 +135,26 @@ export default function AddRecipePage() {
             {/* Recipe Info Section */}
             <Card>
               <CardContent className="pt-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">
-                  Recipe Information
-                </h2>
+                <div className="flex items-start gap-3 mb-6">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Info className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-lg font-semibold text-foreground">
+                      Recipe Information
+                    </h2>
+                    <p className="text-sm text-muted mt-0.5">
+                      Basic details about your recipe including name, timing, and classification
+                    </p>
+                  </div>
+                </div>
                 <div className="space-y-4">
                   {/* Recipe Name */}
                   <div>
-                    <Label htmlFor="recipe-name">Recipe Name</Label>
+                    <Label htmlFor="recipe-name" className="flex items-center gap-2">
+                      <ChefHat className="h-3.5 w-3.5 text-muted" />
+                      Recipe Name
+                    </Label>
                     <Input
                       id="recipe-name"
                       type="text"
@@ -153,7 +168,10 @@ export default function AddRecipePage() {
                   {/* Time and Servings Row */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="total-time">Total Time</Label>
+                      <Label htmlFor="total-time" className="flex items-center gap-2">
+                        <Clock className="h-3.5 w-3.5 text-muted" />
+                        Total Time
+                      </Label>
                       <Input
                         id="total-time"
                         type="text"
@@ -164,7 +182,10 @@ export default function AddRecipePage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="servings">Servings</Label>
+                      <Label htmlFor="servings" className="flex items-center gap-2">
+                        <Users className="h-3.5 w-3.5 text-muted" />
+                        Servings
+                      </Label>
                       <Input
                         id="servings"
                         type="text"
@@ -176,10 +197,13 @@ export default function AddRecipePage() {
                     </div>
                   </div>
 
-                  {/* Meal Type and Category Row */}
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* Meal Type, Category, and Dietary Preference Row */}
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor="meal-type">Meal Type</Label>
+                      <Label htmlFor="meal-type" className="flex items-center gap-2">
+                        <Tag className="h-3.5 w-3.5 text-muted" />
+                        Meal Type
+                      </Label>
                       <Select value={mealType} onValueChange={setMealType}>
                         <SelectTrigger id="meal-type" className="mt-1.5">
                           <SelectValue placeholder="Select meal type" />
@@ -194,7 +218,10 @@ export default function AddRecipePage() {
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="category">Category</Label>
+                      <Label htmlFor="category" className="flex items-center gap-2">
+                        <Tag className="h-3.5 w-3.5 text-muted" />
+                        Category
+                      </Label>
                       <Select value={category} onValueChange={setCategory}>
                         <SelectTrigger id="category" className="mt-1.5">
                           <SelectValue placeholder="Select category" />
@@ -208,28 +235,27 @@ export default function AddRecipePage() {
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-
-                  {/* Dietary Preference */}
-                  <div>
-                    <Label htmlFor="dietary-preference">
-                      Dietary Preference
-                    </Label>
-                    <Select
-                      value={dietaryPreference}
-                      onValueChange={setDietaryPreference}
-                    >
-                      <SelectTrigger id="dietary-preference" className="mt-1.5">
-                        <SelectValue placeholder="Select dietary preference" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {DIETARY_PREFERENCES.map((pref) => (
-                          <SelectItem key={pref.value} value={pref.value}>
-                            {pref.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div>
+                      <Label htmlFor="dietary-preference" className="flex items-center gap-2">
+                        <Leaf className="h-3.5 w-3.5 text-muted" />
+                        Dietary Preference
+                      </Label>
+                      <Select
+                        value={dietaryPreference}
+                        onValueChange={setDietaryPreference}
+                      >
+                        <SelectTrigger id="dietary-preference" className="mt-1.5">
+                          <SelectValue placeholder="Select dietary preference" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DIETARY_PREFERENCES.map((pref) => (
+                            <SelectItem key={pref.value} value={pref.value}>
+                              {pref.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -238,23 +264,21 @@ export default function AddRecipePage() {
             {/* Ingredients Section */}
             <Card>
               <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold text-foreground">
-                    Ingredients
-                  </h2>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addIngredient}
-                    className="gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Ingredient
-                  </Button>
+                <div className="flex items-start gap-3 mb-6">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Plus className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-lg font-semibold text-foreground">
+                      Ingredients
+                    </h2>
+                    <p className="text-sm text-muted mt-0.5">
+                      List all ingredients needed for this recipe
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 mb-4">
                   {ingredients.map((ingredient) => (
                     <IngredientRow
                       key={ingredient.id}
@@ -264,23 +288,51 @@ export default function AddRecipePage() {
                     />
                   ))}
                 </div>
+
+                {/* Add Ingredient Button at Bottom */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addIngredient}
+                  className="w-full gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Ingredient
+                </Button>
               </CardContent>
             </Card>
 
             {/* Directions & Notes Section */}
             <Card>
               <CardContent className="pt-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">
-                  Directions & Notes
-                </h2>
+                <div className="flex items-start gap-3 mb-6">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <ListOrdered className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-lg font-semibold text-foreground">
+                      Directions & Notes
+                    </h2>
+                    <p className="text-sm text-muted mt-0.5">
+                      Step-by-step cooking instructions and additional tips
+                    </p>
+                  </div>
+                </div>
                 <Tabs defaultValue="directions" className="w-full">
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="directions">Directions</TabsTrigger>
-                    <TabsTrigger value="notes">Notes</TabsTrigger>
+                    <TabsTrigger value="directions" className="gap-2">
+                      <ListOrdered className="h-4 w-4" />
+                      Directions
+                    </TabsTrigger>
+                    <TabsTrigger value="notes" className="gap-2">
+                      <FileText className="h-4 w-4" />
+                      Notes
+                    </TabsTrigger>
                   </TabsList>
                   <TabsContent value="directions" className="mt-4">
                     <Textarea
-                      placeholder="Enter cooking directions step by step..."
+                      placeholder="Enter cooking directions step by step...&#10;&#10;1. Preheat oven to 350°F&#10;2. Mix dry ingredients in a bowl&#10;3. Add wet ingredients and stir until combined"
                       value={directions}
                       onChange={(e) => setDirections(e.target.value)}
                       className="min-h-[300px] resize-none"
@@ -288,7 +340,7 @@ export default function AddRecipePage() {
                   </TabsContent>
                   <TabsContent value="notes" className="mt-4">
                     <Textarea
-                      placeholder="Add any additional notes, tips, or variations..."
+                      placeholder="Add any additional notes, tips, or variations...&#10;&#10;• Can substitute almond milk for regular milk&#10;• Best served fresh but can be refrigerated for up to 3 days&#10;• Try adding chocolate chips for extra sweetness"
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       className="min-h-[300px] resize-none"
@@ -301,14 +353,24 @@ export default function AddRecipePage() {
 
           {/* Right Column - Image Upload */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-6">
+            <Card>
               <CardContent className="pt-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">
-                  Recipe Image
-                </h2>
+                <div className="flex items-start gap-3 mb-6">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <ImageIcon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-lg font-semibold text-foreground">
+                      Recipe Image
+                    </h2>
+                    <p className="text-sm text-muted mt-0.5">
+                      Upload an appetizing photo of your dish
+                    </p>
+                  </div>
+                </div>
 
                 {/* Image Preview */}
-                <div className="relative aspect-square rounded-lg overflow-hidden bg-muted border-2 border-dashed border-border mb-4">
+                <div className="relative aspect-square rounded-lg overflow-hidden bg-elevated border-2 border-dashed border-border mb-4 transition-colors hover:border-primary/50">
                   {imagePreview ? (
                     <img
                       src={imagePreview}
@@ -317,8 +379,11 @@ export default function AddRecipePage() {
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full text-muted">
-                      <ImageIcon className="h-16 w-16 mb-3" />
-                      <p className="text-sm">No image uploaded</p>
+                      <div className="p-4 bg-primary/10 rounded-full mb-4">
+                        <ImageIcon className="h-12 w-12 text-primary" />
+                      </div>
+                      <p className="text-sm font-medium">No image uploaded</p>
+                      <p className="text-xs mt-1">Click below to add one</p>
                     </div>
                   )}
                 </div>
@@ -353,15 +418,28 @@ export default function AddRecipePage() {
                 <Separator className="my-6" />
 
                 {/* Quick Tips */}
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium text-foreground">
+                <div className="bg-primary/5 border border-primary/10 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
+                    <Info className="h-4 w-4 text-primary" />
                     Quick Tips
                   </h3>
-                  <ul className="text-xs text-muted space-y-1.5 list-disc list-inside">
-                    <li>Fill out all required fields before saving</li>
-                    <li>Add ingredients in the order they're used</li>
-                    <li>Be specific with measurements</li>
-                    <li>Include prep time in total time</li>
+                  <ul className="text-xs text-muted space-y-2">
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-0.5">•</span>
+                      <span>Fill out all required fields before saving</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-0.5">•</span>
+                      <span>Add ingredients in the order they're used</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-0.5">•</span>
+                      <span>Be specific with measurements</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-primary mt-0.5">•</span>
+                      <span>Include prep time in total time</span>
+                    </li>
                   </ul>
                 </div>
               </CardContent>

@@ -23,7 +23,7 @@ export function NavButton({
       className={cn(
         "flex items-center rounded-lg transition-colors duration-200 ease-in-out relative group px-4 py-3.5",
         "text-muted hover:text-foreground hover:bg-hover",
-        isActive && "text-primary bg-hover font-medium"
+        isActive && "text-primary bg-hover font-medium rounded-lg"
       )}
       aria-label={label}
     >

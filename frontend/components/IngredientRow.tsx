@@ -36,49 +36,37 @@ export function IngredientRow({
 }: IngredientRowProps) {
   return (
     <div className="group bg-elevated hover:bg-hover transition-colors rounded-lg p-3 border border-border">
-      <div className="flex items-start gap-3">
-        {/* Drag Handle */}
-        <div className="flex items-center pt-2">
-          <button
-            type="button"
-            className="p-1 text-muted hover:text-foreground transition-colors cursor-grab active:cursor-grabbing"
-            aria-label="Drag to reorder"
-          >
-            <GripVertical className="h-5 w-5" />
-          </button>
-        </div>
+      <div className="flex items-center gap-3">
+        {/* Drag Handle - Vertically Centered */}
+        <button
+          type="button"
+          className="p-1 text-muted hover:text-foreground transition-colors cursor-grab active:cursor-grabbing flex-shrink-0"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="h-5 w-5" />
+        </button>
 
         {/* Form Fields Container */}
-        <div className="flex-1 flex items-end gap-2">
+        <div className="flex-1 flex items-center gap-2">
           {/* Quantity */}
           <div className="flex-shrink-0 w-20">
-            {showLabels && (
-              <Label htmlFor={`qty-${ingredient.id}`} className="text-xs text-muted mb-1.5">
-                Qty
-              </Label>
-            )}
             <Input
               id={`qty-${ingredient.id}`}
               type="text"
               placeholder="1"
               value={ingredient.quantity}
               onChange={(e) => onUpdate(ingredient.id, "quantity", e.target.value)}
-              className="h-9 bg-background border-border"
+              className="h-9"
             />
           </div>
 
           {/* Unit */}
           <div className="flex-shrink-0 w-28">
-            {showLabels && (
-              <Label htmlFor={`unit-${ingredient.id}`} className="text-xs text-muted mb-1.5">
-                Unit
-              </Label>
-            )}
             <Select
               value={ingredient.unit}
               onValueChange={(value) => onUpdate(ingredient.id, "unit", value)}
             >
-              <SelectTrigger id={`unit-${ingredient.id}`} className="h-9 bg-background border-border">
+              <SelectTrigger id={`unit-${ingredient.id}`} className="h-9">
                 <SelectValue placeholder="Unit" />
               </SelectTrigger>
               <SelectContent>
@@ -93,36 +81,23 @@ export function IngredientRow({
 
           {/* Ingredient Name */}
           <div className="flex-1 min-w-0">
-            {showLabels && (
-              <Label htmlFor={`name-${ingredient.id}`} className="text-xs text-muted mb-1.5">
-                Ingredient
-              </Label>
-            )}
             <Input
               id={`name-${ingredient.id}`}
               type="text"
               placeholder="Ingredient name"
               value={ingredient.name}
               onChange={(e) => onUpdate(ingredient.id, "name", e.target.value)}
-              className="h-9 bg-background border-border"
+              className="h-9"
             />
           </div>
 
           {/* Category */}
           <div className="flex-shrink-0 w-32">
-            {showLabels && (
-              <Label
-                htmlFor={`category-${ingredient.id}`}
-                className="text-xs text-muted mb-1.5"
-              >
-                Category
-              </Label>
-            )}
             <Select
               value={ingredient.category}
               onValueChange={(value) => onUpdate(ingredient.id, "category", value)}
             >
-              <SelectTrigger id={`category-${ingredient.id}`} className="h-9 bg-background border-border">
+              <SelectTrigger id={`category-${ingredient.id}`} className="h-9">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -136,17 +111,15 @@ export function IngredientRow({
           </div>
         </div>
 
-        {/* Delete Button */}
-        <div className="flex items-center pt-2">
-          <button
-            type="button"
-            onClick={() => onDelete(ingredient.id)}
-            className="p-1 text-muted hover:text-error transition-colors"
-            aria-label="Delete ingredient"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+        {/* Delete Button - Vertically Centered */}
+        <button
+          type="button"
+          onClick={() => onDelete(ingredient.id)}
+          className="p-1 text-muted hover:text-error transition-colors flex-shrink-0"
+          aria-label="Delete ingredient"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
     </div>
   );
