@@ -326,7 +326,7 @@ function RecipeCardLarge({
       {/* Main Layout - Side by side */}
       <div className="flex flex-col md:flex-row">
         {/* Left: Image */}
-        <div className="relative w-full md:w-2/5 aspect-square md:aspect-auto overflow-hidden bg-elevated">
+        <div className="relative w-full md:w-1/3 aspect-square md:aspect-auto overflow-hidden bg-elevated">
           {recipe.imageUrl ? (
             <img
               src={recipe.imageUrl}
