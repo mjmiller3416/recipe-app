@@ -2,12 +2,13 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Clock, Users, ChefHat } from "lucide-react";
+import { Clock, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { RecipeCardData, RecipeIngredient } from "@/types";
+import type { RecipeCardData } from "@/types";
 import { FavoriteButton } from "./FavoriteButton";
 import { RecipeBadge, RecipeBadgeGroup } from "./RecipeBadge";
+import { RecipeCardImage } from "./RecipeImage";
 
 interface RecipeCardBaseProps {
   recipe: RecipeCardData;
@@ -147,17 +148,12 @@ function RecipeCardSmall({
       <div className="flex items-center gap-3 p-3">
         {/* Thumbnail */}
         <div className="relative w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg bg-elevated">
-          {recipe.imageUrl ? (
-            <img
-              src={recipe.imageUrl}
-              alt={recipe.name}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-elevated via-hover to-elevated">
-              <ChefHat className="h-6 w-6 text-muted opacity-40" />
-            </div>
-          )}
+          <RecipeCardImage
+            src={recipe.imageUrl}
+            alt={recipe.name}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            iconSize="sm"
+          />
         </div>
 
         {/* Content */}
@@ -221,23 +217,17 @@ function RecipeCardMedium({
     >
       {/* Image Container - Fixed hover glitch */}
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-elevated">
-        {recipe.imageUrl ? (
-          <>
-            <img
-              src={recipe.imageUrl}
-              alt={recipe.name}
-              className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
-              style={{ transformOrigin: 'center center' }}
-            />
-            {/* Hover Overlay - Scales with image */}
-            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 ease-in-out group-hover:scale-105" 
-                 style={{ transformOrigin: 'center center' }} 
-            />
-          </>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-elevated via-hover to-elevated">
-            <ChefHat className="h-24 w-24 text-muted opacity-40" />
-          </div>
+        <RecipeCardImage
+          src={recipe.imageUrl}
+          alt={recipe.name}
+          className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
+          iconSize="lg"
+        />
+        {/* Hover Overlay - Scales with image */}
+        {recipe.imageUrl && (
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 ease-in-out group-hover:scale-105"
+               style={{ transformOrigin: 'center center' }}
+          />
         )}
         
         {/* Favorite Button */}
@@ -334,17 +324,12 @@ function RecipeCardLarge({
       <div className="flex flex-col md:flex-row">
         {/* Left: Image */}
         <div className="relative w-full md:w-1/3 aspect-square md:aspect-auto overflow-hidden bg-elevated">
-          {recipe.imageUrl ? (
-            <img
-              src={recipe.imageUrl}
-              alt={recipe.name}
-              className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-elevated via-hover to-elevated">
-              <ChefHat className="h-32 w-32 text-muted opacity-40" />
-            </div>
-          )}
+          <RecipeCardImage
+            src={recipe.imageUrl}
+            alt={recipe.name}
+            className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
+            iconSize="xl"
+          />
         </div>
 
         {/* Right: Recipe Details */}

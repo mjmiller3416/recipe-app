@@ -29,7 +29,7 @@ router = APIRouter()
 def _recipe_to_response_dto(recipe) -> RecipeResponseDTO:
     """Convert a Recipe model to RecipeResponseDTO."""
     ingredients = []
-    for ri in recipe.recipe_ingredients:
+    for ri in recipe.ingredients:
         ingredients.append(RecipeIngredientResponseDTO(
             id=ri.ingredient.id,
             ingredient_name=ri.ingredient.ingredient_name,
