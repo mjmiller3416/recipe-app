@@ -51,6 +51,16 @@ const mockRecipeBreakdown: Record<string, { recipe_name: string; quantity: numbe
     { recipe_name: "Spaghetti Carbonara", quantity: 4, unit: "slices" },
     { recipe_name: "BLT Sandwich", quantity: 4, unit: "slices" },
   ],
+  // Single-recipe items for testing tooltips
+  "mozzarella_oz": [
+    { recipe_name: "Caprese Salad", quantity: 8, unit: "oz" },
+  ],
+  "milk_gallon": [
+    { recipe_name: "French Toast", quantity: 1, unit: "gallon" },
+  ],
+  "quinoa_cup": [
+    { recipe_name: "Quinoa Bowl", quantity: 1, unit: "cup" },
+  ],
 };
 
 interface ShoppingItemProps {
@@ -60,7 +70,7 @@ interface ShoppingItemProps {
 
 function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
   const breakdown = item.state_key ? mockRecipeBreakdown[item.state_key] : null;
-  const hasBreakdown = breakdown && breakdown.length > 0;
+  const shouldShowTooltip = item.source !== "manual" && breakdown && breakdown.length > 0;
 
   const itemContent = (
     <div
@@ -92,7 +102,7 @@ function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
     </div>
   );
 
-  if (hasBreakdown) {
+  if (shouldShowTooltip) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>{itemContent}</TooltipTrigger>

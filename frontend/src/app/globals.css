@@ -19,17 +19,17 @@
   --muted: #b3b3b3;             /* Secondary/muted text */
   
   /* ============================================
-     PRIMARY COLORS (Teal)
+     PRIMARY COLORS (Purple)
      ============================================ */
-  --primary: #14b8a6;           /* Main brand color - badges, accents */
-  --primary-dark: #0d9488;      /* Darker variant */
-  --primary-light: #2dd4bf;     /* Lighter variant */
-  --primary-foreground: #1a1a1a; /* Text on primary background */
+  --primary: #8b5cf6;           /* Main brand color - badges, accents */
+  --primary-dark: #7c3aed;      /* Darker variant */
+  --primary-light: #a78bfa;     /* Lighter variant */
+  --primary-foreground: #ffffff; /* Text on primary background */
   
   /* ============================================
-     SECONDARY COLORS (Purple)
+     SECONDARY COLORS (Teal)
      ============================================ */
-  --secondary: #8b5cf6;         /* Secondary brand color - meal type badges */
+  --secondary: #14b8a6;         /* Secondary brand color - meal type badges */
   --secondary-foreground: #ffffff; /* Text on secondary background */
   
   /* ============================================
@@ -47,7 +47,7 @@
   --accent-foreground: #f5f5f5; /* Text on accent background */
   --border: #3d3d3d;            /* Border color */
   --input: #2f2f2f;             /* Input backgrounds */
-  --ring: #14b8a6;              /* Focus ring color */
+  --ring: #8b5cf6;              /* Focus ring color */
   
   /* ============================================
      STATUS INDICATORS
@@ -78,10 +78,10 @@
   /* ============================================
      BACKGROUNDS
      ============================================ */
-  --background: #fafafa;        /* Main app background - warm light gray */
-  --sidebar: #f5f5f5;           /* Sidebar background - slightly darker */
-  --elevated: #ffffff;          /* Cards, elevated surfaces - pure white */
-  --hover: #e5e5e5;             /* Hover state background */
+  --background: #efefef;        /* Main app background - softer warm gray */
+  --sidebar: #e8e8e8;           /* Sidebar background - slightly darker */
+  --elevated: #f7f7f7;          /* Cards, elevated surfaces - soft off-white */
+  --hover: #e0e0e0;             /* Hover state background */
   
   /* ============================================
      TEXT COLORS
@@ -90,18 +90,18 @@
   --muted: #6b7280;             /* Secondary/muted text */
   
   /* ============================================
-     PRIMARY COLORS (Teal)
+     PRIMARY COLORS (Purple)
      ============================================ */
-  --primary: #14b8a6;           /* Main brand color - same teal works well */
-  --primary-dark: #0d9488;      /* Darker variant */
-  --primary-light: #5eead4;     /* Lighter variant for light mode */
-  --primary-foreground: #ffffff; /* White text on teal background */
+  --primary: #8b5cf6;           /* Main brand color - same purple works well */
+  --primary-dark: #7c3aed;      /* Darker variant */
+  --primary-light: #c4b5fd;     /* Lighter variant for light mode */
+  --primary-foreground: #ffffff; /* White text on purple background */
   
   /* ============================================
-     SECONDARY COLORS (Purple)
+     SECONDARY COLORS (Teal)
      ============================================ */
-  --secondary: #8b5cf6;         /* Secondary brand color - same purple */
-  --secondary-foreground: #ffffff; /* White text on purple */
+  --secondary: #14b8a6;         /* Secondary brand color - same teal */
+  --secondary-foreground: #ffffff; /* White text on teal */
   
   /* ============================================
      STATUS COLORS
@@ -116,9 +116,9 @@
      ============================================ */
   --accent: #e5e7eb;            /* Accent surfaces - light gray for dietary badges */
   --accent-foreground: #374151; /* Dark gray text on light accent */
-  --border: #e5e5e5;            /* Subtle border color */
-  --input: #ffffff;             /* Input backgrounds - white */
-  --ring: #14b8a6;              /* Focus ring color - same teal */
+  --border: #d6d6d6;            /* Softer border color */
+  --input: #f7f7f7;             /* Input backgrounds - soft off-white */
+  --ring: #8b5cf6;              /* Focus ring color - same purple */
   
   /* ============================================
      STATUS INDICATORS
