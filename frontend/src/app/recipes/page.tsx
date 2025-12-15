@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -17,6 +17,7 @@ import {
   Filter,
   BookOpen,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,9 +37,9 @@ import {
   PageHeaderActions,
 } from "@/components/PageHeader";
 import { RecipeCard, RecipeCardGrid } from "@/components/RecipeCard";
-import { mockRecipes } from "@/lib/mockData";
+import { recipeApi } from "@/lib/api";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
-import type { RecipeCardData } from "@/types";
+import type { RecipeCardData, RecipeResponseDTO } from "@/types";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
@@ -71,31 +72,6 @@ const SORT_OPTIONS: { value: SortOption; label: string; icon: React.ElementType 
   { value: "createdAt", label: "Date Added", icon: Calendar },
 ];
 
-// Extract unique values from mock data for filters
-const getUniqueCategories = () => {
-  const categories = new Set<string>();
-  mockRecipes.forEach((recipe) => {
-    if (recipe.recipe_category) categories.add(recipe.recipe_category);
-  });
-  return Array.from(categories).sort();
-};
-
-const getUniqueMealTypes = () => {
-  const mealTypes = new Set<string>();
-  mockRecipes.forEach((recipe) => {
-    if (recipe.meal_type) mealTypes.add(recipe.meal_type);
-  });
-  return Array.from(mealTypes).sort();
-};
-
-const getUniqueDietaryPreferences = () => {
-  const dietary = new Set<string>();
-  mockRecipes.forEach((recipe) => {
-    if (recipe.diet_pref) dietary.add(recipe.diet_pref);
-  });
-  return Array.from(dietary).sort();
-};
-
 // ============================================================================
 // Filter Section Component
 // ============================================================================
@@ -121,7 +97,7 @@ function FilterSection({
 
   return (
     <div className="py-2">
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-between w-full py-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
       >
@@ -203,14 +179,30 @@ function FilterChip({ label, type, onRemove }: FilterChipProps) {
 export default function RecipeBrowserPage() {
   const router = useRouter();
 
-  // Data
-  const initialRecipes = mapRecipesForCards(mockRecipes);
-  const [recipes, setRecipes] = useState<RecipeCardData[]>(initialRecipes);
+  // Data and loading state
+  const [recipes, setRecipes] = useState<RecipeCardData[]>([]);
+  const [rawRecipes, setRawRecipes] = useState<RecipeResponseDTO[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Filter options from data
-  const categories = useMemo(() => getUniqueCategories(), []);
-  const mealTypes = useMemo(() => getUniqueMealTypes(), []);
-  const dietaryPreferences = useMemo(() => getUniqueDietaryPreferences(), []);
+  // Filter options derived from data
+  const categories = useMemo(() => {
+    const cats = new Set<string>();
+    rawRecipes.forEach((r) => r.recipe_category && cats.add(r.recipe_category));
+    return Array.from(cats).sort();
+  }, [rawRecipes]);
+
+  const mealTypes = useMemo(() => {
+    const types = new Set<string>();
+    rawRecipes.forEach((r) => r.meal_type && types.add(r.meal_type));
+    return Array.from(types).sort();
+  }, [rawRecipes]);
+
+  const dietaryPreferences = useMemo(() => {
+    const prefs = new Set<string>();
+    rawRecipes.forEach((r) => r.diet_pref && prefs.add(r.diet_pref));
+    return Array.from(prefs).sort();
+  }, [rawRecipes]);
 
   // State
   const [searchTerm, setSearchTerm] = useState("");
@@ -224,10 +216,30 @@ export default function RecipeBrowserPage() {
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [showFilters, setShowFilters] = useState(true);
 
+  // Fetch recipes on mount
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await recipeApi.list();
+        setRawRecipes(data);
+        setRecipes(mapRecipesForCards(data));
+      } catch (err) {
+        console.error("Failed to fetch recipes:", err);
+        setError(err instanceof Error ? err.message : "Failed to load recipes");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRecipes();
+  }, []);
+
   // Build active filters list for display
   const activeFilters: ActiveFilter[] = useMemo(() => {
     const active: ActiveFilter[] = [];
-    
+
     filters.categories.forEach((cat) => {
       active.push({ type: "category", value: cat, label: cat });
     });
@@ -240,7 +252,7 @@ export default function RecipeBrowserPage() {
     if (filters.favoritesOnly) {
       active.push({ type: "favorite", value: "favorites", label: "Favorites Only" });
     }
-    
+
     return active;
   }, [filters]);
 
@@ -314,12 +326,26 @@ export default function RecipeBrowserPage() {
     router.push(`/recipes/${recipe.id}`);
   };
 
-  const handleFavoriteToggle = (recipe: RecipeCardData) => {
-    setRecipes((prev) =>
-      prev.map((r) =>
-        r.id === recipe.id ? { ...r, isFavorite: !r.isFavorite } : r
-      )
-    );
+  const handleFavoriteToggle = async (recipe: RecipeCardData) => {
+    try {
+      // Optimistic update
+      setRecipes((prev) =>
+        prev.map((r) =>
+          r.id === recipe.id ? { ...r, isFavorite: !r.isFavorite } : r
+        )
+      );
+
+      // Call API
+      await recipeApi.toggleFavorite(Number(recipe.id));
+    } catch (err) {
+      // Revert on error
+      setRecipes((prev) =>
+        prev.map((r) =>
+          r.id === recipe.id ? { ...r, isFavorite: recipe.isFavorite } : r
+        )
+      );
+      console.error("Failed to toggle favorite:", err);
+    }
   };
 
   const handleCategoryChange = (value: string, checked: boolean) => {
@@ -381,6 +407,34 @@ export default function RecipeBrowserPage() {
   };
 
   const hasActiveFilters = activeFilters.length > 0 || searchTerm.length > 0;
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted">Loading recipes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-center max-w-md">
+          <div className="p-4 bg-[var(--error)]/10 rounded-full">
+            <X className="h-8 w-8 text-[var(--error)]" />
+          </div>
+          <h2 className="text-lg font-semibold text-foreground">Failed to Load Recipes</h2>
+          <p className="text-muted">{error}</p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

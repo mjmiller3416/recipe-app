@@ -1,0 +1,194 @@
+"""app/api/recipes.py
+
+FastAPI router for recipe endpoints.
+"""
+
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+
+from app.core.database.db import get_session
+from app.core.dtos.recipe_dtos import (
+    RecipeCardDTO,
+    RecipeCreateDTO,
+    RecipeFilterDTO,
+    RecipeIngredientResponseDTO,
+    RecipeResponseDTO,
+    RecipeUpdateDTO,
+)
+from app.core.services.recipe_service import (
+    DuplicateRecipeError,
+    RecipeSaveError,
+    RecipeService,
+)
+
+router = APIRouter()
+
+
+def _recipe_to_response_dto(recipe) -> RecipeResponseDTO:
+    """Convert a Recipe model to RecipeResponseDTO."""
+    ingredients = []
+    for ri in recipe.recipe_ingredients:
+        ingredients.append(RecipeIngredientResponseDTO(
+            id=ri.ingredient.id,
+            ingredient_name=ri.ingredient.ingredient_name,
+            ingredient_category=ri.ingredient.ingredient_category,
+            quantity=ri.quantity,
+            unit=ri.unit,
+        ))
+
+    return RecipeResponseDTO(
+        id=recipe.id,
+        recipe_name=recipe.recipe_name,
+        recipe_category=recipe.recipe_category,
+        meal_type=recipe.meal_type,
+        diet_pref=recipe.diet_pref,
+        total_time=recipe.total_time,
+        servings=recipe.servings,
+        directions=recipe.directions,
+        notes=recipe.notes,
+        reference_image_path=recipe.reference_image_path,
+        banner_image_path=recipe.banner_image_path,
+        is_favorite=recipe.is_favorite,
+        created_at=recipe.created_at.isoformat() if recipe.created_at else None,
+        ingredients=ingredients,
+    )
+
+
+@router.get("", response_model=List[RecipeResponseDTO])
+def list_recipes(
+    recipe_category: Optional[str] = Query(None),
+    meal_type: Optional[str] = Query(None),
+    diet_pref: Optional[str] = Query(None),
+    cook_time: Optional[int] = Query(None, ge=0),
+    servings: Optional[int] = Query(None, ge=1),
+    sort_by: Optional[str] = Query(None, pattern="^(recipe_name|created_at|total_time|servings)$"),
+    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
+    favorites_only: bool = Query(False),
+    search_term: Optional[str] = Query(None),
+    limit: Optional[int] = Query(None, ge=1, le=100),
+    offset: Optional[int] = Query(None, ge=0),
+    session: Session = Depends(get_session),
+):
+    """List recipes with optional filters."""
+    filter_dto = RecipeFilterDTO(
+        recipe_category=recipe_category,
+        meal_type=meal_type,
+        diet_pref=diet_pref,
+        cook_time=cook_time,
+        servings=servings,
+        sort_by=sort_by,
+        sort_order=sort_order,
+        favorites_only=favorites_only,
+        search_term=search_term,
+        limit=limit,
+        offset=offset,
+    )
+
+    service = RecipeService(session)
+    recipes = service.list_filtered(filter_dto)
+    return [_recipe_to_response_dto(r) for r in recipes]
+
+
+@router.get("/cards", response_model=List[RecipeCardDTO])
+def list_recipe_cards(
+    recipe_category: Optional[str] = Query(None),
+    meal_type: Optional[str] = Query(None),
+    favorites_only: bool = Query(False),
+    search_term: Optional[str] = Query(None),
+    limit: Optional[int] = Query(None, ge=1, le=100),
+    session: Session = Depends(get_session),
+):
+    """List recipes as lightweight cards for lists/grids."""
+    filter_dto = RecipeFilterDTO(
+        recipe_category=recipe_category,
+        meal_type=meal_type,
+        favorites_only=favorites_only,
+        search_term=search_term,
+        limit=limit,
+    )
+
+    service = RecipeService(session)
+    recipes = service.list_filtered(filter_dto)
+    return [RecipeCardDTO.from_recipe(r) for r in recipes]
+
+
+@router.get("/categories", response_model=List[str])
+def get_categories(session: Session = Depends(get_session)):
+    """Get unique recipe categories."""
+    service = RecipeService(session)
+    recipes = service.list_filtered(RecipeFilterDTO())
+    categories = set(r.recipe_category for r in recipes if r.recipe_category)
+    return sorted(categories)
+
+
+@router.get("/meal-types", response_model=List[str])
+def get_meal_types(session: Session = Depends(get_session)):
+    """Get unique meal types."""
+    service = RecipeService(session)
+    recipes = service.list_filtered(RecipeFilterDTO())
+    meal_types = set(r.meal_type for r in recipes if r.meal_type)
+    return sorted(meal_types)
+
+
+@router.get("/{recipe_id}", response_model=RecipeResponseDTO)
+def get_recipe(recipe_id: int, session: Session = Depends(get_session)):
+    """Get a single recipe by ID."""
+    service = RecipeService(session)
+    recipe = service.get_recipe(recipe_id)
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return _recipe_to_response_dto(recipe)
+
+
+@router.post("", response_model=RecipeResponseDTO, status_code=201)
+def create_recipe(
+    recipe_data: RecipeCreateDTO,
+    session: Session = Depends(get_session),
+):
+    """Create a new recipe."""
+    service = RecipeService(session)
+    try:
+        recipe = service.create_recipe_with_ingredients(recipe_data)
+        return _recipe_to_response_dto(recipe)
+    except DuplicateRecipeError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    except RecipeSaveError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/{recipe_id}", response_model=RecipeResponseDTO)
+def update_recipe(
+    recipe_id: int,
+    update_data: RecipeUpdateDTO,
+    session: Session = Depends(get_session),
+):
+    """Update an existing recipe."""
+    service = RecipeService(session)
+    try:
+        recipe = service.update_recipe(recipe_id, update_data)
+        return _recipe_to_response_dto(recipe)
+    except RecipeSaveError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.delete("/{recipe_id}")
+def delete_recipe(recipe_id: int, session: Session = Depends(get_session)):
+    """Delete a recipe."""
+    service = RecipeService(session)
+    if not service.delete_recipe(recipe_id):
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return {"message": "Recipe deleted successfully"}
+
+
+@router.post("/{recipe_id}/favorite", response_model=RecipeResponseDTO)
+def toggle_favorite(recipe_id: int, session: Session = Depends(get_session)):
+    """Toggle the favorite status of a recipe."""
+    service = RecipeService(session)
+    recipe = service.get_recipe(recipe_id)
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    updated_recipe = service.toggle_favorite(recipe_id)
+    return _recipe_to_response_dto(updated_recipe)

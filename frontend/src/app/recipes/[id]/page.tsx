@@ -15,9 +15,9 @@ import {
   BookOpen,
   Lightbulb,
   UtensilsCrossed,
-  Heart,
   Share2,
   Check,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,7 +29,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -49,7 +48,7 @@ import {
 } from "@/components/ui/tooltip";
 import { RecipeBadge, RecipeBadgeGroup } from "@/components/RecipeBadge";
 import { FavoriteButton } from "@/components/FavoriteButton";
-import { getMockRecipeById, mockMealSelections } from "@/lib/mockData";
+import { recipeApi, plannerApi } from "@/lib/api";
 import type { RecipeResponseDTO, MealSelectionResponseDTO } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -67,17 +66,17 @@ function formatTime(minutes: number | null): string {
 
 function parseDirections(directions: string | null): string[] {
   if (!directions) return [];
-  
+
   // Split by numbered steps (1. 2. etc.) or by newlines
   const steps = directions
     .split(/\n/)
-    .map(step => step.trim())
-    .filter(step => step.length > 0)
-    .map(step => {
+    .map((step) => step.trim())
+    .filter((step) => step.length > 0)
+    .map((step) => {
       // Remove leading numbers like "1." or "1)"
       return step.replace(/^\d+[\.\)]\s*/, "");
     });
-  
+
   return steps;
 }
 
@@ -86,15 +85,15 @@ function groupIngredientsByCategory(
   ingredients: RecipeResponseDTO["ingredients"]
 ): Map<string, RecipeResponseDTO["ingredients"]> {
   const grouped = new Map<string, RecipeResponseDTO["ingredients"]>();
-  
-  ingredients.forEach(ing => {
+
+  ingredients.forEach((ing) => {
     const category = ing.ingredient_category || "Other";
     if (!grouped.has(category)) {
       grouped.set(category, []);
     }
     grouped.get(category)!.push(ing);
   });
-  
+
   return grouped;
 }
 
@@ -107,7 +106,7 @@ function RecipeDetailSkeleton() {
     <div className="min-h-screen bg-background animate-pulse">
       {/* Hero Skeleton */}
       <div className="relative h-[300px] md:h-[400px] bg-elevated" />
-      
+
       <div className="max-w-5xl mx-auto px-6 -mt-16 relative z-10">
         {/* Header Card Skeleton */}
         <Card className="mb-8">
@@ -124,13 +123,13 @@ function RecipeDetailSkeleton() {
             </div>
           </CardContent>
         </Card>
-        
+
         {/* Content Skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-4">
             <div className="h-8 w-32 bg-hover rounded mb-4" />
             <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map(i => (
+              {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="h-6 bg-hover rounded" />
               ))}
             </div>
@@ -138,7 +137,7 @@ function RecipeDetailSkeleton() {
           <div className="lg:col-span-8">
             <div className="h-8 w-32 bg-hover rounded mb-4" />
             <div className="space-y-4">
-              {[1, 2, 3, 4].map(i => (
+              {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="h-20 bg-hover rounded" />
               ))}
             </div>
@@ -188,19 +187,51 @@ interface AddToMealPlanDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-function AddToMealPlanDialog({ recipe, open, onOpenChange }: AddToMealPlanDialogProps) {
+function AddToMealPlanDialog({
+  recipe,
+  open,
+  onOpenChange,
+}: AddToMealPlanDialogProps) {
   const [selectedMeal, setSelectedMeal] = useState<number | null>(null);
   const [added, setAdded] = useState(false);
-  
-  const handleAdd = () => {
-    // Mock adding to meal plan
-    console.log(`Adding ${recipe.recipe_name} to meal plan ${selectedMeal}`);
-    setAdded(true);
-    setTimeout(() => {
-      setAdded(false);
-      onOpenChange(false);
-      setSelectedMeal(null);
-    }, 1500);
+  const [meals, setMeals] = useState<MealSelectionResponseDTO[]>([]);
+  const [loadingMeals, setLoadingMeals] = useState(false);
+
+  // Fetch meals when dialog opens
+  useEffect(() => {
+    if (open) {
+      const fetchMeals = async () => {
+        setLoadingMeals(true);
+        try {
+          const data = await plannerApi.getMeals();
+          setMeals(data);
+        } catch (err) {
+          console.error("Failed to fetch meals:", err);
+        } finally {
+          setLoadingMeals(false);
+        }
+      };
+      fetchMeals();
+    }
+  }, [open]);
+
+  const handleAdd = async () => {
+    if (!selectedMeal) return;
+
+    try {
+      // Update meal to add this recipe as a side dish
+      await plannerApi.updateMeal(selectedMeal, {
+        side_recipe_1_id: recipe.id,
+      });
+      setAdded(true);
+      setTimeout(() => {
+        setAdded(false);
+        onOpenChange(false);
+        setSelectedMeal(null);
+      }, 1500);
+    } catch (err) {
+      console.error("Failed to add to meal plan:", err);
+    }
   };
 
   return (
@@ -212,7 +243,7 @@ function AddToMealPlanDialog({ recipe, open, onOpenChange }: AddToMealPlanDialog
             Choose a meal to add "{recipe.recipe_name}" to, or create a new meal.
           </DialogDescription>
         </DialogHeader>
-        
+
         {added ? (
           <div className="py-8 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-success/20 flex items-center justify-center">
@@ -220,34 +251,46 @@ function AddToMealPlanDialog({ recipe, open, onOpenChange }: AddToMealPlanDialog
             </div>
             <p className="text-foreground font-medium">Added to Meal Plan!</p>
           </div>
+        ) : loadingMeals ? (
+          <div className="py-8 flex justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
         ) : (
           <>
             <div className="space-y-2 max-h-[300px] overflow-y-auto py-2">
-              {mockMealSelections.map((meal) => (
-                <button
-                  key={meal.id}
-                  onClick={() => setSelectedMeal(meal.id)}
-                  className={cn(
-                    "w-full p-4 rounded-lg border text-left transition-all",
-                    selectedMeal === meal.id
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50 hover:bg-hover"
-                  )}
-                >
-                  <p className="font-medium text-foreground">{meal.meal_name}</p>
-                  <p className="text-sm text-muted mt-0.5">
-                    {meal.main_recipe ? `Main: ${meal.main_recipe.recipe_name}` : "No main dish"}
-                  </p>
-                </button>
-              ))}
+              {meals.length === 0 ? (
+                <p className="text-center text-muted py-4">
+                  No meals found. Create one first!
+                </p>
+              ) : (
+                meals.map((meal) => (
+                  <button
+                    key={meal.id}
+                    onClick={() => setSelectedMeal(meal.id)}
+                    className={cn(
+                      "w-full p-4 rounded-lg border text-left transition-all",
+                      selectedMeal === meal.id
+                        ? "border-primary bg-primary/10"
+                        : "border-border hover:border-primary/50 hover:bg-hover"
+                    )}
+                  >
+                    <p className="font-medium text-foreground">{meal.meal_name}</p>
+                    <p className="text-sm text-muted mt-0.5">
+                      {meal.main_recipe
+                        ? `Main: ${meal.main_recipe.recipe_name}`
+                        : "No main dish"}
+                    </p>
+                  </button>
+                ))
+              )}
             </div>
-            
+
             <DialogFooter className="gap-2 sm:gap-0">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button 
-                onClick={handleAdd} 
+              <Button
+                onClick={handleAdd}
                 disabled={!selectedMeal}
                 className="gap-2"
               >
@@ -275,7 +318,7 @@ interface IngredientItemProps {
 function IngredientItem({ ingredient, checked, onToggle }: IngredientItemProps) {
   const quantity = ingredient.quantity !== null ? ingredient.quantity : "";
   const unit = ingredient.unit || "";
-  
+
   return (
     <button
       onClick={onToggle}
@@ -285,19 +328,25 @@ function IngredientItem({ ingredient, checked, onToggle }: IngredientItemProps) 
         checked && "opacity-50"
       )}
     >
-      <div className={cn(
-        "w-5 h-5 rounded border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all",
-        checked 
-          ? "border-primary bg-primary" 
-          : "border-muted group-hover:border-primary"
-      )}>
+      <div
+        className={cn(
+          "w-5 h-5 rounded border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all",
+          checked
+            ? "border-primary bg-primary"
+            : "border-muted group-hover:border-primary"
+        )}
+      >
         {checked && <Check className="h-3 w-3 text-primary-foreground" />}
       </div>
-      <span className={cn(
-        "flex-1 text-foreground transition-all",
-        checked && "line-through"
-      )}>
-        <span className="font-semibold">{quantity} {unit}</span>
+      <span
+        className={cn(
+          "flex-1 text-foreground transition-all",
+          checked && "line-through"
+        )}
+      >
+        <span className="font-semibold">
+          {quantity} {unit}
+        </span>
         {(quantity || unit) && " "}
         {ingredient.ingredient_name}
       </span>
@@ -326,18 +375,22 @@ function DirectionStep({ step, index, completed, onToggle }: DirectionStepProps)
         completed && "opacity-50"
       )}
     >
-      <div className={cn(
-        "w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-sm transition-all",
-        completed 
-          ? "bg-primary text-primary-foreground" 
-          : "bg-elevated text-muted group-hover:bg-primary/20 group-hover:text-primary"
-      )}>
+      <div
+        className={cn(
+          "w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-sm transition-all",
+          completed
+            ? "bg-primary text-primary-foreground"
+            : "bg-elevated text-muted group-hover:bg-primary/20 group-hover:text-primary"
+        )}
+      >
         {completed ? <Check className="h-4 w-4" /> : index + 1}
       </div>
-      <p className={cn(
-        "flex-1 text-foreground leading-relaxed pt-1",
-        completed && "line-through"
-      )}>
+      <p
+        className={cn(
+          "flex-1 text-foreground leading-relaxed pt-1",
+          completed && "line-through"
+        )}
+      >
         {step}
       </p>
     </button>
@@ -352,48 +405,71 @@ export default function RecipeDetailPage() {
   const params = useParams();
   const router = useRouter();
   const recipeId = Number(params.id);
-  
+
   // State
   const [recipe, setRecipe] = useState<RecipeResponseDTO | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [mealPlanDialogOpen, setMealPlanDialogOpen] = useState(false);
-  const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
+  const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(
+    new Set()
+  );
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
-  
-  // Load recipe data
+
+  // Load recipe data from API
   useEffect(() => {
-    // Simulate loading delay for realistic UX
-    const timer = setTimeout(() => {
-      const foundRecipe = getMockRecipeById(recipeId);
-      setRecipe(foundRecipe || null);
-      setIsFavorite(foundRecipe?.is_favorite || false);
-      setLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
+    const fetchRecipe = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await recipeApi.get(recipeId);
+        setRecipe(data);
+        setIsFavorite(data.is_favorite);
+      } catch (err) {
+        console.error("Failed to fetch recipe:", err);
+        setError(err instanceof Error ? err.message : "Failed to load recipe");
+        setRecipe(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (recipeId) {
+      fetchRecipe();
+    }
   }, [recipeId]);
-  
+
   // Parse directions
   const directions = useMemo(() => {
     return parseDirections(recipe?.directions || null);
   }, [recipe?.directions]);
-  
+
   // Group ingredients
   const groupedIngredients = useMemo(() => {
     if (!recipe?.ingredients) return new Map();
     return groupIngredientsByCategory(recipe.ingredients);
   }, [recipe?.ingredients]);
-  
+
   // Handlers
-  const handleFavoriteToggle = (e: React.MouseEvent) => {
+  const handleFavoriteToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!recipe) return;
+
+    // Optimistic update
     setIsFavorite(!isFavorite);
-    // In production: await fetch(`/api/recipes/${recipeId}/favorite`, { method: 'POST' })
+
+    try {
+      await recipeApi.toggleFavorite(recipeId);
+    } catch (err) {
+      // Revert on error
+      setIsFavorite(isFavorite);
+      console.error("Failed to toggle favorite:", err);
+    }
   };
-  
+
   const handleIngredientToggle = (ingredientId: number) => {
-    setCheckedIngredients(prev => {
+    setCheckedIngredients((prev) => {
       const next = new Set(prev);
       if (next.has(ingredientId)) {
         next.delete(ingredientId);
@@ -403,9 +479,9 @@ export default function RecipeDetailPage() {
       return next;
     });
   };
-  
+
   const handleStepToggle = (stepIndex: number) => {
-    setCompletedSteps(prev => {
+    setCompletedSteps((prev) => {
       const next = new Set(prev);
       if (next.has(stepIndex)) {
         next.delete(stepIndex);
@@ -415,34 +491,39 @@ export default function RecipeDetailPage() {
       return next;
     });
   };
-  
-  const handleDelete = () => {
-    console.log(`Deleting recipe ${recipeId}`);
-    // In production: await fetch(`/api/recipes/${recipeId}`, { method: 'DELETE' })
-    router.push("/recipes");
+
+  const handleDelete = async () => {
+    try {
+      await recipeApi.delete(recipeId);
+      router.push("/recipes");
+    } catch (err) {
+      console.error("Failed to delete recipe:", err);
+    }
   };
-  
+
   const handlePrint = () => {
     window.print();
   };
-  
+
   // Loading state
   if (loading) {
     return <RecipeDetailSkeleton />;
   }
-  
-  // Not found state
-  if (!recipe) {
+
+  // Not found or error state
+  if (error || !recipe) {
     return <RecipeNotFound />;
   }
-  
+
   // Progress calculations
-  const ingredientProgress = recipe.ingredients.length > 0
-    ? Math.round((checkedIngredients.size / recipe.ingredients.length) * 100)
-    : 0;
-  const stepProgress = directions.length > 0
-    ? Math.round((completedSteps.size / directions.length) * 100)
-    : 0;
+  const ingredientProgress =
+    recipe.ingredients.length > 0
+      ? Math.round((checkedIngredients.size / recipe.ingredients.length) * 100)
+      : 0;
+  const stepProgress =
+    directions.length > 0
+      ? Math.round((completedSteps.size / directions.length) * 100)
+      : 0;
 
   return (
     <>
@@ -463,17 +544,21 @@ export default function RecipeDetailPage() {
               <ChefHat className="h-32 w-32 text-muted opacity-30" />
             </div>
           )}
-          
+
           {/* Back Button - Fixed Position */}
           <div className="absolute top-6 left-6 print:hidden">
             <Link href="/recipes">
-              <Button variant="outline" size="sm" className="gap-2 bg-background/80 backdrop-blur-sm hover:bg-background">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-background/80 backdrop-blur-sm hover:bg-background"
+              >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Recipes
               </Button>
             </Link>
           </div>
-          
+
           {/* Favorite Button - Fixed Position */}
           <div className="absolute top-6 right-6 print:hidden">
             <FavoriteButton
@@ -484,7 +569,7 @@ export default function RecipeDetailPage() {
             />
           </div>
         </div>
-        
+
         {/* Main Content */}
         <div className="max-w-5xl mx-auto px-6 -mt-16 relative z-10 pb-12">
           {/* Recipe Header Card */}
@@ -494,15 +579,11 @@ export default function RecipeDetailPage() {
               <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4 leading-tight">
                 {recipe.recipe_name}
               </h1>
-              
+
               {/* Badges */}
               <RecipeBadgeGroup className="mb-6">
                 {recipe.meal_type && (
-                  <RecipeBadge
-                    label={recipe.meal_type}
-                    type="mealType"
-                    size="md"
-                  />
+                  <RecipeBadge label={recipe.meal_type} type="mealType" size="md" />
                 )}
                 {recipe.recipe_category && (
                   <RecipeBadge
@@ -512,14 +593,10 @@ export default function RecipeDetailPage() {
                   />
                 )}
                 {recipe.diet_pref && (
-                  <RecipeBadge
-                    label={recipe.diet_pref}
-                    type="dietary"
-                    size="md"
-                  />
+                  <RecipeBadge label={recipe.diet_pref} type="dietary" size="md" />
                 )}
               </RecipeBadgeGroup>
-              
+
               {/* Quick Stats */}
               <div className="flex flex-wrap items-center gap-6 text-muted">
                 <div className="flex items-center gap-2">
@@ -533,7 +610,7 @@ export default function RecipeDetailPage() {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-primary/10 rounded-lg">
                     <Users className="h-5 w-5 text-primary" />
@@ -545,7 +622,7 @@ export default function RecipeDetailPage() {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-primary/10 rounded-lg">
                     <UtensilsCrossed className="h-5 w-5 text-primary" />
@@ -558,26 +635,26 @@ export default function RecipeDetailPage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Action Buttons */}
               <Separator className="my-6 print:hidden" />
-              
+
               <div className="flex flex-wrap gap-3 print:hidden">
-                <Button 
+                <Button
                   onClick={() => setMealPlanDialogOpen(true)}
                   className="gap-2"
                 >
                   <CalendarPlus className="h-4 w-4" />
                   Add to Meal Plan
                 </Button>
-                
+
                 <Link href={`/recipes/${recipeId}/edit`}>
                   <Button variant="outline" className="gap-2">
                     <Edit3 className="h-4 w-4" />
                     Edit Recipe
                   </Button>
                 </Link>
-                
+
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="outline" size="icon" onClick={handlePrint}>
@@ -586,7 +663,7 @@ export default function RecipeDetailPage() {
                   </TooltipTrigger>
                   <TooltipContent>Print Recipe</TooltipContent>
                 </Tooltip>
-                
+
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="outline" size="icon">
@@ -595,10 +672,14 @@ export default function RecipeDetailPage() {
                   </TooltipTrigger>
                   <TooltipContent>Share Recipe</TooltipContent>
                 </Tooltip>
-                
+
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="icon" className="text-muted hover:text-error hover:border-error">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="text-muted hover:text-error hover:border-error"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </AlertDialogTrigger>
@@ -606,7 +687,8 @@ export default function RecipeDetailPage() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to delete "{recipe.recipe_name}"? This action cannot be undone.
+                        Are you sure you want to delete "{recipe.recipe_name}"?
+                        This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -623,7 +705,7 @@ export default function RecipeDetailPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Two Column Layout: Ingredients & Directions */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Ingredients Column */}
@@ -646,7 +728,7 @@ export default function RecipeDetailPage() {
                       </span>
                     )}
                   </div>
-                  
+
                   {/* Progress Bar */}
                   {ingredientProgress > 0 && (
                     <div className="h-1.5 bg-elevated rounded-full overflow-hidden mb-4 print:hidden">
@@ -656,27 +738,35 @@ export default function RecipeDetailPage() {
                       />
                     </div>
                   )}
-                  
+
                   {/* Ingredients List */}
                   {recipe.ingredients.length > 0 ? (
                     <div className="space-y-1">
-                      {Array.from(groupedIngredients.entries()).map(([category, ingredients], groupIndex) => (
-                        <div key={category}>
-                          {groupedIngredients.size > 1 && (
-                            <p className="text-xs font-semibold text-muted uppercase tracking-wider mt-4 mb-2 first:mt-0">
-                              {category}
-                            </p>
-                          )}
-                          {ingredients.map((ingredient: RecipeResponseDTO["ingredients"][0]) => (
-                            <IngredientItem
-                              key={ingredient.id}
-                              ingredient={ingredient}
-                              checked={checkedIngredients.has(ingredient.id)}
-                              onToggle={() => handleIngredientToggle(ingredient.id)}
-                            />
-                          ))}
-                        </div>
-                      ))}
+                      {Array.from(groupedIngredients.entries()).map(
+                        ([category, ingredients]) => (
+                          <div key={category}>
+                            {groupedIngredients.size > 1 && (
+                              <p className="text-xs font-semibold text-muted uppercase tracking-wider mt-4 mb-2 first:mt-0">
+                                {category}
+                              </p>
+                            )}
+                            {ingredients.map(
+                              (
+                                ingredient: RecipeResponseDTO["ingredients"][0]
+                              ) => (
+                                <IngredientItem
+                                  key={ingredient.id}
+                                  ingredient={ingredient}
+                                  checked={checkedIngredients.has(ingredient.id)}
+                                  onToggle={() =>
+                                    handleIngredientToggle(ingredient.id)
+                                  }
+                                />
+                              )
+                            )}
+                          </div>
+                        )
+                      )}
                     </div>
                   ) : (
                     <p className="text-muted text-center py-8">
@@ -686,7 +776,7 @@ export default function RecipeDetailPage() {
                 </CardContent>
               </Card>
             </div>
-            
+
             {/* Directions Column */}
             <div className="lg:col-span-8">
               <Card>
@@ -707,7 +797,7 @@ export default function RecipeDetailPage() {
                       </span>
                     )}
                   </div>
-                  
+
                   {/* Progress Bar */}
                   {stepProgress > 0 && (
                     <div className="h-1.5 bg-elevated rounded-full overflow-hidden mb-4 print:hidden">
@@ -717,7 +807,7 @@ export default function RecipeDetailPage() {
                       />
                     </div>
                   )}
-                  
+
                   {/* Directions Steps */}
                   {directions.length > 0 ? (
                     <div className="space-y-2">
@@ -738,7 +828,7 @@ export default function RecipeDetailPage() {
                   )}
                 </CardContent>
               </Card>
-              
+
               {/* Notes Section */}
               {recipe.notes && (
                 <Card className="mt-8 border-warning/30 bg-warning/5">
@@ -763,14 +853,14 @@ export default function RecipeDetailPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Add to Meal Plan Dialog */}
       <AddToMealPlanDialog
         recipe={recipe}
         open={mealPlanDialogOpen}
         onOpenChange={setMealPlanDialogOpen}
       />
-      
+
       {/* Print Styles */}
       <style jsx global>{`
         @media print {
@@ -779,23 +869,23 @@ export default function RecipeDetailPage() {
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
-          
+
           .print\\:hidden {
             display: none !important;
           }
-          
+
           .print\\:static {
             position: static !important;
           }
-          
+
           .print\\:shadow-none {
             box-shadow: none !important;
           }
-          
+
           .print\\:border-0 {
             border: none !important;
           }
-          
+
           .print\\:bg-white {
             background: white !important;
           }
