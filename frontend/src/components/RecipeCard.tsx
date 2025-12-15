@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { Clock, Users, ChefHat, Heart } from "lucide-react";
+import { Clock, Users, ChefHat } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { RecipeCardData, RecipeIngredient } from "@/types";
+import { FavoriteButton } from "./FavoriteButton";
+import { RecipeBadge, RecipeBadgeGroup } from "./RecipeBadge";
 
 interface RecipeCardBaseProps {
   recipe: RecipeCardData;
@@ -85,7 +87,7 @@ export function RecipeCard({
     />;
   }
 
-  // Medium (default) - previously "large"
+  // Medium (default)
   return <RecipeCardMedium 
     recipe={recipe} 
     onClick={handleClick}
@@ -136,7 +138,7 @@ function RecipeCardSmall({
       aria-label={`View ${recipe.name} recipe`}
     >
       <div className="flex items-center gap-3 p-3">
-        {/* Thumbnail - Small square */}
+        {/* Thumbnail */}
         <div className="relative w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg bg-elevated">
           {recipe.imageUrl ? (
             <img
@@ -171,31 +173,19 @@ function RecipeCardSmall({
         </div>
 
         {/* Favorite Button */}
-        <button
-          onClick={onFavoriteClick}
-          className={cn(
-            "p-2 rounded-lg transition-all duration-200 flex-shrink-0",
-            "hover:bg-elevated",
-            recipe.isFavorite 
-              ? "text-error" 
-              : "text-muted hover:text-error"
-          )}
-          aria-label={recipe.isFavorite ? "Remove from favorites" : "Add to favorites"}
-        >
-          <Heart 
-            className={cn(
-              "h-4 w-4 transition-all duration-200",
-              recipe.isFavorite && "fill-current"
-            )}
-          />
-        </button>
+        <FavoriteButton
+          isFavorite={recipe.isFavorite || false}
+          onToggle={onFavoriteClick}
+          variant="inline"
+          size="sm"
+        />
       </div>
     </Card>
   );
 }
 
 // ============================================================================
-// MEDIUM CARD - Standard featured card (previously "large")
+// MEDIUM CARD - Standard featured card
 // ============================================================================
 
 function RecipeCardMedium({ 
@@ -222,65 +212,52 @@ function RecipeCardMedium({
       role="button"
       aria-label={`View ${recipe.name} recipe`}
     >
-      {/* Image Container - 4:3 aspect ratio */}
+      {/* Image Container - Fixed hover glitch */}
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-elevated">
         {recipe.imageUrl ? (
-          <img
-            src={recipe.imageUrl}
-            alt={recipe.name}
-            className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
-          />
+          <>
+            <img
+              src={recipe.imageUrl}
+              alt={recipe.name}
+              className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
+              style={{ transformOrigin: 'center center' }}
+            />
+            {/* Hover Overlay - Scales with image */}
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 ease-in-out group-hover:scale-105" 
+                 style={{ transformOrigin: 'center center' }} 
+            />
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-elevated via-hover to-elevated">
             <ChefHat className="h-24 w-24 text-muted opacity-40" />
           </div>
         )}
         
-        {/* Enhanced Hover Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
-        {/* Favorite Button - Top Right */}
-        <button
-          onClick={onFavoriteClick}
-          className={cn(
-            "absolute top-4 right-4 p-3 rounded-full backdrop-blur-md transition-all duration-200",
-            "bg-background/70 hover:bg-background/90 shadow-lg",
-            recipe.isFavorite 
-              ? "text-error" 
-              : "text-muted hover:text-error"
-          )}
-          aria-label={recipe.isFavorite ? "Remove from favorites" : "Add to favorites"}
-        >
-          <Heart 
-            className={cn(
-              "h-6 w-6 transition-all duration-200",
-              recipe.isFavorite && "fill-current"
-            )}
+        {/* Favorite Button */}
+        <div className="absolute top-4 right-4">
+          <FavoriteButton
+            isFavorite={recipe.isFavorite || false}
+            onToggle={onFavoriteClick}
+            variant="overlay"
+            size="md"
           />
-        </button>
+        </div>
 
-        {/* Category Badge - Top Left */}
-        {showCategory && recipe.category && (
-          <div className="absolute top-4 left-4">
-            <span className="px-4 py-2 rounded-full text-sm font-medium bg-primary text-primary-foreground backdrop-blur-md shadow-lg">
-              {recipe.category}
-            </span>
-          </div>
-        )}
-
-        {/* Meal Type Badge - Below Category */}
+        {/* Meal Type Badge - Now at top-left, no category badge */}
         {showCategory && recipe.mealType && (
-          <div className="absolute top-16 left-4">
-            <span className="px-3 py-1.5 rounded-full text-xs font-medium bg-secondary/90 text-secondary-foreground backdrop-blur-md">
-              {recipe.mealType}
-            </span>
+          <div className="absolute top-4 left-4">
+            <RecipeBadge
+              label={recipe.mealType}
+              type="mealType"
+              size="md"
+              variant="overlay"
+            />
           </div>
         )}
       </div>
 
       {/* Recipe Info */}
       <div className="p-6 space-y-4">
-        {/* Recipe Name */}
         <h3 className="text-xl font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-200">
           {recipe.name}
         </h3>
@@ -331,13 +308,6 @@ function RecipeCardLarge({
   const displayedIngredients = ingredients.slice(0, maxIngredientsDisplay);
   const remainingCount = Math.max(0, ingredients.length - maxIngredientsDisplay);
 
-  // Format ingredient for display
-  const formatIngredient = (ing: RecipeIngredient): string => {
-    const qty = ing.quantity % 1 === 0 ? ing.quantity : ing.quantity.toFixed(2).replace(/\.?0+$/, '');
-    const unit = ing.unit || '';
-    return `${qty} ${unit} ${ing.name}`.trim();
-  };
-
   return (
     <Card
       className={cn(
@@ -356,7 +326,7 @@ function RecipeCardLarge({
       {/* Main Layout - Side by side */}
       <div className="flex flex-col md:flex-row">
         {/* Left: Image */}
-        <div className="relative w-full md:w-1/3 aspect-square md:aspect-auto overflow-hidden bg-elevated">
+        <div className="relative w-full md:w-2/5 aspect-square md:aspect-auto overflow-hidden bg-elevated">
           {recipe.imageUrl ? (
             <img
               src={recipe.imageUrl}
@@ -379,46 +349,41 @@ function RecipeCardLarge({
               <h3 className="text-2xl md:text-3xl font-bold text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-2 flex-1">
                 {recipe.name}
               </h3>
-
-              {/* Favorite Button */}
-              <button
-                onClick={onFavoriteClick}
-                className={cn(
-                  "p-2 rounded-lg transition-all duration-200 hover:bg-elevated flex-shrink-0",
-                  recipe.isFavorite
-                    ? "text-error"
-                    : "text-muted hover:text-error"
-                )}
-                aria-label={recipe.isFavorite ? "Remove from favorites" : "Add to favorites"}
-              >
-                <Heart
-                  className={cn(
-                    "h-6 w-6 transition-all duration-200",
-                    recipe.isFavorite && "fill-current"
-                  )}
-                />
-              </button>
+              
+              {/* Favorite Button - Inline variant */}
+              <FavoriteButton
+                isFavorite={recipe.isFavorite || false}
+                onToggle={onFavoriteClick}
+                variant="inline"
+                size="lg"
+              />
             </div>
 
             {/* Badges Row */}
             {showCategory && (
-              <div className="flex flex-wrap gap-2">
+              <RecipeBadgeGroup>
                 {recipe.category && (
-                  <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-primary text-primary-foreground">
-                    {recipe.category}
-                  </span>
+                  <RecipeBadge
+                    label={recipe.category}
+                    type="category"
+                    size="md"
+                  />
                 )}
                 {recipe.mealType && (
-                  <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-secondary/90 text-secondary-foreground">
-                    {recipe.mealType}
-                  </span>
+                  <RecipeBadge
+                    label={recipe.mealType}
+                    type="mealType"
+                    size="md"
+                  />
                 )}
                 {recipe.dietaryPreference && (
-                  <span className="px-4 py-1.5 rounded-full text-sm font-medium bg-accent text-accent-foreground">
-                    {recipe.dietaryPreference}
-                  </span>
+                  <RecipeBadge
+                    label={recipe.dietaryPreference}
+                    type="dietary"
+                    size="md"
+                  />
                 )}
-              </div>
+              </RecipeBadgeGroup>
             )}
           </div>
 
@@ -448,7 +413,7 @@ function RecipeCardLarge({
                   ))}
                 </div>
                 
-                {/* "... and X more" indicator */}
+                {/* Overflow indicator */}
                 {remainingCount > 0 && (
                   <div className="text-sm text-muted italic pt-2 border-t border-border">
                     ... and {remainingCount} more ingredient{remainingCount !== 1 ? 's' : ''}
@@ -501,7 +466,6 @@ interface RecipeCardGridProps {
 }
 
 export function RecipeCardGrid({ children, className, size = "medium" }: RecipeCardGridProps) {
-  // Different grid layouts based on size
   const gridClasses = {
     small: "grid grid-cols-1 gap-3",
     medium: "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6",
