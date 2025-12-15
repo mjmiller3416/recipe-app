@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Plus, Upload, ImageIcon, Info, Clock, Users, Tag, ChefHat, Leaf, ListOrdered, FileText } from "lucide-react";
-import Link from "next/link";
+import { Plus, Upload, ImageIcon, Info, Clock, Users, Tag, ChefHat, Leaf, ListOrdered, FileText, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -109,18 +108,13 @@ export default function AddRecipePage() {
       {/* Header */}
       <PageHeader>
         <PageHeaderContent>
-          <Link href="/recipes">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-          </Link>
           <PageHeaderTitle 
             title="Add New Recipe"
             description="Create a new recipe for your collection"
           />
           <PageHeaderActions>
-            <Button className="gap-2">
+            <Button variant="outline" size="sm" className="gap-2">
+              <Save className="h-4 w-4" />
               Save Recipe
             </Button>
           </PageHeaderActions>
@@ -157,7 +151,6 @@ export default function AddRecipePage() {
                     </Label>
                     <Input
                       id="recipe-name"
-                      type="text"
                       placeholder="Enter recipe name"
                       value={recipeName}
                       onChange={(e) => setRecipeName(e.target.value)}
@@ -174,7 +167,6 @@ export default function AddRecipePage() {
                       </Label>
                       <Input
                         id="total-time"
-                        type="text"
                         placeholder="e.g., 30 mins"
                         value={totalTime}
                         onChange={(e) => setTotalTime(e.target.value)}
@@ -188,7 +180,6 @@ export default function AddRecipePage() {
                       </Label>
                       <Input
                         id="servings"
-                        type="text"
                         placeholder="e.g., 4"
                         value={servings}
                         onChange={(e) => setServings(e.target.value)}
@@ -197,7 +188,7 @@ export default function AddRecipePage() {
                     </div>
                   </div>
 
-                  {/* Meal Type, Category, and Dietary Preference Row */}
+                  {/* Classification Row */}
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="meal-type" className="flex items-center gap-2">
@@ -332,18 +323,20 @@ export default function AddRecipePage() {
                   </TabsList>
                   <TabsContent value="directions" className="mt-4">
                     <Textarea
-                      placeholder="Enter cooking directions step by step...&#10;&#10;1. Preheat oven to 350°F&#10;2. Mix dry ingredients in a bowl&#10;3. Add wet ingredients and stir until combined"
+                      placeholder="Enter cooking directions step by step...&#10;&#10;1. Preheat oven to 350°F&#10;2. Mix dry ingredients in a bowl&#10;3. ..."
                       value={directions}
                       onChange={(e) => setDirections(e.target.value)}
-                      className="min-h-[300px] resize-none"
+                      rows={10}
+                      className="font-mono text-sm resize-none"
                     />
                   </TabsContent>
                   <TabsContent value="notes" className="mt-4">
                     <Textarea
-                      placeholder="Add any additional notes, tips, or variations...&#10;&#10;• Can substitute almond milk for regular milk&#10;• Best served fresh but can be refrigerated for up to 3 days&#10;• Try adding chocolate chips for extra sweetness"
+                      placeholder="Add any helpful notes, tips, or variations..."
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      className="min-h-[300px] resize-none"
+                      rows={10}
+                      className="resize-none"
                     />
                   </TabsContent>
                 </Tabs>
@@ -353,7 +346,7 @@ export default function AddRecipePage() {
 
           {/* Right Column - Image Upload */}
           <div className="lg:col-span-1">
-            <Card>
+            <Card className="sticky top-8">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-3 mb-6">
                   <div className="p-2 bg-primary/10 rounded-lg">
@@ -370,7 +363,7 @@ export default function AddRecipePage() {
                 </div>
 
                 {/* Image Preview */}
-                <div className="relative aspect-square rounded-lg overflow-hidden bg-elevated border-2 border-dashed border-border mb-4 transition-colors hover:border-primary/50">
+                <div className="aspect-square rounded-lg overflow-hidden bg-elevated border-2 border-dashed border-border mb-4">
                   {imagePreview ? (
                     <img
                       src={imagePreview}
@@ -410,37 +403,6 @@ export default function AddRecipePage() {
                       {imagePreview ? "Change Image" : "Upload Image"}
                     </Button>
                   </Label>
-                  <p className="text-xs text-muted mt-2 text-center">
-                    Recommended: 1:1 aspect ratio, max 5MB
-                  </p>
-                </div>
-
-                <Separator className="my-6" />
-
-                {/* Quick Tips */}
-                <div className="bg-primary/5 border border-primary/10 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-3">
-                    <Info className="h-4 w-4 text-primary" />
-                    Quick Tips
-                  </h3>
-                  <ul className="text-xs text-muted space-y-2">
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary mt-0.5">•</span>
-                      <span>Fill out all required fields before saving</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary mt-0.5">•</span>
-                      <span>Add ingredients in the order they're used</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary mt-0.5">•</span>
-                      <span>Be specific with measurements</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary mt-0.5">•</span>
-                      <span>Include prep time in total time</span>
-                    </li>
-                  </ul>
                 </div>
               </CardContent>
             </Card>
