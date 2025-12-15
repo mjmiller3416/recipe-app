@@ -275,8 +275,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 4. Add broth one ladle at a time, stirring constantly.
 5. Fold in mushrooms, Parmesan, and butter.`,
     notes: "Patience is key - don't rush the broth additions.",
-    reference_image_path: "/mock/recipes/placeholder.png",
-    banner_image_path: "/mock/recipes/placeholder.png",
+    reference_image_path: "/mock/recipes/mushroom-risotto.png",
+    banner_image_path: "/mock/recipes/mushroom-risotto.png",
     is_favorite: false,
     created_at: "2024-04-20T18:00:00Z",
     ingredients: [
@@ -302,8 +302,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 4. Add teriyaki sauce and coat well.
 5. Serve over rice with vegetables.`,
     notes: "Great for meal prep - keeps well in the fridge.",
-    reference_image_path: "/mock/recipes/placeholder.png",
-    banner_image_path: "/mock/recipes/placeholder.png",
+    reference_image_path: "/mock/recipes/teriyaki-chicken-bowl.png",
+    banner_image_path: "/mock/recipes/teriyaki-chicken-bowl.png",
     is_favorite: false,
     created_at: "2024-05-01T17:30:00Z",
     ingredients: [
@@ -330,8 +330,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 5. Top with vegetables and chickpeas.
 6. Drizzle with tahini dressing.`,
     notes: "Customize with whatever vegetables you have on hand.",
-    reference_image_path: "/mock/recipes/placeholder.png",
-    banner_image_path: "/mock/recipes/placeholder.png",
+    reference_image_path: "/mock/recipes/quinoa-buddha-bowl.png",
+    banner_image_path: "/mock/recipes/quinoa-buddha-bowl.png",
     is_favorite: true,
     created_at: "2024-05-15T11:00:00Z",
     ingredients: [
@@ -357,8 +357,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 4. Sauté apples and onions in same pan.
 5. Return pork to pan and finish cooking.`,
     notes: "Use a meat thermometer - pork is done at 145°F.",
-    reference_image_path: "/mock/recipes/placeholder.png",
-    banner_image_path: "/mock/recipes/placeholder.png",
+    reference_image_path: "/mock/recipes/pork-chops-with-apples.png",
+    banner_image_path: "/mock/recipes/pork-chops-with-apples.png",
     is_favorite: false,
     created_at: "2024-05-25T18:30:00Z",
     ingredients: [
@@ -383,8 +383,8 @@ export const mockRecipes: RecipeResponseDTO[] = [
 4. Roast chicken until cooked through.
 5. Serve with tzatziki and vegetables.`,
     notes: "Longer marinating time = more flavor.",
-    reference_image_path: "/mock/recipes/placeholder.png",
-    banner_image_path: "/mock/recipes/placeholder.png",
+    reference_image_path: "/mock/recipes/greek-chicken.png",
+    banner_image_path: "/mock/recipes/greek-chicken.png",
     is_favorite: false,
     created_at: "2024-06-01T17:00:00Z",
     ingredients: [
