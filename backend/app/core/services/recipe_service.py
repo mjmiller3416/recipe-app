@@ -8,8 +8,6 @@ RecipeService using SQLAlchemy repository pattern.
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from _dev_tools import DebugLogger
-
 from ..dtos.ingredient_dtos import IngredientCreateDTO
 from ..dtos.recipe_dtos import (
     RecipeCreateDTO,
@@ -119,7 +117,7 @@ class RecipeService:
             self.session.commit()
         except Exception as e:
             self.session.rollback()
-            DebugLogger.log("Failed to toggle recipe {recipe_id} favorite status, rolling back: {e}", "error")
+            print("Failed to toggle recipe {recipe_id} favorite status, rolling back: {e}", "error")
             raise
         return updated_recipe
 
@@ -141,11 +139,11 @@ class RecipeService:
 
             recipe.reference_image_path = image_path
             self.session.commit()
-            DebugLogger.log(f"Updated recipe {recipe_id} default image path to: {image_path}", "info")
+            print(f"Updated recipe {recipe_id} default image path to: {image_path}", "info")
             return recipe
         except Exception as e:
             self.session.rollback()
-            DebugLogger.log(f"Failed to update recipe {recipe_id} default image path: {e}", "error")
+            print(f"Failed to update recipe {recipe_id} default image path: {e}", "error")
             raise
 
     def update_recipe_banner_image_path(self, recipe_id: int, image_path: str) -> Recipe | None:
@@ -166,11 +164,11 @@ class RecipeService:
 
             recipe.banner_image_path = image_path
             self.session.commit()
-            DebugLogger.log(f"Updated recipe {recipe_id} banner image path to: {image_path}", "info")
+            print(f"Updated recipe {recipe_id} banner image path to: {image_path}", "info")
             return recipe
         except Exception as e:
             self.session.rollback()
-            DebugLogger.log(f"Failed to update recipe {recipe_id} banner image path: {e}", "error")
+            print(f"Failed to update recipe {recipe_id} banner image path: {e}", "error")
             raise
 
     def delete_recipe(self, recipe_id: int) -> bool:
@@ -184,7 +182,7 @@ class RecipeService:
             return True
         except Exception as e:
             self.session.rollback()
-            DebugLogger.log(f"Failed to delete recipe {recipe_id}: {e}", "error")
+            print(f"Failed to delete recipe {recipe_id}: {e}", "error")
             raise
 
     def update_recipe(self, recipe_id: int, update_dto: RecipeUpdateDTO) -> Recipe:

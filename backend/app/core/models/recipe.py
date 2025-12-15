@@ -6,13 +6,16 @@ SQLAlchemy model for recipes.
 # ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, List, Optional
 
 from sqlalchemy import Boolean, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.utils import utcnow
+
+def _utcnow() -> datetime:
+    """Return current UTC datetime."""
+    return datetime.now(timezone.utc)
 
 from ..database.base import Base
 from ..dtos.ingredient_dtos import IngredientDetailDTO
@@ -38,7 +41,7 @@ class Recipe(Base):
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     reference_image_path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     banner_image_path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
 
     # ── Relationships  ──────────────────────────────────────────────────────────────────────────────────────

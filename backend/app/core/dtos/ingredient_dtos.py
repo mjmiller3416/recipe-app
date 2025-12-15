@@ -7,9 +7,41 @@ Handles ingredient creation, updates, searching, and responses.
 # ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
 from __future__ import annotations
 
+from fractions import Fraction
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+# ── Inline Format Helpers ──────────────────────────────────────────────────────────────────────────────────────
+def _format_quantity(qty: float) -> str:
+    """Format quantity as fraction or whole number."""
+    if qty == int(qty):
+        return str(int(qty))
+    frac = Fraction(qty).limit_denominator(8)
+    if frac.numerator > frac.denominator:
+        whole = frac.numerator // frac.denominator
+        remainder = frac.numerator % frac.denominator
+        if remainder == 0:
+            return str(whole)
+        return f"{whole} {remainder}/{frac.denominator}"
+    return f"{frac.numerator}/{frac.denominator}"
+
+
+def _abbreviate_unit(unit: str) -> str:
+    """Return abbreviated form of unit."""
+    abbreviations = {
+        "tablespoon": "tbsp", "tablespoons": "tbsp",
+        "teaspoon": "tsp", "teaspoons": "tsp",
+        "cup": "cup", "cups": "cups",
+        "ounce": "oz", "ounces": "oz",
+        "pound": "lb", "pounds": "lbs",
+        "gram": "g", "grams": "g",
+        "kilogram": "kg", "kilograms": "kg",
+        "milliliter": "ml", "milliliters": "ml",
+        "liter": "L", "liters": "L",
+    }
+    return abbreviations.get(unit.lower(), unit)
 
 
 # ── Base DTOs ───────────────────────────────────────────────────────────────────────────────────────────────
@@ -82,15 +114,11 @@ class IngredientDetailDTO(BaseModel):
         """Return quantity formatted as fractions/whole numbers."""
         if self.quantity is None:
             return ""
-
-        from ..utils.format_utils import format_quantity
-        return format_quantity(self.quantity)
+        return _format_quantity(self.quantity)
 
     @property
     def abbreviated_unit(self) -> str:
         """Return unit in abbreviated form."""
         if self.unit is None:
             return ""
-
-        from ..utils.format_utils import abbreviate_unit
-        return abbreviate_unit(self.unit)
+        return _abbreviate_unit(self.unit)
