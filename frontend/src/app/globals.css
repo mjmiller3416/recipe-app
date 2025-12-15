@@ -92,7 +92,7 @@
   /* ============================================
      PRIMARY COLORS (Purple)
      ============================================ */
-  --primary: #61f65c;           /* Main brand color - same purple works well */
+  --primary: #8b5cf6;           /* Main brand color - same purple works well */
   --primary-dark: #7c3aed;      /* Darker variant */
   --primary-light: #c4b5fd;     /* Lighter variant for light mode */
   --primary-foreground: #ffffff; /* White text on purple background */
