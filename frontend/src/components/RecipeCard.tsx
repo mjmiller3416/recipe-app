@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Clock, Users, ChefHat } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -31,9 +32,15 @@ export function RecipeCard({
   showCategory = true,
   maxIngredientsDisplay = 8,
 }: RecipeCardBaseProps) {
+  const router = useRouter();
+
   const handleClick = () => {
     if (onClick) {
+      // Use custom onClick handler if provided
       onClick(recipe);
+    } else {
+      // Default behavior: navigate to recipe detail page
+      router.push(`/recipes/${recipe.id}`);
     }
   };
 
@@ -45,9 +52,9 @@ export function RecipeCard({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if ((e.key === "Enter" || e.key === " ") && onClick) {
+    if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      onClick(recipe);
+      handleClick();
     }
   };
 
