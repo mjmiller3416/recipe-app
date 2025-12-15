@@ -1,0 +1,19 @@
+# Web Framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# Database
+sqlalchemy>=2.0.0
+alembic>=1.13.0
+
+# Data Validation
+pydantic>=2.0.0
+
+# Environment
+python-dotenv>=1.0.0
+
+# AI Integration (optional - for recipe generation features)
+openai>=1.0.0
+
+# GUI (optional - only needed for desktop app)
+# PySide6>=6.6.0
