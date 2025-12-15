@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { NavButton } from "@/components/NavButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { appConfig } from "@/lib/config";
@@ -54,8 +55,15 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Bottom Section - User Profile */}
-      <div className="p-4 border-t border-border">
+      {/* Bottom Section - User Profile & Theme Toggle */}
+      <div className="p-4 border-t border-border space-y-3">
+        {/* Theme Toggle */}
+        <div className="flex items-center justify-between">
+          <span className="text-[15px] text-muted">Theme</span>
+          <ThemeToggle />
+        </div>
+        
+        {/* User Profile */}
         <div className="flex items-center gap-3 rounded-lg p-3 bg-elevated">
           <div className="relative flex-shrink-0">
             <Avatar className="h-10 w-10">
