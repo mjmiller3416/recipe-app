@@ -1,46 +1,77 @@
 @import "tailwindcss";
 
 :root {
-  /* Backgrounds */
-  --background: #1a1a1a;
-  --sidebar: #252525;
-  --elevated: #2f2f2f;
-  --hover: #3d3d3d;
+  /* ============================================
+     BACKGROUNDS
+     ============================================ */
+  --background: #1a1a1a;        /* Main app background */
+  --sidebar: #252525;            /* Sidebar background */
+  --elevated: #2f2f2f;          /* Cards, elevated surfaces */
+  --hover: #3d3d3d;             /* Hover state background */
   
-  /* Text */
-  --foreground: #f5f5f5;
-  --muted: #b3b3b3;
+  /* ============================================
+     TEXT COLORS
+     ============================================ */
+  --foreground: #f5f5f5;        /* Primary text */
+  --muted: #b3b3b3;             /* Secondary/muted text */
   
-  /* Primary colors */
-  --primary: #14b8a6;
-  --primary-dark: #0d9488;
-  --primary-light: #2dd4bf;
-  --primary-foreground: #1a1a1a;
+  /* ============================================
+     PRIMARY COLORS (Teal)
+     ============================================ */
+  --primary: #14b8a6;           /* Main brand color - badges, accents */
+  --primary-dark: #0d9488;      /* Darker variant */
+  --primary-light: #2dd4bf;     /* Lighter variant */
+  --primary-foreground: #1a1a1a; /* Text on primary background */
   
-  /* Secondary colors */
-  --secondary: #8b5cf6;
-  --secondary-foreground: #ffffff;
+  /* ============================================
+     SECONDARY COLORS (Purple)
+     ============================================ */
+  --secondary: #8b5cf6;         /* Secondary brand color - meal type badges */
+  --secondary-foreground: #ffffff; /* Text on secondary background */
   
-  /* Status colors */
-  --success: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
-  --destructive: #ef4444;
+  /* ============================================
+     STATUS COLORS
+     ============================================ */
+  --success: #10b981;           /* Success states */
+  --warning: #f59e0b;           /* Warning states */
+  --error: #ef4444;             /* Error states, favorites */
+  --destructive: #ef4444;       /* Destructive actions */
   
-  /* UI elements */
-  --accent: #3d3d3d;
-  --accent-foreground: #f5f5f5;
-  --border: #3d3d3d;
-  --input: #2f2f2f;
-  --ring: #14b8a6;
+  /* ============================================
+     UI ELEMENTS
+     ============================================ */
+  --accent: #3d3d3d;            /* Accent surfaces - dietary badges */
+  --accent-foreground: #f5f5f5; /* Text on accent background */
+  --border: #3d3d3d;            /* Border color */
+  --input: #2f2f2f;             /* Input backgrounds */
+  --ring: #14b8a6;              /* Focus ring color */
   
-  /* Semantic status indicators */
-  --status-online: #10b981;
-  --status-offline: #6b7280;
-  --status-busy: #ef4444;
-  --status-away: #f59e0b;
+  /* ============================================
+     STATUS INDICATORS
+     ============================================ */
+  --status-online: #10b981;     /* Online indicator */
+  --status-offline: #6b7280;    /* Offline indicator */
+  --status-busy: #ef4444;       /* Busy indicator */
+  --status-away: #f59e0b;       /* Away indicator */
+  
+  /* ============================================
+     RECIPE CARD SPECIFIC (Computed from above)
+     Used for badges and special elements
+     ============================================ */
+  --recipe-category-bg: var(--primary);
+  --recipe-category-text: var(--primary-foreground);
+  --recipe-meal-type-bg: var(--secondary);
+  --recipe-meal-type-text: var(--secondary-foreground);
+  --recipe-dietary-bg: var(--accent);
+  --recipe-dietary-text: var(--accent-foreground);
+  --recipe-favorite: var(--error);
+  --recipe-favorite-hover: #dc2626; /* Slightly darker red for hover */
 }
 
+/* ============================================
+   TAILWIND THEME INTEGRATION
+   Maps CSS variables to Tailwind classes
+   ============================================ */
 @theme inline {
   /* Backgrounds */
   --color-background: var(--background);
@@ -81,6 +112,15 @@
   --color-status-busy: var(--status-busy);
   --color-status-away: var(--status-away);
   
+  /* Recipe card specific */
+  --color-recipe-category-bg: var(--recipe-category-bg);
+  --color-recipe-category-text: var(--recipe-category-text);
+  --color-recipe-meal-type-bg: var(--recipe-meal-type-bg);
+  --color-recipe-meal-type-text: var(--recipe-meal-type-text);
+  --color-recipe-dietary-bg: var(--recipe-dietary-bg);
+  --color-recipe-dietary-text: var(--recipe-dietary-text);
+  --color-recipe-favorite: var(--recipe-favorite);
+  
   /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -90,4 +130,27 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ============================================
+   UTILITY CLASSES FOR RECIPE CARDS
+   Use these if you need direct CSS access
+   ============================================ */
+.recipe-category-badge {
+  background-color: var(--recipe-category-bg);
+  color: var(--recipe-category-text);
+}
+
+.recipe-meal-type-badge {
+  background-color: var(--recipe-meal-type-bg);
+  color: var(--recipe-meal-type-text);
+}
+
+.recipe-dietary-badge {
+  background-color: var(--recipe-dietary-bg);
+  color: var(--recipe-dietary-text);
+}
+
+.recipe-favorite {
+  color: var(--recipe-favorite);
 }

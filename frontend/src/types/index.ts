@@ -1,7 +1,40 @@
 // src/types/index.ts
 
 // ============================================================================
-// Recipe Types
+// Recipe Card Component Types (Frontend/UI)
+// ============================================================================
+
+/**
+ * Ingredient data structure for RecipeCard component
+ * (Different from backend RecipeIngredientResponseDTO)
+ */
+export interface RecipeIngredient {
+  id?: string | number;
+  name: string;
+  quantity: number;
+  unit: string | null;
+  category?: string;
+}
+
+/**
+ * Recipe data structure for RecipeCard component
+ * (Converted from RecipeResponseDTO via mapper)
+ */
+export interface RecipeCardData {
+  id: string | number;
+  name: string;
+  servings: number;
+  totalTime: number; // in minutes
+  imageUrl?: string;
+  category?: string;
+  mealType?: string;
+  dietaryPreference?: string;
+  isFavorite?: boolean;
+  ingredients?: RecipeIngredient[]; // For large card display
+}
+
+// ============================================================================
+// Recipe Types (Backend DTOs)
 // ============================================================================
 
 export interface RecipeIngredientResponseDTO {
