@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Upload, ImageIcon, Info, Clock, Users, Tag, ChefHat, Leaf, ListOrdered, FileText, Save } from "lucide-react";
+import { Plus, Upload, ImageIcon, Info, Clock, Users, Tag, ChefHat, Leaf, ListOrdered, FileText, Save, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import {
   PageHeader,
   PageHeaderContent,
@@ -31,6 +30,13 @@ import {
   RECIPE_CATEGORIES,
   DIETARY_PREFERENCES,
 } from "@/lib/constants";
+import {
+  validateString,
+  validateInteger,
+  validateIngredientName,
+  validateQuantity,
+} from "@/lib/formValidation";
+import { cn } from "@/lib/utils";
 
 export default function AddRecipePage() {
   // Recipe basic info state
@@ -45,7 +51,7 @@ export default function AddRecipePage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([
     {
       id: crypto.randomUUID(),
-      quantity: "",
+      quantity: null,
       unit: "",
       name: "",
       category: "",
@@ -59,13 +65,18 @@ export default function AddRecipePage() {
   // Image state
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  // Form validation state
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+
   // Ingredient handlers
   const addIngredient = () => {
     setIngredients([
       ...ingredients,
       {
         id: crypto.randomUUID(),
-        quantity: "",
+        quantity: null,
         unit: "",
         name: "",
         category: "",
@@ -76,7 +87,7 @@ export default function AddRecipePage() {
   const updateIngredient = (
     id: string,
     field: keyof Ingredient,
-    value: string
+    value: string | number | null
   ) => {
     setIngredients(
       ingredients.map((ing) =>
@@ -103,6 +114,138 @@ export default function AddRecipePage() {
     }
   };
 
+  // Validate entire form and return normalized values
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    // Recipe name (required)
+    const nameResult = validateString(recipeName, {
+      required: true,
+      min: 1,
+      max: 255,
+      label: "Recipe name",
+    });
+    if (!nameResult.isValid && nameResult.error) {
+      newErrors.recipeName = nameResult.error;
+    }
+
+    // Category (required)
+    const categoryResult = validateString(category, {
+      required: true,
+      label: "Category",
+    });
+    if (!categoryResult.isValid && categoryResult.error) {
+      newErrors.category = categoryResult.error;
+    }
+
+    // Meal type (required)
+    const mealTypeResult = validateString(mealType, {
+      required: true,
+      label: "Meal type",
+    });
+    if (!mealTypeResult.isValid && mealTypeResult.error) {
+      newErrors.mealType = mealTypeResult.error;
+    }
+
+    // Servings (optional, but must be >= 1 if provided)
+    const servingsResult = validateInteger(servings, {
+      min: 1,
+      label: "Servings",
+    });
+    if (!servingsResult.isValid && servingsResult.error) {
+      newErrors.servings = servingsResult.error;
+    }
+
+    // Total time (optional, but must be >= 0 if provided)
+    const totalTimeResult = validateInteger(totalTime, {
+      min: 0,
+      label: "Total time",
+    });
+    if (!totalTimeResult.isValid && totalTimeResult.error) {
+      newErrors.totalTime = totalTimeResult.error;
+    }
+
+    // Validate ingredients - at least one with a name
+    const validIngredients = ingredients.filter((ing) => ing.name.trim() !== "");
+    if (validIngredients.length === 0) {
+      newErrors.ingredients = "At least one ingredient is required";
+    }
+
+    // Validate each ingredient's fields
+    ingredients.forEach((ing, index) => {
+      if (ing.name.trim() !== "") {
+        const nameResult = validateIngredientName(ing.name);
+        if (!nameResult.isValid && nameResult.error) {
+          newErrors[`ingredient_${index}_name`] = nameResult.error;
+        }
+
+        const qtyResult = validateQuantity(ing.quantity);
+        if (!qtyResult.isValid && qtyResult.error) {
+          newErrors[`ingredient_${index}_quantity`] = qtyResult.error;
+        }
+      }
+    });
+
+    // Directions (required)
+    const directionsResult = validateString(directions, {
+      required: true,
+      min: 1,
+      label: "Directions",
+    });
+    if (!directionsResult.isValid && directionsResult.error) {
+      newErrors.directions = directionsResult.error;
+    }
+
+    return {
+      isValid: Object.keys(newErrors).length === 0,
+      errors: newErrors,
+      values: {
+        recipeName: nameResult.value,
+        category: categoryResult.value,
+        mealType: mealTypeResult.value,
+        dietaryPreference: dietaryPreference || null,
+        servings: servingsResult.value,
+        totalTime: totalTimeResult.value,
+        directions: directionsResult.value,
+        notes: notes.trim() || null,
+        ingredients: validIngredients,
+        imagePreview,
+      },
+    };
+  };
+
+  // Handle form submission
+  const handleSubmit = async () => {
+    setHasAttemptedSubmit(true);
+    const { isValid, errors: validationErrors, values } = validateForm();
+    setErrors(validationErrors);
+
+    if (!isValid) {
+      // Scroll to first error
+      const firstErrorKey = Object.keys(validationErrors)[0];
+      const errorElement = document.querySelector(`[data-field="${firstErrorKey}"]`);
+      errorElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // TODO: Call API to save recipe
+      console.log("Submitting recipe:", values);
+      // await api.recipes.create(values);
+      // router.push('/recipes');
+    } catch (error) {
+      console.error("Failed to save recipe:", error);
+      setErrors({ form: "Failed to save recipe. Please try again." });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Helper to check if a field has an error
+  const hasError = (field: string) => hasAttemptedSubmit && !!errors[field];
+  const getError = (field: string) => (hasAttemptedSubmit ? errors[field] : undefined);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -113,9 +256,15 @@ export default function AddRecipePage() {
             description="Create a new recipe for your collection"
           />
           <PageHeaderActions>
-            <Button variant="outline" size="sm" className="gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
               <Save className="h-4 w-4" />
-              Save Recipe
+              {isSubmitting ? "Saving..." : "Save Recipe"}
             </Button>
           </PageHeaderActions>
         </PageHeaderContent>
@@ -144,36 +293,43 @@ export default function AddRecipePage() {
                 </div>
                 <div className="space-y-4">
                   {/* Recipe Name */}
-                  <div>
+                  <div data-field="recipeName">
                     <Label htmlFor="recipe-name" className="flex items-center gap-2">
                       <ChefHat className="h-3.5 w-3.5 text-muted" />
                       Recipe Name
+                      <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="recipe-name"
                       placeholder="Enter recipe name"
                       value={recipeName}
                       onChange={(e) => setRecipeName(e.target.value)}
-                      className="mt-1.5"
+                      className={cn("mt-1.5", hasError("recipeName") && "border-destructive")}
                     />
+                    {getError("recipeName") && (
+                      <p className="text-sm text-destructive mt-1">{getError("recipeName")}</p>
+                    )}
                   </div>
 
                   {/* Time and Servings Row */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div>
+                    <div data-field="totalTime">
                       <Label htmlFor="total-time" className="flex items-center gap-2">
                         <Clock className="h-3.5 w-3.5 text-muted" />
-                        Total Time
+                        Total Time (mins)
                       </Label>
                       <Input
                         id="total-time"
-                        placeholder="e.g., 30 mins"
+                        placeholder="e.g., 30"
                         value={totalTime}
                         onChange={(e) => setTotalTime(e.target.value)}
-                        className="mt-1.5"
+                        className={cn("mt-1.5", hasError("totalTime") && "border-destructive")}
                       />
+                      {getError("totalTime") && (
+                        <p className="text-sm text-destructive mt-1">{getError("totalTime")}</p>
+                      )}
                     </div>
-                    <div>
+                    <div data-field="servings">
                       <Label htmlFor="servings" className="flex items-center gap-2">
                         <Users className="h-3.5 w-3.5 text-muted" />
                         Servings
@@ -183,20 +339,27 @@ export default function AddRecipePage() {
                         placeholder="e.g., 4"
                         value={servings}
                         onChange={(e) => setServings(e.target.value)}
-                        className="mt-1.5"
+                        className={cn("mt-1.5", hasError("servings") && "border-destructive")}
                       />
+                      {getError("servings") && (
+                        <p className="text-sm text-destructive mt-1">{getError("servings")}</p>
+                      )}
                     </div>
                   </div>
 
                   {/* Classification Row */}
                   <div className="grid grid-cols-3 gap-4">
-                    <div>
+                    <div data-field="mealType">
                       <Label htmlFor="meal-type" className="flex items-center gap-2">
                         <Tag className="h-3.5 w-3.5 text-muted" />
                         Meal Type
+                        <span className="text-destructive">*</span>
                       </Label>
                       <Select value={mealType} onValueChange={setMealType}>
-                        <SelectTrigger id="meal-type" className="mt-1.5">
+                        <SelectTrigger
+                          id="meal-type"
+                          className={cn("mt-1.5", hasError("mealType") && "border-destructive")}
+                        >
                           <SelectValue placeholder="Select meal type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -207,14 +370,21 @@ export default function AddRecipePage() {
                           ))}
                         </SelectContent>
                       </Select>
+                      {getError("mealType") && (
+                        <p className="text-sm text-destructive mt-1">{getError("mealType")}</p>
+                      )}
                     </div>
-                    <div>
+                    <div data-field="category">
                       <Label htmlFor="category" className="flex items-center gap-2">
                         <Tag className="h-3.5 w-3.5 text-muted" />
                         Category
+                        <span className="text-destructive">*</span>
                       </Label>
                       <Select value={category} onValueChange={setCategory}>
-                        <SelectTrigger id="category" className="mt-1.5">
+                        <SelectTrigger
+                          id="category"
+                          className={cn("mt-1.5", hasError("category") && "border-destructive")}
+                        >
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
@@ -225,6 +395,9 @@ export default function AddRecipePage() {
                           ))}
                         </SelectContent>
                       </Select>
+                      {getError("category") && (
+                        <p className="text-sm text-destructive mt-1">{getError("category")}</p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="dietary-preference" className="flex items-center gap-2">
@@ -253,7 +426,7 @@ export default function AddRecipePage() {
             </Card>
 
             {/* Ingredients Section */}
-            <Card>
+            <Card data-field="ingredients">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-3 mb-6">
                   <div className="p-2 bg-primary/10 rounded-lg">
@@ -262,12 +435,20 @@ export default function AddRecipePage() {
                   <div className="flex-1">
                     <h2 className="text-lg font-semibold text-foreground">
                       Ingredients
+                      <span className="text-destructive ml-1">*</span>
                     </h2>
                     <p className="text-sm text-muted mt-0.5">
                       List all ingredients needed for this recipe
                     </p>
                   </div>
                 </div>
+
+                {getError("ingredients") && (
+                  <div className="flex items-center gap-2 p-3 mb-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                    <p className="text-sm text-destructive">{getError("ingredients")}</p>
+                  </div>
+                )}
 
                 <div className="space-y-2 mb-4">
                   {ingredients.map((ingredient) => (
@@ -295,7 +476,7 @@ export default function AddRecipePage() {
             </Card>
 
             {/* Directions & Notes Section */}
-            <Card>
+            <Card data-field="directions">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-3 mb-6">
                   <div className="p-2 bg-primary/10 rounded-lg">
@@ -304,6 +485,7 @@ export default function AddRecipePage() {
                   <div className="flex-1">
                     <h2 className="text-lg font-semibold text-foreground">
                       Directions & Notes
+                      <span className="text-destructive ml-1">*</span>
                     </h2>
                     <p className="text-sm text-muted mt-0.5">
                       Step-by-step cooking instructions and additional tips
@@ -327,8 +509,14 @@ export default function AddRecipePage() {
                       value={directions}
                       onChange={(e) => setDirections(e.target.value)}
                       rows={10}
-                      className="font-mono text-sm resize-none"
+                      className={cn(
+                        "font-mono text-sm resize-none",
+                        hasError("directions") && "border-destructive"
+                      )}
                     />
+                    {getError("directions") && (
+                      <p className="text-sm text-destructive mt-1">{getError("directions")}</p>
+                    )}
                   </TabsContent>
                   <TabsContent value="notes" className="mt-4">
                     <Textarea

@@ -2,6 +2,7 @@
 
 import { GripVertical, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { QuantityInput } from "@/components/QuantityInput";
 import {
   Select,
   SelectContent,
@@ -10,11 +11,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { INGREDIENT_UNITS, INGREDIENT_CATEGORIES } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 
 export interface Ingredient {
   id: string;
-  quantity: string;
+  quantity: number | null;
   unit: string;
   name: string;
   category: string;
@@ -22,7 +22,7 @@ export interface Ingredient {
 
 interface IngredientRowProps {
   ingredient: Ingredient;
-  onUpdate: (id: string, field: keyof Ingredient, value: string) => void;
+  onUpdate: (id: string, field: keyof Ingredient, value: string | number | null) => void;
   onDelete: (id: string) => void;
   showLabels?: boolean;
 }
@@ -48,14 +48,11 @@ export function IngredientRow({
         {/* Form Fields Container */}
         <div className="flex-1 flex items-center gap-2">
           {/* Quantity */}
-          <div className="flex-shrink-0 w-20">
-            <Input
-              id={`qty-${ingredient.id}`}
-              type="text"
-              placeholder="1"
+          <div className="flex-shrink-0 w-24">
+            <QuantityInput
               value={ingredient.quantity}
-              onChange={(e) => onUpdate(ingredient.id, "quantity", e.target.value)}
-              className="h-9"
+              onChange={(value) => onUpdate(ingredient.id, "quantity", value)}
+              placeholder="Qty"
             />
           </div>
 
