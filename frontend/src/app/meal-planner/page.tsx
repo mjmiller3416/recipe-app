@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import {
   CalendarDays,
   Plus,
@@ -60,7 +61,7 @@ import {
 import { StatsCard } from "@/components/common/StatsCard";
 import { plannerApi, recipeApi, shoppingApi } from "@/lib/api";
 import type { MealSelectionCreateDTO, MealSelectionUpdateDTO, ManualItemCreateDTO } from "@/lib/api";
-import { INGREDIENT_CATEGORIES, INGREDIENT_UNITS } from "@/lib/constants";
+import { INGREDIENT_UNITS } from "@/lib/constants";
 import type { MealSelectionResponseDTO, RecipeCardDTO, RecipeCardData } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -102,11 +103,6 @@ function getTotalTime(meal: Meal): number {
   return total;
 }
 
-function getTotalServings(meal: Meal): number | null {
-  // Return the main recipe servings as the meal servings
-  return meal.main_recipe?.servings ?? null;
-}
-
 // Convert RecipeCardDTO to RecipeCardData for RecipeCard component
 function recipeCardDTOToData(dto: RecipeCardDTO | null): RecipeCardData | null {
   if (!dto) return null;
@@ -145,6 +141,13 @@ function MealListItem({
 }: MealListItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(meal.meal_name);
+
+  // Sync editName when meal.meal_name changes externally
+  useEffect(() => {
+    if (!isEditing) {
+      setEditName(meal.meal_name);
+    }
+  }, [meal.meal_name, isEditing]);
 
   const handleSaveRename = () => {
     if (editName.trim()) {
@@ -441,6 +444,7 @@ interface AddRecipeDialogProps {
 
 function AddRecipeDialog({ isOpen, onClose, onSelect, getExcludedRecipeIds, slotType }: AddRecipeDialogProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [recipes, setRecipes] = useState<RecipeCardDTO[]>([]);
   const [isLoadingRecipes, setIsLoadingRecipes] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -452,6 +456,14 @@ function AddRecipeDialog({ isOpen, onClose, onSelect, getExcludedRecipeIds, slot
   onSelectRef.current = onSelect;
   getExcludedRef.current = getExcludedRecipeIds;
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // Fetch recipes when dialog opens
   useEffect(() => {
     if (!isOpen) return;
@@ -459,7 +471,7 @@ function AddRecipeDialog({ isOpen, onClose, onSelect, getExcludedRecipeIds, slot
     const fetchRecipes = async () => {
       try {
         setIsLoadingRecipes(true);
-        const data = await recipeApi.listCards({ search_term: searchTerm || undefined });
+        const data = await recipeApi.listCards({ search_term: debouncedSearchTerm || undefined });
         setRecipes(data);
       } catch (err) {
         console.error("Failed to fetch recipes:", err);
@@ -469,7 +481,7 @@ function AddRecipeDialog({ isOpen, onClose, onSelect, getExcludedRecipeIds, slot
     };
 
     fetchRecipes();
-  }, [isOpen, searchTerm]);
+  }, [isOpen, debouncedSearchTerm]);
 
   const filteredRecipes = useMemo(() => {
     // Call the getter via ref to always get current excluded IDs
@@ -586,17 +598,27 @@ function AddRecipeDialog({ isOpen, onClose, onSelect, getExcludedRecipeIds, slot
 interface AddMealDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (mainRecipeId: number, mealName?: string) => void;
+  onAdd: (mainRecipeId: number, mealName?: string) => Promise<void>;
 }
 
 function AddMealDialog({ isOpen, onClose, onAdd }: AddMealDialogProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [recipes, setRecipes] = useState<RecipeCardDTO[]>([]);
   const [isLoadingRecipes, setIsLoadingRecipes] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Use ref to always call the latest onAdd callback
   const onAddRef = useRef(onAdd);
   onAddRef.current = onAdd;
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Fetch recipes when dialog opens
   useEffect(() => {
@@ -605,7 +627,7 @@ function AddMealDialog({ isOpen, onClose, onAdd }: AddMealDialogProps) {
     const fetchRecipes = async () => {
       try {
         setIsLoadingRecipes(true);
-        const data = await recipeApi.listCards({ search_term: searchTerm || undefined });
+        const data = await recipeApi.listCards({ search_term: debouncedSearchTerm || undefined });
         setRecipes(data);
       } catch (err) {
         console.error("Failed to fetch recipes:", err);
@@ -615,12 +637,19 @@ function AddMealDialog({ isOpen, onClose, onAdd }: AddMealDialogProps) {
     };
 
     fetchRecipes();
-  }, [isOpen, searchTerm]);
+  }, [isOpen, debouncedSearchTerm]);
 
-  const handleSelect = (recipeId: number, recipeName: string) => {
-    onAddRef.current(recipeId, recipeName);  // Use ref to get latest callback
-    onClose();
-    setSearchTerm("");
+  const handleSelect = async (recipeId: number, recipeName: string) => {
+    if (isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+      await onAddRef.current(recipeId, recipeName);
+      onClose();
+      setSearchTerm("");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -657,8 +686,12 @@ function AddMealDialog({ isOpen, onClose, onAdd }: AddMealDialogProps) {
             recipes.map((recipe) => (
               <button
                 key={recipe.id}
+                disabled={isSubmitting}
                 onClick={() => handleSelect(recipe.id, recipe.recipe_name)}
-                className="w-full text-left rounded-lg bg-elevated hover:bg-hover transition-colors p-3 flex items-center gap-3 group"
+                className={cn(
+                  "w-full text-left rounded-lg bg-elevated hover:bg-hover transition-colors p-3 flex items-center gap-3 group",
+                  isSubmitting && "opacity-50 pointer-events-none"
+                )}
               >
                 {/* Thumbnail */}
                 <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-hover">
@@ -709,25 +742,29 @@ function QuickAddShoppingItem() {
   const [itemName, setItemName] = useState("");
   const [quantity, setQuantity] = useState("");
   const [unit, setUnit] = useState("");
-  const [category, setCategory] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAdd = async () => {
-    if (!itemName.trim()) return;
+    if (!itemName.trim() || isSubmitting) return;
 
     try {
+      setIsSubmitting(true);
       const itemData: ManualItemCreateDTO = {
         ingredient_name: itemName.trim(),
         quantity: quantity ? parseFloat(quantity) : 1,
         unit: unit || null,
       };
       await shoppingApi.addItem(itemData);
+      toast.success("Item added to shopping list");
       // Reset form
       setItemName("");
       setQuantity("");
       setUnit("");
-      setCategory("");
     } catch (err) {
       console.error("Failed to add shopping item:", err);
+      toast.error("Failed to add item to shopping list");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -797,32 +834,13 @@ function QuickAddShoppingItem() {
             </div>
           </div>
 
-          {/* Category */}
-          <div>
-            <Label htmlFor="item-category" className="text-sm font-medium">
-              Category
-            </Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger id="item-category" className="mt-1.5">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {INGREDIENT_CATEGORIES.map((cat) => (
-                  <SelectItem key={cat.value} value={cat.value}>
-                    {cat.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Add Button */}
           <Button
             type="button"
             variant={"secondary"}
             onClick={handleAdd}
             className="w-full gap-2"
-            disabled={!itemName.trim()}
+            disabled={!itemName.trim() || isSubmitting}
           >
             <Plus className="h-4 w-4" />
             Add to List
@@ -945,8 +963,10 @@ export default function MealPlannerPage() {
       const newMeal = await plannerApi.createMeal(createData);
       setMeals((prev) => [...prev, newMeal]);
       setSelectedMealId(newMeal.id);
+      toast.success("Meal created");
     } catch (err) {
       console.error("Failed to create meal:", err);
+      toast.error("Failed to create meal");
     }
   }, []);
 
@@ -960,8 +980,10 @@ export default function MealPlannerPage() {
         }
         return updated;
       });
+      toast.success("Meal deleted");
     } catch (err) {
       console.error("Failed to delete meal:", err);
+      toast.error("Failed to delete meal");
     }
   }, [selectedMealId]);
 
@@ -974,6 +996,7 @@ export default function MealPlannerPage() {
       );
     } catch (err) {
       console.error("Failed to rename meal:", err);
+      toast.error("Failed to rename meal");
     }
   }, []);
 
@@ -1013,6 +1036,7 @@ export default function MealPlannerPage() {
       );
     } catch (err) {
       console.error("Failed to add recipe to slot:", err);
+      toast.error("Failed to add recipe");
     }
   };
 
@@ -1053,10 +1077,13 @@ export default function MealPlannerPage() {
       );
     } catch (err) {
       console.error("Failed to remove recipe:", err);
+      toast.error("Failed to remove recipe");
     }
   };
 
   // Drag and drop handlers
+  // Note: Reordering is local only - the new order is not persisted to the backend.
+  // A future enhancement could add a plannerApi.reorderMeals() endpoint.
   const handleDragStart = (mealId: number) => {
     setDraggedMealId(mealId);
   };
@@ -1245,8 +1272,8 @@ export default function MealPlannerPage() {
                           />
                         )}
 
-                        {/* Single add button for next available slot */}
-                        {!selectedMeal.side_recipe_1 || !selectedMeal.side_recipe_2 || !selectedMeal.side_recipe_3 ? (
+                        {/* Single add button for next available slot - use _id fields for consistency */}
+                        {!selectedMeal.side_recipe_1_id || !selectedMeal.side_recipe_2_id || !selectedMeal.side_recipe_3_id ? (
                           <button
                             onClick={() =>
                               setAddRecipeDialog({ isOpen: true, slotType: "side" })
