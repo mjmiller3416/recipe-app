@@ -434,20 +434,23 @@ function RecipeSlot({ recipe, slotType, slotIndex, onRemove, onAdd, isAddable }:
 interface AddRecipeDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (recipeId: number) => void;
-  excludeRecipeIds: number[];
+  onSelect: (recipeId: number) => Promise<void>;
+  getExcludedRecipeIds: () => number[];  // Changed to getter function to avoid stale state
   slotType: "main" | "side";
 }
 
-function AddRecipeDialog({ isOpen, onClose, onSelect, excludeRecipeIds, slotType }: AddRecipeDialogProps) {
+function AddRecipeDialog({ isOpen, onClose, onSelect, getExcludedRecipeIds, slotType }: AddRecipeDialogProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [recipes, setRecipes] = useState<RecipeCardDTO[]>([]);
   const [isLoadingRecipes, setIsLoadingRecipes] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Use ref to always call the latest onSelect callback
+  // Use refs to always call the latest callbacks
   // This avoids stale closure issues with Radix Dialog's portal
   const onSelectRef = useRef(onSelect);
+  const getExcludedRef = useRef(getExcludedRecipeIds);
   onSelectRef.current = onSelect;
+  getExcludedRef.current = getExcludedRecipeIds;
 
   // Fetch recipes when dialog opens
   useEffect(() => {
@@ -469,17 +472,26 @@ function AddRecipeDialog({ isOpen, onClose, onSelect, excludeRecipeIds, slotType
   }, [isOpen, searchTerm]);
 
   const filteredRecipes = useMemo(() => {
+    // Call the getter via ref to always get current excluded IDs
+    const excludedIds = getExcludedRef.current();
     return recipes.filter((recipe) => {
       // Exclude already added recipes
-      if (excludeRecipeIds.includes(recipe.id)) return false;
+      if (excludedIds.includes(recipe.id)) return false;
       return true;
     });
-  }, [recipes, excludeRecipeIds]);
+  }, [recipes]); // Note: Don't include getExcludedRef - we call it fresh each render via ref
 
-  const handleSelect = (recipeId: number) => {
-    onSelectRef.current(recipeId);  // Use ref to get latest callback
-    onClose();
-    setSearchTerm("");
+  const handleSelect = async (recipeId: number) => {
+    if (isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+      await onSelectRef.current(recipeId);  // Wait for updateMeal to finish
+      onClose();
+      setSearchTerm("");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -516,8 +528,12 @@ function AddRecipeDialog({ isOpen, onClose, onSelect, excludeRecipeIds, slotType
             filteredRecipes.map((recipe) => (
               <button
                 key={recipe.id}
+                disabled={isSubmitting}
                 onClick={() => handleSelect(recipe.id)}
-                className="w-full text-left rounded-lg bg-elevated hover:bg-hover transition-colors p-3 flex items-center gap-3 group"
+                className={cn(
+                  "w-full text-left rounded-lg bg-elevated hover:bg-hover transition-colors p-3 flex items-center gap-3 group",
+                  isSubmitting && "opacity-50 pointer-events-none"
+                )}
               >
                 {/* Thumbnail */}
                 <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-hover">
@@ -871,6 +887,10 @@ export default function MealPlannerPage() {
   // State
   const [meals, setMeals] = useState<Meal[]>([]);
   const [selectedMealId, setSelectedMealId] = useState<number | null>(null);
+  
+  // Ref to always access current meals state (avoids stale closure in dialog callbacks)
+  const mealsRef = useRef<Meal[]>(meals);
+  mealsRef.current = meals;
   const [isAddMealOpen, setIsAddMealOpen] = useState(false);
   const [addRecipeDialog, setAddRecipeDialog] = useState<{
     isOpen: boolean;
@@ -959,10 +979,13 @@ export default function MealPlannerPage() {
 
   // Note: Not using useCallback here to ensure we always have fresh state
   // The Dialog component may cache the callback, causing stale closure issues
+  // We use mealsRef.current to ensure we always read the latest meals state
   const handleAddRecipeToSlot = async (recipeId: number) => {
     if (selectedMealId === null) return;
 
-    const currentMeal = meals.find((m) => m.id === selectedMealId);
+    // Use ref to get CURRENT meals state, not stale closure value
+    const currentMeals = mealsRef.current;
+    const currentMeal = currentMeals.find((m) => m.id === selectedMealId);
     if (!currentMeal) return;
 
     try {
@@ -972,12 +995,12 @@ export default function MealPlannerPage() {
       if (addRecipeDialog.slotType === "main") {
         updateData = { main_recipe_id: recipeId };
       } else {
-        // Find the first empty side slot
-        if (!currentMeal.side_recipe_1) {
+        // Use *_id fields (authoritative), not side_recipe_* objects (may be null while hydrating)
+        if (!currentMeal.side_recipe_1_id) {
           updateData = { side_recipe_1_id: recipeId };
-        } else if (!currentMeal.side_recipe_2) {
+        } else if (!currentMeal.side_recipe_2_id) {
           updateData = { side_recipe_2_id: recipeId };
-        } else if (!currentMeal.side_recipe_3) {
+        } else if (!currentMeal.side_recipe_3_id) {
           updateData = { side_recipe_3_id: recipeId };
         } else {
           return; // All slots filled
@@ -1058,13 +1081,16 @@ export default function MealPlannerPage() {
   };
 
   // Get excluded recipe IDs for the add dialog
+  // Uses mealsRef to ensure we always get current state, not stale closure
   const getExcludedRecipeIds = (): number[] => {
-    if (!selectedMeal) return [];
+    const currentMeals = mealsRef.current;
+    const currentSelectedMeal = currentMeals.find((m) => m.id === selectedMealId);
+    if (!currentSelectedMeal) return [];
     const ids: number[] = [];
-    if (selectedMeal.main_recipe_id) ids.push(selectedMeal.main_recipe_id);
-    if (selectedMeal.side_recipe_1_id) ids.push(selectedMeal.side_recipe_1_id);
-    if (selectedMeal.side_recipe_2_id) ids.push(selectedMeal.side_recipe_2_id);
-    if (selectedMeal.side_recipe_3_id) ids.push(selectedMeal.side_recipe_3_id);
+    if (currentSelectedMeal.main_recipe_id) ids.push(currentSelectedMeal.main_recipe_id);
+    if (currentSelectedMeal.side_recipe_1_id) ids.push(currentSelectedMeal.side_recipe_1_id);
+    if (currentSelectedMeal.side_recipe_2_id) ids.push(currentSelectedMeal.side_recipe_2_id);
+    if (currentSelectedMeal.side_recipe_3_id) ids.push(currentSelectedMeal.side_recipe_3_id);
     return ids;
   };
 
@@ -1261,7 +1287,7 @@ export default function MealPlannerPage() {
         isOpen={addRecipeDialog.isOpen}
         onClose={() => setAddRecipeDialog({ isOpen: false, slotType: "main" })}
         onSelect={handleAddRecipeToSlot}
-        excludeRecipeIds={getExcludedRecipeIds()}
+        getExcludedRecipeIds={getExcludedRecipeIds}
         slotType={addRecipeDialog.slotType}
       />
     </div>
