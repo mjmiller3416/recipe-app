@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { hasAnyUnsavedChanges, setNavigationBypass } from "@/hooks/useUnsavedChanges";
@@ -32,7 +32,10 @@ interface SafeLinkProps {
 export function SafeLink({ href, children, className, onClick }: SafeLinkProps) {
   const router = useRouter();
   const [showDialog, setShowDialog] = useState(false);
-  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  // Use ref to store href so it's not affected by state updates during dialog close
+  const pendingHrefRef = useRef<string | null>(null);
+  // Track if we're in the middle of confirming to prevent onOpenChange interference
+  const isConfirmingRef = useRef(false);
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
@@ -45,7 +48,7 @@ export function SafeLink({ href, children, className, onClick }: SafeLinkProps) 
       // Check for unsaved changes
       if (hasAnyUnsavedChanges()) {
         e.preventDefault();
-        setPendingHref(href);
+        pendingHrefRef.current = href;
         setShowDialog(true);
       }
       // Otherwise, let the Link handle navigation normally
@@ -54,19 +57,43 @@ export function SafeLink({ href, children, className, onClick }: SafeLinkProps) 
   );
 
   const handleConfirm = useCallback(() => {
+    // Mark that we're confirming to prevent onOpenChange from interfering
+    isConfirmingRef.current = true;
+    
     // Enable bypass to prevent re-interception
     setNavigationBypass(true);
+    
+    // Get the href before any state changes
+    const targetHref = pendingHrefRef.current;
+    
+    // Close dialog
     setShowDialog(false);
     
-    if (pendingHref) {
-      router.push(pendingHref);
+    // Navigate after a micro-delay to ensure state updates have settled
+    if (targetHref) {
+      // Use setTimeout to ensure this runs after React's state updates
+      setTimeout(() => {
+        router.push(targetHref);
+        pendingHrefRef.current = null;
+        isConfirmingRef.current = false;
+      }, 0);
     }
-    setPendingHref(null);
-  }, [pendingHref, router]);
+  }, [router]);
 
   const handleCancel = useCallback(() => {
     setShowDialog(false);
-    setPendingHref(null);
+    pendingHrefRef.current = null;
+  }, []);
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    // Don't interfere if we're in the middle of confirming
+    if (isConfirmingRef.current) return;
+    
+    // Only allow closing (not opening) through onOpenChange
+    if (!open) {
+      setShowDialog(false);
+      pendingHrefRef.current = null;
+    }
   }, []);
 
   return (
@@ -75,7 +102,7 @@ export function SafeLink({ href, children, className, onClick }: SafeLinkProps) 
         {children}
       </Link>
 
-      <AlertDialog open={showDialog} onOpenChange={setShowDialog}>
+      <AlertDialog open={showDialog} onOpenChange={handleOpenChange}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">

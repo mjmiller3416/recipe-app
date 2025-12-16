@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Plus, Upload, ImageIcon, Info, Clock, Users, Tag, ChefHat, Leaf, ListOrdered, FileText, Save, AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
+import { Plus, Upload, ImageIcon, Info, Clock, Users, Tag, ChefHat, Leaf, ListOrdered, FileText, Save, AlertCircle, ArrowLeft, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { recipeApi, uploadApi } from "@/lib/api";
 import type { RecipeUpdateDTO, RecipeIngredientDTO, RecipeResponseDTO } from "@/types";
@@ -48,6 +48,7 @@ import {
   validateString,
   validateInteger,
 } from "@/lib/formValidation";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
@@ -135,8 +136,18 @@ export default function EditRecipePage() {
 
   // Unsaved changes tracking
   const [isDirty, setIsDirty] = useState(false);
-  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+
+  // Use the unsaved changes hook for navigation guards
+  const {
+    showLeaveDialog,
+    setShowLeaveDialog,
+    handleNavigation,
+    confirmLeave,
+    cancelLeave,
+  } = useUnsavedChanges({
+    isDirty,
+    onConfirmLeave: () => setIsDirty(false),
+  });
 
   // Load recipe data
   useEffect(() => {
@@ -180,43 +191,12 @@ export default function EditRecipePage() {
     fetchRecipe();
   }, [recipeId, router]);
 
-  // Warn about unsaved changes on browser navigation/refresh
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirty) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isDirty]);
-
   // Mark form as dirty when values change
   const markDirty = useCallback(() => {
     if (!loading) {
       setIsDirty(true);
     }
   }, [loading]);
-
-  // Handle navigation with unsaved changes check
-  const handleNavigation = (path: string) => {
-    if (isDirty) {
-      setPendingNavigation(path);
-      setShowLeaveDialog(true);
-    } else {
-      router.push(path);
-    }
-  };
-
-  const confirmLeave = () => {
-    if (pendingNavigation) {
-      router.push(pendingNavigation);
-    }
-    setShowLeaveDialog(false);
-    setPendingNavigation(null);
-  };
 
   // Ingredient handlers
   const addIngredient = () => {
@@ -792,16 +772,17 @@ export default function EditRecipePage() {
       <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-secondary" />
+              Unsaved Changes
+            </AlertDialogTitle>
             <AlertDialogDescription>
               You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingNavigation(null)}>
-              Keep Editing
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={confirmLeave}>
+            <AlertDialogCancel onClick={cancelLeave}>Keep Editing</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmLeave} className="bg-secondary hover:bg-secondary/90">
               Discard Changes
             </AlertDialogAction>
           </AlertDialogFooter>
