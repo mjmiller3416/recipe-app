@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { RecipeCard, RecipeCardGrid } from "@/components/RecipeCard";  // ← Component only
+import { RecipeCard, RecipeCardGrid } from "@/components/recipe/RecipeCard";  // ← Component only
 import type { RecipeCardData } from "@/types";  // ← Types from types!
 import { Separator } from "@/components/ui/separator";
 import { mockRecipes } from "@/lib/mockData";

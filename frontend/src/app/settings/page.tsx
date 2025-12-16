@@ -43,7 +43,7 @@ import {
   PageHeaderContent,
   PageHeaderTitle,
   PageHeaderActions,
-} from "@/components/PageHeader";
+} from "@/components/layout/PageHeader";
 import { useSettings, DEFAULT_SETTINGS } from "@/hooks/useSettings";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { cn } from "@/lib/utils";

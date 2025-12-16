@@ -2,7 +2,7 @@
 
 import { GripVertical, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { QuantityInput } from "@/components/QuantityInput";
+import { QuantityInput } from "@/components/forms/QuantityInput";
 import {
   Select,
   SelectContent,

@@ -48,7 +48,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RecipeBadge, RecipeBadgeGroup } from "@/components/RecipeBadge";
-import { FavoriteButton } from "@/components/FavoriteButton";
+import { FavoriteButton } from "@/components/common/FavoriteButton";
 import { RecipeHeroImage } from "@/components/RecipeImage";
 import { recipeApi, plannerApi } from "@/lib/api";
 import type { RecipeResponseDTO, MealSelectionResponseDTO } from "@/types";

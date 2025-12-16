@@ -9,11 +9,10 @@ import {
   Plus,
   Settings,
 } from "lucide-react";
-import { Logo } from "@/components/logo";
-import { NavButton } from "@/components/NavButton";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Logo } from "@/components/layout/Logo";
+import { NavButton } from "@/components/layout/NavButton";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import { appConfig } from "@/lib/config";
 
 const navigation = [

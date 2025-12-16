@@ -34,11 +34,11 @@ import {
   PageHeaderContent,
   PageHeaderTitle,
   PageHeaderActions,
-} from "@/components/PageHeader";
+} from "@/components/layout/PageHeader";
 import {
   IngredientRow,
   Ingredient,
-} from "@/components/IngredientRow";
+} from "@/components/forms/IngredientRow";
 import {
   MEAL_TYPES,
   RECIPE_CATEGORIES,

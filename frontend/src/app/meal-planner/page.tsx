@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import {
   CalendarDays,
   Plus,
@@ -32,10 +32,8 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -58,11 +56,10 @@ import {
   PageHeaderContent,
   PageHeaderTitle,
   PageHeaderActions,
-} from "@/components/PageHeader";
-import { StatsCard } from "@/components/StatsCard";
-import { RecipeCard } from "@/components/RecipeCard";
-import { mockMealSelections, mockRecipes } from "@/lib/mockData";
-import { mapRecipesForCards } from "@/lib/recipeCardMapper";
+} from "@/components/layout/PageHeader";
+import { StatsCard } from "@/components/common/StatsCard";
+import { plannerApi, recipeApi, shoppingApi } from "@/lib/api";
+import type { MealSelectionCreateDTO, MealSelectionUpdateDTO, ManualItemCreateDTO } from "@/lib/api";
 import { INGREDIENT_CATEGORIES, INGREDIENT_UNITS } from "@/lib/constants";
 import type { MealSelectionResponseDTO, RecipeCardDTO, RecipeCardData } from "@/types";
 import { cn } from "@/lib/utils";
@@ -444,26 +441,43 @@ interface AddRecipeDialogProps {
 
 function AddRecipeDialog({ isOpen, onClose, onSelect, excludeRecipeIds, slotType }: AddRecipeDialogProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  
-  const allRecipes = mapRecipesForCards(mockRecipes);
-  
-  const filteredRecipes = useMemo(() => {
-    return allRecipes.filter((recipe) => {
-      // Exclude already added recipes
-      if (excludeRecipeIds.includes(Number(recipe.id))) return false;
-      // Filter by search term
-      if (searchTerm) {
-        const search = searchTerm.toLowerCase();
-        return recipe.name.toLowerCase().includes(search) ||
-               recipe.category?.toLowerCase().includes(search) ||
-               recipe.mealType?.toLowerCase().includes(search);
+  const [recipes, setRecipes] = useState<RecipeCardDTO[]>([]);
+  const [isLoadingRecipes, setIsLoadingRecipes] = useState(false);
+
+  // Use ref to always call the latest onSelect callback
+  // This avoids stale closure issues with Radix Dialog's portal
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
+
+  // Fetch recipes when dialog opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchRecipes = async () => {
+      try {
+        setIsLoadingRecipes(true);
+        const data = await recipeApi.listCards({ search_term: searchTerm || undefined });
+        setRecipes(data);
+      } catch (err) {
+        console.error("Failed to fetch recipes:", err);
+      } finally {
+        setIsLoadingRecipes(false);
       }
+    };
+
+    fetchRecipes();
+  }, [isOpen, searchTerm]);
+
+  const filteredRecipes = useMemo(() => {
+    return recipes.filter((recipe) => {
+      // Exclude already added recipes
+      if (excludeRecipeIds.includes(recipe.id)) return false;
       return true;
     });
-  }, [allRecipes, excludeRecipeIds, searchTerm]);
+  }, [recipes, excludeRecipeIds]);
 
   const handleSelect = (recipeId: number) => {
-    onSelect(recipeId);
+    onSelectRef.current(recipeId);  // Use ref to get latest callback
     onClose();
     setSearchTerm("");
   };
@@ -494,19 +508,23 @@ function AddRecipeDialog({ isOpen, onClose, onSelect, excludeRecipeIds, slotType
 
         {/* Recipe List */}
         <div className="flex-1 overflow-y-auto -mx-6 px-6 py-2 space-y-2">
-          {filteredRecipes.length > 0 ? (
+          {isLoadingRecipes ? (
+            <div className="text-center py-12 text-muted">
+              <p>Loading recipes...</p>
+            </div>
+          ) : filteredRecipes.length > 0 ? (
             filteredRecipes.map((recipe) => (
               <button
                 key={recipe.id}
-                onClick={() => handleSelect(Number(recipe.id))}
+                onClick={() => handleSelect(recipe.id)}
                 className="w-full text-left rounded-lg bg-elevated hover:bg-hover transition-colors p-3 flex items-center gap-3 group"
               >
                 {/* Thumbnail */}
                 <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-hover">
-                  {recipe.imageUrl ? (
+                  {recipe.reference_image_path ? (
                     <img
-                      src={recipe.imageUrl}
-                      alt={recipe.name}
+                      src={recipe.reference_image_path}
+                      alt={recipe.recipe_name}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -519,10 +537,10 @@ function AddRecipeDialog({ isOpen, onClose, onSelect, excludeRecipeIds, slotType
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-foreground group-hover:text-primary transition-colors truncate">
-                    {recipe.name}
+                    {recipe.recipe_name}
                   </h4>
                   <p className="text-xs text-muted">
-                    {recipe.category} • {recipe.mealType} • {formatTime(recipe.totalTime)}
+                    {formatTime(recipe.total_time)}
                   </p>
                 </div>
 
@@ -557,21 +575,34 @@ interface AddMealDialogProps {
 
 function AddMealDialog({ isOpen, onClose, onAdd }: AddMealDialogProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  
-  const allRecipes = mapRecipesForCards(mockRecipes);
-  
-  const filteredRecipes = useMemo(() => {
-    if (!searchTerm) return allRecipes;
-    const search = searchTerm.toLowerCase();
-    return allRecipes.filter((recipe) =>
-      recipe.name.toLowerCase().includes(search) ||
-      recipe.category?.toLowerCase().includes(search) ||
-      recipe.mealType?.toLowerCase().includes(search)
-    );
-  }, [allRecipes, searchTerm]);
+  const [recipes, setRecipes] = useState<RecipeCardDTO[]>([]);
+  const [isLoadingRecipes, setIsLoadingRecipes] = useState(false);
+
+  // Use ref to always call the latest onAdd callback
+  const onAddRef = useRef(onAdd);
+  onAddRef.current = onAdd;
+
+  // Fetch recipes when dialog opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchRecipes = async () => {
+      try {
+        setIsLoadingRecipes(true);
+        const data = await recipeApi.listCards({ search_term: searchTerm || undefined });
+        setRecipes(data);
+      } catch (err) {
+        console.error("Failed to fetch recipes:", err);
+      } finally {
+        setIsLoadingRecipes(false);
+      }
+    };
+
+    fetchRecipes();
+  }, [isOpen, searchTerm]);
 
   const handleSelect = (recipeId: number, recipeName: string) => {
-    onAdd(recipeId, recipeName);
+    onAddRef.current(recipeId, recipeName);  // Use ref to get latest callback
     onClose();
     setSearchTerm("");
   };
@@ -602,19 +633,23 @@ function AddMealDialog({ isOpen, onClose, onAdd }: AddMealDialogProps) {
 
         {/* Recipe List */}
         <div className="flex-1 overflow-y-auto -mx-6 px-6 py-2 space-y-2">
-          {filteredRecipes.length > 0 ? (
-            filteredRecipes.map((recipe) => (
+          {isLoadingRecipes ? (
+            <div className="text-center py-12 text-muted">
+              <p>Loading recipes...</p>
+            </div>
+          ) : recipes.length > 0 ? (
+            recipes.map((recipe) => (
               <button
                 key={recipe.id}
-                onClick={() => handleSelect(Number(recipe.id), recipe.name)}
+                onClick={() => handleSelect(recipe.id, recipe.recipe_name)}
                 className="w-full text-left rounded-lg bg-elevated hover:bg-hover transition-colors p-3 flex items-center gap-3 group"
               >
                 {/* Thumbnail */}
                 <div className="w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-hover">
-                  {recipe.imageUrl ? (
+                  {recipe.reference_image_path ? (
                     <img
-                      src={recipe.imageUrl}
-                      alt={recipe.name}
+                      src={recipe.reference_image_path}
+                      alt={recipe.recipe_name}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -627,10 +662,10 @@ function AddMealDialog({ isOpen, onClose, onAdd }: AddMealDialogProps) {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-foreground group-hover:text-primary transition-colors truncate">
-                    {recipe.name}
+                    {recipe.recipe_name}
                   </h4>
                   <p className="text-xs text-muted">
-                    {recipe.category} • {recipe.mealType} • {formatTime(recipe.totalTime)}
+                    {formatTime(recipe.total_time)}
                   </p>
                 </div>
 
@@ -660,15 +695,24 @@ function QuickAddShoppingItem() {
   const [unit, setUnit] = useState("");
   const [category, setCategory] = useState("");
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!itemName.trim()) return;
-    // In production, this would call an API
-    console.log("Adding shopping item:", { itemName, quantity, unit, category });
-    // Reset form
-    setItemName("");
-    setQuantity("");
-    setUnit("");
-    setCategory("");
+
+    try {
+      const itemData: ManualItemCreateDTO = {
+        ingredient_name: itemName.trim(),
+        quantity: quantity ? parseFloat(quantity) : 1,
+        unit: unit || null,
+      };
+      await shoppingApi.addItem(itemData);
+      // Reset form
+      setItemName("");
+      setQuantity("");
+      setUnit("");
+      setCategory("");
+    } catch (err) {
+      console.error("Failed to add shopping item:", err);
+    }
   };
 
   return (
@@ -825,10 +869,8 @@ function NoSelectionState() {
 
 export default function MealPlannerPage() {
   // State
-  const [meals, setMeals] = useState<Meal[]>(mockMealSelections);
-  const [selectedMealId, setSelectedMealId] = useState<number | null>(
-    mockMealSelections.length > 0 ? mockMealSelections[0].id : null
-  );
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [selectedMealId, setSelectedMealId] = useState<number | null>(null);
   const [isAddMealOpen, setIsAddMealOpen] = useState(false);
   const [addRecipeDialog, setAddRecipeDialog] = useState<{
     isOpen: boolean;
@@ -836,8 +878,34 @@ export default function MealPlannerPage() {
     slotIndex?: number;
   }>({ isOpen: false, slotType: "main" });
 
+  // Loading and error states
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   // Drag state for reordering
   const [draggedMealId, setDraggedMealId] = useState<number | null>(null);
+
+  // Fetch meals on mount
+  useEffect(() => {
+    const fetchMeals = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await plannerApi.getMeals();
+        setMeals(data);
+        if (data.length > 0) {
+          setSelectedMealId(data[0].id);
+        }
+      } catch (err) {
+        console.error("Failed to fetch meals:", err);
+        setError("Failed to load meals. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMeals();
+  }, []);
 
   // Computed
   const selectedMeal = meals.find((m) => m.id === selectedMealId) ?? null;
@@ -848,115 +916,122 @@ export default function MealPlannerPage() {
   }, [meals]);
 
   // Handlers
-  const handleAddMeal = useCallback((mainRecipeId: number, mealName?: string) => {
-    const recipe = mockRecipes.find((r) => r.id === mainRecipeId);
-    if (!recipe) return;
-
-    const newMeal: Meal = {
-      id: Date.now(), // Temporary ID
-      meal_name: mealName || recipe.recipe_name,
-      main_recipe_id: mainRecipeId,
-      side_recipe_1_id: null,
-      side_recipe_2_id: null,
-      side_recipe_3_id: null,
-      main_recipe: {
-        id: recipe.id,
-        recipe_name: recipe.recipe_name,
-        is_favorite: recipe.is_favorite,
-        reference_image_path: recipe.reference_image_path,
-        servings: recipe.servings,
-        total_time: recipe.total_time,
-      },
-      side_recipe_1: null,
-      side_recipe_2: null,
-      side_recipe_3: null,
-    };
-
-    setMeals((prev) => [...prev, newMeal]);
-    setSelectedMealId(newMeal.id);
-  }, []);
-
-  const handleDeleteMeal = useCallback((mealId: number) => {
-    setMeals((prev) => prev.filter((m) => m.id !== mealId));
-    if (selectedMealId === mealId) {
-      setSelectedMealId(meals.length > 1 ? meals[0].id : null);
+  const handleAddMeal = useCallback(async (mainRecipeId: number, mealName?: string) => {
+    try {
+      const createData: MealSelectionCreateDTO = {
+        meal_name: mealName || "New Meal",
+        main_recipe_id: mainRecipeId,
+      };
+      const newMeal = await plannerApi.createMeal(createData);
+      setMeals((prev) => [...prev, newMeal]);
+      setSelectedMealId(newMeal.id);
+    } catch (err) {
+      console.error("Failed to create meal:", err);
     }
-  }, [meals, selectedMealId]);
-
-  const handleRenameMeal = useCallback((mealId: number, newName: string) => {
-    setMeals((prev) =>
-      prev.map((m) => (m.id === mealId ? { ...m, meal_name: newName } : m))
-    );
   }, []);
 
-  const handleAddRecipeToSlot = useCallback((recipeId: number) => {
-    if (!selectedMeal) return;
-
-    const recipe = mockRecipes.find((r) => r.id === recipeId);
-    if (!recipe) return;
-
-    const recipeCard: RecipeCardDTO = {
-      id: recipe.id,
-      recipe_name: recipe.recipe_name,
-      is_favorite: recipe.is_favorite,
-      reference_image_path: recipe.reference_image_path,
-      servings: recipe.servings,
-      total_time: recipe.total_time,
-    };
-
-    setMeals((prev) =>
-      prev.map((m) => {
-        if (m.id !== selectedMeal.id) return m;
-
-        if (addRecipeDialog.slotType === "main") {
-          return {
-            ...m,
-            main_recipe_id: recipeId,
-            main_recipe: recipeCard,
-          };
-        } else {
-          // Find the first empty side slot
-          if (!m.side_recipe_1) {
-            return { ...m, side_recipe_1_id: recipeId, side_recipe_1: recipeCard };
-          } else if (!m.side_recipe_2) {
-            return { ...m, side_recipe_2_id: recipeId, side_recipe_2: recipeCard };
-          } else if (!m.side_recipe_3) {
-            return { ...m, side_recipe_3_id: recipeId, side_recipe_3: recipeCard };
-          }
-          return m;
+  const handleDeleteMeal = useCallback(async (mealId: number) => {
+    try {
+      await plannerApi.deleteMeal(mealId);
+      setMeals((prev) => {
+        const updated = prev.filter((m) => m.id !== mealId);
+        if (selectedMealId === mealId) {
+          setSelectedMealId(updated.length > 0 ? updated[0].id : null);
         }
-      })
-    );
-  }, [selectedMeal, addRecipeDialog]);
+        return updated;
+      });
+    } catch (err) {
+      console.error("Failed to delete meal:", err);
+    }
+  }, [selectedMealId]);
 
-  const handleRemoveRecipe = useCallback((slotType: "main" | "side", slotIndex?: number) => {
-    if (!selectedMeal) return;
+  const handleRenameMeal = useCallback(async (mealId: number, newName: string) => {
+    try {
+      const updateData: MealSelectionUpdateDTO = { meal_name: newName };
+      const updatedMeal = await plannerApi.updateMeal(mealId, updateData);
+      setMeals((prev) =>
+        prev.map((m) => (m.id === mealId ? updatedMeal : m))
+      );
+    } catch (err) {
+      console.error("Failed to rename meal:", err);
+    }
+  }, []);
 
-    setMeals((prev) =>
-      prev.map((m) => {
-        if (m.id !== selectedMeal.id) return m;
+  // Note: Not using useCallback here to ensure we always have fresh state
+  // The Dialog component may cache the callback, causing stale closure issues
+  const handleAddRecipeToSlot = async (recipeId: number) => {
+    if (selectedMealId === null) return;
 
-        if (slotType === "main") {
-          return {
-            ...m,
-            main_recipe_id: 0,
-            main_recipe: null,
-          };
+    const currentMeal = meals.find((m) => m.id === selectedMealId);
+    if (!currentMeal) return;
+
+    try {
+      // Build update data based on slot type
+      let updateData: MealSelectionUpdateDTO;
+
+      if (addRecipeDialog.slotType === "main") {
+        updateData = { main_recipe_id: recipeId };
+      } else {
+        // Find the first empty side slot
+        if (!currentMeal.side_recipe_1) {
+          updateData = { side_recipe_1_id: recipeId };
+        } else if (!currentMeal.side_recipe_2) {
+          updateData = { side_recipe_2_id: recipeId };
+        } else if (!currentMeal.side_recipe_3) {
+          updateData = { side_recipe_3_id: recipeId };
         } else {
-          switch (slotIndex) {
-            case 1:
-              return { ...m, side_recipe_1_id: null, side_recipe_1: null };
-            case 2:
-              return { ...m, side_recipe_2_id: null, side_recipe_2: null };
-            case 3:
-              return { ...m, side_recipe_3_id: null, side_recipe_3: null };
-            default:
-              return m;
-          }
+          return; // All slots filled
         }
-      })
-    );
-  }, [selectedMeal]);
+      }
+
+      const updatedMeal = await plannerApi.updateMeal(currentMeal.id, updateData);
+      setMeals((prev) =>
+        prev.map((m) => (m.id === currentMeal.id ? updatedMeal : m))
+      );
+    } catch (err) {
+      console.error("Failed to add recipe to slot:", err);
+    }
+  };
+
+  // Note: Not using useCallback to ensure fresh state access
+  const handleRemoveRecipe = async (slotType: "main" | "side", slotIndex?: number) => {
+    if (selectedMealId === null) return;
+
+    const currentMeal = meals.find((m) => m.id === selectedMealId);
+    if (!currentMeal) return;
+
+    try {
+      let updateData: MealSelectionUpdateDTO;
+
+      if (slotType === "main") {
+        // Note: Setting main_recipe_id to a special value or handling via backend
+        // For now, we'll skip removing main recipe as it's required
+        console.warn("Cannot remove main recipe - it is required");
+        return;
+      } else {
+        switch (slotIndex) {
+          case 1:
+            updateData = { side_recipe_1_id: null };
+            break;
+          case 2:
+            updateData = { side_recipe_2_id: null };
+            break;
+          case 3:
+            updateData = { side_recipe_3_id: null };
+            break;
+          default:
+            return;
+        }
+      }
+
+      const updatedMeal = await plannerApi.updateMeal(currentMeal.id, updateData);
+      setMeals((prev) =>
+        prev.map((m) => (m.id === currentMeal.id ? updatedMeal : m))
+      );
+    } catch (err) {
+      console.error("Failed to remove recipe:", err);
+    }
+  };
 
   // Drag and drop handlers
   const handleDragStart = (mealId: number) => {
@@ -993,13 +1068,6 @@ export default function MealPlannerPage() {
     return ids;
   };
 
-  // Check if can add more side recipes
-  const canAddSideRecipe = selectedMeal
-    ? !selectedMeal.side_recipe_1 ||
-      !selectedMeal.side_recipe_2 ||
-      !selectedMeal.side_recipe_3
-    : false;
-
   // Render
   return (
     <div className="min-h-screen bg-background">
@@ -1023,7 +1091,21 @@ export default function MealPlannerPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        {meals.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-24">
+            <div className="text-center">
+              <CalendarDays className="h-12 w-12 text-muted mx-auto mb-4 animate-pulse" />
+              <p className="text-muted">Loading your meals...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center py-24">
+            <div className="text-center">
+              <p className="text-error mb-4">{error}</p>
+              <Button onClick={() => window.location.reload()}>Retry</Button>
+            </div>
+          </div>
+        ) : meals.length === 0 ? (
           <EmptyState onAddMeal={() => setIsAddMealOpen(true)} />
         ) : (
           <>
@@ -1111,70 +1193,46 @@ export default function MealPlannerPage() {
                         Side Dishes
                       </h3>
                       <div className="grid gap-3">
-                        <RecipeSlot
-                          recipe={selectedMeal.side_recipe_1}
-                          slotType="side"
-                          slotIndex={1}
-                          onRemove={() => handleRemoveRecipe("side", 1)}
-                          onAdd={() =>
-                            setAddRecipeDialog({ isOpen: true, slotType: "side", slotIndex: 1 })
-                          }
-                          isAddable={!selectedMeal.side_recipe_1}
-                        />
-                        {(selectedMeal.side_recipe_1 || selectedMeal.side_recipe_2) && (
+                        {/* Show existing side recipes */}
+                        {selectedMeal.side_recipe_1 && (
+                          <RecipeSlot
+                            recipe={selectedMeal.side_recipe_1}
+                            slotType="side"
+                            slotIndex={1}
+                            onRemove={() => handleRemoveRecipe("side", 1)}
+                          />
+                        )}
+                        {selectedMeal.side_recipe_2 && (
                           <RecipeSlot
                             recipe={selectedMeal.side_recipe_2}
                             slotType="side"
                             slotIndex={2}
                             onRemove={() => handleRemoveRecipe("side", 2)}
-                            onAdd={() =>
-                              setAddRecipeDialog({ isOpen: true, slotType: "side", slotIndex: 2 })
-                            }
-                            isAddable={!selectedMeal.side_recipe_2 && !!selectedMeal.side_recipe_1}
                           />
                         )}
-                        {(selectedMeal.side_recipe_2 || selectedMeal.side_recipe_3) && (
+                        {selectedMeal.side_recipe_3 && (
                           <RecipeSlot
                             recipe={selectedMeal.side_recipe_3}
                             slotType="side"
                             slotIndex={3}
                             onRemove={() => handleRemoveRecipe("side", 3)}
-                            onAdd={() =>
-                              setAddRecipeDialog({ isOpen: true, slotType: "side", slotIndex: 3 })
-                            }
-                            isAddable={!selectedMeal.side_recipe_3 && !!selectedMeal.side_recipe_2}
                           />
                         )}
-                        
-                        {/* Add side button if first slot is filled but not all */}
-                        {selectedMeal.side_recipe_1 &&
-                          !selectedMeal.side_recipe_2 && (
-                            <button
-                              onClick={() =>
-                                setAddRecipeDialog({ isOpen: true, slotType: "side" })
-                              }
-                              className="w-full rounded-xl border-2 border-dashed border-border/50 transition-all duration-200 hover:border-primary/50 hover:bg-primary/5 group min-h-[80px]"
-                            >
-                              <div className="flex flex-col items-center justify-center gap-2 p-4 text-muted group-hover:text-primary transition-colors">
-                                <Plus className="h-5 w-5 transition-transform group-hover:scale-110" />
-                                <span className="text-sm font-medium">Add Another Side</span>
-                              </div>
-                            </button>
-                          )}
-                        {selectedMeal.side_recipe_2 &&
-                          !selectedMeal.side_recipe_3 && (
-                            <button
-                              onClick={() =>
-                                setAddRecipeDialog({ isOpen: true, slotType: "side" })
-                              }
-                              className="w-full rounded-xl border-2 border-dashed border-border/50 transition-all duration-200 hover:border-primary/50 hover:bg-primary/5 group min-h-[80px]"
-                            >
-                              <div className="flex flex-col items-center justify-center gap-2 p-4 text-muted group-hover:text-primary transition-colors">
-                                <Plus className="h-5 w-5 transition-transform group-hover:scale-110" />
-                                <span className="text-sm font-medium">Add Another Side</span>
-                              </div>
-                            </button>
-                          )}
+
+                        {/* Single add button for next available slot */}
+                        {!selectedMeal.side_recipe_1 || !selectedMeal.side_recipe_2 || !selectedMeal.side_recipe_3 ? (
+                          <button
+                            onClick={() =>
+                              setAddRecipeDialog({ isOpen: true, slotType: "side" })
+                            }
+                            className="w-full rounded-xl border-2 border-dashed border-border/50 transition-all duration-200 hover:border-primary/50 hover:bg-primary/5 group min-h-[80px]"
+                          >
+                            <div className="flex flex-col items-center justify-center gap-2 p-4 text-muted group-hover:text-primary transition-colors">
+                              <Plus className="h-5 w-5 transition-transform group-hover:scale-110" />
+                              <span className="text-sm font-medium">Add Side Recipe</span>
+                            </div>
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                   </div>

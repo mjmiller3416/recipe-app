@@ -1,7 +1,7 @@
 "use client";
 
 import { LucideIcon } from "lucide-react";
-import { SafeLink } from "@/components/SafeLink";
+import { SafeLink } from "@/components/common/SafeLink";
 import { cn } from "@/lib/utils";
 
 interface NavButtonProps {

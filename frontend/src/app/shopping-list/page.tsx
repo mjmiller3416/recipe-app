@@ -21,10 +21,10 @@ import {
   PageHeaderContent,
   PageHeaderTitle,
   PageHeaderActions,
-} from "@/components/PageHeader";
-import { StatsCard } from "@/components/StatsCard";
+} from "@/components/layout/PageHeader";
+import { StatsCard } from "@/components/common/StatsCard";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AddItemForm, type AddItemFormData } from "@/components/AddItemForm";
+import { AddItemForm, type AddItemFormData } from "@/components/forms/AddItemForm";
 import { mockShoppingList } from "@/lib/mockData";
 import type { ShoppingItemResponseDTO } from "@/types";
 import { cn } from "@/lib/utils";

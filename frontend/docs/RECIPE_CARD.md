@@ -202,7 +202,7 @@ Your backend already has all the data needed!
 
 ```typescript
 // utils/recipeMapper.ts
-import { RecipeCardData, RecipeIngredient } from "@/components/RecipeCard";
+import { RecipeCardData, RecipeIngredient } from "@/components/recipe/RecipeCard";
 import { RecipeResponseDTO, RecipeIngredientDTO } from "@/types";
 
 export function mapRecipeToCardData(dto: RecipeResponseDTO): RecipeCardData {
@@ -238,7 +238,7 @@ function mapIngredient(dto: RecipeIngredientDTO): RecipeIngredient {
 "use client";
 
 import { useState, useEffect } from "react";
-import { RecipeCard, RecipeCardGrid } from "@/components/RecipeCard";
+import { RecipeCard, RecipeCardGrid } from "@/components/recipe/RecipeCard";
 
 export default function RecipeBrowserPage() {
   const [recipes, setRecipes] = useState<RecipeCardData[]>([]);

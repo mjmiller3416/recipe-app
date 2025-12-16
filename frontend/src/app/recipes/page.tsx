@@ -35,8 +35,8 @@ import {
   PageHeaderContent,
   PageHeaderTitle,
   PageHeaderActions,
-} from "@/components/PageHeader";
-import { RecipeCard, RecipeCardGrid } from "@/components/RecipeCard";
+} from "@/components/layout/PageHeader";
+import { RecipeCard, RecipeCardGrid } from "@/components/recipe/RecipeCard";
 import { recipeApi } from "@/lib/api";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
 import { RECIPE_CATEGORIES, MEAL_TYPES, DIETARY_PREFERENCES } from "@/lib/constants";
