@@ -246,7 +246,7 @@ export const shoppingApi = {
    * Get shopping list with optional filters
    */
   getList: (filters?: ShoppingListFilterDTO): Promise<ShoppingListResponseDTO> => {
-    const query = filters ? buildQueryString(filters) : "";
+    const query = filters ? buildQueryString(filters as Record<string, unknown>) : "";
     return fetchApi<ShoppingListResponseDTO>(`/api/shopping${query}`);
   },
 
@@ -524,6 +524,42 @@ export interface IngredientBreakdownDTO {
     unit: string | null;
   }[];
 }
+
+// ============================================================================
+// Image Upload API
+// ============================================================================
+
+export const uploadApi = {
+  /**
+   * Upload a recipe image
+   * @param file - The image file to upload
+   * @param recipeId - The recipe ID (used to name the file)
+   * @returns The path to the uploaded image
+   */
+  uploadRecipeImage: async (
+    file: File,
+    recipeId: number
+  ): Promise<{ success: boolean; path: string; filename: string }> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("recipeId", recipeId.toString());
+
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new ApiError(
+        error.error || "Failed to upload image",
+        response.status
+      );
+    }
+
+    return response.json();
+  },
+};
 
 // Export the error class for use in components
 export { ApiError };

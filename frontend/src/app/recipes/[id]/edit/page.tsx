@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Plus, Upload, ImageIcon, Info, Clock, Users, Tag, ChefHat, Leaf, ListOrdered, FileText, Save, AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { recipeApi } from "@/lib/api";
+import { recipeApi, uploadApi } from "@/lib/api";
 import type { RecipeUpdateDTO, RecipeIngredientDTO, RecipeResponseDTO } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -126,6 +126,7 @@ export default function EditRecipePage() {
 
   // Image state
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   // Form validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -257,6 +258,7 @@ export default function EditRecipePage() {
     const file = e.target.files?.[0];
     if (file) {
       markDirty();
+      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -366,6 +368,18 @@ export default function EditRecipePage() {
 
     setIsSubmitting(true);
     try {
+      // Upload image if a new file was selected
+      let imagePath = originalRecipe?.reference_image_path || null;
+      if (imageFile) {
+        try {
+          const uploadResult = await uploadApi.uploadRecipeImage(imageFile, recipeId);
+          imagePath = uploadResult.path;
+        } catch (uploadError) {
+          console.error("Failed to upload image:", uploadError);
+          toast.error("Failed to upload image. Recipe will be saved without the new image.");
+        }
+      }
+
       // Transform ingredients to API format
       const apiIngredients: RecipeIngredientDTO[] = values.ingredients.map((ing) => ({
         ingredient_name: ing.name,
@@ -384,6 +398,7 @@ export default function EditRecipePage() {
         servings: values.servings as number | null,
         directions: values.directions as string,
         notes: values.notes,
+        reference_image_path: imagePath,
         ingredients: apiIngredients,
       };
 
