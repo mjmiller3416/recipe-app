@@ -133,7 +133,7 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
           {/* Add Button */}
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             onClick={handleAddItem}
             className="w-full gap-2"
             disabled={!newItemName.trim()}

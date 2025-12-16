@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Plus, Upload, ImageIcon, Info, Clock, Users, Tag, ChefHat, Leaf, ListOrdered, FileText, Save, AlertCircle } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { Plus, Upload, ImageIcon, Info, Clock, Users, Tag, ChefHat, Leaf, ListOrdered, FileText, Save, AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { recipeApi } from "@/lib/api";
-import type { RecipeCreateDTO, RecipeIngredientDTO } from "@/types";
+import type { RecipeUpdateDTO, RecipeIngredientDTO, RecipeResponseDTO } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,16 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   PageHeader,
   PageHeaderContent,
@@ -40,8 +50,56 @@ import {
 } from "@/lib/formValidation";
 import { cn } from "@/lib/utils";
 
-export default function AddRecipePage() {
+// ============================================================================
+// LOADING SKELETON
+// ============================================================================
+
+function EditRecipeSkeleton() {
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="h-8 w-48 bg-hover rounded animate-pulse" />
+        </div>
+      </div>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <div className="h-10 bg-hover rounded animate-pulse" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="h-10 bg-hover rounded animate-pulse" />
+                    <div className="h-10 bg-hover rounded animate-pulse" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="h-10 bg-hover rounded animate-pulse" />
+                    <div className="h-10 bg-hover rounded animate-pulse" />
+                    <div className="h-10 bg-hover rounded animate-pulse" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
+export default function EditRecipePage() {
   const router = useRouter();
+  const params = useParams();
+  const recipeId = Number(params.id);
+
+  // Loading state
+  const [loading, setLoading] = useState(true);
+  const [originalRecipe, setOriginalRecipe] = useState<RecipeResponseDTO | null>(null);
 
   // Recipe basic info state
   const [recipeName, setRecipeName] = useState("");
@@ -74,8 +132,94 @@ export default function AddRecipePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
+  // Unsaved changes tracking
+  const [isDirty, setIsDirty] = useState(false);
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+
+  // Load recipe data
+  useEffect(() => {
+    async function fetchRecipe() {
+      try {
+        const recipe = await recipeApi.get(recipeId);
+        setOriginalRecipe(recipe);
+
+        // Populate form fields
+        setRecipeName(recipe.recipe_name);
+        setTotalTime(recipe.total_time?.toString() || "");
+        setServings(recipe.servings?.toString() || "");
+        setMealType(recipe.meal_type || "");
+        setCategory(recipe.recipe_category || "");
+        setDietaryPreference(recipe.diet_pref || "");
+        setDirections(recipe.directions || "");
+        setNotes(recipe.notes || "");
+        setImagePreview(recipe.reference_image_path);
+
+        // Populate ingredients
+        if (recipe.ingredients && recipe.ingredients.length > 0) {
+          setIngredients(
+            recipe.ingredients.map((ing) => ({
+              id: crypto.randomUUID(),
+              quantity: ing.quantity,
+              unit: ing.unit || "",
+              name: ing.ingredient_name,
+              category: ing.ingredient_category || "",
+            }))
+          );
+        }
+      } catch (error) {
+        console.error("Failed to fetch recipe:", error);
+        toast.error("Failed to load recipe");
+        router.push("/recipes");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchRecipe();
+  }, [recipeId, router]);
+
+  // Warn about unsaved changes on browser navigation/refresh
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
+
+  // Mark form as dirty when values change
+  const markDirty = useCallback(() => {
+    if (!loading) {
+      setIsDirty(true);
+    }
+  }, [loading]);
+
+  // Handle navigation with unsaved changes check
+  const handleNavigation = (path: string) => {
+    if (isDirty) {
+      setPendingNavigation(path);
+      setShowLeaveDialog(true);
+    } else {
+      router.push(path);
+    }
+  };
+
+  const confirmLeave = () => {
+    if (pendingNavigation) {
+      router.push(pendingNavigation);
+    }
+    setShowLeaveDialog(false);
+    setPendingNavigation(null);
+  };
+
   // Ingredient handlers
   const addIngredient = () => {
+    markDirty();
     setIngredients([
       ...ingredients,
       {
@@ -93,6 +237,7 @@ export default function AddRecipePage() {
     field: keyof Ingredient,
     value: string | number | null
   ) => {
+    markDirty();
     setIngredients(
       ingredients.map((ing) =>
         ing.id === id ? { ...ing, [field]: value } : ing
@@ -102,14 +247,16 @@ export default function AddRecipePage() {
 
   const deleteIngredient = (id: string) => {
     if (ingredients.length > 1) {
+      markDirty();
       setIngredients(ingredients.filter((ing) => ing.id !== id));
     }
   };
 
-  // Image upload handler (mock)
+  // Image upload handler
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      markDirty();
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -175,10 +322,6 @@ export default function AddRecipePage() {
       newErrors.ingredients = "At least one ingredient is required";
     }
 
-    // TODO: Re-enable ingredient field validation (name length, quantity bounds)
-    // Disabled for now - validation was too strict during recipe entry
-    // See frontend/TODO.md for details
-
     // Directions (required)
     const directionsResult = validateString(directions, {
       required: true,
@@ -231,8 +374,8 @@ export default function AddRecipePage() {
         unit: ing.unit || null,
       }));
 
-      // Build the recipe create payload
-      const payload: RecipeCreateDTO = {
+      // Build the recipe update payload
+      const payload: RecipeUpdateDTO = {
         recipe_name: values.recipeName as string,
         recipe_category: values.category as string,
         meal_type: values.mealType as string,
@@ -244,12 +387,12 @@ export default function AddRecipePage() {
         ingredients: apiIngredients,
       };
 
-      const createdRecipe = await recipeApi.create(payload);
-      toast.success("Recipe created successfully!");
-      router.push(`/recipes/${createdRecipe.id}`);
+      await recipeApi.update(recipeId, payload);
+      toast.success("Recipe updated successfully!");
+      router.push(`/recipes/${recipeId}`);
     } catch (error) {
-      console.error("Failed to save recipe:", error);
-      toast.error("Failed to save recipe. Please try again.");
+      console.error("Failed to update recipe:", error);
+      toast.error("Failed to update recipe. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -259,15 +402,35 @@ export default function AddRecipePage() {
   const hasError = (field: string) => hasAttemptedSubmit && !!errors[field];
   const getError = (field: string) => (hasAttemptedSubmit ? errors[field] : undefined);
 
+  // Show loading skeleton
+  if (loading) {
+    return <EditRecipeSkeleton />;
+  }
+
+  // Recipe not found
+  if (!originalRecipe) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <PageHeader>
         <PageHeaderContent>
-          <PageHeaderTitle 
-            title="Add New Recipe"
-            description="Create a new recipe for your collection"
-          />
+          <div className="flex items-center gap-4 flex-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => handleNavigation(`/recipes/${recipeId}`)}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <PageHeaderTitle
+              title="Edit Recipe"
+              description={`Editing "${originalRecipe.recipe_name}"`}
+            />
+          </div>
           <PageHeaderActions>
             <Button
               variant="outline"
@@ -276,8 +439,12 @@ export default function AddRecipePage() {
               onClick={handleSubmit}
               disabled={isSubmitting}
             >
-              <Save className="h-4 w-4" />
-              {isSubmitting ? "Saving..." : "Save Recipe"}
+              {isSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </Button>
           </PageHeaderActions>
         </PageHeaderContent>
@@ -315,7 +482,7 @@ export default function AddRecipePage() {
                       id="recipe-name"
                       placeholder="Enter recipe name"
                       value={recipeName}
-                      onChange={(e) => setRecipeName(e.target.value)}
+                      onChange={(e) => { markDirty(); setRecipeName(e.target.value); }}
                       className={cn("mt-1.5", hasError("recipeName") && "border-destructive")}
                     />
                     {getError("recipeName") && (
@@ -334,7 +501,7 @@ export default function AddRecipePage() {
                         id="total-time"
                         placeholder="e.g., 30"
                         value={totalTime}
-                        onChange={(e) => setTotalTime(e.target.value)}
+                        onChange={(e) => { markDirty(); setTotalTime(e.target.value); }}
                         className={cn("mt-1.5", hasError("totalTime") && "border-destructive")}
                       />
                       {getError("totalTime") && (
@@ -350,7 +517,7 @@ export default function AddRecipePage() {
                         id="servings"
                         placeholder="e.g., 4"
                         value={servings}
-                        onChange={(e) => setServings(e.target.value)}
+                        onChange={(e) => { markDirty(); setServings(e.target.value); }}
                         className={cn("mt-1.5", hasError("servings") && "border-destructive")}
                       />
                       {getError("servings") && (
@@ -366,7 +533,7 @@ export default function AddRecipePage() {
                         <Tag className="h-3.5 w-3.5 text-muted" />
                         Meal Type
                       </Label>
-                      <Select value={mealType} onValueChange={setMealType}>
+                      <Select value={mealType} onValueChange={(v) => { markDirty(); setMealType(v); }}>
                         <SelectTrigger
                           id="meal-type"
                           className={cn("mt-1.5", hasError("mealType") && "border-destructive")}
@@ -390,7 +557,7 @@ export default function AddRecipePage() {
                         <Tag className="h-3.5 w-3.5 text-muted" />
                         Category
                       </Label>
-                      <Select value={category} onValueChange={setCategory}>
+                      <Select value={category} onValueChange={(v) => { markDirty(); setCategory(v); }}>
                         <SelectTrigger
                           id="category"
                           className={cn("mt-1.5", hasError("category") && "border-destructive")}
@@ -416,7 +583,7 @@ export default function AddRecipePage() {
                       </Label>
                       <Select
                         value={dietaryPreference}
-                        onValueChange={setDietaryPreference}
+                        onValueChange={(v) => { markDirty(); setDietaryPreference(v); }}
                       >
                         <SelectTrigger id="dietary-preference" className="mt-1.5">
                           <SelectValue placeholder="Select dietary preference" />
@@ -515,7 +682,7 @@ export default function AddRecipePage() {
                     <Textarea
                       placeholder="Enter cooking directions step by step...&#10;&#10;1. Preheat oven to 350°F&#10;2. Mix dry ingredients in a bowl&#10;3. ..."
                       value={directions}
-                      onChange={(e) => setDirections(e.target.value)}
+                      onChange={(e) => { markDirty(); setDirections(e.target.value); }}
                       rows={10}
                       className={cn(
                         "font-mono text-sm resize-none",
@@ -530,7 +697,7 @@ export default function AddRecipePage() {
                     <Textarea
                       placeholder="Add any helpful notes, tips, or variations..."
                       value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
+                      onChange={(e) => { markDirty(); setNotes(e.target.value); }}
                       rows={10}
                       className="resize-none"
                     />
@@ -605,6 +772,26 @@ export default function AddRecipePage() {
           </div>
         </div>
       </div>
+
+      {/* Unsaved Changes Confirmation Dialog */}
+      <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingNavigation(null)}>
+              Keep Editing
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmLeave}>
+              Discard Changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { parseQuantity, formatQuantity } from "@/lib/quantityUtils";
 
 interface QuantityInputProps {
@@ -12,16 +11,21 @@ interface QuantityInputProps {
   className?: string;
 }
 
+/**
+ * QuantityInput - A smart input for recipe quantities
+ *
+ * What it does differently from a standard input:
+ * 1. Parses fraction inputs: "1/2" or "1 1/2" → stored as 0.5 or 1.5
+ * 2. Formats on blur: displays "½" instead of "0.5"
+ * 3. Stores numeric value while displaying formatted text
+ */
 export function QuantityInput({
   value,
   onChange,
   placeholder = "Qty",
   className,
 }: QuantityInputProps) {
-  // Track the raw input text separately from the numeric value
-  const [inputText, setInputText] = React.useState(() =>
-    formatQuantity(value)
-  );
+  const [inputText, setInputText] = React.useState(() => formatQuantity(value));
   const [isFocused, setIsFocused] = React.useState(false);
 
   // Sync input text when value changes externally
@@ -34,13 +38,7 @@ export function QuantityInput({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newText = e.target.value;
     setInputText(newText);
-
-    const parsed = parseQuantity(newText);
-    onChange(parsed);
-  };
-
-  const handleFocus = () => {
-    setIsFocused(true);
+    onChange(parseQuantity(newText));
   };
 
   const handleBlur = () => {
@@ -51,39 +49,15 @@ export function QuantityInput({
     }
   };
 
-  // Determine what to show in the preview
-  const parsed = parseQuantity(inputText);
-  const formatted = formatQuantity(parsed);
-  const showPreview = isFocused && inputText.trim() !== "";
-  const previewText = parsed !== null ? formatted : "?";
-  const isInvalid = inputText.trim() !== "" && parsed === null;
-
   return (
-    <div className={cn("relative", className)}>
-      <Input
-        type="text"
-        value={inputText}
-        onChange={handleChange}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        placeholder={placeholder}
-        className={cn(
-          "pr-16",
-          isInvalid && "border-destructive focus-visible:border-destructive"
-        )}
-      />
-      {showPreview && (
-        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-          <span
-            className={cn(
-              "text-sm",
-              isInvalid ? "text-destructive" : "text-muted-foreground"
-            )}
-          >
-            → {previewText}
-          </span>
-        </div>
-      )}
-    </div>
+    <Input
+      type="text"
+      value={inputText}
+      onChange={handleChange}
+      onFocus={() => setIsFocused(true)}
+      onBlur={handleBlur}
+      placeholder={placeholder}
+      className={className}
+    />
   );
 }

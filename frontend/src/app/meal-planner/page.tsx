@@ -758,6 +758,8 @@ function QuickAddShoppingItem() {
 
           {/* Add Button */}
           <Button
+            type="button"
+            variant={"secondary"}
             onClick={handleAdd}
             className="w-full gap-2"
             disabled={!itemName.trim()}
