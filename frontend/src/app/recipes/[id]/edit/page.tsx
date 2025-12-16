@@ -50,6 +50,7 @@ import {
 } from "@/lib/formValidation";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { cn } from "@/lib/utils";
+import { v4 as uuidv4 } from 'uuid';
 
 // ============================================================================
 // LOADING SKELETON
@@ -113,7 +114,7 @@ export default function EditRecipePage() {
   // Ingredients state
   const [ingredients, setIngredients] = useState<Ingredient[]>([
     {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       quantity: null,
       unit: "",
       name: "",
@@ -171,7 +172,7 @@ export default function EditRecipePage() {
         if (recipe.ingredients && recipe.ingredients.length > 0) {
           setIngredients(
             recipe.ingredients.map((ing) => ({
-              id: crypto.randomUUID(),
+              id: uuidv4(),
               quantity: ing.quantity,
               unit: ing.unit || "",
               name: ing.ingredient_name,
@@ -204,7 +205,7 @@ export default function EditRecipePage() {
     setIngredients([
       ...ingredients,
       {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         quantity: null,
         unit: "",
         name: "",

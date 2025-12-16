@@ -39,6 +39,7 @@ import {
   validateInteger,
 } from "@/lib/formValidation";
 import { cn } from "@/lib/utils";
+import { v4 as uuidv4 } from 'uuid';
 
 export default function AddRecipePage() {
   const router = useRouter();
@@ -54,7 +55,7 @@ export default function AddRecipePage() {
   // Ingredients state
   const [ingredients, setIngredients] = useState<Ingredient[]>([
     {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       quantity: null,
       unit: "",
       name: "",
@@ -79,7 +80,7 @@ export default function AddRecipePage() {
     setIngredients([
       ...ingredients,
       {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         quantity: null,
         unit: "",
         name: "",
