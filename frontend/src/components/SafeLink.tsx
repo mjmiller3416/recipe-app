@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { hasAnyUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { hasAnyUnsavedChanges, setNavigationBypass } from "@/hooks/useUnsavedChanges";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,7 +54,10 @@ export function SafeLink({ href, children, className, onClick }: SafeLinkProps) 
   );
 
   const handleConfirm = useCallback(() => {
+    // Enable bypass to prevent re-interception
+    setNavigationBypass(true);
     setShowDialog(false);
+    
     if (pendingHref) {
       router.push(pendingHref);
     }
@@ -89,7 +92,7 @@ export function SafeLink({ href, children, className, onClick }: SafeLinkProps) 
               onClick={handleConfirm}
               className="bg-secondary hover:bg-secondary/90"
             >
-              Leave Page
+              Discard Changes
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

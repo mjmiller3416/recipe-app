@@ -42,13 +42,29 @@ interface UseUnsavedChangesReturn {
 }
 
 // Global registry for pages with unsaved changes
-// This allows other components (like Sidebar) to check before navigating
 const unsavedChangesRegistry = new Map<string, () => boolean>();
 
+// Global flag to temporarily bypass checks (set during confirmed navigation)
+let navigationBypassActive = false;
+
 /**
- * Check if any page has unsaved changes
+ * Temporarily bypass unsaved changes checks (used after user confirms leaving)
+ */
+export function setNavigationBypass(active: boolean): void {
+  navigationBypassActive = active;
+  // Auto-reset after a short delay as a safety net
+  if (active) {
+    setTimeout(() => {
+      navigationBypassActive = false;
+    }, 500);
+  }
+}
+
+/**
+ * Check if any page has unsaved changes (respects bypass flag)
  */
 export function hasAnyUnsavedChanges(): boolean {
+  if (navigationBypassActive) return false;
   for (const [, checkFn] of unsavedChangesRegistry) {
     if (checkFn()) return true;
   }
@@ -71,26 +87,6 @@ export function getUnsavedChangesCheck(path: string): (() => boolean) | undefine
  * - Provides controlled navigation with confirmation dialog
  * - Registers with global registry for cross-component navigation checks
  * - Reusable across any form page
- * 
- * @example
- * ```tsx
- * const [isDirty, setIsDirty] = useState(false);
- * const {
- *   showLeaveDialog,
- *   setShowLeaveDialog,
- *   handleNavigation,
- *   confirmLeave,
- *   cancelLeave,
- * } = useUnsavedChanges({ isDirty });
- * 
- * // Use handleNavigation instead of router.push for internal links
- * <Button onClick={() => handleNavigation('/recipes')}>Cancel</Button>
- * 
- * // Render the dialog
- * <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
- *   ...
- * </AlertDialog>
- * ```
  */
 export function useUnsavedChanges({
   isDirty,
@@ -120,7 +116,7 @@ export function useUnsavedChanges({
   // Handle browser refresh/close with beforeunload
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirty) {
+      if (isDirty && !navigationBypassActive) {
         e.preventDefault();
         e.returnValue = "";
       }
@@ -132,22 +128,17 @@ export function useUnsavedChanges({
 
   // Handle browser back/forward buttons with history manipulation
   useEffect(() => {
-    // When dirty, push a state so we can intercept the back button
     if (isDirty && !historyStateAddedRef.current) {
-      // Push a duplicate state so pressing back stays on same page
       window.history.pushState({ unsavedChangesGuard: true }, "", window.location.href);
       historyStateAddedRef.current = true;
     }
-
-    // If no longer dirty, we could clean up but it's simpler to leave it
-    // The state will be naturally cleaned up on navigation
   }, [isDirty]);
 
   // Listen for popstate (browser back/forward)
   useEffect(() => {
-    const handlePopState = (e: PopStateEvent) => {
-      // If we're in a confirmed navigation, let it proceed
-      if (isNavigatingRef.current) {
+    const handlePopState = () => {
+      // If bypass is active or we're already navigating, let it proceed
+      if (navigationBypassActive || isNavigatingRef.current) {
         return;
       }
 
@@ -169,7 +160,7 @@ export function useUnsavedChanges({
   // Handle navigation with unsaved changes check
   const handleNavigation = useCallback(
     (path: string) => {
-      if (isDirty) {
+      if (isDirty && !navigationBypassActive) {
         setPendingNavigation(path);
         setShowLeaveDialog(true);
       } else {
@@ -181,21 +172,27 @@ export function useUnsavedChanges({
 
   // Confirm leaving - navigate to pending path
   const confirmLeave = useCallback(() => {
+    // Set flags to prevent re-interception
     isNavigatingRef.current = true;
     historyStateAddedRef.current = false;
+    setNavigationBypass(true);
+    
+    // Call the cleanup callback
     onConfirmLeave?.();
     
+    // Close dialog first
+    setShowLeaveDialog(false);
+    
+    // Navigate
     if (pendingNavigation === "__BROWSER_BACK__") {
-      // For browser back, go back in history
       window.history.go(-1);
     } else if (pendingNavigation) {
       router.push(pendingNavigation);
     }
     
-    setShowLeaveDialog(false);
     setPendingNavigation(null);
     
-    // Reset after a short delay
+    // Reset navigating flag after delay
     setTimeout(() => {
       isNavigatingRef.current = false;
     }, 100);
