@@ -39,7 +39,8 @@ import {
 import { RecipeCard, RecipeCardGrid } from "@/components/RecipeCard";
 import { recipeApi } from "@/lib/api";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
-import type { RecipeCardData, RecipeResponseDTO } from "@/types";
+import { RECIPE_CATEGORIES, MEAL_TYPES, DIETARY_PREFERENCES } from "@/lib/constants";
+import type { RecipeCardData } from "@/types";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
@@ -181,28 +182,13 @@ export default function RecipeBrowserPage() {
 
   // Data and loading state
   const [recipes, setRecipes] = useState<RecipeCardData[]>([]);
-  const [rawRecipes, setRawRecipes] = useState<RecipeResponseDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter options derived from data
-  const categories = useMemo(() => {
-    const cats = new Set<string>();
-    rawRecipes.forEach((r) => r.recipe_category && cats.add(r.recipe_category));
-    return Array.from(cats).sort();
-  }, [rawRecipes]);
-
-  const mealTypes = useMemo(() => {
-    const types = new Set<string>();
-    rawRecipes.forEach((r) => r.meal_type && types.add(r.meal_type));
-    return Array.from(types).sort();
-  }, [rawRecipes]);
-
-  const dietaryPreferences = useMemo(() => {
-    const prefs = new Set<string>();
-    rawRecipes.forEach((r) => r.diet_pref && prefs.add(r.diet_pref));
-    return Array.from(prefs).sort();
-  }, [rawRecipes]);
+  // Filter options from constants (filtered to exclude "all" and "none" values)
+  const categoryOptions = RECIPE_CATEGORIES.filter((c) => c.value !== "all");
+  const mealTypeOptions = MEAL_TYPES.filter((m) => m.value !== "all");
+  const dietaryOptions = DIETARY_PREFERENCES.filter((d) => d.value !== "none");
 
   // State
   const [searchTerm, setSearchTerm] = useState("");
@@ -223,7 +209,6 @@ export default function RecipeBrowserPage() {
         setIsLoading(true);
         setError(null);
         const data = await recipeApi.list();
-        setRawRecipes(data);
         setRecipes(mapRecipesForCards(data));
       } catch (err) {
         console.error("Failed to fetch recipes:", err);
@@ -559,22 +544,22 @@ export default function RecipeBrowserPage() {
                     <FilterSection
                       title="Category"
                       icon={ChefHat}
-                      options={categories}
+                      options={categoryOptions.map((c) => c.label)}
                       selected={filters.categories}
                       onChange={handleCategoryChange}
                     />
                     <FilterSection
                       title="Meal Type"
                       icon={Clock}
-                      options={mealTypes}
+                      options={mealTypeOptions.map((m) => m.label)}
                       selected={filters.mealTypes}
                       onChange={handleMealTypeChange}
                     />
-                    {dietaryPreferences.length > 0 && (
+                    {dietaryOptions.length > 0 && (
                       <FilterSection
                         title="Dietary Preference"
                         icon={BookOpen}
-                        options={dietaryPreferences}
+                        options={dietaryOptions.map((d) => d.label)}
                         selected={filters.dietaryPreferences}
                         onChange={handleDietaryChange}
                       />

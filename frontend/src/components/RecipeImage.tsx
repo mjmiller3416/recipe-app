@@ -118,3 +118,47 @@ export function RecipeCardImage({
     />
   );
 }
+
+/**
+ * Hero image component for recipe detail pages
+ * Features gradient overlay and responsive height
+ * Accepts children for overlay elements (back button, favorite button, etc.)
+ */
+interface RecipeHeroImageProps {
+  src: string | null | undefined;
+  alt: string;
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export function RecipeHeroImage({ src, alt, className, children }: RecipeHeroImageProps) {
+  const [hasError, setHasError] = useState(false);
+
+  const showPlaceholder = !src || hasError;
+
+  return (
+    <div
+      className={cn(
+        "relative h-[300px] md:h-[400px] bg-elevated overflow-hidden",
+        className
+      )}
+    >
+      {showPlaceholder ? (
+        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-elevated via-hover to-elevated">
+          <ChefHat className="h-32 w-32 text-muted opacity-30" />
+        </div>
+      ) : (
+        <>
+          <img
+            src={src}
+            alt={alt}
+            className="w-full h-full object-cover"
+            onError={() => setHasError(true)}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+        </>
+      )}
+      {children}
+    </div>
+  );
+}
