@@ -52,7 +52,7 @@ import { FavoriteButton } from "@/components/FavoriteButton";
 import { RecipeHeroImage } from "@/components/RecipeImage";
 import { recipeApi, plannerApi } from "@/lib/api";
 import type { RecipeResponseDTO, MealSelectionResponseDTO } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, formatQuantity } from "@/lib/utils";
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -275,7 +275,7 @@ interface IngredientItemProps {
 }
 
 function IngredientItem({ ingredient, checked, onToggle }: IngredientItemProps) {
-  const quantity = ingredient.quantity !== null ? ingredient.quantity : "";
+  const quantity = formatQuantity(ingredient.quantity);
   const unit = ingredient.unit || "";
   
   return (
