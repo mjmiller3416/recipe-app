@@ -8,6 +8,8 @@
      BACKGROUNDS
      ============================================ */
   --background: #1a1a1a;        /* Main app background */
+  --background-subtle: #212121; /* Between background and sidebar */
+  --background-intense: #151515; /* Deeper than background (modals, overlays) */
   --sidebar: #252525;            /* Sidebar background */
   --elevated: #2f2f2f;          /* Cards, elevated surfaces */
   --hover: #3d3d3d;             /* Hover state background */
@@ -16,6 +18,8 @@
      TEXT COLORS
      ============================================ */
   --foreground: #f5f5f5;        /* Primary text */
+  --foreground-subtle: #d4d4d4; /* Between foreground and muted */
+  --foreground-disabled: #737373; /* Disabled text state */
   --muted: #b3b3b3;             /* Secondary/muted text */
   
   /* ============================================
@@ -24,13 +28,23 @@
   --primary: #8b5cf6;           /* Main brand color - badges, accents */
   --primary-dark: #7c3aed;      /* Darker variant */
   --primary-light: #a78bfa;     /* Lighter variant */
+  --primary-hover: #7c3aed;     /* Hover state */
+  --primary-active: #6d28d9;    /* Pressed/active state */
   --primary-foreground: #ffffff; /* Text on primary background */
   
   /* ============================================
      SECONDARY COLORS (Teal)
      ============================================ */
   --secondary: #14b8a6;         /* Secondary brand color - meal type badges */
+  --secondary-hover: #0d9488;   /* Hover state */
+  --secondary-active: #0f766e;  /* Pressed/active state */
   --secondary-foreground: #ffffff; /* Text on secondary background */
+  
+  /* ============================================
+     NEUTRAL COLORS
+     ============================================ */
+  --neutral: #525252;           /* Neutral gray for non-brand components */
+  --neutral-foreground: #f5f5f5; /* Text on neutral background */
   
   /* ============================================
      STATUS COLORS
@@ -39,6 +53,8 @@
   --warning: #f59e0b;           /* Warning states */
   --error: #ef4444;             /* Error states, favorites */
   --destructive: #ef4444;       /* Destructive actions */
+  --info: #3b82f6;              /* Informational states */
+  --info-foreground: #ffffff;   /* Text on info background */
   
   /* ============================================
      UI ELEMENTS
@@ -46,8 +62,32 @@
   --accent: #3d3d3d;            /* Accent surfaces - dietary badges */
   --accent-foreground: #f5f5f5; /* Text on accent background */
   --border: #3d3d3d;            /* Border color */
+  --border-subtle: #2d2d2d;     /* Lighter than main border */
+  --border-strong: #525252;     /* Stronger than main border */
   --input: #2f2f2f;             /* Input backgrounds */
   --ring: #8b5cf6;              /* Focus ring color */
+  
+  /* ============================================
+     DISABLED STATES
+     ============================================ */
+  --disabled-bg: #3d3d3d;       /* Disabled background */
+  --disabled-fg: #737373;       /* Disabled text */
+  --disabled-opacity: 0.5;      /* Opacity for disabled elements */
+  
+  /* ============================================
+     SHADOWS
+     ============================================ */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  
+  /* ============================================
+     OVERLAYS
+     ============================================ */
+  --overlay: rgba(0, 0, 0, 0.5);        /* Modal backdrop */
+  --overlay-light: rgba(0, 0, 0, 0.25); /* Subtle overlay */
+  --overlay-strong: rgba(0, 0, 0, 0.75); /* Strong overlay */
   
   /* ============================================
      STATUS INDICATORS
@@ -56,6 +96,16 @@
   --status-offline: #6b7280;    /* Offline indicator */
   --status-busy: #ef4444;       /* Busy indicator */
   --status-away: #f59e0b;       /* Away indicator */
+  
+  /* ============================================
+     CHART COLORS (for data visualization)
+     ============================================ */
+  --chart-1: #8b5cf6;           /* Purple - primary */
+  --chart-2: #14b8a6;           /* Teal - secondary */
+  --chart-3: #f59e0b;           /* Amber */
+  --chart-4: #ec4899;           /* Pink */
+  --chart-5: #10b981;           /* Green */
+  --chart-6: #6366f1;           /* Indigo */
   
   /* ============================================
      RECIPE CARD SPECIFIC (Computed from above)
@@ -78,15 +128,19 @@
   /* ============================================
      BACKGROUNDS
      ============================================ */
-  --background: #efefef;        /* Main app background - softer warm gray */
-  --sidebar: #e8e8e8;           /* Sidebar background - slightly darker */
-  --elevated: #f7f7f7;          /* Cards, elevated surfaces - soft off-white */
+  --background: #f5f5f5;        /* Main app background - improved contrast */
+  --background-subtle: #f3f3f3; /* Between background and sidebar */
+  --background-intense: #ffffff; /* Brightest surfaces (modals) */
+  --sidebar: #e8e8e8;           /* Sidebar background */
+  --elevated: #ffffff;          /* Cards, elevated surfaces - pure white */
   --hover: #e0e0e0;             /* Hover state background */
   
   /* ============================================
      TEXT COLORS
      ============================================ */
   --foreground: #1a1a1a;        /* Primary text - dark gray */
+  --foreground-subtle: #4b5563; /* Between foreground and muted */
+  --foreground-disabled: #9ca3af; /* Disabled text state */
   --muted: #6b7280;             /* Secondary/muted text */
   
   /* ============================================
@@ -95,13 +149,23 @@
   --primary: #8b5cf6;           /* Main brand color - same purple works well */
   --primary-dark: #7c3aed;      /* Darker variant */
   --primary-light: #c4b5fd;     /* Lighter variant for light mode */
+  --primary-hover: #7c3aed;     /* Hover state */
+  --primary-active: #6d28d9;    /* Pressed/active state */
   --primary-foreground: #ffffff; /* White text on purple background */
   
   /* ============================================
      SECONDARY COLORS (Teal)
      ============================================ */
   --secondary: #14b8a6;         /* Secondary brand color - same teal */
+  --secondary-hover: #0d9488;   /* Hover state */
+  --secondary-active: #0f766e;  /* Pressed/active state */
   --secondary-foreground: #ffffff; /* White text on teal */
+  
+  /* ============================================
+     NEUTRAL COLORS
+     ============================================ */
+  --neutral: #d4d4d4;           /* Neutral gray for non-brand components */
+  --neutral-foreground: #1a1a1a; /* Text on neutral background */
   
   /* ============================================
      STATUS COLORS
@@ -110,6 +174,8 @@
   --warning: #f59e0b;           /* Warning states */
   --error: #ef4444;             /* Error states, favorites */
   --destructive: #ef4444;       /* Destructive actions */
+  --info: #3b82f6;              /* Informational states */
+  --info-foreground: #ffffff;   /* Text on info background */
   
   /* ============================================
      UI ELEMENTS
@@ -117,8 +183,32 @@
   --accent: #e5e7eb;            /* Accent surfaces - light gray for dietary badges */
   --accent-foreground: #374151; /* Dark gray text on light accent */
   --border: #d6d6d6;            /* Softer border color */
-  --input: #f7f7f7;             /* Input backgrounds - soft off-white */
+  --border-subtle: #e5e5e5;     /* Lighter than main border */
+  --border-strong: #a3a3a3;     /* Stronger than main border */
+  --input: #ffffff;             /* Input backgrounds - pure white */
   --ring: #8b5cf6;              /* Focus ring color - same purple */
+  
+  /* ============================================
+     DISABLED STATES
+     ============================================ */
+  --disabled-bg: #e5e7eb;       /* Disabled background */
+  --disabled-fg: #9ca3af;       /* Disabled text */
+  --disabled-opacity: 0.5;      /* Opacity for disabled elements */
+  
+  /* ============================================
+     SHADOWS
+     ============================================ */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* ============================================
+     OVERLAYS
+     ============================================ */
+  --overlay: rgba(0, 0, 0, 0.5);        /* Modal backdrop */
+  --overlay-light: rgba(0, 0, 0, 0.25); /* Subtle overlay */
+  --overlay-strong: rgba(0, 0, 0, 0.75); /* Strong overlay */
   
   /* ============================================
      STATUS INDICATORS
@@ -127,6 +217,16 @@
   --status-offline: #9ca3af;    /* Offline indicator - lighter gray */
   --status-busy: #ef4444;       /* Busy indicator */
   --status-away: #f59e0b;       /* Away indicator */
+  
+  /* ============================================
+     CHART COLORS (for data visualization)
+     ============================================ */
+  --chart-1: #8b5cf6;           /* Purple - primary */
+  --chart-2: #14b8a6;           /* Teal - secondary */
+  --chart-3: #f59e0b;           /* Amber */
+  --chart-4: #ec4899;           /* Pink */
+  --chart-5: #10b981;           /* Green */
+  --chart-6: #6366f1;           /* Indigo */
   
   /* ============================================
      RECIPE CARD SPECIFIC (Computed from above)
@@ -146,45 +246,84 @@
    TAILWIND THEME INTEGRATION
    Maps CSS variables to Tailwind classes
    ============================================ */
-@theme inline {
+:root {
   /* Backgrounds */
   --color-background: var(--background);
+  --color-background-subtle: var(--background-subtle);
+  --color-background-intense: var(--background-intense);
   --color-sidebar: var(--sidebar);
   --color-elevated: var(--elevated);
   --color-hover: var(--hover);
   
   /* Text */
   --color-foreground: var(--foreground);
+  --color-foreground-subtle: var(--foreground-subtle);
+  --color-foreground-disabled: var(--foreground-disabled);
   --color-muted: var(--muted);
   
   /* Primary */
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
   --color-primary-light: var(--primary-light);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
   --color-primary-foreground: var(--primary-foreground);
   
   /* Secondary */
   --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-active: var(--secondary-active);
   --color-secondary-foreground: var(--secondary-foreground);
+  
+  /* Neutral */
+  --color-neutral: var(--neutral);
+  --color-neutral-foreground: var(--neutral-foreground);
   
   /* Status */
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-error: var(--error);
   --color-destructive: var(--destructive);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   
   /* UI */
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  
+  /* Disabled */
+  --color-disabled-bg: var(--disabled-bg);
+  --color-disabled-fg: var(--disabled-fg);
+  
+  /* Shadows */
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  
+  /* Overlays */
+  --color-overlay: var(--overlay);
+  --color-overlay-light: var(--overlay-light);
+  --color-overlay-strong: var(--overlay-strong);
   
   /* Status indicators */
   --color-status-online: var(--status-online);
   --color-status-offline: var(--status-offline);
   --color-status-busy: var(--status-busy);
   --color-status-away: var(--status-away);
+  
+  /* Charts */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
   
   /* Recipe card specific */
   --color-recipe-category-bg: var(--recipe-category-bg);
@@ -227,4 +366,23 @@ body {
 
 .recipe-favorite {
   color: var(--recipe-favorite);
+}
+
+/* ============================================
+   ADDITIONAL UTILITY CLASSES
+   ============================================ */
+.shadow-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.shadow-md {
+  box-shadow: var(--shadow-md);
+}
+
+.shadow-lg {
+  box-shadow: var(--shadow-lg);
+}
+
+.shadow-xl {
+  box-shadow: var(--shadow-xl);
 }

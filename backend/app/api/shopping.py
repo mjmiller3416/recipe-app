@@ -129,6 +129,13 @@ def clear_manual_items(session: Session = Depends(get_session)):
     return service.clear_manual_items()
 
 
+@router.delete("/clear-recipe", response_model=BulkOperationResultDTO)
+def clear_recipe_items(session: Session = Depends(get_session)):
+    """Clear only recipe-generated items from the shopping list."""
+    service = ShoppingService(session)
+    return service.clear_recipe_items()
+
+
 @router.delete("/clear-completed", response_model=dict)
 def clear_completed_items(session: Session = Depends(get_session)):
     """Clear all completed (have=True) items from the shopping list."""

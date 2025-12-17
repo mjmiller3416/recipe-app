@@ -149,6 +149,17 @@ def get_deletion_impact(recipe_id: int, session: Session = Depends(get_session))
     return service.get_recipe_deletion_impact(recipe_id)
 
 
+@router.get("/{recipe_id}/last-cooked")
+def get_last_cooked(recipe_id: int, session: Session = Depends(get_session)):
+    """Get the most recent date a recipe was cooked."""
+    service = RecipeService(session)
+    recipe = service.get_recipe(recipe_id)
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    last_cooked = service.get_last_cooked_date(recipe_id)
+    return {"last_cooked": last_cooked.isoformat() if last_cooked else None}
+
+
 @router.get("/{recipe_id}", response_model=RecipeResponseDTO)
 def get_recipe(recipe_id: int, session: Session = Depends(get_session)):
     """Get a single recipe by ID."""

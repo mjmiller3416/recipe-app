@@ -336,6 +336,31 @@ class ShoppingService:
                 errors=[str(e)]
             )
 
+    def clear_recipe_items(self) -> BulkOperationResultDTO:
+        """
+        Clear all recipe-generated items from the shopping list.
+
+        Returns:
+            BulkOperationResultDTO: Operation result.
+        """
+        try:
+            deleted_count = self.shopping_repo.clear_shopping_items(source="recipe")
+            self.session.commit()
+            return BulkOperationResultDTO(
+                success=True,
+                updated_count=deleted_count,
+                message=f"Cleared {deleted_count} recipe items"
+            )
+
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            return BulkOperationResultDTO(
+                success=False,
+                updated_count=0,
+                message="Failed to clear recipe items",
+                errors=[str(e)]
+            )
+
     # ── Item Status Management ──────────────────────────────────────────────────────────────────────────────
     def toggle_item_status(self, item_id: int) -> Optional[bool]:
         """

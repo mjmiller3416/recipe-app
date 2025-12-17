@@ -66,6 +66,13 @@ def get_favorites(session: Session = Depends(get_session)):
     return service.get_favorite_meals()
 
 
+@router.get("/by-recipe/{recipe_id}", response_model=List[MealResponseDTO])
+def get_meals_by_recipe(recipe_id: int, session: Session = Depends(get_session)):
+    """Get all meals that contain a specific recipe (main or side)."""
+    service = MealService(session)
+    return service.get_meals_by_recipe(recipe_id)
+
+
 @router.get("/{meal_id}", response_model=MealResponseDTO)
 def get_meal(meal_id: int, session: Session = Depends(get_session)):
     """Get a single meal by ID."""
@@ -202,10 +209,3 @@ def reorder_side_recipes(
         raise HTTPException(status_code=400, detail=str(e))
     except MealSaveError as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/by-recipe/{recipe_id}", response_model=List[MealResponseDTO])
-def get_meals_by_recipe(recipe_id: int, session: Session = Depends(get_session)):
-    """Get all meals that contain a specific recipe (main or side)."""
-    service = MealService(session)
-    return service.get_meals_by_recipe(recipe_id)

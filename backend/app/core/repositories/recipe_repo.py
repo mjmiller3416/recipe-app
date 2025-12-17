@@ -6,7 +6,7 @@ related to recipes, including related ingredients and history.
 
 # ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
@@ -18,7 +18,6 @@ from ..dtos.recipe_dtos import (
     RecipeUpdateDTO)
 from ..models.recipe import Recipe
 from ..models.recipe_history import RecipeHistory
-from ..models.meal_selection import MealSelection
 from ..models.recipe_ingredient import RecipeIngredient
 from ..repositories.ingredient_repo import IngredientRepo
 
@@ -63,16 +62,6 @@ class RecipeRepo:
             self.session.add(link)
 
         return recipe
-
-    def get_all_recipes(self) -> List[Recipe]:
-        """
-        Returns all recipes with their ingredients (eager loaded).
-
-        Returns:
-            List[Recipe]: A list of all recipes with their ingredients loaded.
-        """
-        stmt = select(Recipe).options(joinedload(Recipe.ingredients))
-        return self.session.scalars(stmt).unique().all()
 
     def get_by_id(self, recipe_id: int) -> Optional[Recipe]:
         """

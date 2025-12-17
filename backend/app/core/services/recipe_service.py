@@ -5,6 +5,8 @@ RecipeService using SQLAlchemy repository pattern.
 
 # ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
 
+from datetime import datetime
+
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -276,3 +278,15 @@ class RecipeService:
             Optional[Recipe]: The Recipe if found, else None.
         """
         return self.recipe_repo.get_by_id(recipe_id)
+
+    def get_last_cooked_date(self, recipe_id: int) -> datetime | None:
+        """
+        Get the most recent date a recipe was cooked.
+
+        Args:
+            recipe_id (int): ID of the recipe to check.
+
+        Returns:
+            datetime | None: The last cooked date, or None if never cooked.
+        """
+        return self.recipe_repo.get_last_cooked_date(recipe_id)

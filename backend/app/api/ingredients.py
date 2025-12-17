@@ -94,6 +94,20 @@ def create_ingredient(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/bulk", response_model=List[IngredientResponseDTO], status_code=201)
+def bulk_create_ingredients(
+    ingredients_data: List[IngredientCreateDTO],
+    session: Session = Depends(get_session),
+):
+    """Bulk create ingredients. Returns existing ingredients if they already exist."""
+    service = IngredientService(session)
+    try:
+        ingredients = service.bulk_create_ingredients(ingredients_data)
+        return [_ingredient_to_response_dto(ing) for ing in ingredients]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.put("/{ingredient_id}", response_model=IngredientResponseDTO)
 def update_ingredient(
     ingredient_id: int,

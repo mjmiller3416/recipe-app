@@ -168,15 +168,35 @@ class PlannerService:
         except SQLAlchemyError:
             return None
 
-    def get_all_entries(self) -> List[PlannerEntryResponseDTO]:
+    def get_all_entries(
+        self,
+        meal_id: Optional[int] = None,
+        completed: Optional[bool] = None,
+    ) -> List[PlannerEntryResponseDTO]:
         """
-        Get all planner entries in position order.
+        Get planner entries with optional filtering.
+
+        Args:
+            meal_id: Filter by specific meal ID
+            completed: Filter by completion status (True/False/None for all)
 
         Returns:
-            List of all entries as DTOs
+            List of entries as DTOs matching the filters
         """
         try:
-            entries = self.repo.get_all()
+            # Apply filters based on parameters
+            if meal_id is not None:
+                entries = self.repo.get_by_meal_id(meal_id)
+                # Apply completion filter if also specified
+                if completed is not None:
+                    entries = [e for e in entries if e.is_completed == completed]
+            elif completed is True:
+                entries = self.repo.get_completed_entries()
+            elif completed is False:
+                entries = self.repo.get_incomplete_entries()
+            else:
+                entries = self.repo.get_all()
+
             return [self._entry_to_response_dto(e) for e in entries]
         except SQLAlchemyError:
             return []

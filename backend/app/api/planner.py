@@ -5,9 +5,9 @@ Handles planner entry operations (adding/removing meals from planner).
 Meal CRUD is handled by the meals router.
 """
 
-from typing import List
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database.db import get_session
@@ -29,10 +29,19 @@ router = APIRouter()
 
 # -- Read Operations -----------------------------------------------------------------------------
 @router.get("/entries", response_model=List[PlannerEntryResponseDTO])
-def get_all_entries(session: Session = Depends(get_session)):
-    """Get all planner entries in position order."""
+def get_all_entries(
+    meal_id: Optional[int] = Query(None, description="Filter by meal ID"),
+    completed: Optional[bool] = Query(None, description="Filter by completion status"),
+    session: Session = Depends(get_session),
+):
+    """
+    Get planner entries with optional filtering.
+
+    - **meal_id**: Filter entries for a specific meal
+    - **completed**: Filter by completion status (true/false)
+    """
     service = PlannerService(session)
-    return service.get_all_entries()
+    return service.get_all_entries(meal_id=meal_id, completed=completed)
 
 
 @router.get("/entries/{entry_id}", response_model=PlannerEntryResponseDTO)
