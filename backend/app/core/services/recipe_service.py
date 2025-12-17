@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from ..dtos.ingredient_dtos import IngredientCreateDTO
 from ..dtos.recipe_dtos import (
     RecipeCreateDTO,
+    RecipeDeletionImpactDTO,
     RecipeFilterDTO,
     RecipeIngredientDTO,
     RecipeUpdateDTO)
@@ -18,6 +19,7 @@ from ..models.ingredient import Ingredient
 from ..models.recipe import Recipe
 from ..repositories.ingredient_repo import IngredientRepo
 from ..repositories.recipe_repo import RecipeRepo
+from ..repositories.meal_repo import MealRepo
 
 
 # ── Exceptions ──────────────────────────────────────────────────────────────────────────────────────────────
@@ -44,6 +46,7 @@ class RecipeService:
         # ensure ingredient repository is created before passing into recipe repository
         self.ingredient_repo = IngredientRepo(self.session)
         self.recipe_repo = RecipeRepo(self.session, self.ingredient_repo)
+        self.meal_repo = MealRepo(self.session)
 
     def create_recipe_with_ingredients(self, recipe_dto: RecipeCreateDTO) -> Recipe:
         if self.recipe_repo.recipe_exists(
@@ -172,17 +175,70 @@ class RecipeService:
             raise
 
     def delete_recipe(self, recipe_id: int) -> bool:
-        """Delete a recipe by ID."""
+        """
+        Delete a recipe by ID.
+        Cleans up side_recipe_ids arrays in affected meals before deletion.
+        """
         try:
             recipe = self.recipe_repo.get_by_id(recipe_id)
             if not recipe:
                 return False
+            
+            # Clean up side_recipe_ids arrays in affected meals
+            affected_meals = self.meal_repo.get_meals_by_recipe_id(recipe_id)
+            for meal in affected_meals:
+                # If this recipe is in side_recipe_ids, remove it
+                if recipe_id in meal.side_recipe_ids:
+                    meal.remove_side_recipe(recipe_id)
+                    self.meal_repo.update_meal(meal)
+            
+            # Delete the recipe (CASCADE will handle meals where it's the main recipe)
             self.recipe_repo.delete_recipe(recipe)
             self.session.commit()
             return True
         except Exception as e:
             self.session.rollback()
             print(f"Failed to delete recipe {recipe_id}: {e}", "error")
+            raise
+
+    def get_recipe_deletion_impact(self, recipe_id: int) -> RecipeDeletionImpactDTO:
+        """
+        Get information about what will be affected if this recipe is deleted.
+        
+        Returns:
+            RecipeDeletionImpactDTO with affected meals information
+        """
+        try:
+            recipe = self.recipe_repo.get_by_id(recipe_id)
+            if not recipe:
+                raise ValueError(f"Recipe {recipe_id} not found")
+            
+            # Get all meals affected by this recipe
+            affected_meals = self.meal_repo.get_meals_by_recipe_id(recipe_id)
+            
+            meals_to_delete = []
+            meals_to_update = []
+            
+            for meal in affected_meals:
+                if meal.main_recipe_id == recipe_id:
+                    # Meal will be deleted (CASCADE)
+                    meals_to_delete.append(meal.id)
+                elif recipe_id in meal.side_recipe_ids:
+                    # Meal will be updated (side recipe removed)
+                    meals_to_update.append(meal.id)
+            
+            return RecipeDeletionImpactDTO(
+                recipe_id=recipe.id,
+                recipe_name=recipe.recipe_name,
+                meals_to_delete=meals_to_delete,
+                meals_to_update=meals_to_update,
+                total_affected_meals=len(meals_to_delete) + len(meals_to_update)
+            )
+            
+        except ValueError:
+            raise
+        except Exception as e:
+            print(f"Failed to get deletion impact for recipe {recipe_id}: {e}", "error")
             raise
 
     def update_recipe(self, recipe_id: int, update_dto: RecipeUpdateDTO) -> Recipe:

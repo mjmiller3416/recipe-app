@@ -12,6 +12,7 @@ from app.core.database.db import get_session
 from app.core.dtos.recipe_dtos import (
     RecipeCardDTO,
     RecipeCreateDTO,
+    RecipeDeletionImpactDTO,
     RecipeFilterDTO,
     RecipeIngredientResponseDTO,
     RecipeResponseDTO,
@@ -171,6 +172,18 @@ def update_recipe(
         return _recipe_to_response_dto(recipe)
     except RecipeSaveError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/{recipe_id}/deletion-impact", response_model=RecipeDeletionImpactDTO)
+def get_recipe_deletion_impact(recipe_id: int, session: Session = Depends(get_session)):
+    """Get information about what will be affected if this recipe is deleted."""
+    service = RecipeService(session)
+    try:
+        return service.get_recipe_deletion_impact(recipe_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get deletion impact: {str(e)}")
 
 
 @router.delete("/{recipe_id}")

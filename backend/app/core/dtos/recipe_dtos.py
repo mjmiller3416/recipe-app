@@ -154,3 +154,15 @@ class RecipeFilterDTO(BaseModel):
     search_term: Optional[str] = None
     limit: Optional[int] = Field(None, ge=1, le=100)
     offset: Optional[int] = Field(None, ge=0)
+
+# ── Recipe Deletion Impact DTO ──────────────────────────────────────────────────────────────────────────────
+class RecipeDeletionImpactDTO(BaseModel):
+    """DTO for recipe deletion impact information."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    recipe_id: int
+    recipe_name: str
+    meals_to_delete: List[int] = Field(default_factory=list)  # Meals where this is the main recipe
+    meals_to_update: List[int] = Field(default_factory=list)  # Meals where this is in side_recipe_ids
+    total_affected_meals: int
