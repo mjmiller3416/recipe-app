@@ -99,17 +99,15 @@ export interface IngredientDetailDTO extends IngredientBaseDTO {
 export interface MealSelectionBaseDTO {
   meal_name: string;
   main_recipe_id: number;
-  side_recipe_1_id: number | null;
-  side_recipe_2_id: number | null;
-  side_recipe_3_id: number | null;
+  side_recipe_ids: number[];
+  is_favorite: boolean;
+  tags: string[];
 }
 
 export interface MealSelectionResponseDTO extends MealSelectionBaseDTO {
   id: number;
+  created_at: string | null;
   main_recipe: RecipeCardDTO | null;
-  side_recipe_1: RecipeCardDTO | null;
-  side_recipe_2: RecipeCardDTO | null;
-  side_recipe_3: RecipeCardDTO | null;
 }
 
 export interface MealPlanSummaryDTO {
@@ -221,17 +219,17 @@ export interface RecipeUpdateDTO {
 export interface MealSelectionCreateDTO {
   meal_name: string;
   main_recipe_id: number;
-  side_recipe_1_id?: number | null;
-  side_recipe_2_id?: number | null;
-  side_recipe_3_id?: number | null;
+  side_recipe_ids?: number[];
+  is_favorite?: boolean;
+  tags?: string[];
 }
 
 export interface MealSelectionUpdateDTO {
   meal_name?: string;
   main_recipe_id?: number;
-  side_recipe_1_id?: number | null;
-  side_recipe_2_id?: number | null;
-  side_recipe_3_id?: number | null;
+  side_recipe_ids?: number[];
+  is_favorite?: boolean;
+  tags?: string[];
 }
 
 export interface MealPlanSaveResultDTO {

@@ -171,67 +171,60 @@ export const recipeApi = {
 
 export const plannerApi = {
   /**
-   * Get all meal selections
+   * Get all meals
    */
   getMeals: (): Promise<MealSelectionResponseDTO[]> =>
-    fetchApi<MealSelectionResponseDTO[]>("/api/planner/meals"),
+    fetchApi<MealSelectionResponseDTO[]>("/api/meals"),
 
   /**
-   * Get saved meal plan
-   */
-  getSavedPlan: (): Promise<MealSelectionResponseDTO[]> =>
-    fetchApi<MealSelectionResponseDTO[]>("/api/planner/saved"),
-
-  /**
-   * Get meal plan summary
+   * Get planner summary
    */
   getSummary: (): Promise<MealPlanSummaryDTO> =>
     fetchApi<MealPlanSummaryDTO>("/api/planner/summary"),
 
   /**
-   * Get a single meal selection
+   * Get a single meal
    */
   getMeal: (id: number): Promise<MealSelectionResponseDTO> =>
-    fetchApi<MealSelectionResponseDTO>(`/api/planner/meals/${id}`),
+    fetchApi<MealSelectionResponseDTO>(`/api/meals/${id}`),
 
   /**
-   * Create a new meal selection
+   * Create a new meal
    */
   createMeal: (data: MealSelectionCreateDTO): Promise<MealSelectionResponseDTO> =>
-    fetchApi<MealSelectionResponseDTO>("/api/planner/meals", {
+    fetchApi<MealSelectionResponseDTO>("/api/meals", {
       method: "POST",
       body: JSON.stringify(data),
     }),
 
   /**
-   * Update an existing meal selection
+   * Update an existing meal
    */
   updateMeal: (
     id: number,
     data: MealSelectionUpdateDTO
   ): Promise<MealSelectionResponseDTO> =>
-    fetchApi<MealSelectionResponseDTO>(`/api/planner/meals/${id}`, {
+    fetchApi<MealSelectionResponseDTO>(`/api/meals/${id}`, {
       method: "PUT",
       body: JSON.stringify(data),
     }),
 
   /**
-   * Delete a meal selection
+   * Delete a meal
    */
   deleteMeal: (id: number): Promise<void> =>
-    fetchApi<void>(`/api/planner/meals/${id}`, { method: "DELETE" }),
+    fetchApi<void>(`/api/meals/${id}`, { method: "DELETE" }),
 
   /**
-   * Save meal plan
+   * Toggle meal favorite status
    */
-  savePlan: (mealIds: number[]): Promise<MealPlanSaveResultDTO> =>
-    fetchApi<MealPlanSaveResultDTO>("/api/planner/save", {
+  toggleFavorite: (id: number): Promise<MealSelectionResponseDTO> =>
+    fetchApi<MealSelectionResponseDTO>(`/api/meals/${id}/favorite`, {
       method: "POST",
-      body: JSON.stringify(mealIds),
     }),
 
   /**
-   * Clear meal plan
+   * Clear planner entries
    */
   clearPlan: (): Promise<void> =>
     fetchApi<void>("/api/planner/clear", { method: "DELETE" }),
@@ -446,17 +439,17 @@ export interface RecipeUpdateDTO {
 export interface MealSelectionCreateDTO {
   meal_name: string;
   main_recipe_id: number;
-  side_recipe_1_id?: number | null;
-  side_recipe_2_id?: number | null;
-  side_recipe_3_id?: number | null;
+  side_recipe_ids?: number[];
+  is_favorite?: boolean;
+  tags?: string[];
 }
 
 export interface MealSelectionUpdateDTO {
   meal_name?: string;
   main_recipe_id?: number;
-  side_recipe_1_id?: number | null;
-  side_recipe_2_id?: number | null;
-  side_recipe_3_id?: number | null;
+  side_recipe_ids?: number[];
+  is_favorite?: boolean;
+  tags?: string[];
 }
 
 export interface MealPlanSaveResultDTO {

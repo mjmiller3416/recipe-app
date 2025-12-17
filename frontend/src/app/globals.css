@@ -246,7 +246,7 @@
    TAILWIND THEME INTEGRATION
    Maps CSS variables to Tailwind classes
    ============================================ */
-:root {
+@theme inline {
   /* Backgrounds */
   --color-background: var(--background);
   --color-background-subtle: var(--background-subtle);
