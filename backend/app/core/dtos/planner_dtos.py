@@ -1,104 +1,98 @@
 """app/core/dtos/planner_dtos.py
 
-Pydantic DTOs for meal planning and selection operations.
+Pydantic DTOs for planner entry operations.
 """
 
 # ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
 from __future__ import annotations
 
+from datetime import date, datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .recipe_dtos import RecipeCardDTO
-
-# Ensure Recipe is available at runtime for forward references
-"""DTO for meal selection responses with full recipe information is simplified to include only ID."""
+from .meal_dtos import MealResponseDTO
 
 
-# ── Base DTOs ───────────────────────────────────────────────────────────────────────────────────────────────
-class MealSelectionBaseDTO(BaseModel):
-    """Base DTO for meal selection operations."""
+# ── Planner Entry DTOs ──────────────────────────────────────────────────────────────────────────────────────
+class PlannerEntryBaseDTO(BaseModel):
+    """Base DTO for planner entry operations."""
 
     model_config = ConfigDict(from_attributes=True)
 
-    meal_name: str = Field(..., min_length=1, max_length=255)
-    main_recipe_id: int = Field(..., ge=1)
-    side_recipe_1_id: Optional[int] = Field(None, ge=1)
-    side_recipe_2_id: Optional[int] = Field(None, ge=1)
-    side_recipe_3_id: Optional[int] = Field(None, ge=1)
+    meal_id: int = Field(..., ge=1)
+    position: int = Field(default=0, ge=0)
+    is_completed: bool = Field(default=False)
+    scheduled_date: Optional[date] = None
 
-# ── Create DTO ──────────────────────────────────────────────────────────────────────────────────────────────
-class MealSelectionCreateDTO(MealSelectionBaseDTO):
-    """DTO for creating a new meal selection."""
-    pass
 
-# ── Update DTO ──────────────────────────────────────────────────────────────────────────────────────────────
-class MealSelectionUpdateDTO(BaseModel):
-    """DTO for updating an existing meal selection."""
+class PlannerEntryCreateDTO(BaseModel):
+    """DTO for creating a new planner entry."""
 
     model_config = ConfigDict(from_attributes=True)
 
-    meal_name: Optional[str] = Field(None, min_length=1, max_length=255)
-    main_recipe_id: Optional[int] = Field(None, ge=1)
-    side_recipe_1_id: Optional[int] = Field(None, ge=1)
-    side_recipe_2_id: Optional[int] = Field(None, ge=1)
-    side_recipe_3_id: Optional[int] = Field(None, ge=1)
+    meal_id: int = Field(..., ge=1)
+    scheduled_date: Optional[date] = None
 
-# ── Response DTO ────────────────────────────────────────────────────────────────────────────────────────────
-class MealSelectionResponseDTO(MealSelectionBaseDTO):
-    """DTO for meal selection responses with full recipe information."""
+
+class PlannerEntryUpdateDTO(BaseModel):
+    """DTO for updating an existing planner entry."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    position: Optional[int] = Field(None, ge=0)
+    is_completed: Optional[bool] = None
+    scheduled_date: Optional[date] = None
+
+
+class PlannerEntryResponseDTO(PlannerEntryBaseDTO):
+    """DTO for planner entry responses with full details."""
 
     id: int
-    main_recipe: Optional[RecipeCardDTO] = None
-    side_recipe_1: Optional[RecipeCardDTO] = None
-    side_recipe_2: Optional[RecipeCardDTO] = None
-    side_recipe_3: Optional[RecipeCardDTO] = None
+    completed_at: Optional[datetime] = None
+    meal: Optional[MealResponseDTO] = None
 
-# ── Filter DTO ──────────────────────────────────────────────────────────────────────────────────────────────
-class MealSelectionFilterDTO(BaseModel):
-    """DTO for filtering meal selections."""
+
+class PlannerEntryReorderDTO(BaseModel):
+    """DTO for reordering planner entries."""
 
     model_config = ConfigDict(from_attributes=True)
 
-    meal_name_pattern: Optional[str] = None
-    main_recipe_id: Optional[int] = None
-    contains_recipe_id: Optional[int] = None
-    limit: Optional[int] = Field(None, ge=1, le=100)
-    offset: Optional[int] = Field(None, ge=0)
+    entry_id: int = Field(..., ge=1)
+    new_position: int = Field(..., ge=0)
 
-# ── Summary DTO ─────────────────────────────────────────────────────────────────────────────────────────────
-class MealPlanSummaryDTO(BaseModel):
-    """DTO for meal plan summary information."""
+
+class PlannerEntriesReorderDTO(BaseModel):
+    """DTO for batch reordering planner entries."""
 
     model_config = ConfigDict(from_attributes=True)
 
-    total_meals: int
+    # List of entry IDs in the desired order
+    entry_ids: list[int] = Field(..., min_length=0, max_length=15)
+
+
+# ── Planner Summary ─────────────────────────────────────────────────────────────────────────────────────────
+class PlannerSummaryDTO(BaseModel):
+    """DTO for planner summary information."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    total_entries: int
+    completed_entries: int
+    pending_entries: int
     total_recipes: int
-    meal_names: list[str]
-    has_saved_plan: bool
+    has_entries: bool
     error: Optional[str] = None
 
-# ── Validation Result DTO ───────────────────────────────────────────────────────────────────────────────────
-class MealPlanValidationDTO(BaseModel):
-    """DTO for meal plan validation results."""
+
+# ── Planner Validation ──────────────────────────────────────────────────────────────────────────────────────
+class PlannerValidationDTO(BaseModel):
+    """DTO for planner validation results."""
 
     model_config = ConfigDict(from_attributes=True)
 
     is_valid: bool
-    valid_ids: list[int]
-    invalid_meal_ids: list[int]
-    total_meals: int
-    total_valid: int
+    can_add_more: bool
+    current_count: int
+    max_count: int = 15
     error: Optional[str] = None
-
-# ── Save Result DTO ─────────────────────────────────────────────────────────────────────────────────────────
-class MealPlanSaveResultDTO(BaseModel):
-    """DTO for meal plan save operation results."""
-
-    model_config = ConfigDict(from_attributes=True)
-
-    success: bool
-    saved_count: int
-    invalid_ids: list[int]
-    message: str
