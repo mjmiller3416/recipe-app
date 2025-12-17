@@ -24,6 +24,7 @@ from .recipe_ingredient import RecipeIngredient
 
 if TYPE_CHECKING:
     from .meal_selection import MealSelection
+    from .meal import Meal
 
 
 # ── Recipe Model ────────────────────────────────────────────────────────────────────────────────────────────
@@ -60,6 +61,13 @@ class Recipe(Base):
     main_meal_selections: Mapped[List["MealSelection"]] = relationship(
         "MealSelection",
         foreign_keys="MealSelection.main_recipe_id",
+        back_populates="main_recipe",
+        passive_deletes=True
+    )
+
+    meals_as_main: Mapped[List["Meal"]] = relationship(
+        "Meal",
+        foreign_keys="Meal.main_recipe_id",
         back_populates="main_recipe",
         passive_deletes=True
     )
