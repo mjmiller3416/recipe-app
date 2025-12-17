@@ -6,7 +6,7 @@ Repository for managing meal planner state and meal selections.
 # ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from sqlalchemy import delete, select, func
 from sqlalchemy.orm import Session, joinedload
@@ -167,6 +167,39 @@ class PlannerRepo:
             self.session.flush()
             return True
         return False
+
+    def remove_recipe_from_meal(self, meal_id: int, slot: Literal["side_1", "side_2", "side_3"]
+        ) -> Optional[MealSelection]:
+        """
+        Remove a recipe from a specific slot in a meal selection.
+
+        Note: Only side recipe slots can be cleared. To remove the main recipe,
+        use delete_meal_selection() instead as a meal cannot exist without a main recipe.
+
+        Args:
+            meal_id (int): ID of the meal selection to modify
+            slot (str): The recipe slot to clear ("side_1", "side_2", or "side_3")
+
+        Returns:
+            Optional[MealSelection]: Updated meal selection, or None if not found
+        """
+        meal_selection = self.get_meal_selection_by_id(meal_id)
+        if not meal_selection:
+            return None
+
+        slot_mapping = {
+            "side_1": "side_recipe_1_id",
+            "side_2": "side_recipe_2_id",
+            "side_3": "side_recipe_3_id",
+        }
+
+        attr_name = slot_mapping.get(slot)
+        if not attr_name:
+            raise ValueError(f"Invalid slot '{slot}'. Must be one of: {list(slot_mapping.keys())}")
+
+        setattr(meal_selection, attr_name, None)
+        self.session.flush()
+        return meal_selection
 
     # ── Validation Methods ──────────────────────────────────────────────────────────────────────────────────
     def validate_meal_ids(self, meal_ids: List[int]) -> List[int]:

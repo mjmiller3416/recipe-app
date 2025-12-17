@@ -7,7 +7,7 @@ Orchestrates repository operations and business logic.
 # ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -319,6 +319,34 @@ class PlannerService:
         except SQLAlchemyError:
             self.session.rollback()
             return False
+
+    def remove_recipe_from_meal(self, meal_id: int, slot: Literal["side_1", "side_2", "side_3"]
+        ) -> Optional[MealSelectionResponseDTO]:
+        """
+        Remove a recipe from a specific slot in a meal selection.
+
+        Note: Only side recipe slots can be cleared. To remove the main recipe,
+        use delete_meal_selection() instead as a meal cannot exist without a main recipe.
+
+        Args:
+            meal_id (int): ID of the meal selection to modify.
+            slot (str): The recipe slot to clear ("side_1", "side_2", or "side_3").
+
+        Returns:
+            Optional[MealSelectionResponseDTO]: Updated meal selection, or None if not found.
+        """
+        try:
+            updated_meal = self.repo.remove_recipe_from_meal(meal_id, slot)
+            if updated_meal is None:
+                return None
+
+            self.session.commit()
+            return self._meal_to_response_dto(updated_meal)
+
+        except (SQLAlchemyError, ValueError) as e:
+            self.session.rollback()
+            print(f"Failed to remove recipe from meal {meal_id}, transaction rolled back: {e}", "error")
+            return None
 
     # ── Search and Query Operations ─────────────────────────────────────────────────────────────────────────
     def search_meals_by_recipe(self, recipe_id: int) -> List[MealSelectionResponseDTO]:
