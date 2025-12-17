@@ -23,7 +23,7 @@ from ..dtos.shopping_dtos import (
     ShoppingListGenerationResultDTO,
     ShoppingListResponseDTO)
 from ..models.shopping_item import ShoppingItem
-from ..repositories.planner_repo import PlannerRepo
+from ..repositories.meal_repo import MealRepo
 from ..repositories.shopping_repo import ShoppingRepo
 
 
@@ -39,7 +39,7 @@ class ShoppingService:
             session = create_session()
         self.session = session
         self.shopping_repo = ShoppingRepo(self.session)
-        self.planner_repo = PlannerRepo(self.session)
+        self.meal_repo = MealRepo(self.session)
 
     # ── Shopping List Generation ────────────────────────────────────────────────────────────────────────────
     def generate_shopping_list(
@@ -142,33 +142,27 @@ class ShoppingService:
 
     def _extract_recipe_ids_from_meals(self, meal_ids: List[int]) -> List[int]:
         """
-        Extract all recipe IDs from meal selections.
+        Extract all recipe IDs from meals.
 
         Args:
-            meal_ids (List[int]): List of meal selection IDs.
+            meal_ids (List[int]): List of meal IDs.
 
         Returns:
             List[int]: List of recipe IDs used in the meals.
         """
         recipe_ids = []
         for meal_id in meal_ids:
-            meal = self.planner_repo.get_meal_selection_by_id(meal_id)
+            meal = self.meal_repo.get_by_id(meal_id)
             if meal:
-                recipe_ids.append(meal.main_recipe_id)
-                if meal.side_recipe_1_id:
-                    recipe_ids.append(meal.side_recipe_1_id)
-                if meal.side_recipe_2_id:
-                    recipe_ids.append(meal.side_recipe_2_id)
-                if meal.side_recipe_3_id:
-                    recipe_ids.append(meal.side_recipe_3_id)
+                recipe_ids.extend(meal.get_all_recipe_ids())
         return recipe_ids
 
     def get_recipe_ids_from_meals(self, meal_ids: List[int]) -> List[int]:
         """
-        Public alias for extracting all recipe IDs from saved meal selections.
+        Public alias for extracting all recipe IDs from meals.
 
         Args:
-            meal_ids (List[int]): List of meal selection IDs.
+            meal_ids (List[int]): List of meal IDs.
 
         Returns:
             List[int]: Flattened list of recipe IDs used in those meals.

@@ -9,14 +9,18 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from ..dtos.ingredient_dtos import IngredientCreateDTO
+from ..dtos.meal_dtos import MealResponseDTO, RecipeDeletionImpactDTO
 from ..dtos.recipe_dtos import (
+    RecipeCardDTO,
     RecipeCreateDTO,
     RecipeFilterDTO,
     RecipeIngredientDTO,
     RecipeUpdateDTO)
 from ..models.ingredient import Ingredient
+from ..models.meal import Meal
 from ..models.recipe import Recipe
 from ..repositories.ingredient_repo import IngredientRepo
+from ..repositories.meal_repo import MealRepo
 from ..repositories.recipe_repo import RecipeRepo
 
 
@@ -44,6 +48,7 @@ class RecipeService:
         # ensure ingredient repository is created before passing into recipe repository
         self.ingredient_repo = IngredientRepo(self.session)
         self.recipe_repo = RecipeRepo(self.session, self.ingredient_repo)
+        self.meal_repo = MealRepo(self.session)
 
     def create_recipe_with_ingredients(self, recipe_dto: RecipeCreateDTO) -> Recipe:
         if self.recipe_repo.recipe_exists(
@@ -172,11 +177,22 @@ class RecipeService:
             raise
 
     def delete_recipe(self, recipe_id: int) -> bool:
-        """Delete a recipe by ID."""
+        """
+        Delete a recipe by ID.
+
+        Before deletion:
+        - Meals with this recipe as main will CASCADE delete
+        - Meals with this recipe as a side will have it removed from their side_recipe_ids
+        """
         try:
             recipe = self.recipe_repo.get_by_id(recipe_id)
             if not recipe:
                 return False
+
+            # Clean up side_recipe_ids in affected meals before deletion
+            # (Meals with this as main will CASCADE delete automatically)
+            self.meal_repo.remove_side_recipe_from_all_meals(recipe_id)
+
             self.recipe_repo.delete_recipe(recipe)
             self.session.commit()
             return True
@@ -184,6 +200,54 @@ class RecipeService:
             self.session.rollback()
             print(f"Failed to delete recipe {recipe_id}: {e}", "error")
             raise
+
+    def get_recipe_deletion_impact(self, recipe_id: int) -> RecipeDeletionImpactDTO:
+        """
+        Get the impact of deleting a recipe on meals.
+
+        Returns information about:
+        - meals_to_delete: Meals that will be deleted (recipe is their main_recipe_id)
+        - meals_to_update: Meals that will have this recipe removed from sides
+
+        Args:
+            recipe_id: ID of the recipe to check
+
+        Returns:
+            RecipeDeletionImpactDTO with affected meals
+        """
+        try:
+            meals_as_main = self.meal_repo.get_meals_by_main_recipe(recipe_id)
+            meals_as_side = self.meal_repo.get_meals_with_side_recipe(recipe_id)
+
+            meals_to_delete = [self._meal_to_response_dto(m) for m in meals_as_main]
+            meals_to_update = [self._meal_to_response_dto(m) for m in meals_as_side]
+
+            return RecipeDeletionImpactDTO(
+                recipe_id=recipe_id,
+                meals_to_delete=meals_to_delete,
+                meals_to_update=meals_to_update,
+                total_affected=len(meals_to_delete) + len(meals_to_update),
+            )
+        except SQLAlchemyError:
+            return RecipeDeletionImpactDTO(
+                recipe_id=recipe_id,
+                meals_to_delete=[],
+                meals_to_update=[],
+                total_affected=0,
+            )
+
+    def _meal_to_response_dto(self, meal: Meal) -> MealResponseDTO:
+        """Convert a Meal model to a response DTO."""
+        return MealResponseDTO(
+            id=meal.id,
+            meal_name=meal.meal_name,
+            main_recipe_id=meal.main_recipe_id,
+            side_recipe_ids=meal.side_recipe_ids,
+            is_favorite=meal.is_favorite,
+            tags=meal.tags,
+            created_at=meal.created_at.isoformat() if meal.created_at else None,
+            main_recipe=RecipeCardDTO.from_recipe(meal.main_recipe),
+        )
 
     def update_recipe(self, recipe_id: int, update_dto: RecipeUpdateDTO) -> Recipe:
         """

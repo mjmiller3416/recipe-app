@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database.db import get_session
+from app.core.dtos.meal_dtos import RecipeDeletionImpactDTO
 from app.core.dtos.recipe_dtos import (
     RecipeCardDTO,
     RecipeCreateDTO,
@@ -130,6 +131,22 @@ def get_meal_types(session: Session = Depends(get_session)):
     recipes = service.list_filtered(RecipeFilterDTO())
     meal_types = set(r.meal_type for r in recipes if r.meal_type)
     return sorted(meal_types)
+
+
+@router.get("/{recipe_id}/deletion-impact", response_model=RecipeDeletionImpactDTO)
+def get_deletion_impact(recipe_id: int, session: Session = Depends(get_session)):
+    """
+    Get the impact of deleting a recipe on meals.
+
+    Returns:
+    - meals_to_delete: Meals that will be deleted (recipe is their main)
+    - meals_to_update: Meals that will have this recipe removed from sides
+    """
+    service = RecipeService(session)
+    recipe = service.get_recipe(recipe_id)
+    if not recipe:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return service.get_recipe_deletion_impact(recipe_id)
 
 
 @router.get("/{recipe_id}", response_model=RecipeResponseDTO)

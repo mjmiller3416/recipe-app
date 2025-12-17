@@ -1,6 +1,7 @@
-# app/core/repos/__init__.py
+# app/core/repositories/__init__.py
 
 from .ingredient_repo import IngredientRepo
+from .meal_repo import MealRepo
 from .planner_repo import PlannerRepo
 from .recipe_repo import RecipeRepo
 from .shopping_repo import ShoppingRepo
@@ -8,6 +9,7 @@ from .shopping_repo import ShoppingRepo
 __all__ = [
     "RecipeRepo",
     "IngredientRepo",
+    "MealRepo",
     "PlannerRepo",
     "ShoppingRepo",
 ]

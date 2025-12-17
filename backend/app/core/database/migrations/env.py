@@ -46,6 +46,8 @@ if database_url:
 from app.core.database.base import Base
 from app.core.models.ingredient import Ingredient
 # import all models to register them with metadata
+from app.core.models.meal import Meal
+from app.core.models.planner_entry import PlannerEntry
 from app.core.models.recipe import Recipe
 from app.core.models.recipe_history import RecipeHistory
 from app.core.models.recipe_ingredient import RecipeIngredient

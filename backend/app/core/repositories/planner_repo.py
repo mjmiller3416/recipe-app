@@ -1,326 +1,385 @@
 """app/core/repositories/planner_repo.py
 
-Repository for managing meal planner state and meal selections.
+Repository for managing planner entry operations.
+Handles only the planner state - meal CRUD is in meal_repo.py.
 """
 
-# ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
+# -- Imports -------------------------------------------------------------------------------------
 from __future__ import annotations
 
-from typing import List, Literal, Optional
+from typing import List, Optional
 
-from sqlalchemy import delete, select, func
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.orm import Session, joinedload
 
-from ..models.meal_selection import MealSelection
-from ..models.recipe import Recipe
-from ..models.saved_meal_state import SavedMealState
+from ..models.meal import Meal
+from ..models.planner_entry import PlannerEntry
 
 
-# ── Planner Repository ──────────────────────────────────────────────────────────────────────────────────────
+# -- Constants -----------------------------------------------------------------------------------
+MAX_PLANNER_ENTRIES = 15
+
+
+# -- Planner Repository --------------------------------------------------------------------------
 class PlannerRepo:
-    """Repository for meal planner operations."""
+    """Repository for planner entry operations."""
 
     def __init__(self, session: Session):
         """Initialize the Planner Repository with a database session."""
         self.session = session
 
-    # ── Saved Meal State Operations ─────────────────────────────────────────────────────────────────────────
-    def get_saved_meal_ids(self) -> List[int]:
+    # -- Create Operations -----------------------------------------------------------------------
+    def add_entry(self, meal_id: int, position: Optional[int] = None) -> PlannerEntry:
         """
-        Load saved meal IDs from the database.
-
-        Returns:
-            List[int]: List of saved meal IDs.
-        """
-        stmt = select(SavedMealState.meal_id)
-        result = self.session.execute(stmt)
-        return result.scalars().all()
-
-    def save_active_meal_ids(self, meal_ids: List[int]) -> None:
-        """
-        Save the active meal IDs to the database atomically.
-        Clears existing saved states and saves new ones.
+        Add a meal to the planner.
 
         Args:
-            meal_ids (List[int]): List of meal IDs to save.
-        """
-        # clear existing saved states
-        self.clear_saved_meal_states()
+            meal_id: ID of the meal to add
+            position: Optional position (defaults to next available)
 
-        # save new meal IDs
-        for meal_id in meal_ids:
-            saved_state = SavedMealState(meal_id=meal_id)
-            self.session.add(saved_state)
-        # flush so new saved meal states can be read immediately in this session
+        Returns:
+            Created PlannerEntry
+        """
+        if position is None:
+            position = self._get_next_position()
+
+        entry = PlannerEntry(meal_id=meal_id, position=position)
+        self.session.add(entry)
         self.session.flush()
+        self.session.refresh(entry)
+        return entry
 
-    def clear_saved_meal_states(self) -> None:
-        """Clear all saved meal states from the database."""
-        stmt = delete(SavedMealState)
-        self.session.execute(stmt)
-
-    def get_saved_meal_states(self) -> List[SavedMealState]:
+    # -- Read Operations -------------------------------------------------------------------------
+    def get_by_id(self, entry_id: int) -> Optional[PlannerEntry]:
         """
-        Get all saved meal states with their associated meal selections.
-
-        Returns:
-            List[SavedMealState]: List of saved meal states with loaded relationships.
-        """
-        stmt = select(SavedMealState).options(
-            joinedload(SavedMealState.meal_selection).joinedload(MealSelection.main_recipe),
-            joinedload(SavedMealState.meal_selection).joinedload(MealSelection.side_recipe_1),
-            joinedload(SavedMealState.meal_selection).joinedload(MealSelection.side_recipe_2),
-            joinedload(SavedMealState.meal_selection).joinedload(MealSelection.side_recipe_3),
-        )
-        result = self.session.execute(stmt)
-        return result.scalars().unique().all()  # added unique() for joinedload
-
-    # ── Meal Selection Operations ───────────────────────────────────────────────────────────────────────────
-    def create_meal_selection(self, meal_selection: MealSelection) -> MealSelection:
-        """
-        Create and persist a new MealSelection to the database.
+        Get a planner entry by ID with eager-loaded meal and recipe.
 
         Args:
-            meal_selection (MealSelection): Unsaved model instance (id should be None)
+            entry_id: ID of the entry
 
         Returns:
-            MealSelection: Saved instance with assigned ID
+            PlannerEntry if found, None otherwise
         """
-        if meal_selection.id is not None:
-            raise ValueError("Cannot create a meal selection that already has an ID.")
-
-        self.session.add(meal_selection)
-        # ensure the INSERT is flushed so the instance becomes persistent and gets its ID
-        self.session.flush()
-        self.session.refresh(meal_selection)
-        return meal_selection
-
-    def update_meal_selection(self, meal_selection: MealSelection) -> MealSelection:
-        """
-        Update an existing MealSelection in the database.
-
-        Args:
-            meal_selection (MealSelection): Model instance with valid ID
-
-        Returns:
-            MealSelection: Updated meal selection
-        """
-        if meal_selection.id is None:
-            raise ValueError("Cannot update a meal selection without an ID.")
-
-        # merge the instance with the session
-        merged_meal = self.session.merge(meal_selection)
-        return merged_meal
-
-    def get_meal_selection_by_id(self, meal_id: int) -> Optional[MealSelection]:
-        """
-        Load a MealSelection from the database by ID with all relationships.
-
-        Args:
-            meal_id (int): ID of the meal to load
-
-        Returns:
-            Optional[MealSelection]: Loaded model or None if not found
-        """
-        stmt = select(MealSelection).where(MealSelection.id == meal_id).options(
-            joinedload(MealSelection.main_recipe),
-            joinedload(MealSelection.side_recipe_1),
-            joinedload(MealSelection.side_recipe_2),
-            joinedload(MealSelection.side_recipe_3)
+        stmt = (
+            select(PlannerEntry)
+            .where(PlannerEntry.id == entry_id)
+            .options(
+                joinedload(PlannerEntry.meal).joinedload(Meal.main_recipe)
+            )
         )
         result = self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    def get_all_meal_selections(self) -> List[MealSelection]:
+    def get_all(self) -> List[PlannerEntry]:
         """
-        Get all meal selections with their associated recipes.
+        Get all planner entries ordered by position, with eager-loaded relationships.
 
         Returns:
-            List[MealSelection]: List of all meal selections with loaded relationships.
+            List of all planner entries
         """
-        stmt = select(MealSelection).options(
-            joinedload(MealSelection.main_recipe),
-            joinedload(MealSelection.side_recipe_1),
-            joinedload(MealSelection.side_recipe_2),
-            joinedload(MealSelection.side_recipe_3)
+        stmt = (
+            select(PlannerEntry)
+            .options(
+                joinedload(PlannerEntry.meal).joinedload(Meal.main_recipe)
+            )
+            .order_by(PlannerEntry.position)
         )
         result = self.session.execute(stmt)
-        return result.scalars().all()
+        return result.scalars().unique().all()
 
-    def delete_meal_selection(self, meal_id: int) -> bool:
+    def get_by_meal_id(self, meal_id: int) -> List[PlannerEntry]:
         """
-        Delete a meal selection by ID.
+        Get all planner entries for a specific meal.
 
         Args:
-            meal_id (int): ID of the meal selection to delete
+            meal_id: ID of the meal
 
         Returns:
-            bool: True if deleted, False if not found
+            List of planner entries for this meal
         """
-        stmt = select(MealSelection).where(MealSelection.id == meal_id)
+        stmt = (
+            select(PlannerEntry)
+            .where(PlannerEntry.meal_id == meal_id)
+            .options(
+                joinedload(PlannerEntry.meal).joinedload(Meal.main_recipe)
+            )
+            .order_by(PlannerEntry.position)
+        )
         result = self.session.execute(stmt)
-        meal_selection = result.scalar_one_or_none()
+        return result.scalars().unique().all()
 
-        if meal_selection:
-            self.session.delete(meal_selection)
-            # flush to push the delete before any follow-up queries
+    def get_meal_ids(self) -> List[int]:
+        """
+        Get all meal IDs currently in the planner.
+
+        Returns:
+            List of meal IDs in position order
+        """
+        stmt = (
+            select(PlannerEntry.meal_id)
+            .order_by(PlannerEntry.position)
+        )
+        result = self.session.execute(stmt)
+        return list(result.scalars().all())
+
+    def get_completed_entries(self) -> List[PlannerEntry]:
+        """
+        Get all completed planner entries.
+
+        Returns:
+            List of completed entries
+        """
+        stmt = (
+            select(PlannerEntry)
+            .where(PlannerEntry.is_completed == True)
+            .options(
+                joinedload(PlannerEntry.meal).joinedload(Meal.main_recipe)
+            )
+            .order_by(PlannerEntry.position)
+        )
+        result = self.session.execute(stmt)
+        return result.scalars().unique().all()
+
+    def get_incomplete_entries(self) -> List[PlannerEntry]:
+        """
+        Get all incomplete planner entries.
+
+        Returns:
+            List of incomplete entries
+        """
+        stmt = (
+            select(PlannerEntry)
+            .where(PlannerEntry.is_completed == False)
+            .options(
+                joinedload(PlannerEntry.meal).joinedload(Meal.main_recipe)
+            )
+            .order_by(PlannerEntry.position)
+        )
+        result = self.session.execute(stmt)
+        return result.scalars().unique().all()
+
+    # -- Update Operations -----------------------------------------------------------------------
+    def update(self, entry: PlannerEntry) -> PlannerEntry:
+        """
+        Update a planner entry.
+
+        Args:
+            entry: PlannerEntry with changes
+
+        Returns:
+            Updated entry
+        """
+        merged = self.session.merge(entry)
+        self.session.flush()
+        return merged
+
+    def update_position(self, entry_id: int, new_position: int) -> Optional[PlannerEntry]:
+        """
+        Update the position of a planner entry.
+
+        Args:
+            entry_id: ID of the entry
+            new_position: New position value
+
+        Returns:
+            Updated entry or None if not found
+        """
+        entry = self.get_by_id(entry_id)
+        if not entry:
+            return None
+
+        entry.position = new_position
+        self.session.flush()
+        return entry
+
+    def reorder_entries(self, entry_ids: List[int]) -> bool:
+        """
+        Reorder entries based on the provided ID order.
+        Sets positions to 0, 1, 2, ... based on ID order.
+
+        Args:
+            entry_ids: List of entry IDs in desired order
+
+        Returns:
+            True if successful
+        """
+        for position, entry_id in enumerate(entry_ids):
+            stmt = (
+                update(PlannerEntry)
+                .where(PlannerEntry.id == entry_id)
+                .values(position=position)
+            )
+            self.session.execute(stmt)
+        self.session.flush()
+        return True
+
+    def mark_completed(self, entry_id: int) -> Optional[PlannerEntry]:
+        """
+        Mark a planner entry as completed.
+
+        Args:
+            entry_id: ID of the entry
+
+        Returns:
+            Updated entry or None if not found
+        """
+        entry = self.get_by_id(entry_id)
+        if not entry:
+            return None
+
+        entry.mark_completed()
+        self.session.flush()
+        return entry
+
+    def mark_incomplete(self, entry_id: int) -> Optional[PlannerEntry]:
+        """
+        Mark a planner entry as incomplete.
+
+        Args:
+            entry_id: ID of the entry
+
+        Returns:
+            Updated entry or None if not found
+        """
+        entry = self.get_by_id(entry_id)
+        if not entry:
+            return None
+
+        entry.mark_incomplete()
+        self.session.flush()
+        return entry
+
+    def toggle_completion(self, entry_id: int) -> Optional[PlannerEntry]:
+        """
+        Toggle the completion status of a planner entry.
+
+        Args:
+            entry_id: ID of the entry
+
+        Returns:
+            Updated entry or None if not found
+        """
+        entry = self.get_by_id(entry_id)
+        if not entry:
+            return None
+
+        entry.toggle_completion()
+        self.session.flush()
+        return entry
+
+    # -- Delete Operations -----------------------------------------------------------------------
+    def remove_entry(self, entry_id: int) -> bool:
+        """
+        Remove a planner entry by ID.
+        Does NOT delete the underlying meal.
+
+        Args:
+            entry_id: ID of the entry to remove
+
+        Returns:
+            True if removed, False if not found
+        """
+        entry = self.get_by_id(entry_id)
+        if entry:
+            self.session.delete(entry)
             self.session.flush()
+            self._normalize_positions()
             return True
         return False
 
-    def remove_recipe_from_meal(self, meal_id: int, slot: Literal["side_1", "side_2", "side_3"]
-        ) -> Optional[MealSelection]:
+    def remove_entries_by_meal_id(self, meal_id: int) -> int:
         """
-        Remove a recipe from a specific slot in a meal selection.
-
-        Note: Only side recipe slots can be cleared. To remove the main recipe,
-        use delete_meal_selection() instead as a meal cannot exist without a main recipe.
+        Remove all planner entries for a specific meal.
 
         Args:
-            meal_id (int): ID of the meal selection to modify
-            slot (str): The recipe slot to clear ("side_1", "side_2", or "side_3")
+            meal_id: ID of the meal
 
         Returns:
-            Optional[MealSelection]: Updated meal selection, or None if not found
+            Number of entries removed
         """
-        meal_selection = self.get_meal_selection_by_id(meal_id)
-        if not meal_selection:
-            return None
-
-        slot_mapping = {
-            "side_1": "side_recipe_1_id",
-            "side_2": "side_recipe_2_id",
-            "side_3": "side_recipe_3_id",
-        }
-
-        attr_name = slot_mapping.get(slot)
-        if not attr_name:
-            raise ValueError(f"Invalid slot '{slot}'. Must be one of: {list(slot_mapping.keys())}")
-
-        setattr(meal_selection, attr_name, None)
+        stmt = delete(PlannerEntry).where(PlannerEntry.meal_id == meal_id)
+        result = self.session.execute(stmt)
         self.session.flush()
-        return meal_selection
+        self._normalize_positions()
+        return result.rowcount
 
-    # ── Validation Methods ──────────────────────────────────────────────────────────────────────────────────
-    def validate_meal_ids(self, meal_ids: List[int]) -> List[int]:
+    def clear_all(self) -> int:
         """
-        Validate the given meal IDs against the database.
-
-        Args:
-            meal_ids (List[int]): List of meal IDs to validate
+        Clear all planner entries.
 
         Returns:
-            List[int]: List of valid meal IDs that exist in the database.
+            Number of entries cleared
         """
-        if not meal_ids:
-            return []
-
-        stmt = select(MealSelection.id).where(MealSelection.id.in_(meal_ids))
+        stmt = delete(PlannerEntry)
         result = self.session.execute(stmt)
-        return result.scalars().all()
+        self.session.flush()
+        return result.rowcount
 
-    def validate_recipe_ids(self, recipe_ids: List[int]) -> List[int]:
+    def clear_completed(self) -> int:
         """
-        Validate the given recipe IDs against the database.
-
-        Args:
-            recipe_ids (List[int]): List of recipe IDs to validate
+        Clear all completed planner entries.
 
         Returns:
-            List[int]: List of valid recipe IDs that exist in the database.
+            Number of entries cleared
         """
-        if not recipe_ids:
-            return []
-
-        stmt = select(Recipe.id).where(Recipe.id.in_(recipe_ids))
+        stmt = delete(PlannerEntry).where(PlannerEntry.is_completed == True)
         result = self.session.execute(stmt)
-        return result.scalars().all()
+        self.session.flush()
+        self._normalize_positions()
+        return result.rowcount
 
-    # ── Query Methods ───────────────────────────────────────────────────────────────────────────────────────
-    def get_meals_by_recipe_id(self, recipe_id: int) -> List[MealSelection]:
+    # -- Utility Methods -------------------------------------------------------------------------
+    def count(self) -> int:
         """
-        Get all meal selections that contain a specific recipe (main or side).
-
-        Args:
-            recipe_id (int): ID of the recipe to search for
+        Count total number of planner entries.
 
         Returns:
-            List[MealSelection]: List of meal selections containing the recipe
+            Total count
         """
-        stmt = select(MealSelection).where(
-            (MealSelection.main_recipe_id == recipe_id) |
-            (MealSelection.side_recipe_1_id == recipe_id) |
-            (MealSelection.side_recipe_2_id == recipe_id) |
-            (MealSelection.side_recipe_3_id == recipe_id)
-        ).options(
-            joinedload(MealSelection.main_recipe),
-            joinedload(MealSelection.side_recipe_1),
-            joinedload(MealSelection.side_recipe_2),
-            joinedload(MealSelection.side_recipe_3)
-        )
-        result = self.session.execute(stmt)
-        return result.scalars().all()
-
-    def get_meals_by_name_pattern(self, name_pattern: str) -> List[MealSelection]:
-        """
-        Get meal selections by name pattern (case-insensitive).
-
-        Args:
-            name_pattern (str): Pattern to search for in meal names
-
-        Returns:
-            List[MealSelection]: List of matching meal selections
-        """
-        stmt = select(MealSelection).where(
-            MealSelection.meal_name.ilike(f"%{name_pattern}%")
-        ).options(
-            joinedload(MealSelection.main_recipe),
-            joinedload(MealSelection.side_recipe_1),
-            joinedload(MealSelection.side_recipe_2),
-            joinedload(MealSelection.side_recipe_3)
-        )
-        result = self.session.execute(stmt)
-        return result.scalars().all()
-
-    # ── Utility Methods ─────────────────────────────────────────────────────────────────────────────────────
-    def get_saved_meal_selections(self) -> List[MealSelection]:
-        """
-        Get all currently saved meal selections with their recipes.
-
-        Returns:
-            List[MealSelection]: List of saved meal selections with loaded relationships.
-        """
-        saved_ids = self.get_saved_meal_ids()
-        if not saved_ids:
-            return []
-
-        stmt = select(MealSelection).where(
-            MealSelection.id.in_(saved_ids)
-        ).options(
-            joinedload(MealSelection.main_recipe),
-            joinedload(MealSelection.side_recipe_1),
-            joinedload(MealSelection.side_recipe_2),
-            joinedload(MealSelection.side_recipe_3)
-        )
-        result = self.session.execute(stmt)
-        return result.scalars().all()
-
-    def count_meal_selections(self) -> int:
-        """
-        Count total number of meal selections in the database.
-
-        Returns:
-            int: Total count of meal selections
-        """
-        stmt = select(func.count()).select_from(MealSelection)
+        stmt = select(func.count()).select_from(PlannerEntry)
         return self.session.execute(stmt).scalar() or 0
 
-    def count_saved_meal_states(self) -> int:
+    def count_completed(self) -> int:
         """
-        Count total number of saved meal states.
+        Count completed planner entries.
 
         Returns:
-            int: Total count of saved meal states
+            Count of completed entries
         """
-        stmt = select(func.count()).select_from(SavedMealState)
+        stmt = (
+            select(func.count())
+            .select_from(PlannerEntry)
+            .where(PlannerEntry.is_completed == True)
+        )
         return self.session.execute(stmt).scalar() or 0
+
+    def is_at_capacity(self) -> bool:
+        """
+        Check if the planner is at maximum capacity.
+
+        Returns:
+            True if at capacity (15 entries)
+        """
+        return self.count() >= MAX_PLANNER_ENTRIES
+
+    def _get_next_position(self) -> int:
+        """
+        Get the next available position.
+
+        Returns:
+            Next position value
+        """
+        stmt = select(func.max(PlannerEntry.position))
+        max_pos = self.session.execute(stmt).scalar()
+        return (max_pos or -1) + 1
+
+    def _normalize_positions(self) -> None:
+        """
+        Normalize positions to be contiguous (0, 1, 2, ...).
+        Called after deletions to prevent gaps.
+        """
+        entries = self.get_all()
+        for i, entry in enumerate(entries):
+            if entry.position != i:
+                entry.position = i
+        self.session.flush()

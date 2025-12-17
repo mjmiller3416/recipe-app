@@ -1,6 +1,8 @@
 """app/api/planner.py
 
-FastAPI router for meal planner endpoints.
+FastAPI router for planner endpoints.
+Handles planner entry operations (adding/removing meals from planner).
+Meal CRUD is handled by the meals router.
 """
 
 from typing import List
@@ -10,107 +12,181 @@ from sqlalchemy.orm import Session
 
 from app.core.database.db import get_session
 from app.core.dtos.planner_dtos import (
-    MealPlanSaveResultDTO,
-    MealPlanSummaryDTO,
-    MealSelectionCreateDTO,
-    MealSelectionResponseDTO,
-    MealSelectionUpdateDTO,
+    PlannerBulkAddDTO,
+    PlannerEntryResponseDTO,
+    PlannerOperationResultDTO,
+    PlannerReorderDTO,
+    PlannerSummaryDTO,
 )
-from app.core.services.planner_service import PlannerService
+from app.core.services.planner_service import (
+    InvalidMealError,
+    PlannerFullError,
+    PlannerService,
+)
 
 router = APIRouter()
 
 
-@router.get("/meals", response_model=List[MealSelectionResponseDTO])
-def get_all_meals(session: Session = Depends(get_session)):
-    """Get all meal selections."""
+# -- Read Operations -----------------------------------------------------------------------------
+@router.get("/entries", response_model=List[PlannerEntryResponseDTO])
+def get_all_entries(session: Session = Depends(get_session)):
+    """Get all planner entries in position order."""
     service = PlannerService(session)
-    return service.get_all_meal_selections()
+    return service.get_all_entries()
 
 
-@router.get("/saved", response_model=List[MealSelectionResponseDTO])
-def get_saved_meal_plan(session: Session = Depends(get_session)):
-    """Get the saved meal plan with full recipe details."""
+@router.get("/entries/{entry_id}", response_model=PlannerEntryResponseDTO)
+def get_entry(entry_id: int, session: Session = Depends(get_session)):
+    """Get a single planner entry by ID."""
+    service = PlannerService(session)
+    entry = service.get_entry(entry_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Planner entry not found")
+    return entry
+
+
+@router.get("/summary", response_model=PlannerSummaryDTO)
+def get_summary(session: Session = Depends(get_session)):
+    """Get a summary of the current planner state."""
+    service = PlannerService(session)
+    return service.get_summary()
+
+
+@router.get("/meal-ids", response_model=List[int])
+def get_meal_ids(session: Session = Depends(get_session)):
+    """Get all meal IDs currently in the planner."""
+    service = PlannerService(session)
+    return service.get_meal_ids()
+
+
+# -- Add Operations ------------------------------------------------------------------------------
+@router.post("/entries/{meal_id}", response_model=PlannerEntryResponseDTO, status_code=201)
+def add_meal_to_planner(
+    meal_id: int,
+    session: Session = Depends(get_session),
+):
+    """
+    Add a meal to the planner.
+
+    Creates a new planner entry referencing the meal.
+    The meal must exist. Maximum 15 entries allowed.
+    """
     service = PlannerService(session)
     try:
-        return service.get_saved_meal_plan()
+        return service.add_meal_to_planner(meal_id)
+    except PlannerFullError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except InvalidMealError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/summary", response_model=MealPlanSummaryDTO)
-def get_meal_plan_summary(session: Session = Depends(get_session)):
-    """Get a summary of the current meal plan."""
-    service = PlannerService(session)
-    return service.get_meal_plan_summary()
-
-
-@router.get("/meals/{meal_id}", response_model=MealSelectionResponseDTO)
-def get_meal_selection(meal_id: int, session: Session = Depends(get_session)):
-    """Get a single meal selection by ID."""
-    service = PlannerService(session)
-    meal = service.get_meal_selection(meal_id)
-    if not meal:
-        raise HTTPException(status_code=404, detail="Meal selection not found")
-    return meal
-
-
-@router.post("/meals", response_model=MealSelectionResponseDTO, status_code=201)
-def create_meal_selection(
-    create_data: MealSelectionCreateDTO,
+@router.post("/entries/bulk", response_model=List[PlannerEntryResponseDTO], status_code=201)
+def add_meals_to_planner(
+    data: PlannerBulkAddDTO,
     session: Session = Depends(get_session),
 ):
-    """Create a new meal selection."""
+    """
+    Add multiple meals to the planner.
+
+    All meals must exist. Total entries cannot exceed 15.
+    """
     service = PlannerService(session)
-    meal = service.create_meal_selection(create_data)
-    if not meal:
-        raise HTTPException(
-            status_code=400,
-            detail="Failed to create meal selection. Check that recipe IDs are valid."
-        )
-    return meal
+    try:
+        return service.add_meals_to_planner(data.meal_ids)
+    except PlannerFullError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except InvalidMealError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/meals/{meal_id}", response_model=MealSelectionResponseDTO)
-def update_meal_selection(
-    meal_id: int,
-    update_data: MealSelectionUpdateDTO,
+# -- Update Operations ---------------------------------------------------------------------------
+@router.put("/entries/reorder", response_model=PlannerOperationResultDTO)
+def reorder_entries(
+    data: PlannerReorderDTO,
     session: Session = Depends(get_session),
 ):
-    """Update an existing meal selection."""
+    """
+    Reorder planner entries.
+
+    Provide entry IDs in the desired order. Positions will be reassigned 0, 1, 2, ...
+    """
     service = PlannerService(session)
-    meal = service.update_meal_selection(meal_id, update_data)
-    if not meal:
-        raise HTTPException(
-            status_code=404,
-            detail="Meal selection not found or update failed"
-        )
-    return meal
+    success = service.reorder_entries(data.entry_ids)
+    return PlannerOperationResultDTO(
+        success=success,
+        message="Entries reordered successfully" if success else "Failed to reorder entries",
+        affected_count=len(data.entry_ids) if success else 0,
+    )
 
 
-@router.delete("/meals/{meal_id}")
-def delete_meal_selection(meal_id: int, session: Session = Depends(get_session)):
-    """Delete a meal selection."""
+@router.post("/entries/{entry_id}/toggle", response_model=PlannerEntryResponseDTO)
+def toggle_completion(entry_id: int, session: Session = Depends(get_session)):
+    """Toggle the completion status of a planner entry."""
     service = PlannerService(session)
-    if not service.delete_meal_selection(meal_id):
-        raise HTTPException(status_code=404, detail="Meal selection not found")
-    return {"message": "Meal selection deleted successfully"}
+    entry = service.toggle_completion(entry_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Planner entry not found")
+    return entry
 
 
-@router.post("/save", response_model=MealPlanSaveResultDTO)
-def save_meal_plan(
-    meal_ids: List[int],
-    session: Session = Depends(get_session),
-):
-    """Save a meal plan with the specified meal IDs."""
+@router.post("/entries/{entry_id}/complete", response_model=PlannerEntryResponseDTO)
+def mark_completed(entry_id: int, session: Session = Depends(get_session)):
+    """Mark a planner entry as completed."""
     service = PlannerService(session)
-    return service.saveMealPlan(meal_ids)
+    entry = service.mark_completed(entry_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Planner entry not found")
+    return entry
+
+
+@router.post("/entries/{entry_id}/incomplete", response_model=PlannerEntryResponseDTO)
+def mark_incomplete(entry_id: int, session: Session = Depends(get_session)):
+    """Mark a planner entry as incomplete."""
+    service = PlannerService(session)
+    entry = service.mark_incomplete(entry_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Planner entry not found")
+    return entry
+
+
+# -- Remove Operations ---------------------------------------------------------------------------
+@router.delete("/entries/{entry_id}")
+def remove_entry(entry_id: int, session: Session = Depends(get_session)):
+    """
+    Remove a planner entry.
+
+    Note: This does NOT delete the underlying meal.
+    The meal can be re-added to the planner later.
+    """
+    service = PlannerService(session)
+    if not service.remove_entry(entry_id):
+        raise HTTPException(status_code=404, detail="Planner entry not found")
+    return {"message": "Entry removed from planner"}
+
+
+@router.delete("/entries/by-meal/{meal_id}")
+def remove_entries_by_meal(meal_id: int, session: Session = Depends(get_session)):
+    """Remove all planner entries for a specific meal."""
+    service = PlannerService(session)
+    count = service.remove_entries_by_meal(meal_id)
+    return {"message": f"Removed {count} entries for meal {meal_id}"}
 
 
 @router.delete("/clear")
-def clear_meal_plan(session: Session = Depends(get_session)):
-    """Clear the current meal plan."""
+def clear_planner(session: Session = Depends(get_session)):
+    """Clear all entries from the planner."""
     service = PlannerService(session)
-    if not service.clear_meal_plan():
-        raise HTTPException(status_code=500, detail="Failed to clear meal plan")
-    return {"message": "Meal plan cleared successfully"}
+    count = service.clear_planner()
+    return {"message": f"Cleared {count} entries from planner"}
+
+
+@router.delete("/clear-completed")
+def clear_completed(session: Session = Depends(get_session)):
+    """Clear all completed entries from the planner."""
+    service = PlannerService(session)
+    count = service.clear_completed()
+    return {"message": f"Cleared {count} completed entries from planner"}

@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-from app.api import recipes, planner, shopping, ingredients
+from app.api import meals, planner, recipes, shopping, ingredients
 
 # Create FastAPI app
 app = FastAPI(
@@ -28,6 +28,7 @@ app.add_middleware(
 
 # Include API routers
 app.include_router(recipes.router, prefix="/api/recipes", tags=["recipes"])
+app.include_router(meals.router, prefix="/api/meals", tags=["meals"])
 app.include_router(planner.router, prefix="/api/planner", tags=["planner"])
 app.include_router(shopping.router, prefix="/api/shopping", tags=["shopping"])
 app.include_router(ingredients.router, prefix="/api/ingredients", tags=["ingredients"])

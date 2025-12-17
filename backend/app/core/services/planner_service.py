@@ -1,36 +1,51 @@
 """app/core/services/planner_service.py
 
-Service layer for managing meal planner state and meal selections.
-Orchestrates repository operations and business logic.
+Service layer for managing planner entry operations.
+Handles only the planner state - meal CRUD is in meal_service.py.
 """
 
-# ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
+# -- Imports -------------------------------------------------------------------------------------
 from __future__ import annotations
 
-from typing import List, Literal, Optional
+from typing import List, Optional
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from ..dtos.planner_dtos import (
-    MealPlanSaveResultDTO,
-    MealPlanSummaryDTO,
-    MealPlanValidationDTO,
-    MealSelectionCreateDTO,
-    MealSelectionResponseDTO,
-    MealSelectionUpdateDTO,
-    RecipeCardDTO)
-from ..models.meal_selection import MealSelection
-from ..repositories.planner_repo import PlannerRepo
+    PlannerEntryResponseDTO,
+    PlannerSummaryDTO,
+    RecipeCardDTO,
+)
+from ..models.meal import Meal
+from ..models.planner_entry import PlannerEntry
+from ..repositories.meal_repo import MealRepo
+from ..repositories.planner_repo import MAX_PLANNER_ENTRIES, PlannerRepo
 
 
-# ── Planner Service ─────────────────────────────────────────────────────────────────────────────────────────
+# -- Exceptions ----------------------------------------------------------------------------------
+class PlannerFullError(Exception):
+    """Raised when the planner is at maximum capacity."""
+    pass
+
+
+class InvalidMealError(Exception):
+    """Raised when a meal ID is invalid."""
+    pass
+
+
+class EntryNotFoundError(Exception):
+    """Raised when a planner entry is not found."""
+    pass
+
+
+# -- Planner Service -----------------------------------------------------------------------------
 class PlannerService:
-    """Service for meal planner operations with business logic."""
+    """Service for planner entry operations with business logic."""
 
     def __init__(self, session: Session | None = None):
         """
-        Initialize the PlannerService with a database session and repository.
+        Initialize the PlannerService with a database session and repositories.
         If no session is provided, a new session is created.
         """
         if session is None:
@@ -38,402 +53,361 @@ class PlannerService:
             session = create_session()
         self.session = session
         self.repo = PlannerRepo(self.session)
+        self.meal_repo = MealRepo(self.session)
 
-    # ── Meal Planner State Management ───────────────────────────────────────────────────────────────────────
-    def load_saved_meal_ids(self) -> List[int]:
+    # -- Add to Planner --------------------------------------------------------------------------
+    def add_meal_to_planner(
+        self, meal_id: int, position: Optional[int] = None
+    ) -> PlannerEntryResponseDTO:
         """
-        Load saved meal IDs from the database.
-
-        Returns:
-            List[int]: List of saved meal IDs from saved meal states.
-        """
-        try:
-            return self.repo.get_saved_meal_ids()
-        except SQLAlchemyError as e:
-            print(f"Failed to load saved meal IDs: {e}", "error")
-            return []
-
-    def get_saved_meal_plan(self) -> List[MealSelectionResponseDTO]:
-        """
-        Get the current saved meal plan with full recipe details.
-
-        Returns:
-            List[MealSelectionResponseDTO]: List of saved meals with recipe information.
-        """
-        try:
-            saved_meals = self.repo.get_saved_meal_selections()
-            return [self._meal_to_response_dto(meal) for meal in saved_meals]
-        except SQLAlchemyError as e:
-            raise RuntimeError(f"Failed to load saved meal plan: {e}")
-
-    def saveMealPlan(self, meal_ids: List[int]) -> MealPlanSaveResultDTO:
-        """
-        Save a meal plan by storing the meal IDs.
-        Validates meal IDs before saving.
+        Add a meal to the planner.
 
         Args:
-            meal_ids (List[int]): List of meal selection IDs to save.
+            meal_id: ID of the meal to add
+            position: Optional position (defaults to end)
 
         Returns:
-            MealPlanSaveResultDTO: Result with saved meal count and any validation errors.
+            Created planner entry as DTO
+
+        Raises:
+            PlannerFullError: If planner is at capacity (15 entries)
+            InvalidMealError: If meal ID doesn't exist
         """
         try:
-            # validate meal IDs exist
-            valid_ids = self.repo.validate_meal_ids(meal_ids)
-            invalid_ids = [mid for mid in meal_ids if mid not in valid_ids]
-
-            if invalid_ids:
-                return MealPlanSaveResultDTO(
-                    success=False,
-                    saved_count=0,
-                    invalid_ids=invalid_ids,
-                    message=f"Invalid meal IDs found: {invalid_ids}"
+            # Check capacity
+            if self.repo.is_at_capacity():
+                raise PlannerFullError(
+                    f"Planner is at maximum capacity ({MAX_PLANNER_ENTRIES} entries)"
                 )
 
-            # save the meal plan
-            self.repo.save_active_meal_ids(valid_ids)
+            # Validate meal exists
+            valid_ids = self.meal_repo.validate_meal_ids([meal_id])
+            if meal_id not in valid_ids:
+                raise InvalidMealError(f"Meal ID {meal_id} does not exist")
+
+            # Add entry
+            entry = self.repo.add_entry(meal_id, position)
             self.session.commit()
-            return MealPlanSaveResultDTO(
-                success=True,
-                saved_count=len(valid_ids),
-                invalid_ids=[],
-                message=f"Successfully saved {len(valid_ids)} meals to plan"
-            )
 
-        except SQLAlchemyError as e:
+            # Refresh to get relationships
+            entry = self.repo.get_by_id(entry.id)
+            return self._entry_to_response_dto(entry)
+
+        except (PlannerFullError, InvalidMealError):
             self.session.rollback()
-            return MealPlanSaveResultDTO(
-                success=False,
-                saved_count=0,
-                invalid_ids=meal_ids,
-                message=f"Database error: {e}"
-            )
-
-    def save_active_meal_ids(self, meal_ids: List[int]) -> None:
-        """
-        Save the active meal IDs to the database.
-
-        Args:
-            meal_ids (List[int]): List of meal IDs to save as active.
-        """
-        try:
-            self.repo.save_active_meal_ids(meal_ids)
-            self.session.commit()
-        except SQLAlchemyError as e:
-            self.session.rollback()
-            print(f"Failed to save active meal IDs, transaction rolled back: {e}", "error")
             raise
-
-    def clear_meal_plan(self) -> bool:
-        """
-        Clear the current meal plan.
-
-        Returns:
-            bool: True if successful, False otherwise.
-        """
-        try:
-            self.repo.clear_saved_meal_states()
-            self.session.commit()
-            return True
-        except SQLAlchemyError:
-            self.session.rollback()
-            return False
-
-    def get_meal_plan_summary(self) -> MealPlanSummaryDTO:
-        """
-        Get a summary of the current meal plan.
-
-        Returns:
-            MealPlanSummaryDTO: Summary with counts and basic meal information.
-        """
-        try:
-            saved_meals = self.repo.get_saved_meal_selections()
-            total_recipes = 0
-            meal_names = []
-
-            for meal in saved_meals:
-                meal_names.append(meal.meal_name)
-                # count main recipe + side recipes
-                total_recipes += 1 + len(meal.get_side_recipes())
-
-            return MealPlanSummaryDTO(
-                total_meals=len(saved_meals),
-                total_recipes=total_recipes,
-                meal_names=meal_names,
-                has_saved_plan=len(saved_meals) > 0
-            )
-
         except SQLAlchemyError as e:
-            return MealPlanSummaryDTO(
-                total_meals=0,
-                total_recipes=0,
-                meal_names=[],
-                has_saved_plan=False,
-                error=str(e)
-            )
-
-    # ── Meal Selection Management ───────────────────────────────────────────────────────────────────────────
-    def create_meal_selection(self, create_dto: MealSelectionCreateDTO) -> Optional[MealSelectionResponseDTO]:
-        """
-        Create a new meal selection with validation.
-
-        Args:
-            create_dto (MealSelectionCreateDTO): Data for creating the meal selection.
-
-        Returns:
-            Optional[MealSelectionResponseDTO]: Created meal selection or None if failed.
-        """
-        try:
-            # validate recipe IDs exist
-            recipe_ids = [create_dto.main_recipe_id]
-            side_ids = [
-                create_dto.side_recipe_1_id,
-                create_dto.side_recipe_2_id,
-                create_dto.side_recipe_3_id
-            ]
-            recipe_ids.extend([sid for sid in side_ids if sid is not None])
-
-            valid_recipe_ids = self.repo.validate_recipe_ids(recipe_ids)
-
-            if create_dto.main_recipe_id not in valid_recipe_ids:
-                raise ValueError(f"Main recipe ID {create_dto.main_recipe_id} does not exist")
-
-            # check side recipe IDs if provided
-            for side_id in side_ids:
-                if side_id is not None and side_id not in valid_recipe_ids:
-                    raise ValueError(f"Side recipe ID {side_id} does not exist")
-
-            # create the meal selection
-            meal_selection = MealSelection(
-                meal_name=create_dto.meal_name,
-                main_recipe_id=create_dto.main_recipe_id,
-                side_recipe_1_id=create_dto.side_recipe_1_id,
-                side_recipe_2_id=create_dto.side_recipe_2_id,
-                side_recipe_3_id=create_dto.side_recipe_3_id
-            )
-
-            created_meal = self.repo.create_meal_selection(meal_selection)
-            self.session.commit()
-            return self._meal_to_response_dto(created_meal)
-
-        except (SQLAlchemyError, ValueError) as e:
             self.session.rollback()
-            print(f"Failed to create meal selection, transaction rolled back: {e}", "error")
-            return None
+            raise RuntimeError(f"Failed to add meal to planner: {e}") from e
 
-    def update_meal_selection(self, meal_id: int, update_dto: MealSelectionUpdateDTO) -> Optional[MealSelectionResponseDTO]:
+    def add_meals_to_planner(self, meal_ids: List[int]) -> List[PlannerEntryResponseDTO]:
         """
-        Update an existing meal selection.
+        Add multiple meals to the planner.
 
         Args:
-            meal_id (int): ID of the meal selection to update.
-            update_dto (MealSelectionUpdateDTO): Updated data.
+            meal_ids: List of meal IDs to add
 
         Returns:
-            Optional[MealSelectionResponseDTO]: Updated meal selection or None if failed.
+            List of created planner entries as DTOs
+
+        Raises:
+            PlannerFullError: If adding would exceed capacity
+            InvalidMealError: If any meal ID doesn't exist
         """
         try:
-            # get existing meal
-            existing_meal = self.repo.get_meal_selection_by_id(meal_id)
-            if not existing_meal:
-                return None
+            current_count = self.repo.count()
+            if current_count + len(meal_ids) > MAX_PLANNER_ENTRIES:
+                raise PlannerFullError(
+                    f"Cannot add {len(meal_ids)} meals: would exceed "
+                    f"maximum capacity ({MAX_PLANNER_ENTRIES})"
+                )
 
-            # update fields from DTO
-            if update_dto.meal_name is not None:
-                existing_meal.meal_name = update_dto.meal_name
+            # Validate all meal IDs
+            valid_ids = self.meal_repo.validate_meal_ids(meal_ids)
+            invalid_ids = [mid for mid in meal_ids if mid not in valid_ids]
+            if invalid_ids:
+                raise InvalidMealError(f"Meal IDs {invalid_ids} do not exist")
 
-            if update_dto.main_recipe_id is not None:
-                # validate main recipe exists
-                valid_ids = self.repo.validate_recipe_ids([update_dto.main_recipe_id])
-                if update_dto.main_recipe_id not in valid_ids:
-                    raise ValueError(f"Main recipe ID {update_dto.main_recipe_id} does not exist")
-                existing_meal.main_recipe_id = update_dto.main_recipe_id
+            # Add entries
+            entries = []
+            for meal_id in meal_ids:
+                entry = self.repo.add_entry(meal_id)
+                entries.append(entry)
 
-            # update side recipes if provided
-            side_updates = [
-                (update_dto.side_recipe_1_id, 'side_recipe_1_id'),
-                (update_dto.side_recipe_2_id, 'side_recipe_2_id'),
-                (update_dto.side_recipe_3_id, 'side_recipe_3_id')
-            ]
-
-            for side_id, attr_name in side_updates:
-                if side_id is not None:
-                    if side_id > 0:  # validate if > 0
-                        valid_ids = self.repo.validate_recipe_ids([side_id])
-                        if side_id not in valid_ids:
-                            raise ValueError(f"Side recipe ID {side_id} does not exist")
-                    setattr(existing_meal, attr_name, side_id if side_id > 0 else None)
-
-            updated_meal = self.repo.update_meal_selection(existing_meal)
             self.session.commit()
-            return self._meal_to_response_dto(updated_meal)
 
-        except (SQLAlchemyError, ValueError) as e:
+            # Refresh and convert to DTOs
+            result = []
+            for entry in entries:
+                entry = self.repo.get_by_id(entry.id)
+                result.append(self._entry_to_response_dto(entry))
+
+            return result
+
+        except (PlannerFullError, InvalidMealError):
             self.session.rollback()
-            print(f"Failed to update meal selection {meal_id}, transaction rolled back: {e}", "error")
-            return None
+            raise
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise RuntimeError(f"Failed to add meals to planner: {e}") from e
 
-    def get_meal_selection(self, meal_id: int) -> Optional[MealSelectionResponseDTO]:
+    # -- Read Operations -------------------------------------------------------------------------
+    def get_entry(self, entry_id: int) -> Optional[PlannerEntryResponseDTO]:
         """
-        Get a meal selection by ID.
+        Get a planner entry by ID.
 
         Args:
-            meal_id (int): ID of the meal selection.
+            entry_id: ID of the entry
 
         Returns:
-            Optional[MealSelectionResponseDTO]: Meal selection or None if not found.
+            Entry as DTO or None if not found
         """
         try:
-            meal = self.repo.get_meal_selection_by_id(meal_id)
-            return self._meal_to_response_dto(meal) if meal else None
+            entry = self.repo.get_by_id(entry_id)
+            return self._entry_to_response_dto(entry) if entry else None
         except SQLAlchemyError:
             return None
 
-    def get_all_meal_selections(self) -> List[MealSelectionResponseDTO]:
+    def get_all_entries(self) -> List[PlannerEntryResponseDTO]:
         """
-        Get all meal selections.
+        Get all planner entries in position order.
 
         Returns:
-            List[MealSelectionResponseDTO]: List of all meal selections.
+            List of all entries as DTOs
         """
         try:
-            meals = self.repo.get_all_meal_selections()
-            return [self._meal_to_response_dto(meal) for meal in meals]
+            entries = self.repo.get_all()
+            return [self._entry_to_response_dto(e) for e in entries]
         except SQLAlchemyError:
             return []
 
-    def delete_meal_selection(self, meal_id: int) -> bool:
+    def get_meal_ids(self) -> List[int]:
         """
-        Delete a meal selection.
-
-        Args:
-            meal_id (int): ID of the meal selection to delete.
+        Get all meal IDs in the planner.
 
         Returns:
-            bool: True if deleted successfully, False otherwise.
+            List of meal IDs in position order
         """
         try:
-            result = self.repo.delete_meal_selection(meal_id)
+            return self.repo.get_meal_ids()
+        except SQLAlchemyError:
+            return []
+
+    def get_summary(self) -> PlannerSummaryDTO:
+        """
+        Get a summary of the current planner state.
+
+        Returns:
+            PlannerSummaryDTO with counts and status
+        """
+        try:
+            entries = self.repo.get_all()
+            total_entries = len(entries)
+            completed = sum(1 for e in entries if e.is_completed)
+
+            # Count total recipes across all meals
+            total_recipes = 0
+            meal_names = []
+            for entry in entries:
+                if entry.meal:
+                    meal_names.append(entry.meal.meal_name)
+                    total_recipes += 1 + len(entry.meal.side_recipe_ids)
+
+            return PlannerSummaryDTO(
+                total_entries=total_entries,
+                completed_entries=completed,
+                incomplete_entries=total_entries - completed,
+                total_recipes=total_recipes,
+                meal_names=meal_names,
+                is_at_capacity=(total_entries >= MAX_PLANNER_ENTRIES),
+                max_capacity=MAX_PLANNER_ENTRIES,
+            )
+        except SQLAlchemyError as e:
+            return PlannerSummaryDTO(
+                total_entries=0,
+                completed_entries=0,
+                incomplete_entries=0,
+                total_recipes=0,
+                meal_names=[],
+                is_at_capacity=False,
+                max_capacity=MAX_PLANNER_ENTRIES,
+                error=str(e),
+            )
+
+    # -- Update Operations -----------------------------------------------------------------------
+    def reorder_entries(self, entry_ids: List[int]) -> bool:
+        """
+        Reorder planner entries.
+
+        Args:
+            entry_ids: List of entry IDs in desired order
+
+        Returns:
+            True if successful
+        """
+        try:
+            result = self.repo.reorder_entries(entry_ids)
             self.session.commit()
             return result
         except SQLAlchemyError:
             self.session.rollback()
             return False
 
-    def remove_recipe_from_meal(self, meal_id: int, slot: Literal["side_1", "side_2", "side_3"]
-        ) -> Optional[MealSelectionResponseDTO]:
+    def toggle_completion(self, entry_id: int) -> Optional[PlannerEntryResponseDTO]:
         """
-        Remove a recipe from a specific slot in a meal selection.
-
-        Note: Only side recipe slots can be cleared. To remove the main recipe,
-        use delete_meal_selection() instead as a meal cannot exist without a main recipe.
+        Toggle the completion status of a planner entry.
 
         Args:
-            meal_id (int): ID of the meal selection to modify.
-            slot (str): The recipe slot to clear ("side_1", "side_2", or "side_3").
+            entry_id: ID of the entry
 
         Returns:
-            Optional[MealSelectionResponseDTO]: Updated meal selection, or None if not found.
+            Updated entry as DTO or None if not found
         """
         try:
-            updated_meal = self.repo.remove_recipe_from_meal(meal_id, slot)
-            if updated_meal is None:
+            entry = self.repo.toggle_completion(entry_id)
+            if not entry:
                 return None
 
             self.session.commit()
-            return self._meal_to_response_dto(updated_meal)
-
-        except (SQLAlchemyError, ValueError) as e:
+            entry = self.repo.get_by_id(entry.id)
+            return self._entry_to_response_dto(entry)
+        except SQLAlchemyError:
             self.session.rollback()
-            print(f"Failed to remove recipe from meal {meal_id}, transaction rolled back: {e}", "error")
             return None
 
-    # ── Search and Query Operations ─────────────────────────────────────────────────────────────────────────
-    def search_meals_by_recipe(self, recipe_id: int) -> List[MealSelectionResponseDTO]:
+    def mark_completed(self, entry_id: int) -> Optional[PlannerEntryResponseDTO]:
         """
-        Find all meals that contain a specific recipe.
+        Mark a planner entry as completed.
 
         Args:
-            recipe_id (int): ID of the recipe to search for.
+            entry_id: ID of the entry
 
         Returns:
-            List[MealSelectionResponseDTO]: List of meals containing the recipe.
+            Updated entry as DTO or None if not found
         """
         try:
-            meals = self.repo.get_meals_by_recipe_id(recipe_id)
-            return [self._meal_to_response_dto(meal) for meal in meals]
-        except SQLAlchemyError:
-            return []
+            entry = self.repo.mark_completed(entry_id)
+            if not entry:
+                return None
 
-    def search_meals_by_name(self, name_pattern: str) -> List[MealSelectionResponseDTO]:
+            self.session.commit()
+            entry = self.repo.get_by_id(entry.id)
+            return self._entry_to_response_dto(entry)
+        except SQLAlchemyError:
+            self.session.rollback()
+            return None
+
+    def mark_incomplete(self, entry_id: int) -> Optional[PlannerEntryResponseDTO]:
         """
-        Search meals by name pattern.
+        Mark a planner entry as incomplete.
 
         Args:
-            name_pattern (str): Pattern to search for in meal names.
+            entry_id: ID of the entry
 
         Returns:
-            List[MealSelectionResponseDTO]: List of matching meals.
+            Updated entry as DTO or None if not found
         """
         try:
-            meals = self.repo.get_meals_by_name_pattern(name_pattern)
-            return [self._meal_to_response_dto(meal) for meal in meals]
-        except SQLAlchemyError:
-            return []
+            entry = self.repo.mark_incomplete(entry_id)
+            if not entry:
+                return None
 
-    # ── Helper Methods ──────────────────────────────────────────────────────────────────────────────────────
-    def _meal_to_response_dto(self, meal: MealSelection) -> MealSelectionResponseDTO:
+            self.session.commit()
+            entry = self.repo.get_by_id(entry.id)
+            return self._entry_to_response_dto(entry)
+        except SQLAlchemyError:
+            self.session.rollback()
+            return None
+
+    # -- Remove Operations -----------------------------------------------------------------------
+    def remove_entry(self, entry_id: int) -> bool:
         """
-        Convert a MealSelection model to a response DTO.
+        Remove a planner entry.
+        Note: This does NOT delete the underlying meal.
 
         Args:
-            meal (MealSelection): Meal selection model.
+            entry_id: ID of the entry
 
         Returns:
-            MealSelectionResponseDTO: Response DTO.
+            True if removed, False if not found
         """
-        return MealSelectionResponseDTO(
-        id=meal.id,
-        meal_name=meal.meal_name,
-        main_recipe_id=meal.main_recipe_id,
-        side_recipe_1_id=meal.side_recipe_1_id,
-        side_recipe_2_id=meal.side_recipe_2_id,
-        side_recipe_3_id=meal.side_recipe_3_id,
-        main_recipe=RecipeCardDTO.from_recipe(meal.main_recipe),
-        side_recipe_1=RecipeCardDTO.from_recipe(meal.side_recipe_1),
-        side_recipe_2=RecipeCardDTO.from_recipe(meal.side_recipe_2),
-        side_recipe_3=RecipeCardDTO.from_recipe(meal.side_recipe_3),
+        try:
+            result = self.repo.remove_entry(entry_id)
+            self.session.commit()
+            return result
+        except SQLAlchemyError:
+            self.session.rollback()
+            return False
+
+    def remove_entries_by_meal(self, meal_id: int) -> int:
+        """
+        Remove all planner entries for a specific meal.
+
+        Args:
+            meal_id: ID of the meal
+
+        Returns:
+            Number of entries removed
+        """
+        try:
+            count = self.repo.remove_entries_by_meal_id(meal_id)
+            self.session.commit()
+            return count
+        except SQLAlchemyError:
+            self.session.rollback()
+            return 0
+
+    def clear_planner(self) -> int:
+        """
+        Clear all entries from the planner.
+
+        Returns:
+            Number of entries cleared
+        """
+        try:
+            count = self.repo.clear_all()
+            self.session.commit()
+            return count
+        except SQLAlchemyError:
+            self.session.rollback()
+            return 0
+
+    def clear_completed(self) -> int:
+        """
+        Clear all completed entries from the planner.
+
+        Returns:
+            Number of entries cleared
+        """
+        try:
+            count = self.repo.clear_completed()
+            self.session.commit()
+            return count
+        except SQLAlchemyError:
+            self.session.rollback()
+            return 0
+
+    # -- Helper Methods --------------------------------------------------------------------------
+    def _entry_to_response_dto(self, entry: PlannerEntry) -> PlannerEntryResponseDTO:
+        """
+        Convert a PlannerEntry model to a response DTO.
+
+        Args:
+            entry: PlannerEntry model
+
+        Returns:
+            PlannerEntryResponseDTO
+        """
+        meal = entry.meal
+        return PlannerEntryResponseDTO(
+            id=entry.id,
+            meal_id=entry.meal_id,
+            position=entry.position,
+            is_completed=entry.is_completed,
+            completed_at=entry.completed_at.isoformat() if entry.completed_at else None,
+            scheduled_date=entry.scheduled_date.isoformat() if entry.scheduled_date else None,
+            meal_name=meal.meal_name if meal else None,
+            main_recipe_id=meal.main_recipe_id if meal else None,
+            side_recipe_ids=meal.side_recipe_ids if meal else [],
+            main_recipe=RecipeCardDTO.from_recipe(meal.main_recipe) if meal else None,
         )
-
-    # ── Validation Methods ───────────────────────────────────────────────────────────────────
-    def validate_meal_plan(self, meal_ids: List[int]) -> MealPlanValidationDTO:
-        """
-        Validate a meal plan without saving it.
-
-        Args:
-            meal_ids (List[int]): List of meal IDs to validate.
-
-        Returns:
-            MealPlanValidationDTO: Validation result with details.
-        """
-        try:
-            valid_ids = self.repo.validate_meal_ids(meal_ids)
-            invalid_ids = [mid for mid in meal_ids if mid not in valid_ids]
-
-            return MealPlanValidationDTO(
-                is_valid=(len(invalid_ids) == 0),
-                valid_ids=valid_ids,
-                invalid_meal_ids=invalid_ids,
-                total_meals=len(meal_ids),
-                total_valid=len(valid_ids)
-            )
-
-        except SQLAlchemyError as e:
-            return MealPlanValidationDTO(
-                is_valid=False,
-                valid_ids=[],
-                invalid_meal_ids=meal_ids,
-                total_meals=len(meal_ids),
-                total_valid=0,
-                error=str(e)
-            )
