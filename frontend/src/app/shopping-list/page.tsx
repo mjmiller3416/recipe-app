@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { ShoppingCart, Search, RefreshCw, Trash2 } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { ShoppingCart, Search, RefreshCw, Trash2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,11 +12,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   PageHeader,
   PageHeaderContent,
   PageHeaderTitle,
@@ -25,43 +20,10 @@ import {
 import { StatsCard } from "@/components/common/StatsCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AddItemForm, type AddItemFormData } from "@/components/forms/AddItemForm";
-import { mockShoppingList } from "@/lib/mockData";
+import { shoppingApi, ApiError } from "@/lib/api";
 import type { ShoppingItemResponseDTO } from "@/types";
 import { cn } from "@/lib/utils";
 
-// Mock recipe breakdown data - in production this would come from the API
-const mockRecipeBreakdown: Record<string, { recipe_name: string; quantity: number; unit: string | null }[]> = {
-  "parmesan_cheese_cup": [
-    { recipe_name: "Spaghetti Carbonara", quantity: 0.5, unit: "cup" },
-    { recipe_name: "Caesar Salad", quantity: 0.5, unit: "cup" },
-  ],
-  "olive_oil_tbsp": [
-    { recipe_name: "Caprese Salad", quantity: 2, unit: "tbsp" },
-    { recipe_name: "Garlic Bread", quantity: 2, unit: "tbsp" },
-  ],
-  "tomato_whole": [
-    { recipe_name: "Caprese Salad", quantity: 2, unit: "whole" },
-    { recipe_name: "Tomato Soup", quantity: 2, unit: "whole" },
-  ],
-  "eggs_whole": [
-    { recipe_name: "Spaghetti Carbonara", quantity: 2, unit: "whole" },
-    { recipe_name: "French Toast", quantity: 2, unit: "whole" },
-  ],
-  "bacon_slices": [
-    { recipe_name: "Spaghetti Carbonara", quantity: 4, unit: "slices" },
-    { recipe_name: "BLT Sandwich", quantity: 4, unit: "slices" },
-  ],
-  // Single-recipe items for testing tooltips
-  "mozzarella_oz": [
-    { recipe_name: "Caprese Salad", quantity: 8, unit: "oz" },
-  ],
-  "milk_gallon": [
-    { recipe_name: "French Toast", quantity: 1, unit: "gallon" },
-  ],
-  "quinoa_cup": [
-    { recipe_name: "Quinoa Bowl", quantity: 1, unit: "cup" },
-  ],
-};
 
 interface ShoppingItemProps {
   item: ShoppingItemResponseDTO;
@@ -69,9 +31,6 @@ interface ShoppingItemProps {
 }
 
 function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
-  const breakdown = item.state_key ? mockRecipeBreakdown[item.state_key] : null;
-  const shouldShowTooltip = item.source !== "manual" && breakdown && breakdown.length > 0;
-
   const itemContent = (
     <div
       className={cn(
@@ -102,33 +61,36 @@ function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
     </div>
   );
 
-  if (shouldShowTooltip) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>{itemContent}</TooltipTrigger>
-        <TooltipContent side="top" align="start" className="max-w-xs">
-          <div className="space-y-1">
-            <p className="font-medium text-xs text-foreground mb-2">
-              Used in {breakdown.length} recipe{breakdown.length > 1 ? "s" : ""}:
-            </p>
-            {breakdown.map((recipe, idx) => (
-              <p key={idx} className="text-xs text-muted">
-                • {recipe.quantity} {recipe.unit} - {recipe.recipe_name}
-              </p>
-            ))}
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
-
   return itemContent;
 }
 
 export default function ShoppingListPage() {
   // Shopping list state
-  const [items, setItems] = useState<ShoppingItemResponseDTO[]>(mockShoppingList.items);
+  const [items, setItems] = useState<ShoppingItemResponseDTO[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch shopping list data
+  const fetchShoppingList = useCallback(async () => {
+    try {
+      setError(null);
+      const data = await shoppingApi.getList();
+      setItems(data.items);
+    } catch (err) {
+      const message =
+        err instanceof ApiError ? err.message : "Failed to load shopping list";
+      setError(message);
+      console.error("Failed to fetch shopping list:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Initial data load
+  useEffect(() => {
+    fetchShoppingList();
+  }, [fetchShoppingList]);
 
   // Group items by category
   const groupedItems = useMemo(() => {
@@ -163,37 +125,109 @@ export default function ShoppingListPage() {
   }, [items]);
 
   // Handle item toggle
-  const handleToggle = (id: number, checked: boolean) => {
+  const handleToggle = useCallback(async (id: number, checked: boolean) => {
+    // Optimistic update
+    const previousItems = items;
     setItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, have: checked } : item))
     );
-  };
+
+    try {
+      await shoppingApi.toggleItem(id);
+    } catch (err) {
+      // Rollback on error
+      setItems(previousItems);
+      console.error("Failed to toggle item:", err);
+    }
+  }, [items]);
 
   // Handle add item
-  const handleAddItem = (formData: AddItemFormData) => {
-    const newItem: ShoppingItemResponseDTO = {
-      id: Date.now(),
-      ingredient_name: formData.name,
-      quantity: formData.quantity,
-      unit: formData.unit,
-      category: formData.category,
-      source: "manual",
-      have: false,
-      state_key: null,
-    };
-
-    setItems((prev) => [...prev, newItem]);
-  };
+  const handleAddItem = useCallback(async (formData: AddItemFormData) => {
+    try {
+      const newItem = await shoppingApi.addItem({
+        ingredient_name: formData.name,
+        quantity: formData.quantity,
+        unit: formData.unit,
+      });
+      setItems((prev) => [...prev, newItem]);
+    } catch (err) {
+      console.error("Failed to add item:", err);
+    }
+  }, []);
 
   // Handle clear checked
-  const handleClearChecked = () => {
-    setItems((prev) => prev.filter((item) => !item.have));
-  };
+  const handleClearChecked = useCallback(async () => {
+    const checkedItems = items.filter((item) => item.have);
+    if (checkedItems.length === 0) return;
 
-  // Handle refresh (mock regeneration from meal plan)
-  const handleRefresh = () => {
-    setItems(mockShoppingList.items);
-  };
+    // Optimistic update
+    const previousItems = items;
+    setItems((prev) => prev.filter((item) => !item.have));
+
+    try {
+      await Promise.all(checkedItems.map((item) => shoppingApi.deleteItem(item.id)));
+    } catch (err) {
+      // Rollback on error
+      setItems(previousItems);
+      console.error("Failed to clear checked items:", err);
+    }
+  }, [items]);
+
+  // Handle refresh (regenerate from meal plan)
+  const handleRefresh = useCallback(async () => {
+    setIsLoading(true);
+    await fetchShoppingList();
+  }, [fetchShoppingList]);
+
+  // Render loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <PageHeader>
+          <PageHeaderContent>
+            <PageHeaderTitle
+              title="Shopping List"
+              description="Auto-generated from your meal plan"
+            />
+          </PageHeaderContent>
+        </PageHeader>
+        <main className="max-w-7xl mx-auto px-6 py-8">
+          <div className="flex items-center justify-center py-12">
+            <RefreshCw className="h-8 w-8 animate-spin text-muted" />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Render error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <PageHeader>
+          <PageHeaderContent>
+            <PageHeaderTitle
+              title="Shopping List"
+              description="Auto-generated from your meal plan"
+            />
+          </PageHeaderContent>
+        </PageHeader>
+        <main className="max-w-7xl mx-auto px-6 py-8">
+          <div className="flex flex-col items-center justify-center rounded-lg border border-error/30 bg-error/10 px-6 py-12 text-center">
+            <AlertCircle className="mb-4 h-12 w-12 text-error" />
+            <h3 className="mb-2 text-lg font-semibold text-foreground">
+              Unable to load shopping list
+            </h3>
+            <p className="mb-4 text-muted">{error}</p>
+            <Button onClick={fetchShoppingList} variant="outline">
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Try Again
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -222,7 +256,7 @@ export default function ShoppingListPage() {
               className="gap-2"
             >
               <RefreshCw className="h-4 w-4" />
-              Regenerate
+              Refresh
             </Button>
           </PageHeaderActions>
         </PageHeaderContent>
