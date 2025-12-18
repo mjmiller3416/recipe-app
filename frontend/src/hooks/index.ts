@@ -1,3 +1,17 @@
+export {
+  useKeyboardShortcuts,
+  useEntryNavigation,
+  type ShortcutConfig,
+} from "./useKeyboardShortcuts";
+
+export {
+  useMediaQuery,
+  useBreakpoints,
+  useIsMobile,
+  usePrefersReducedMotion,
+  breakpoints,
+} from "./useMediaQuery";
+
 export { 
   useUnsavedChanges, 
   hasAnyUnsavedChanges, 
@@ -5,3 +19,4 @@ export {
   setNavigationBypass,
 } from "./useUnsavedChanges";
 export { useSettings, type AppSettings, type UserProfile, DEFAULT_SETTINGS } from "./useSettings";
+

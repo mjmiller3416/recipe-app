@@ -135,13 +135,20 @@ export function RecipeSelector({
             
             <div className="flex items-center gap-1">
               {selectedRecipe && !disabled && (
-                <button
-                  type="button"
+                <span
+                  role="button"
+                  tabIndex={0}
                   onClick={handleClear}
-                  className="p-0.5 rounded hover:bg-hover text-muted hover:text-foreground"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleClear(e as unknown as React.MouseEvent);
+                    }
+                  }}
+                  className="p-0.5 rounded hover:bg-hover text-muted hover:text-foreground cursor-pointer"
                 >
                   <X className="h-4 w-4" />
-                </button>
+                </span>
               )}
               <ChevronDown className="h-4 w-4 text-muted shrink-0" />
             </div>
