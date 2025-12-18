@@ -12,17 +12,18 @@ import { plannerApi, ApiError } from "@/lib/api";
 import type {
   PlannerEntryResponseDTO,
   PlannerSummaryDTO,
+  MealSelectionResponseDTO,
 } from "@/types/index";
 import {
   PlannerHeader,
   ActivePlanner,
   PlannerSkeleton,
+  MealLibrary,
+  MobileTabNav,
+  MealFormModal,
 } from "./components";
+import type { MobileTab } from "./components";
 import { cn } from "@/lib/utils";
-
-// Phase 2 Components
-import { MealLibrary } from "./components/MealLibrary";
-import { MobileTabNav, type MobileTab } from "./components/MobileTabNav";
 
 // ============================================================================
 // Toast Notification Component
@@ -54,10 +55,10 @@ function ToastContainer({
               : "bg-success text-white"
           }`}
         >
-          {toast.message}
+          <span>{toast.message}</span>
           <button
             onClick={() => onDismiss(toast.id)}
-            className="ml-2 opacity-70 hover:opacity-100"
+            className="ml-2 hover:opacity-70"
           >
             ×
           </button>
@@ -65,10 +66,6 @@ function ToastContainer({
       ))}
     </div>
   );
-}
-
-function generateId(): string {
-  return Math.random().toString(36).substring(2, 9);
 }
 
 // ============================================================================
@@ -79,37 +76,54 @@ export default function MealPlannerPage() {
   // Data state
   const [entries, setEntries] = useState<PlannerEntryResponseDTO[]>([]);
   const [summary, setSummary] = useState<PlannerSummaryDTO | null>(null);
-
-  // Loading states
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Action states
+  // UI state
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
   const [removingIds, setRemovingIds] = useState<Set<number>>(new Set());
   const [isClearingCompleted, setIsClearingCompleted] = useState(false);
   const [isClearingAll, setIsClearingAll] = useState(false);
+  const [mobileTab, setMobileTab] = useState<MobileTab>("planner");
+  
+  // Modal state (Phase 3)
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingMeal, setEditingMeal] = useState<MealSelectionResponseDTO | null>(null);
+  const [mealLibraryRefreshTrigger, setMealLibraryRefreshTrigger] = useState(0);
 
-  // Toast notifications
+  // Toast state
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // Mobile tab state
-  const [mobileTab, setMobileTab] = useState<MobileTab>("planner");
-
-  // Derive meal IDs in planner for "In Planner" badges
+  // Get set of meal IDs currently in planner
   const mealIdsInPlanner = useMemo(() => {
-    return new Set(entries.map((entry) => entry.meal_id));
+    return new Set(entries.map((e) => e.meal_id));
   }, [entries]);
 
-  const showToast = useCallback((message: string, type: "success" | "error") => {
-    const id = generateId();
-    setToasts((prev) => [...prev, { id, message, type }]);
-    // Auto-dismiss after 4 seconds
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
-  }, []);
+  // Get all existing tags from meals for autocomplete
+  const existingTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    entries.forEach((entry) => {
+      entry.tags?.forEach((tag) => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
+  }, [entries]);
 
+  // Show toast notification
+  const showToast = useCallback(
+    (message: string, type: "success" | "error") => {
+      const id = Math.random().toString(36).substr(2, 9);
+      setToasts((prev) => [...prev, { id, message, type }]);
+
+      // Auto-dismiss after 4 seconds
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 4000);
+    },
+    []
+  );
+
+  // Dismiss toast
   const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
@@ -126,9 +140,7 @@ export default function MealPlannerPage() {
       setSummary(summaryData);
     } catch (err) {
       const message =
-        err instanceof ApiError
-          ? `Error: ${err.message}`
-          : "Failed to load planner data";
+        err instanceof ApiError ? err.message : "Failed to load planner data";
       setError(message);
       console.error("Failed to fetch planner data:", err);
     } finally {
@@ -136,51 +148,41 @@ export default function MealPlannerPage() {
     }
   }, []);
 
-  // Initial load
+  // Initial data load
   useEffect(() => {
     fetchPlannerData();
   }, [fetchPlannerData]);
 
-  // Toggle completion with optimistic update
+  // Toggle entry completion
   const handleToggleCompletion = useCallback(
     async (entryId: number) => {
-      const entryIndex = entries.findIndex((e) => e.id === entryId);
-      if (entryIndex === -1) return;
-
-      const previousEntries = [...entries];
-      const previousSummary = summary;
+      // Prevent double-toggling
+      if (togglingIds.has(entryId)) return;
+      setTogglingIds((prev) => new Set([...prev, entryId]));
 
       // Optimistic update
-      setTogglingIds((prev) => new Set(prev).add(entryId));
+      const previousEntries = entries;
+      const previousSummary = summary;
+
       setEntries((prev) =>
         prev.map((e) =>
-          e.id === entryId
-            ? {
-                ...e,
-                is_completed: !e.is_completed,
-                completed_at: !e.is_completed
-                  ? new Date().toISOString()
-                  : null,
-              }
-            : e
+          e.id === entryId ? { ...e, is_completed: !e.is_completed } : e
         )
       );
 
-      // Update summary counts
-      const wasCompleted = previousEntries[entryIndex].is_completed;
-      setSummary((prev) =>
-        prev
-          ? {
-              ...prev,
-              completed_entries: wasCompleted
-                ? prev.completed_entries - 1
-                : prev.completed_entries + 1,
-              incomplete_entries: wasCompleted
-                ? prev.incomplete_entries + 1
-                : prev.incomplete_entries - 1,
-            }
-          : null
-      );
+      // Update summary optimistically
+      const toggledEntry = entries.find((e) => e.id === entryId);
+      if (toggledEntry && summary) {
+        setSummary({
+          ...summary,
+          completed_entries: toggledEntry.is_completed
+            ? summary.completed_entries - 1
+            : summary.completed_entries + 1,
+          incomplete_entries: toggledEntry.is_completed
+            ? summary.incomplete_entries + 1
+            : summary.incomplete_entries - 1,
+        });
+      }
 
       try {
         await plannerApi.toggleCompletion(entryId);
@@ -188,7 +190,7 @@ export default function MealPlannerPage() {
         // Rollback on error
         setEntries(previousEntries);
         setSummary(previousSummary);
-        showToast("Failed to update meal status", "error");
+        showToast("Failed to update completion status", "error");
         console.error("Failed to toggle completion:", err);
       } finally {
         setTogglingIds((prev) => {
@@ -198,30 +200,27 @@ export default function MealPlannerPage() {
         });
       }
     },
-    [entries, summary, showToast]
+    [entries, summary, togglingIds, showToast]
   );
 
-  // Remove entry with optimistic update
+  // Remove entry from planner
   const handleRemoveEntry = useCallback(
     async (entryId: number) => {
-      const removedEntry = entries.find((e) => e.id === entryId);
-      if (!removedEntry) return;
-
-      const previousEntries = [...entries];
-      const previousSummary = summary;
+      // Prevent double-removing
+      if (removingIds.has(entryId)) return;
+      setRemovingIds((prev) => new Set([...prev, entryId]));
 
       // Optimistic update
-      setRemovingIds((prev) => new Set(prev).add(entryId));
-      setEntries((prev) =>
-        prev
-          .filter((e) => e.id !== entryId)
-          .map((e, idx) => ({ ...e, position: idx + 1 }))
-      );
+      const previousEntries = entries;
+      const previousSummary = summary;
+      const removedEntry = entries.find((e) => e.id === entryId);
 
-      // Update summary
-      const recipeCount =
-        1 + (removedEntry.side_recipe_ids?.length || 0);
-      if (summary) {
+      setEntries((prev) => prev.filter((e) => e.id !== entryId));
+
+      // Update summary optimistically
+      if (removedEntry && summary) {
+        const recipeCount =
+          1 + (removedEntry.side_recipe_ids?.length || 0);
         setSummary({
           ...summary,
           total_entries: summary.total_entries - 1,
@@ -253,7 +252,7 @@ export default function MealPlannerPage() {
         });
       }
     },
-    [entries, summary, showToast]
+    [entries, summary, removingIds, showToast]
   );
 
   // Clear completed entries
@@ -314,6 +313,70 @@ export default function MealPlannerPage() {
       await fetchPlannerData();
     },
     [fetchPlannerData]
+  );
+
+  // =========================================================================
+  // Phase 3: Modal Handlers
+  // =========================================================================
+
+  // Open create modal
+  const handleCreateMeal = useCallback(() => {
+    setCreateModalOpen(true);
+  }, []);
+
+  // Open edit modal
+  const handleEditMeal = useCallback((meal: MealSelectionResponseDTO) => {
+    setEditingMeal(meal);
+    setEditModalOpen(true);
+  }, []);
+
+  // Handle meal created
+  const handleMealCreated = useCallback(
+    async (meal: MealSelectionResponseDTO, addedToPlanner?: boolean) => {
+      showToast(`Created "${meal.meal_name}"`, "success");
+      
+      // Refresh meal library
+      setMealLibraryRefreshTrigger((prev) => prev + 1);
+      
+      // If added to planner, refresh planner data too
+      if (addedToPlanner) {
+        await fetchPlannerData();
+        showToast(`Added "${meal.meal_name}" to planner`, "success");
+      }
+    },
+    [fetchPlannerData, showToast]
+  );
+
+  // Handle meal updated
+  const handleMealUpdated = useCallback(
+    async (meal: MealSelectionResponseDTO) => {
+      showToast(`Updated "${meal.meal_name}"`, "success");
+      
+      // Refresh meal library
+      setMealLibraryRefreshTrigger((prev) => prev + 1);
+      
+      // If meal is in planner, refresh planner data to reflect changes
+      if (mealIdsInPlanner.has(meal.id)) {
+        await fetchPlannerData();
+      }
+    },
+    [fetchPlannerData, mealIdsInPlanner, showToast]
+  );
+
+  // Handle meal deleted
+  const handleMealDeleted = useCallback(
+    async (mealId: number) => {
+      showToast("Meal deleted", "success");
+      
+      // Refresh meal library
+      setMealLibraryRefreshTrigger((prev) => prev + 1);
+      
+      // If meal was in planner, refresh planner data
+      if (mealIdsInPlanner.has(mealId)) {
+        await fetchPlannerData();
+      }
+    },
+    [fetchPlannerData, mealIdsInPlanner, showToast]
   );
 
   // Render loading state
@@ -415,10 +478,36 @@ export default function MealPlannerPage() {
               onMealAdded={handleMealAdded}
               showToast={showToast}
               isAtCapacity={summary?.is_at_capacity || false}
+              onCreateMeal={handleCreateMeal}
+              onEditMeal={handleEditMeal}
+              refreshTrigger={mealLibraryRefreshTrigger}
             />
           </div>
         </div>
       </main>
+
+      {/* Phase 3: Create Meal Modal */}
+      <MealFormModal
+        mode="create"
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+        onSuccess={handleMealCreated}
+        existingTags={existingTags}
+      />
+
+      {/* Phase 3: Edit Meal Modal */}
+      <MealFormModal
+        mode="edit"
+        meal={editingMeal}
+        open={editModalOpen}
+        onOpenChange={(open) => {
+          setEditModalOpen(open);
+          if (!open) setEditingMeal(null);
+        }}
+        onSuccess={handleMealUpdated}
+        onDelete={handleMealDeleted}
+        existingTags={existingTags}
+      />
 
       {/* Toast notifications */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

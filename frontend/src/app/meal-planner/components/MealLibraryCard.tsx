@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Check, Loader2, Heart } from "lucide-react";
+import { Plus, Check, Loader2, Heart, Edit2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import type { MealSelectionResponseDTO } from "@/types/index";
@@ -11,6 +11,7 @@ interface MealLibraryCardProps {
   isInPlanner: boolean;
   onAddToPlanner: (mealId: number) => Promise<void>;
   onToggleFavorite: (mealId: number) => Promise<void>;
+  onEdit?: (meal: MealSelectionResponseDTO) => void;
 }
 
 export function MealLibraryCard({
@@ -18,6 +19,7 @@ export function MealLibraryCard({
   isInPlanner,
   onAddToPlanner,
   onToggleFavorite,
+  onEdit,
 }: MealLibraryCardProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
@@ -51,6 +53,13 @@ export function MealLibraryCard({
     }
   };
 
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onEdit) {
+      onEdit(meal);
+    }
+  };
+
   // Update optimistic state when prop changes
   if (meal.is_favorite !== optimisticFavorite && !isTogglingFavorite) {
     setOptimisticFavorite(meal.is_favorite);
@@ -71,7 +80,20 @@ export function MealLibraryCard({
         <h4 className="font-semibold text-foreground text-sm line-clamp-1 flex-1">
           {meal.meal_name}
         </h4>
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-0.5 flex-shrink-0">
+          {/* Edit button */}
+          {onEdit && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-muted hover:text-foreground"
+              onClick={handleEdit}
+            >
+              <Edit2 className="h-3.5 w-3.5" />
+              <span className="sr-only">Edit meal</span>
+            </Button>
+          )}
+          
           {/* Favorite button */}
           <Button
             size="icon"

@@ -19,6 +19,9 @@ interface MealLibraryProps {
   onMealAdded: (entry: { meal_id: number; meal_name: string }) => void;
   showToast: (message: string, type: "success" | "error") => void;
   isAtCapacity: boolean;
+  onCreateMeal?: () => void;
+  onEditMeal?: (meal: MealSelectionResponseDTO) => void;
+  refreshTrigger?: number;
 }
 
 export function MealLibrary({
@@ -26,6 +29,9 @@ export function MealLibrary({
   onMealAdded,
   showToast,
   isAtCapacity,
+  onCreateMeal,
+  onEditMeal,
+  refreshTrigger = 0,
 }: MealLibraryProps) {
   // Data state
   const [meals, setMeals] = useState<MealSelectionResponseDTO[]>([]);
@@ -60,10 +66,10 @@ export function MealLibrary({
     }
   }, []);
 
-  // Initial load
+  // Initial load and refresh on trigger change
   useEffect(() => {
     fetchMeals();
-  }, [fetchMeals]);
+  }, [fetchMeals, refreshTrigger]);
 
   // Extract all unique tags from meals
   const allTags = useMemo(() => {
@@ -103,7 +109,7 @@ export function MealLibrary({
   }, [meals, debouncedSearch, activeTab, selectedTags]);
 
   // Check if any filters are active
-  const hasActiveFilters = debouncedSearch || activeTab === "favorites" || selectedTags.length > 0;
+  const hasActiveFilters = !!debouncedSearch || activeTab === "favorites" || selectedTags.length > 0;
 
   // Clear all filters
   const clearFilters = () => {
@@ -192,9 +198,9 @@ export function MealLibrary({
           <Button
             variant="outline"
             size="sm"
-            disabled
-            className="gap-2 opacity-60 cursor-not-allowed"
-            title="Coming soon!"
+            className="gap-2"
+            onClick={onCreateMeal}
+            disabled={!onCreateMeal}
           >
             <Plus className="h-4 w-4" />
             New
@@ -236,16 +242,11 @@ export function MealLibrary({
             size="sm"
             className={cn(
               "h-8 gap-1.5",
-              activeTab === "favorites" && "bg-error hover:bg-error/90"
+              activeTab === "favorites" && "bg-error/20 text-error hover:bg-error/30 border-error/30"
             )}
-            onClick={() => setActiveTab(activeTab === "favorites" ? "all" : "favorites")}
+            onClick={() => setActiveTab("favorites")}
           >
-            <Heart
-              className={cn(
-                "h-3.5 w-3.5",
-                activeTab === "favorites" && "fill-current"
-              )}
-            />
+            <Heart className={cn("h-3.5 w-3.5", activeTab === "favorites" && "fill-current")} />
             Favorites
           </Button>
           <TagFilterDropdown
@@ -256,35 +257,43 @@ export function MealLibrary({
         </div>
       </div>
 
-      {/* Content */}
+      {/* Meal list */}
       <div className="p-4">
-        {/* Empty states */}
-        {meals.length === 0 ? (
-          <MealLibraryEmpty variant="empty" />
-        ) : filteredMeals.length === 0 ? (
-          <MealLibraryEmpty variant="no-results" onClearFilters={clearFilters} />
-        ) : (
-          <>
-            {/* Meal list */}
-            <div className="space-y-3">
-              {filteredMeals.map((meal) => (
-                <MealLibraryCard
-                  key={meal.id}
-                  meal={meal}
-                  isInPlanner={mealIdsInPlanner.has(meal.id)}
-                  onAddToPlanner={handleAddToPlanner}
-                  onToggleFavorite={handleToggleFavorite}
-                />
-              ))}
-            </div>
+        {/* Active filters indicator */}
+        {hasActiveFilters && (
+          <div className="flex items-center justify-between mb-3 pb-3 border-b border-border-subtle">
+            <span className="text-xs text-muted">
+              {filteredMeals.length} of {meals.length} meals
+            </span>
+            <button
+              onClick={clearFilters}
+              className="text-xs text-primary hover:underline"
+            >
+              Clear filters
+            </button>
+          </div>
+        )}
 
-            {/* Footer count */}
-            <div className="mt-4 pt-3 border-t border-border-subtle">
-              <p className="text-xs text-muted text-center">
-                Showing {filteredMeals.length} of {meals.length} meal{meals.length !== 1 ? "s" : ""}
-              </p>
-            </div>
-          </>
+        {/* Meal cards */}
+        {filteredMeals.length === 0 ? (
+          <MealLibraryEmpty
+            hasFilters={hasActiveFilters}
+            onClearFilters={clearFilters}
+            onCreateMeal={onCreateMeal}
+          />
+        ) : (
+          <div className="space-y-2 max-h-[calc(100vh-400px)] overflow-y-auto pr-1">
+            {filteredMeals.map((meal) => (
+              <MealLibraryCard
+                key={meal.id}
+                meal={meal}
+                isInPlanner={mealIdsInPlanner.has(meal.id)}
+                onAddToPlanner={handleAddToPlanner}
+                onToggleFavorite={handleToggleFavorite}
+                onEdit={onEditMeal}
+              />
+            ))}
+          </div>
         )}
       </div>
     </div>
