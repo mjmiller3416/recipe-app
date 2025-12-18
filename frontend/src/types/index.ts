@@ -119,6 +119,60 @@ export interface MealPlanSummaryDTO {
 }
 
 // ============================================================================
+// Planner Entry Types
+// ============================================================================
+
+export interface PlannerEntryCreateDTO {
+  meal_id: number;
+  position?: number;
+}
+
+export interface PlannerEntryUpdateDTO {
+  position?: number;
+  is_completed?: boolean;
+  scheduled_date?: string;
+}
+
+export interface PlannerEntryResponseDTO {
+  id: number;
+  meal_id: number;
+  position: number;
+  is_completed: boolean;
+  completed_at: string | null;
+  scheduled_date: string | null;
+  meal_name: string | null;
+  main_recipe_id: number | null;
+  side_recipe_ids: number[];
+  main_recipe: RecipeCardDTO | null;
+}
+
+export interface PlannerSummaryDTO {
+  total_entries: number;
+  completed_entries: number;
+  incomplete_entries: number;
+  total_recipes: number;
+  meal_names: string[];
+  is_at_capacity: boolean;
+  max_capacity: number;
+  error: string | null;
+}
+
+export interface PlannerReorderDTO {
+  entry_ids: number[];
+}
+
+export interface PlannerBulkAddDTO {
+  meal_ids: number[];
+}
+
+export interface PlannerOperationResultDTO {
+  success: boolean;
+  message: string;
+  affected_count: number;
+  error: string | null;
+}
+
+// ============================================================================
 // Shopping List Types
 // ============================================================================
 

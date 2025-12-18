@@ -6,11 +6,13 @@ import type {
   RecipeCardDTO,
   RecipeFilterDTO,
   MealSelectionResponseDTO,
-  MealPlanSummaryDTO,
   ShoppingListResponseDTO,
   ShoppingItemResponseDTO,
   ShoppingListGenerationResultDTO,
   IngredientResponseDTO,
+  PlannerEntryResponseDTO,
+  PlannerSummaryDTO,
+  PlannerOperationResultDTO,
 } from "@/types";
 
 // API base URL from environment variable or default to localhost
@@ -179,8 +181,8 @@ export const plannerApi = {
   /**
    * Get planner summary
    */
-  getSummary: (): Promise<MealPlanSummaryDTO> =>
-    fetchApi<MealPlanSummaryDTO>("/api/planner/summary"),
+  getSummary: (): Promise<PlannerSummaryDTO> =>
+    fetchApi<PlannerSummaryDTO>("/api/planner/summary"),
 
   /**
    * Get a single meal
@@ -224,10 +226,40 @@ export const plannerApi = {
     }),
 
   /**
-   * Clear planner entries
+   * Get all planner entries ordered by position
    */
-  clearPlan: (): Promise<void> =>
-    fetchApi<void>("/api/planner/clear", { method: "DELETE" }),
+  getEntries: (): Promise<PlannerEntryResponseDTO[]> =>
+    fetchApi<PlannerEntryResponseDTO[]>("/api/planner/entries"),
+
+  /**
+   * Toggle completion status of an entry
+   */
+  toggleCompletion: (entryId: number): Promise<PlannerEntryResponseDTO> =>
+    fetchApi<PlannerEntryResponseDTO>(`/api/planner/entries/${entryId}/toggle`, {
+      method: "POST",
+    }),
+
+  /**
+   * Remove an entry from the planner
+   */
+  removeEntry: (entryId: number): Promise<void> =>
+    fetchApi<void>(`/api/planner/entries/${entryId}`, { method: "DELETE" }),
+
+  /**
+   * Clear all completed entries
+   */
+  clearCompleted: (): Promise<PlannerOperationResultDTO> =>
+    fetchApi<PlannerOperationResultDTO>("/api/planner/clear-completed", {
+      method: "POST",
+    }),
+
+  /**
+   * Clear entire planner
+   */
+  clearAll: (): Promise<PlannerOperationResultDTO> =>
+    fetchApi<PlannerOperationResultDTO>("/api/planner/clear", {
+      method: "POST",
+    }),
 };
 
 // ============================================================================
