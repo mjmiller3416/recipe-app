@@ -119,6 +119,50 @@ class RecipeDeletionImpactDTO(BaseModel):
     )
     total_affected: int = 0
 
+    @property
+    def warning_message(self) -> str:
+        """Generate user-friendly warning message for recipe deletion."""
+        if not self.meals_to_delete and not self.meals_to_update:
+            return ""
+
+        def format_meal_list(meals: List[MealResponseDTO], max_display: int = 5) -> str:
+            """Format a list of meals with truncation."""
+            meal_names = [meal.meal_name for meal in meals]
+            if len(meal_names) <= max_display:
+                return ", ".join(meal_names)
+            displayed = ", ".join(meal_names[:max_display])
+            remaining = len(meal_names) - max_display
+            return f"{displayed} and {remaining} more"
+
+        def pluralize_meal(count: int) -> str:
+            """Return 'meal' or 'meals' based on count."""
+            return "meal" if count == 1 else "meals"
+
+        parts = []
+
+        if self.meals_to_delete:
+            count = len(self.meals_to_delete)
+            meal_list = format_meal_list(self.meals_to_delete)
+            parts.append(
+                f"⚠️ Deleting this recipe will DELETE {count} {pluralize_meal(count)}: {meal_list}"
+            )
+
+        if self.meals_to_update:
+            count = len(self.meals_to_update)
+            meal_list = format_meal_list(self.meals_to_update)
+            if self.meals_to_delete:
+                # Secondary message when there are also main meals
+                parts.append(
+                    f"It will also be removed as a side from {count} {pluralize_meal(count)}: {meal_list}"
+                )
+            else:
+                # Primary message when only side meals affected
+                parts.append(
+                    f"⚠️ This recipe will be removed as a side from {count} {pluralize_meal(count)}: {meal_list}"
+                )
+
+        return "\n\n".join(parts)
+
 
 # Re-export RecipeCardDTO for convenience
 __all__ = [

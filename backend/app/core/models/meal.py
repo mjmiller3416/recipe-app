@@ -117,13 +117,62 @@ class Meal(Base):
         except (json.JSONDecodeError, TypeError):
             return []
 
+    # Constants for tag validation
+    MAX_TAGS = 20
+    MAX_TAG_LENGTH = 50
+
     @tags.setter
     def tags(self, value: List[str]) -> None:
-        """Set the list of tags."""
+        """
+        Set the list of tags with validation and normalization.
+
+        Tags are normalized to lowercase and stripped of whitespace.
+        Duplicates are removed while preserving order.
+
+        Args:
+            value: List of tag strings
+
+        Raises:
+            ValueError: If value is not a list, contains non-strings,
+                       exceeds 20 tags, or any tag exceeds 50 characters
+        """
         import json
+
+        # Handle None case
         if value is None:
-            value = []
-        self._tags_json = json.dumps(value)
+            self._tags_json = "[]"
+            return
+
+        # Type validation - must be a list
+        if not isinstance(value, list):
+            raise ValueError(f"Tags must be a list, got {type(value)}")
+
+        # Type validation - all items must be strings
+        if not all(isinstance(tag, str) for tag in value):
+            raise ValueError("All tags must be strings")
+
+        # Normalize tags: strip, lowercase, remove empty, deduplicate (preserve order)
+        normalized: List[str] = []
+        seen: set = set()
+        for tag in value:
+            tag_clean = tag.strip().lower()
+            if tag_clean and tag_clean not in seen:
+                seen.add(tag_clean)
+                normalized.append(tag_clean)
+
+        # Validate tag count
+        if len(normalized) > self.MAX_TAGS:
+            raise ValueError(f"Maximum {self.MAX_TAGS} tags allowed, got {len(normalized)}")
+
+        # Validate individual tag length
+        for tag in normalized:
+            if len(tag) > self.MAX_TAG_LENGTH:
+                display_tag = tag[:20] + "..." if len(tag) > 23 else tag
+                raise ValueError(
+                    f"Tag '{display_tag}' exceeds {self.MAX_TAG_LENGTH} character limit"
+                )
+
+        self._tags_json = json.dumps(normalized)
 
     # -- String Representation -------------------------------------------------------------------
     def __repr__(self) -> str:
