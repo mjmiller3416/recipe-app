@@ -1,8 +1,7 @@
 "use client";
 
-import { PlannerEntryCard } from "./PlannerEntryCard";
-import { PlannerEmptyState } from "./PlannerEmptyState";
 import type { PlannerEntryResponseDTO } from "@/types/index";
+import { SortablePlannerList } from "./dnd/SortablePlannerList";
 
 interface ActivePlannerProps {
   entries: PlannerEntryResponseDTO[];
@@ -10,6 +9,7 @@ interface ActivePlannerProps {
   onRemoveEntry: (entryId: number) => Promise<void>;
   togglingIds: Set<number>;
   removingIds: Set<number>;
+  isAtCapacity: boolean;
 }
 
 export function ActivePlanner({
@@ -18,23 +18,16 @@ export function ActivePlanner({
   onRemoveEntry,
   togglingIds,
   removingIds,
+  isAtCapacity,
 }: ActivePlannerProps) {
-  if (entries.length === 0) {
-    return <PlannerEmptyState />;
-  }
-
   return (
-    <div className="space-y-3">
-      {entries.map((entry) => (
-        <PlannerEntryCard
-          key={entry.id}
-          entry={entry}
-          onToggleCompletion={onToggleCompletion}
-          onRemove={onRemoveEntry}
-          isToggling={togglingIds.has(entry.id)}
-          isRemoving={removingIds.has(entry.id)}
-        />
-      ))}
-    </div>
+    <SortablePlannerList
+      entries={entries}
+      onToggleCompletion={onToggleCompletion}
+      onRemoveEntry={onRemoveEntry}
+      togglingIds={togglingIds}
+      removingIds={removingIds}
+      isAtCapacity={isAtCapacity}
+    />
   );
 }

@@ -20,3 +20,14 @@ export { RecipeSelector } from "./RecipeSelector";
 export { SideRecipeSlots } from "./SideRecipeSlots";
 export { TagInput } from "./TagInput";
 export { DeleteMealDialog } from "./DeleteMealDialog";
+
+// Phase 4 Components (Drag & Drop)
+export {
+  DragHandle,
+  PlannerDropZone,
+  MealDragOverlay,
+  SortablePlannerEntry,
+  SortablePlannerList,
+  DraggableMealCard,
+} from "./dnd";
+export type { DragItem } from "./dnd";

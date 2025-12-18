@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CompletionCheckbox } from "@/components/CompletionCheckbox";
 import { formatRelativeTime } from "@/lib/timeUtils";
+import { DragHandle } from "./dnd/DragHandle";
 import type { PlannerEntryResponseDTO } from "@/types/index";
 
 interface PlannerEntryCardProps {
@@ -21,6 +22,9 @@ interface PlannerEntryCardProps {
   onRemove: (entryId: number) => Promise<void>;
   isToggling?: boolean;
   isRemoving?: boolean;
+  // Phase 4: Drag & Drop props
+  dragHandleProps?: Record<string, unknown>;
+  isDragging?: boolean;
 }
 
 export function PlannerEntryCard({
@@ -29,6 +33,8 @@ export function PlannerEntryCard({
   onRemove,
   isToggling = false,
   isRemoving = false,
+  dragHandleProps,
+  isDragging = false,
 }: PlannerEntryCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -53,22 +59,41 @@ export function PlannerEntryCard({
   return (
     <div
       className={cn(
-        "group relative flex items-start gap-4 rounded-lg border border-border-subtle bg-elevated p-4 transition-all duration-200",
+        "group relative flex items-stretch rounded-lg border transition-all duration-200",
+        "bg-elevated border-border-subtle",
         "hover:border-border",
         entry.is_completed && "opacity-60",
-        isRemoving && "pointer-events-none opacity-50"
+        isRemoving && "pointer-events-none opacity-50",
+        // Phase 4: Drag states
+        isDragging && [
+          "shadow-lg shadow-primary/20",
+          "border-primary",
+          "ring-2 ring-primary/30",
+          "scale-[1.02]",
+        ]
       )}
     >
+      {/* Phase 4: Drag Handle */}
+      {dragHandleProps && (
+        <DragHandle
+          listeners={dragHandleProps}
+          attributes={dragHandleProps}
+          isDragging={isDragging}
+        />
+      )}
+
       {/* Completion checkbox */}
-      <CompletionCheckbox
-        checked={entry.is_completed}
-        onChange={handleToggle}
-        disabled={isToggling}
-        className="mt-0.5"
-      />
+      <div className={cn("flex items-start py-4", dragHandleProps ? "pl-0" : "pl-4")}>
+        <CompletionCheckbox
+          checked={entry.is_completed}
+          onChange={handleToggle}
+          disabled={isToggling}
+          className="mt-0.5"
+        />
+      </div>
 
       {/* Content */}
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 py-4 pr-4">
         {/* Header row: position + meal name */}
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-muted">
@@ -113,7 +138,7 @@ export function PlannerEntryCard({
       </div>
 
       {/* Right side: completed status or actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 pr-4">
         {entry.is_completed && entry.completed_at && (
           <span className="flex items-center gap-1 text-xs text-success">
             <Check className="h-3 w-3" />

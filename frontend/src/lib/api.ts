@@ -289,6 +289,17 @@ export const plannerApi = {
       body: JSON.stringify(filters),
     });
   },
+
+  /**
+   * Reorder planner entries
+   * PUT /api/planner/entries/reorder
+   */
+  reorder: async (data: PlannerReorderDTO): Promise<PlannerOperationResultDTO> => {
+    return fetchApi<PlannerOperationResultDTO>("/api/planner/entries/reorder", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
 };
 
 // ============================================================================
@@ -574,6 +585,10 @@ export interface MealFilterDTO {
   favorites_only?: boolean;
   limit?: number;
   offset?: number;
+}
+
+export interface PlannerReorderDTO {
+  entry_ids: number[];
 }
 
 export interface IngredientBreakdownDTO {

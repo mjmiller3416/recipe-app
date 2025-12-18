@@ -463,6 +463,7 @@ export default function MealPlannerPage() {
               onRemoveEntry={handleRemoveEntry}
               togglingIds={togglingIds}
               removingIds={removingIds}
+              isAtCapacity={summary?.is_at_capacity || false}
             />
           </div>
 
