@@ -14,10 +14,10 @@ import {
   Calendar,
   SortAsc,
   Heart,
-  Filter,
   BookOpen,
   ChevronDown,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,16 +30,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  PageHeader,
-  PageHeaderContent,
-  PageHeaderTitle,
-  PageHeaderActions,
-} from "@/components/layout/PageHeader";
 import { RecipeCard, RecipeCardGrid } from "@/components/recipe/RecipeCard";
 import { recipeApi } from "@/lib/api";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
-import { RECIPE_CATEGORIES, MEAL_TYPES, DIETARY_PREFERENCES } from "@/lib/constants";
+import { RECIPE_CATEGORIES, MEAL_TYPES, DIETARY_PREFERENCES, QUICK_FILTERS } from "@/lib/constants";
 import type { RecipeCardData } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -55,10 +49,11 @@ interface FilterState {
   mealTypes: string[];
   dietaryPreferences: string[];
   favoritesOnly: boolean;
+  maxCookTime: number | null;
 }
 
 interface ActiveFilter {
-  type: "category" | "mealType" | "dietary" | "favorite";
+  type: "category" | "mealType" | "dietary" | "favorite" | "time";
   value: string;
   label: string;
 }
@@ -72,6 +67,105 @@ const SORT_OPTIONS: { value: SortOption; label: string; icon: React.ElementType 
   { value: "cookTime", label: "Cook Time", icon: Clock },
   { value: "createdAt", label: "Date Added", icon: Calendar },
 ];
+
+// ============================================================================
+// Hero Section Component
+// ============================================================================
+
+interface HeroSectionProps {
+  recipeCount: number;
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+  onSearch: () => void;
+  activeQuickFilters: Set<string>;
+  onQuickFilterToggle: (filterId: string) => void;
+}
+
+function HeroSection({
+  recipeCount,
+  searchTerm,
+  onSearchChange,
+  onSearch,
+  activeQuickFilters,
+  onQuickFilterToggle,
+}: HeroSectionProps) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      onSearch();
+    }
+  };
+
+  return (
+    <div className="relative w-full overflow-hidden">
+      {/* Background Image with Overlay */}
+      <div className="absolute inset-0">
+        <img
+          src="/images/rb_hero_image.png"
+          alt=""
+          className="w-full h-full object-cover"
+        />
+        {/* Dark gradient overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/70 to-background" />
+        {/* Subtle blur effect on image */}
+        <div className="absolute inset-0 backdrop-blur-[2px]" />
+      </div>
+
+      {/* Hero Content */}
+      <div className="relative z-10 max-w-4xl mx-auto px-6 py-16 text-center">
+        {/* Headline */}
+        <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3 tracking-tight">
+          Find your next meal
+        </h1>
+        <p className="text-muted text-lg mb-8">
+          Browse through your collection of {recipeCount} saved recipes
+        </p>
+
+        {/* Search Bar */}
+        <div className="flex gap-3 max-w-2xl mx-auto mb-8">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted" />
+            <Input
+              placeholder="Search saved recipes, ingredients, tags..."
+              value={searchTerm}
+              onChange={(e) => onSearchChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="pl-12 h-12 text-base bg-elevated/90 backdrop-blur-sm border-border/50 focus:border-primary"
+            />
+          </div>
+          <Button
+            onClick={onSearch}
+            size="lg"
+            className="h-12 px-6 bg-primary hover:bg-primary/90"
+          >
+            Search
+          </Button>
+        </div>
+
+        {/* Quick Filter Pills */}
+        <div className="flex flex-wrap justify-center gap-2">
+          {QUICK_FILTERS.map((filter) => {
+            const isActive = activeQuickFilters.has(filter.id);
+            return (
+              <button
+                key={filter.id}
+                onClick={() => onQuickFilterToggle(filter.id)}
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
+                  "border backdrop-blur-sm",
+                  isActive
+                    ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25"
+                    : "bg-elevated/80 text-foreground border-border/50 hover:bg-elevated hover:border-border"
+                )}
+              >
+                {filter.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ============================================================================
 // Filter Section Component
@@ -111,10 +205,12 @@ function FilterSection({
             </span>
           )}
         </span>
-        <ChevronDown className={cn(
-          "h-4 w-4 text-muted transition-transform duration-200",
-          isOpen && "rotate-180"
-        )} />
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 text-muted transition-transform duration-200",
+            isOpen && "rotate-180"
+          )}
+        />
       </button>
       {isOpen && (
         <div className="pt-2 pb-4 space-y-1">
@@ -147,18 +243,19 @@ interface FilterChipProps {
 }
 
 function FilterChip({ label, type, onRemove }: FilterChipProps) {
-  const typeColors = {
+  const typeColors: Record<string, string> = {
     category: "bg-primary/20 text-primary border-primary/30",
     mealType: "bg-secondary/20 text-secondary border-secondary/30",
     dietary: "bg-accent/50 text-foreground border-accent",
     favorite: "bg-[var(--error)]/20 text-[var(--error)] border-[var(--error)]/30",
+    time: "bg-secondary/20 text-secondary border-secondary/30",
   };
 
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-colors",
-        typeColors[type as keyof typeof typeColors] || "bg-elevated text-foreground border-border"
+        typeColors[type] || "bg-elevated text-foreground border-border"
       )}
     >
       {label}
@@ -170,6 +267,86 @@ function FilterChip({ label, type, onRemove }: FilterChipProps) {
         <X className="h-3 w-3" />
       </button>
     </span>
+  );
+}
+
+// ============================================================================
+// Section Header Component
+// ============================================================================
+
+interface SectionHeaderProps {
+  resultCount: number;
+  totalCount: number;
+  sortBy: SortOption;
+  sortDirection: SortDirection;
+  onSortChange: (value: SortOption) => void;
+  onSortDirectionToggle: () => void;
+  showFilters: boolean;
+  onToggleFilters: () => void;
+}
+
+function SectionHeader({
+  resultCount,
+  totalCount,
+  sortBy,
+  sortDirection,
+  onSortChange,
+  onSortDirectionToggle,
+  showFilters,
+  onToggleFilters,
+}: SectionHeaderProps) {
+  return (
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center gap-3">
+        <Sparkles className="h-5 w-5 text-primary" />
+        <h2 className="text-xl font-semibold text-foreground">Your Recipes</h2>
+        <span className="text-sm text-muted">
+          {resultCount === totalCount
+            ? `${totalCount} recipes`
+            : `${resultCount} of ${totalCount} recipes`}
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted">Sort by:</span>
+        <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortOption)}>
+          <SelectTrigger className="w-[140px] h-9">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SORT_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                <span className="flex items-center gap-2">
+                  <option.icon className="h-4 w-4" />
+                  {option.label}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={onSortDirectionToggle}
+          className="h-9 w-9"
+          aria-label={`Sort ${sortDirection === "asc" ? "ascending" : "descending"}`}
+        >
+          {sortDirection === "asc" ? (
+            <ArrowUp className="h-4 w-4" />
+          ) : (
+            <ArrowDown className="h-4 w-4" />
+          )}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onToggleFilters}
+          className="gap-2 ml-2"
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          {showFilters ? "Hide Filters" : "Show Filters"}
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -197,10 +374,12 @@ export default function RecipeBrowserPage() {
     mealTypes: [],
     dietaryPreferences: [],
     favoritesOnly: false,
+    maxCookTime: null,
   });
   const [sortBy, setSortBy] = useState<SortOption>("alphabetical");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [showFilters, setShowFilters] = useState(true);
+  const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(new Set());
 
   // Fetch recipes on mount
   useEffect(() => {
@@ -221,6 +400,52 @@ export default function RecipeBrowserPage() {
     fetchRecipes();
   }, []);
 
+  // Handle quick filter toggle
+  const handleQuickFilterToggle = (filterId: string) => {
+    const filter = QUICK_FILTERS.find((f) => f.id === filterId);
+    if (!filter) return;
+
+    setActiveQuickFilters((prev) => {
+      const next = new Set(prev);
+      const isActive = next.has(filterId);
+
+      if (isActive) {
+        next.delete(filterId);
+      } else {
+        next.add(filterId);
+      }
+
+      // Update the actual filter state based on quick filter type
+      if (filter.type === "mealType") {
+        setFilters((f) => ({
+          ...f,
+          mealTypes: isActive
+            ? f.mealTypes.filter((m) => m !== filter.value)
+            : [...f.mealTypes, filter.value as string],
+        }));
+      } else if (filter.type === "dietary") {
+        setFilters((f) => ({
+          ...f,
+          dietaryPreferences: isActive
+            ? f.dietaryPreferences.filter((d) => d !== filter.value)
+            : [...f.dietaryPreferences, filter.value as string],
+        }));
+      } else if (filter.type === "favorite") {
+        setFilters((f) => ({
+          ...f,
+          favoritesOnly: !isActive,
+        }));
+      } else if (filter.type === "time") {
+        setFilters((f) => ({
+          ...f,
+          maxCookTime: isActive ? null : (filter.value as number),
+        }));
+      }
+
+      return next;
+    });
+  };
+
   // Build active filters list for display
   const activeFilters: ActiveFilter[] = useMemo(() => {
     const active: ActiveFilter[] = [];
@@ -236,6 +461,13 @@ export default function RecipeBrowserPage() {
     });
     if (filters.favoritesOnly) {
       active.push({ type: "favorite", value: "favorites", label: "Favorites Only" });
+    }
+    if (filters.maxCookTime) {
+      active.push({
+        type: "time",
+        value: String(filters.maxCookTime),
+        label: `Under ${filters.maxCookTime}m`,
+      });
     }
 
     return active;
@@ -259,28 +491,37 @@ export default function RecipeBrowserPage() {
 
     // Category filter
     if (filters.categories.length > 0) {
-      result = result.filter((recipe) =>
-        recipe.category && filters.categories.includes(recipe.category)
+      result = result.filter(
+        (recipe) => recipe.category && filters.categories.includes(recipe.category)
       );
     }
 
     // Meal type filter
     if (filters.mealTypes.length > 0) {
-      result = result.filter((recipe) =>
-        recipe.mealType && filters.mealTypes.includes(recipe.mealType)
+      result = result.filter(
+        (recipe) => recipe.mealType && filters.mealTypes.includes(recipe.mealType)
       );
     }
 
     // Dietary preference filter
     if (filters.dietaryPreferences.length > 0) {
-      result = result.filter((recipe) =>
-        recipe.dietaryPreference && filters.dietaryPreferences.includes(recipe.dietaryPreference)
+      result = result.filter(
+        (recipe) =>
+          recipe.dietaryPreference &&
+          filters.dietaryPreferences.includes(recipe.dietaryPreference)
       );
     }
 
     // Favorites filter
     if (filters.favoritesOnly) {
       result = result.filter((recipe) => recipe.isFavorite);
+    }
+
+    // Cook time filter
+    if (filters.maxCookTime) {
+      result = result.filter(
+        (recipe) => recipe.totalTime && recipe.totalTime <= filters.maxCookTime!
+      );
     }
 
     // Sorting
@@ -315,9 +556,7 @@ export default function RecipeBrowserPage() {
     try {
       // Optimistic update
       setRecipes((prev) =>
-        prev.map((r) =>
-          r.id === recipe.id ? { ...r, isFavorite: !r.isFavorite } : r
-        )
+        prev.map((r) => (r.id === recipe.id ? { ...r, isFavorite: !r.isFavorite } : r))
       );
 
       // Call API
@@ -325,9 +564,7 @@ export default function RecipeBrowserPage() {
     } catch (err) {
       // Revert on error
       setRecipes((prev) =>
-        prev.map((r) =>
-          r.id === recipe.id ? { ...r, isFavorite: recipe.isFavorite } : r
-        )
+        prev.map((r) => (r.id === recipe.id ? { ...r, isFavorite: recipe.isFavorite } : r))
       );
       console.error("Failed to toggle favorite:", err);
     }
@@ -349,6 +586,19 @@ export default function RecipeBrowserPage() {
         ? [...prev.mealTypes, value]
         : prev.mealTypes.filter((t) => t !== value),
     }));
+    // Sync with quick filters
+    const quickFilter = QUICK_FILTERS.find((f) => f.type === "mealType" && f.value === value);
+    if (quickFilter) {
+      setActiveQuickFilters((prev) => {
+        const next = new Set(prev);
+        if (checked) {
+          next.add(quickFilter.id);
+        } else {
+          next.delete(quickFilter.id);
+        }
+        return next;
+      });
+    }
   };
 
   const handleDietaryChange = (value: string, checked: boolean) => {
@@ -358,6 +608,19 @@ export default function RecipeBrowserPage() {
         ? [...prev.dietaryPreferences, value]
         : prev.dietaryPreferences.filter((d) => d !== value),
     }));
+    // Sync with quick filters
+    const quickFilter = QUICK_FILTERS.find((f) => f.type === "dietary" && f.value === value);
+    if (quickFilter) {
+      setActiveQuickFilters((prev) => {
+        const next = new Set(prev);
+        if (checked) {
+          next.add(quickFilter.id);
+        } else {
+          next.delete(quickFilter.id);
+        }
+        return next;
+      });
+    }
   };
 
   const handleRemoveFilter = (filter: ActiveFilter) => {
@@ -373,6 +636,19 @@ export default function RecipeBrowserPage() {
         break;
       case "favorite":
         setFilters((prev) => ({ ...prev, favoritesOnly: false }));
+        setActiveQuickFilters((prev) => {
+          const next = new Set(prev);
+          next.delete("favorites");
+          return next;
+        });
+        break;
+      case "time":
+        setFilters((prev) => ({ ...prev, maxCookTime: null }));
+        setActiveQuickFilters((prev) => {
+          const next = new Set(prev);
+          next.delete("under30");
+          return next;
+        });
         break;
     }
   };
@@ -383,8 +659,10 @@ export default function RecipeBrowserPage() {
       mealTypes: [],
       dietaryPreferences: [],
       favoritesOnly: false,
+      maxCookTime: null,
     });
     setSearchTerm("");
+    setActiveQuickFilters(new Set());
   };
 
   const toggleSortDirection = () => {
@@ -423,119 +701,63 @@ export default function RecipeBrowserPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <PageHeader>
-        <PageHeaderContent>
-          <PageHeaderTitle
-            title="Recipe Browser"
-            description={`${filteredRecipes.length} of ${recipes.length} recipes`}
-          />
-          <PageHeaderActions>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="gap-2"
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              {showFilters ? "Hide Filters" : "Show Filters"}
-            </Button>
-          </PageHeaderActions>
-        </PageHeaderContent>
-      </PageHeader>
+      {/* Hero Section */}
+      <HeroSection
+        recipeCount={recipes.length}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onSearch={() => {}}
+        activeQuickFilters={activeQuickFilters}
+        onQuickFilterToggle={handleQuickFilterToggle}
+      />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex gap-6">
           {/* Filter Sidebar */}
           {showFilters && (
-            <aside className="w-72 flex-shrink-0">
+            <aside className="w-64 flex-shrink-0">
               <Card className="sticky top-24">
                 <CardContent className="pt-6">
-                  {/* Search */}
-                  <div className="mb-6">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-                      <Input
-                        placeholder="Search recipes..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Sort Section */}
-                  <div className="mb-6 pb-6 border-b border-border">
-                    <div className="flex items-center gap-2 mb-3">
-                      <ArrowUpDown className="h-4 w-4 text-muted" />
-                      <span className="text-sm font-medium text-foreground">Sort By</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-                        <SelectTrigger className="flex-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SORT_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              <span className="flex items-center gap-2">
-                                <option.icon className="h-4 w-4" />
-                                {option.label}
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={toggleSortDirection}
-                        className="flex-shrink-0"
-                        aria-label={`Sort ${sortDirection === "asc" ? "ascending" : "descending"}`}
-                      >
-                        {sortDirection === "asc" ? (
-                          <ArrowUp className="h-4 w-4" />
-                        ) : (
-                          <ArrowDown className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted mt-2">
-                      {sortDirection === "asc" ? "A → Z / Low → High" : "Z → A / High → Low"}
-                    </p>
-                  </div>
-
-                  {/* Filters Header */}
-                  <div className="flex items-center justify-between mb-4">
+                  {/* Sidebar Header */}
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-border">
                     <div className="flex items-center gap-2">
-                      <Filter className="h-4 w-4 text-muted" />
-                      <span className="text-sm font-medium text-foreground">Filters</span>
+                      <SlidersHorizontal className="h-4 w-4 text-primary" />
+                      <span className="font-medium text-foreground">Refine Results</span>
                     </div>
                     {hasActiveFilters && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      <button
                         onClick={handleClearAllFilters}
-                        className="text-xs text-muted hover:text-foreground h-auto py-1 px-2"
+                        className="text-xs text-primary hover:text-primary/80 transition-colors"
                       >
-                        Clear All
-                      </Button>
+                        Reset
+                      </button>
                     )}
                   </div>
 
                   {/* Favorites Toggle */}
-                  <label className="flex items-center gap-3 py-2 px-2 mb-4 rounded-md cursor-pointer hover:bg-hover transition-colors border border-border">
+                  <label className="flex items-center gap-3 py-3 px-2 mb-2 rounded-md cursor-pointer hover:bg-hover transition-colors">
                     <Checkbox
                       checked={filters.favoritesOnly}
-                      onCheckedChange={(checked) =>
-                        setFilters((prev) => ({ ...prev, favoritesOnly: checked as boolean }))
-                      }
+                      onCheckedChange={(checked) => {
+                        setFilters((prev) => ({ ...prev, favoritesOnly: checked as boolean }));
+                        setActiveQuickFilters((prev) => {
+                          const next = new Set(prev);
+                          if (checked) {
+                            next.add("favorites");
+                          } else {
+                            next.delete("favorites");
+                          }
+                          return next;
+                        });
+                      }}
                     />
-                    <Heart className={cn(
-                      "h-4 w-4",
-                      filters.favoritesOnly ? "text-[var(--error)] fill-current" : "text-muted"
-                    )} />
+                    <Heart
+                      className={cn(
+                        "h-4 w-4 transition-colors",
+                        filters.favoritesOnly ? "text-[var(--error)] fill-current" : "text-muted"
+                      )}
+                    />
                     <span className="text-sm text-foreground">Favorites Only</span>
                   </label>
 
@@ -572,6 +794,18 @@ export default function RecipeBrowserPage() {
 
           {/* Recipe Grid */}
           <main className="flex-1 min-w-0">
+            {/* Section Header with Sort */}
+            <SectionHeader
+              resultCount={filteredRecipes.length}
+              totalCount={recipes.length}
+              sortBy={sortBy}
+              sortDirection={sortDirection}
+              onSortChange={setSortBy}
+              onSortDirectionToggle={toggleSortDirection}
+              showFilters={showFilters}
+              onToggleFilters={() => setShowFilters(!showFilters)}
+            />
+
             {/* Active Filters Display */}
             {activeFilters.length > 0 && (
               <div className="mb-6 p-4 bg-elevated rounded-lg border border-border">
