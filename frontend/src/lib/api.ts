@@ -260,6 +260,35 @@ export const plannerApi = {
     fetchApi<PlannerOperationResultDTO>("/api/planner/clear", {
       method: "POST",
     }),
+
+  /**
+   * Add a meal to the planner
+   * POST /api/planner/entries/{meal_id}
+   */
+  addMeal: async (mealId: number): Promise<PlannerEntryResponseDTO> => {
+    return fetchApi<PlannerEntryResponseDTO>(`/api/planner/entries/${mealId}`, {
+      method: "POST",
+    });
+  },
+
+  /**
+   * Get list of meal IDs currently in the planner
+   * GET /api/planner/meal-ids
+   */
+  getMealIds: async (): Promise<number[]> => {
+    return fetchApi<number[]>("/api/planner/meal-ids");
+  },
+
+  /**
+   * Filter meals with criteria
+   * POST /api/meals/filter
+   */
+  filterMeals: async (filters: MealFilterDTO): Promise<MealSelectionResponseDTO[]> => {
+    return fetchApi<MealSelectionResponseDTO[]>("/api/meals/filter", {
+      method: "POST",
+      body: JSON.stringify(filters),
+    });
+  },
 };
 
 // ============================================================================
@@ -537,6 +566,14 @@ export interface IngredientSearchDTO {
   category?: string | null;
   limit?: number | null;
   offset?: number | null;
+}
+
+export interface MealFilterDTO {
+  name_pattern?: string;
+  tags?: string[];
+  favorites_only?: boolean;
+  limit?: number;
+  offset?: number;
 }
 
 export interface IngredientBreakdownDTO {

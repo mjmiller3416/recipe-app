@@ -144,6 +144,8 @@ export interface PlannerEntryResponseDTO {
   main_recipe_id: number | null;
   side_recipe_ids: number[];
   main_recipe: RecipeCardDTO | null;
+  side_recipes?: RecipeCardDTO[] | null;
+  tags?: string[] | null;
 }
 
 export interface PlannerSummaryDTO {
@@ -339,6 +341,14 @@ export interface IngredientSearchDTO {
   category?: string | null;
   limit?: number | null;
   offset?: number | null;
+}
+
+export interface MealFilterDTO {
+  name_pattern?: string;
+  tags?: string[];
+  favorites_only?: boolean;
+  limit?: number;
+  offset?: number;
 }
 
 export interface IngredientBreakdownDTO {

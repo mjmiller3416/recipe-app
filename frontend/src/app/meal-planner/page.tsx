@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,16 +17,30 @@ import {
   PlannerHeader,
   ActivePlanner,
   PlannerSkeleton,
-} from "@/components";
+} from "./components";
+import { cn } from "@/lib/utils";
 
-// Toast notification component (simple inline implementation)
+// Phase 2 Components
+import { MealLibrary } from "./components/MealLibrary";
+import { MobileTabNav, type MobileTab } from "./components/MobileTabNav";
+
+// ============================================================================
+// Toast Notification Component
+// ============================================================================
+
 interface Toast {
   id: string;
   message: string;
   type: "success" | "error";
 }
 
-function ToastContainer({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id: string) => void }) {
+function ToastContainer({
+  toasts,
+  onDismiss,
+}: {
+  toasts: Toast[];
+  onDismiss: (id: string) => void;
+}) {
   if (toasts.length === 0) return null;
 
   return (
@@ -57,6 +71,10 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 9);
 }
 
+// ============================================================================
+// Main Page Component
+// ============================================================================
+
 export default function MealPlannerPage() {
   // Data state
   const [entries, setEntries] = useState<PlannerEntryResponseDTO[]>([]);
@@ -74,6 +92,14 @@ export default function MealPlannerPage() {
 
   // Toast notifications
   const [toasts, setToasts] = useState<Toast[]>([]);
+
+  // Mobile tab state
+  const [mobileTab, setMobileTab] = useState<MobileTab>("planner");
+
+  // Derive meal IDs in planner for "In Planner" badges
+  const mealIdsInPlanner = useMemo(() => {
+    return new Set(entries.map((entry) => entry.meal_id));
+  }, [entries]);
 
   const showToast = useCallback((message: string, type: "success" | "error") => {
     const id = generateId();
@@ -118,7 +144,6 @@ export default function MealPlannerPage() {
   // Toggle completion with optimistic update
   const handleToggleCompletion = useCallback(
     async (entryId: number) => {
-      // Find the entry to toggle
       const entryIndex = entries.findIndex((e) => e.id === entryId);
       if (entryIndex === -1) return;
 
@@ -133,25 +158,29 @@ export default function MealPlannerPage() {
             ? {
                 ...e,
                 is_completed: !e.is_completed,
-                completed_at: !e.is_completed ? new Date().toISOString() : null,
+                completed_at: !e.is_completed
+                  ? new Date().toISOString()
+                  : null,
               }
             : e
         )
       );
 
-      // Update summary optimistically
-      if (summary) {
-        const wasCompleted = entries[entryIndex].is_completed;
-        setSummary({
-          ...summary,
-          completed_entries: wasCompleted
-            ? summary.completed_entries - 1
-            : summary.completed_entries + 1,
-          incomplete_entries: wasCompleted
-            ? summary.incomplete_entries + 1
-            : summary.incomplete_entries - 1,
-        });
-      }
+      // Update summary counts
+      const wasCompleted = previousEntries[entryIndex].is_completed;
+      setSummary((prev) =>
+        prev
+          ? {
+              ...prev,
+              completed_entries: wasCompleted
+                ? prev.completed_entries - 1
+                : prev.completed_entries + 1,
+              incomplete_entries: wasCompleted
+                ? prev.incomplete_entries + 1
+                : prev.incomplete_entries - 1,
+            }
+          : null
+      );
 
       try {
         await plannerApi.toggleCompletion(entryId);
@@ -159,7 +188,7 @@ export default function MealPlannerPage() {
         // Rollback on error
         setEntries(previousEntries);
         setSummary(previousSummary);
-        showToast("Failed to update completion status", "error");
+        showToast("Failed to update meal status", "error");
         console.error("Failed to toggle completion:", err);
       } finally {
         setTogglingIds((prev) => {
@@ -175,17 +204,24 @@ export default function MealPlannerPage() {
   // Remove entry with optimistic update
   const handleRemoveEntry = useCallback(
     async (entryId: number) => {
+      const removedEntry = entries.find((e) => e.id === entryId);
+      if (!removedEntry) return;
+
       const previousEntries = [...entries];
       const previousSummary = summary;
-      const removedEntry = entries.find((e) => e.id === entryId);
 
       // Optimistic update
       setRemovingIds((prev) => new Set(prev).add(entryId));
-      setEntries((prev) => prev.filter((e) => e.id !== entryId));
+      setEntries((prev) =>
+        prev
+          .filter((e) => e.id !== entryId)
+          .map((e, idx) => ({ ...e, position: idx + 1 }))
+      );
 
-      // Update summary optimistically
-      if (summary && removedEntry) {
-        const recipeCount = 1 + (removedEntry.side_recipe_ids?.length || 0);
+      // Update summary
+      const recipeCount =
+        1 + (removedEntry.side_recipe_ids?.length || 0);
+      if (summary) {
         setSummary({
           ...summary,
           total_entries: summary.total_entries - 1,
@@ -271,6 +307,15 @@ export default function MealPlannerPage() {
     }
   }, [showToast]);
 
+  // Handle meal added from library
+  const handleMealAdded = useCallback(
+    async (added: { meal_id: number; meal_name: string }) => {
+      // Refetch planner data to get the new entry
+      await fetchPlannerData();
+    },
+    [fetchPlannerData]
+  );
+
   // Render loading state
   if (isLoading) {
     return (
@@ -322,24 +367,56 @@ export default function MealPlannerPage() {
       </PageHeader>
 
       <main className="container mx-auto px-4 py-6">
-        <div className="space-y-6">
-          {/* Header with stats and actions */}
-          <PlannerHeader
-            summary={summary}
-            onClearCompleted={handleClearCompleted}
-            onClearAll={handleClearAll}
-            isClearingCompleted={isClearingCompleted}
-            isClearingAll={isClearingAll}
-          />
+        {/* Header with stats and actions */}
+        <PlannerHeader
+          summary={summary}
+          onClearCompleted={handleClearCompleted}
+          onClearAll={handleClearAll}
+          isClearingCompleted={isClearingCompleted}
+          isClearingAll={isClearingAll}
+        />
 
-          {/* Active planner list */}
-          <ActivePlanner
-            entries={entries}
-            onToggleCompletion={handleToggleCompletion}
-            onRemoveEntry={handleRemoveEntry}
-            togglingIds={togglingIds}
-            removingIds={removingIds}
+        {/* Mobile tab navigation - hidden on desktop */}
+        <div className="lg:hidden mt-6">
+          <MobileTabNav
+            activeTab={mobileTab}
+            onTabChange={setMobileTab}
+            plannerCount={entries.length}
           />
+        </div>
+
+        {/* Main content area - responsive layout */}
+        <div className="mt-6 flex flex-col lg:flex-row gap-6">
+          {/* Active Planner - 65% on desktop, full on mobile when selected */}
+          <div
+            className={cn(
+              "w-full lg:w-[65%]",
+              mobileTab !== "planner" && "hidden lg:block"
+            )}
+          >
+            <ActivePlanner
+              entries={entries}
+              onToggleCompletion={handleToggleCompletion}
+              onRemoveEntry={handleRemoveEntry}
+              togglingIds={togglingIds}
+              removingIds={removingIds}
+            />
+          </div>
+
+          {/* Meal Library Sidebar - 35% on desktop, full on mobile when selected */}
+          <div
+            className={cn(
+              "w-full lg:w-[35%]",
+              mobileTab !== "library" && "hidden lg:block"
+            )}
+          >
+            <MealLibrary
+              mealIdsInPlanner={mealIdsInPlanner}
+              onMealAdded={handleMealAdded}
+              showToast={showToast}
+              isAtCapacity={summary?.is_at_capacity || false}
+            />
+          </div>
         </div>
       </main>
 

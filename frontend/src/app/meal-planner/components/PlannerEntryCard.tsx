@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CompletionCheckbox } from "./CompletionCheckbox";
+import { CompletionCheckbox } from "@/components/CompletionCheckbox";
 import { formatRelativeTime } from "@/lib/timeUtils";
 import type { PlannerEntryResponseDTO } from "@/types/index";
 
