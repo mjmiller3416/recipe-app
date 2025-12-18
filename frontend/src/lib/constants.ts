@@ -64,9 +64,38 @@ export const INGREDIENT_CATEGORIES = [
   { value: "other", label: "Other" },
 ] as const;
 
+// ============================================================================
+// Quick Filters for Recipe Browser Hero
+// ============================================================================
+// These are the one-click filter pills shown in the hero section.
+// Edit this array to change what quick filters are available.
+// 
+// Types:
+//   - "mealType": filters by meal type (value should match MEAL_TYPES label)
+//   - "dietary": filters by dietary preference (value should match DIETARY_PREFERENCES label)  
+//   - "favorite": filters to show only favorites (value should be true)
+//   - "time": filters recipes under X minutes (value should be a number)
+//
+// To add a new quick filter:
+//   1. Add an entry to this array with a unique id
+//   2. Set the appropriate type and value
+//   3. The label is what users see in the UI
+
+export const QUICK_FILTERS = [
+  { id: "breakfast", label: "Breakfast", type: "mealType", value: "Breakfast" },
+  { id: "under30", label: "Under 30m", type: "time", value: 30 },
+  { id: "dinner", label: "Dinner", type: "mealType", value: "Dinner" },
+  { id: "vegetarian", label: "Vegetarian", type: "dietary", value: "Vegetarian" },
+  { id: "favorites", label: "Favorites", type: "favorite", value: true },
+] as const;
+
+// ============================================================================
 // Type exports for TypeScript
-export type MealType = typeof MEAL_TYPES[number]["value"];
-export type RecipeCategory = typeof RECIPE_CATEGORIES[number]["value"];
-export type DietaryPreference = typeof DIETARY_PREFERENCES[number]["value"];
-export type IngredientUnit = typeof INGREDIENT_UNITS[number]["value"];
-export type IngredientCategory = typeof INGREDIENT_CATEGORIES[number]["value"];
+// ============================================================================
+
+export type MealType = (typeof MEAL_TYPES)[number]["value"];
+export type RecipeCategory = (typeof RECIPE_CATEGORIES)[number]["value"];
+export type DietaryPreference = (typeof DIETARY_PREFERENCES)[number]["value"];
+export type IngredientUnit = (typeof INGREDIENT_UNITS)[number]["value"];
+export type IngredientCategory = (typeof INGREDIENT_CATEGORIES)[number]["value"];
+export type QuickFilter = (typeof QUICK_FILTERS)[number];
