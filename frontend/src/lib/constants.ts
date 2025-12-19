@@ -2,21 +2,29 @@
 
 export const MEAL_TYPES = [
   { value: "all", label: "All" },
+  { value: "appetizer", label: "Appetizer" },
   { value: "breakfast", label: "Breakfast" },
   { value: "lunch", label: "Lunch" },
   { value: "dinner", label: "Dinner" },
   { value: "dessert", label: "Dessert" },
   { value: "snack", label: "Snack" },
+  { value: "sauce", label: "Sauce" },
+  { value: "other", label: "Other" },
 ] as const;
 
 export const RECIPE_CATEGORIES = [
   { value: "all", label: "All" },
   { value: "beef", label: "Beef" },
   { value: "chicken", label: "Chicken" },
+  { value: "pork", label: "Pork" },
   { value: "seafood", label: "Seafood" },
   { value: "veggie", label: "Veggie" },
   { value: "other", label: "Other" },
 ] as const;
+
+// Form options excluding "All" - use for Add/Edit Recipe forms
+export const MEAL_TYPE_OPTIONS = MEAL_TYPES.filter(t => t.value !== "all");
+export const RECIPE_CATEGORY_OPTIONS = RECIPE_CATEGORIES.filter(c => c.value !== "all");
 
 export const DIETARY_PREFERENCES = [
   { value: "none", label: "None" },
@@ -35,16 +43,13 @@ export const INGREDIENT_UNITS = [
   { value: "cup", label: "cup" },
   { value: "oz", label: "oz" },
   { value: "lbs", label: "lbs" },
-  { value: "g", label: "g" },
-  { value: "kg", label: "kg" },
-  { value: "ml", label: "ml" },
-  { value: "l", label: "L" },
   { value: "bag", label: "bag" },
   { value: "box", label: "box" },
   { value: "can", label: "can" },
   { value: "jar", label: "jar" },
   { value: "package", label: "package" },
   { value: "piece", label: "piece" },
+  { value: "slice", label: "slice" },
   { value: "whole", label: "whole" },
   { value: "pinch", label: "pinch" },
   { value: "dash", label: "dash" },

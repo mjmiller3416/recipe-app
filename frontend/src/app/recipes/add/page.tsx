@@ -30,8 +30,8 @@ import {
   Ingredient,
 } from "@/components/forms/IngredientRow";
 import {
-  MEAL_TYPES,
-  RECIPE_CATEGORIES,
+  MEAL_TYPE_OPTIONS,
+  RECIPE_CATEGORY_OPTIONS,
   DIETARY_PREFERENCES,
 } from "@/lib/constants";
 import {
@@ -375,7 +375,7 @@ export default function AddRecipePage() {
                           <SelectValue placeholder="Select meal type" />
                         </SelectTrigger>
                         <SelectContent>
-                          {MEAL_TYPES.map((type) => (
+                          {MEAL_TYPE_OPTIONS.map((type) => (
                             <SelectItem key={type.value} value={type.value}>
                               {type.label}
                             </SelectItem>
@@ -399,7 +399,7 @@ export default function AddRecipePage() {
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
-                          {RECIPE_CATEGORIES.map((cat) => (
+                          {RECIPE_CATEGORY_OPTIONS.map((cat) => (
                             <SelectItem key={cat.value} value={cat.value}>
                               {cat.label}
                             </SelectItem>

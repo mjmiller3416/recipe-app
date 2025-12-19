@@ -33,7 +33,7 @@ import {
 import { RecipeCard, RecipeCardGrid } from "@/components/recipe/RecipeCard";
 import { recipeApi } from "@/lib/api";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
-import { RECIPE_CATEGORIES, MEAL_TYPES, DIETARY_PREFERENCES, QUICK_FILTERS } from "@/lib/constants";
+import { RECIPE_CATEGORY_OPTIONS, MEAL_TYPE_OPTIONS, DIETARY_PREFERENCES, QUICK_FILTERS } from "@/lib/constants";
 import type { RecipeCardData } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -362,9 +362,9 @@ export default function RecipeBrowserPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter options from constants (filtered to exclude "all" and "none" values)
-  const categoryOptions = RECIPE_CATEGORIES.filter((c) => c.value !== "all");
-  const mealTypeOptions = MEAL_TYPES.filter((m) => m.value !== "all");
+  // Filter options from constants (already exclude "all", plus filter "none" from dietary)
+  const categoryOptions = RECIPE_CATEGORY_OPTIONS;
+  const mealTypeOptions = MEAL_TYPE_OPTIONS;
   const dietaryOptions = DIETARY_PREFERENCES.filter((d) => d.value !== "none");
 
   // State
