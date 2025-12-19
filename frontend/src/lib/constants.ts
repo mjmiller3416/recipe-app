@@ -7,6 +7,7 @@ export const MEAL_TYPES = [
   { value: "lunch", label: "Lunch" },
   { value: "dinner", label: "Dinner" },
   { value: "dessert", label: "Dessert" },
+  { value: "side", label: "Side" },
   { value: "snack", label: "Snack" },
   { value: "sauce", label: "Sauce" },
   { value: "other", label: "Other" },
