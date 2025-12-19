@@ -52,7 +52,7 @@ export const INGREDIENT_UNITS = [
 ] as const;
 
 export const INGREDIENT_CATEGORIES = [
-  { value: "produce", label: "Produce" },
+{ value: "produce", label: "Produce" },
   { value: "dairy", label: "Dairy" },
   { value: "meat", label: "Meat" },
   { value: "seafood", label: "Seafood" },
@@ -60,6 +60,7 @@ export const INGREDIENT_CATEGORIES = [
   { value: "spices", label: "Spices" },
   { value: "frozen", label: "Frozen" },
   { value: "bakery", label: "Bakery" },
+  { value: "baking", label: "Baking" },
   { value: "beverages", label: "Beverages" },
   { value: "other", label: "Other" },
 ] as const;

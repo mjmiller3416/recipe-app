@@ -9,6 +9,7 @@ Usage:
     python backend/scripts/seed_database.py --mode replace
     python backend/scripts/seed_database.py --mode append --count 10
     python backend/scripts/seed_database.py --recipes-only --verbose
+    python backend/scripts/seed_database.py --clear-only
     python backend/scripts/seed_database.py --help
 """
 
@@ -32,19 +33,19 @@ def get_db_and_models():
     from app.core.database.db import SessionLocal
     from app.core.models import (
         Ingredient,
-        MealSelection,
+        Meal,
+        PlannerEntry,
         Recipe,
         RecipeIngredient,
-        SavedMealState,
         ShoppingItem,
         ShoppingState,
     )
     return SessionLocal, {
         "Ingredient": Ingredient,
-        "MealSelection": MealSelection,
+        "Meal": Meal,
+        "PlannerEntry": PlannerEntry,
         "Recipe": Recipe,
         "RecipeIngredient": RecipeIngredient,
-        "SavedMealState": SavedMealState,
         "ShoppingItem": ShoppingItem,
         "ShoppingState": ShoppingState,
     }
@@ -1321,17 +1322,23 @@ def clear_all_data(session: Session, models: Dict[str, Any], verbose: bool = Fal
     tables_to_clear = [
         ("shopping_states", models["ShoppingState"]),
         ("shopping_items", models["ShoppingItem"]),
-        ("saved_meal_states", models["SavedMealState"]),
-        ("meal_selections", models["MealSelection"]),
+        ("planner_entries", models["PlannerEntry"]),
+        ("meals", models["Meal"]),
         ("recipe_ingredients", models["RecipeIngredient"]),
         ("recipes", models["Recipe"]),
         ("ingredients", models["Ingredient"]),
     ]
 
     for table_name, model in tables_to_clear:
-        session.query(model).delete()
-        if verbose:
-            print(f"  [OK] Cleared {table_name}")
+        try:
+            count = session.query(model).delete()
+            if verbose:
+                print(f"  [OK] Cleared {table_name} ({count} rows)")
+        except Exception as e:
+            # Table might not exist yet (migrations not run)
+            session.rollback()
+            if verbose:
+                print(f"  [SKIP] {table_name} (table may not exist)")
     session.commit()
 
 
@@ -1457,13 +1464,13 @@ def seed_meal_selections(
     recipes: List[Any],
     verbose: bool = False
 ) -> Tuple[List[Any], List[Any]]:
-    """Seed meal selections and saved states."""
-    MealSelection = models["MealSelection"]
-    SavedMealState = models["SavedMealState"]
+    """Seed meals and planner entries."""
+    Meal = models["Meal"]
+    PlannerEntry = models["PlannerEntry"]
 
     recipe_by_name = {r.recipe_name: r for r in recipes}
     created_meals: List[Any] = []
-    created_states: List[Any] = []
+    created_entries: List[Any] = []
 
     for meal_data in MEAL_SELECTIONS_DATA:
         main_recipe = recipe_by_name.get(meal_data["main"])
@@ -1473,32 +1480,31 @@ def seed_meal_selections(
         sides = meal_data.get("sides", [])
         side_ids = [recipe_by_name.get(s) for s in sides if recipe_by_name.get(s)]
 
-        meal = MealSelection(
+        meal = Meal(
             meal_name=meal_data["name"],
             main_recipe_id=main_recipe.id,
-            side_recipe_1_id=side_ids[0].id if len(side_ids) > 0 else None,
-            side_recipe_2_id=side_ids[1].id if len(side_ids) > 1 else None,
-            side_recipe_3_id=side_ids[2].id if len(side_ids) > 2 else None,
         )
+        # Set side recipe IDs using the property (stores as JSON)
+        meal.side_recipe_ids = [s.id for s in side_ids]
         session.add(meal)
         created_meals.append(meal)
 
     session.flush()
 
-    # Save some meals as active (about half)
-    meals_to_save = random.sample(created_meals, min(len(created_meals) // 2 + 1, len(created_meals)))
-    for meal in meals_to_save:
-        saved_state = SavedMealState(meal_id=meal.id)
-        session.add(saved_state)
-        created_states.append(saved_state)
+    # Add some meals to planner (about half)
+    meals_to_plan = random.sample(created_meals, min(len(created_meals) // 2 + 1, len(created_meals)))
+    for meal in meals_to_plan:
+        planner_entry = PlannerEntry(meal_id=meal.id)
+        session.add(planner_entry)
+        created_entries.append(planner_entry)
 
     session.commit()
 
     if verbose:
-        print(f"  [OK] Created {len(created_meals)} meal selections")
-        print(f"  [OK] Saved {len(created_states)} meals to active plan")
+        print(f"  [OK] Created {len(created_meals)} meals")
+        print(f"  [OK] Added {len(created_entries)} meals to planner")
 
-    return created_meals, created_states
+    return created_meals, created_entries
 
 
 def seed_shopping_data(
@@ -1562,6 +1568,7 @@ Examples:
   python seed_database.py --mode replace           # Clear and reseed all data
   python seed_database.py --mode append --count 10 # Add 10 more recipes
   python seed_database.py --recipes-only --verbose # Only seed recipes with detailed output
+  python seed_database.py --clear-only             # Clear all data without reseeding
         """
     )
 
@@ -1591,21 +1598,32 @@ Examples:
         help="Print detailed output during seeding"
     )
 
+    parser.add_argument(
+        "--clear-only",
+        action="store_true",
+        help="Only clear all data from the database (no seeding)"
+    )
+
     args = parser.parse_args()
 
-    # Validate count
-    if args.mode == "replace" and args.count < 25:
+    # Validate count (skip if clear-only)
+    if not args.clear_only and args.mode == "replace" and args.count < 25:
         print("Warning: Minimum recipe count for replace mode is 25. Using 25.")
         args.count = 25
 
     # Header
     print()
-    print("Meal Genie Database Seeder")
-    print("=" * 26)
-    print(f"Mode: {args.mode}")
-    print(f"Recipe count: {args.count}")
-    if args.recipes_only:
-        print("Recipes only: Yes")
+    if args.clear_only:
+        print("Meal Genie Database Clearer")
+        print("=" * 27)
+        print("Mode: clear-only")
+    else:
+        print("Meal Genie Database Seeder")
+        print("=" * 26)
+        print(f"Mode: {args.mode}")
+        print(f"Recipe count: {args.count}")
+        if args.recipes_only:
+            print("Recipes only: Yes")
     print()
 
     # Lazy load database and models to avoid circular imports
@@ -1613,6 +1631,15 @@ Examples:
     session = SessionLocal()
 
     try:
+        # Handle clear-only mode
+        if args.clear_only:
+            print("Clearing all data...")
+            clear_all_data(session, models, verbose=args.verbose)
+            print()
+            print("Database cleared successfully!")
+            print()
+            return
+
         # Clear data if replace mode
         if args.mode == "replace":
             print("Clearing existing data...")
@@ -1654,8 +1681,8 @@ Examples:
         print(f"  - Recipes: {total_recipes}")
         print(f"  - Ingredients: {total_ingredients}")
         if not args.recipes_only:
-            print(f"  - Meal Selections: {total_meals}")
-            print(f"  - Saved Meal Plans: {total_saved}")
+            print(f"  - Meals: {total_meals}")
+            print(f"  - Planner Entries: {total_saved}")
             print(f"  - Shopping Items: {total_shopping}")
         print()
 

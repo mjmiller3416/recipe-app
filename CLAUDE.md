@@ -22,8 +22,13 @@ npx shadcn@latest add <component>  # Add shadcn/ui components
 # Windows (using venv)
 venv/Scripts/python.exe -m uvicorn app.main:app --reload --port 8000
 
-# Seed database with sample data
-venv/Scripts/python.exe scripts/seed_database.py
+# Database seeding/clearing
+venv/Scripts/python.exe scripts/seed_database.py                    # Clear and reseed all data (default)
+venv/Scripts/python.exe scripts/seed_database.py --clear-only       # Clear all data without reseeding
+venv/Scripts/python.exe scripts/seed_database.py --mode append      # Add to existing data
+venv/Scripts/python.exe scripts/seed_database.py --recipes-only     # Only seed recipes (skip meals/shopping)
+venv/Scripts/python.exe scripts/seed_database.py --count 10         # Seed specific number of recipes
+venv/Scripts/python.exe scripts/seed_database.py --verbose          # Show detailed output
 ```
 
 ### Environment Setup
