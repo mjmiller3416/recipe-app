@@ -190,7 +190,7 @@ shadcn/ui components - use `npx shadcn@latest add <name>` to add more
 | `useRecipeForm` | **Hook**: Form state management for recipe create/edit |
 
 ### Forms (`components/forms/`)
-| Component | Purpose |
+| Component | Purpose |mer
 |-----------|---------|
 | `AddItemForm` | Generic add-item form pattern |
 | `IngredientRow` | Ingredient with quantity/unit inputs |
