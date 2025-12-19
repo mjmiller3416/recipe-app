@@ -17,6 +17,7 @@ Complete technical documentation for the Meal Genie backend API.
 11. [Error Handling](#error-handling)
 12. [Scripts & Utilities](#scripts--utilities)
 13. [Development Guide](#development-guide)
+14. [Feedback API](#feedback-api)
 
 ---
 
@@ -60,7 +61,8 @@ backend/
 │   │   ├── planner.py                   # Planner endpoints
 │   │   ├── shopping.py                  # Shopping list endpoints
 │   │   ├── ingredients.py               # Ingredient endpoints
-│   │   └── data_management.py           # Import/export endpoints
+│   │   ├── data_management.py           # Import/export endpoints
+│   │   └── feedback.py                  # User feedback endpoints
 │   └── core/
 │       ├── models/                      # SQLAlchemy ORM models
 │       │   ├── recipe.py
@@ -83,14 +85,16 @@ backend/
 │       │   ├── planner_service.py
 │       │   ├── shopping_service.py
 │       │   ├── ingredient_service.py
-│       │   └── data_management_service.py
+│       │   ├── data_management_service.py
+│       │   └── feedback_service.py
 │       ├── dtos/                        # Pydantic validation models
 │       │   ├── recipe_dtos.py
 │       │   ├── meal_dtos.py
 │       │   ├── planner_dtos.py
 │       │   ├── shopping_dtos.py
 │       │   ├── ingredient_dtos.py
-│       │   └── data_management_dtos.py
+│       │   ├── data_management_dtos.py
+│       │   └── feedback.py
 │       └── database/
 │           ├── db.py                    # Database connection & session
 │           ├── base.py                  # SQLAlchemy declarative base
@@ -2139,3 +2143,70 @@ def filter_items(self, filter_dto: FilterDTO) -> List[Item]:
 | Ingredient | `/api/ingredients/{id}` | GET, PUT, DELETE |
 | Import | `/api/data-management/import/*` | POST |
 | Export | `/api/data-management/export` | GET |
+| Feedback | `/api/feedback` | POST |
+
+---
+
+## Feedback API
+
+Submit user feedback as GitHub Issues. Requires GitHub integration to be configured via environment variables.
+
+### Configuration
+
+Set the following environment variables:
+
+```bash
+GITHUB_TOKEN=github_pat_xxxxx    # Fine-grained personal access token with Issues read/write
+GITHUB_REPO=username/repo-name   # Repository to create issues in
+```
+
+### Submit Feedback
+
+```http
+POST /api/feedback
+```
+
+**Request Body:** `FeedbackCreateDTO`
+```json
+{
+  "category": "Feature Request",
+  "message": "It would be great to have a dark mode toggle in the settings."
+}
+```
+
+**Category Options:**
+- `Feature Request` → Creates issue with `enhancement` label
+- `Bug Report` → Creates issue with `bug` label
+- `General Feedback` → Creates issue with `feedback` label
+- `Question` → Creates issue with `question` label
+
+**Response:** `FeedbackResponseDTO`
+```json
+{
+  "success": true,
+  "issue_url": "https://github.com/username/repo/issues/123",
+  "message": "Thank you for your feedback! It has been submitted successfully."
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "issue_url": null,
+  "message": "Feedback submission is not configured. Please contact the administrator."
+}
+```
+
+### Feedback DTOs
+
+```python
+class FeedbackCreateDTO(BaseModel):
+    category: str       # 1-50 characters
+    message: str        # 10-5000 characters
+
+class FeedbackResponseDTO(BaseModel):
+    success: bool
+    issue_url: Optional[str]
+    message: str
+```

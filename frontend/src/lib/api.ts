@@ -680,5 +680,33 @@ export const dataManagementApi = {
   },
 };
 
+// ============================================================================
+// Feedback API
+// ============================================================================
+
+export interface FeedbackSubmitDTO {
+  category: string;
+  message: string;
+}
+
+export interface FeedbackResponseDTO {
+  success: boolean;
+  issue_url?: string;
+  message: string;
+}
+
+export const feedbackApi = {
+  /**
+   * Submit user feedback as a GitHub issue
+   * @param data - The feedback category and message
+   * @returns Response with success status and optional issue URL
+   */
+  submit: (data: FeedbackSubmitDTO): Promise<FeedbackResponseDTO> =>
+    fetchApi<FeedbackResponseDTO>("/api/feedback", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
+
 // Export the error class for use in components
 export { ApiError };

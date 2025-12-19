@@ -19,6 +19,9 @@ import {
   Moon,
   Monitor,
   AlertTriangle,
+  MessageSquare,
+  Send,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,6 +30,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import {
   AlertDialog,
@@ -47,6 +58,7 @@ import {
 import { useSettings, DEFAULT_SETTINGS } from "@/hooks/useSettings";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { cn } from "@/lib/utils";
+import { feedbackApi } from "@/lib/api";
 import { DataManagementSection } from "@/components/settings/DataManagementSection";
 
 // ============================================================================
@@ -59,7 +71,8 @@ type SettingsCategory =
   | "mealPlanning"
   | "recipePreferences"
   | "shoppingList"
-  | "dataManagement";
+  | "dataManagement"
+  | "feedback";
 
 interface CategoryConfig {
   id: SettingsCategory;
@@ -108,6 +121,12 @@ const CATEGORIES: CategoryConfig[] = [
     label: "Data Management",
     icon: Database,
     description: "Export, import, and manage your data",
+  },
+  {
+    id: "feedback",
+    label: "Feedback",
+    icon: MessageSquare,
+    description: "Share your thoughts and suggestions",
   },
 ];
 
@@ -479,6 +498,140 @@ function AppearanceSection({ theme, onThemeChange }: AppearanceSectionProps) {
 }
 
 // ============================================================================
+// FEEDBACK SECTION
+// ============================================================================
+
+const FEEDBACK_CATEGORIES = [
+  { value: "Feature Request", label: "Feature Request" },
+  { value: "Bug Report", label: "Bug Report" },
+  { value: "General Feedback", label: "General Feedback" },
+  { value: "Question", label: "Question" },
+];
+
+function FeedbackSection() {
+  const [category, setCategory] = useState("");
+  const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const canSubmit = category && message.trim().length >= 10;
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await feedbackApi.submit({
+        category,
+        message: message.trim(),
+      });
+
+      if (response.success) {
+        toast.success(response.message);
+        setCategory("");
+        setMessage("");
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error("Failed to submit feedback. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <SectionHeader
+          icon={MessageSquare}
+          title="Send Feedback"
+          description="Help us improve Meal Genie by sharing your thoughts"
+        />
+
+        <div className="space-y-6">
+          {/* Category Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="feedback-category" className="flex items-center gap-2">
+              <MessageSquare className="h-3.5 w-3.5 text-muted" />
+              Feedback Type
+            </Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger className="max-w-md">
+                <SelectValue placeholder="Select a category..." />
+              </SelectTrigger>
+              <SelectContent>
+                {FEEDBACK_CATEGORIES.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted">
+              Choose the type of feedback you&apos;re providing
+            </p>
+          </div>
+
+          {/* Message */}
+          <div className="space-y-2">
+            <Label htmlFor="feedback-message" className="flex items-center gap-2">
+              <Mail className="h-3.5 w-3.5 text-muted" />
+              Your Message
+            </Label>
+            <Textarea
+              id="feedback-message"
+              placeholder="Tell us what's on your mind... (minimum 10 characters)"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="min-h-[150px] max-w-2xl"
+            />
+            <p className="text-xs text-muted">
+              Be as detailed as possible to help us understand your feedback
+            </p>
+          </div>
+
+          <Separator />
+
+          {/* Submit Button */}
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={handleSubmit}
+              disabled={!canSubmit || isSubmitting}
+              className="gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  Submit Feedback
+                </>
+              )}
+            </Button>
+            {!canSubmit && category && message.length > 0 && message.length < 10 && (
+              <p className="text-sm text-muted">
+                Message must be at least 10 characters
+              </p>
+            )}
+          </div>
+
+          {/* Info Box */}
+          <div className="bg-elevated rounded-xl p-4 border border-border">
+            <p className="text-sm text-muted">
+              Your feedback is submitted as a GitHub issue and helps us prioritize improvements.
+              Thank you for helping make Meal Genie better!
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================================================
 // MAIN SETTINGS PAGE
 // ============================================================================
 
@@ -516,6 +669,11 @@ export default function SettingsPage() {
 
   // Handle reset current section
   const handleResetSection = () => {
+    // Feedback section doesn't have persistent settings
+    if (activeCategory === "feedback") {
+      toast.info("Feedback form has no saved settings to reset");
+      return;
+    }
     updateSettings(activeCategory, DEFAULT_SETTINGS[activeCategory]);
     toast.info(`${CATEGORIES.find((c) => c.id === activeCategory)?.label} reset to defaults`);
   };
@@ -572,6 +730,9 @@ export default function SettingsPage() {
 
       case "dataManagement":
         return <DataManagementSection />;
+
+      case "feedback":
+        return <FeedbackSection />;
 
       default:
         return null;
