@@ -225,12 +225,16 @@ class DataManagementService:
                 )
                 continue
 
+            # Normalize category and meal_type to lowercase for frontend compatibility
+            meal_type_raw = self._get_cell_value(cells, col_map, "meal_type")
+            diet_pref_raw = self._get_cell_value(cells, col_map, "diet_pref")
+
             row_data = {
                 "_row": row_num,
                 "recipe_name": str(recipe_name).strip(),
-                "recipe_category": str(recipe_category).strip(),
-                "meal_type": self._get_cell_value(cells, col_map, "meal_type"),
-                "diet_pref": self._get_cell_value(cells, col_map, "diet_pref"),
+                "recipe_category": str(recipe_category).strip().lower(),
+                "meal_type": str(meal_type_raw).strip().lower() if meal_type_raw else None,
+                "diet_pref": str(diet_pref_raw).strip().lower() if diet_pref_raw else None,
                 "total_time": self._parse_int(
                     self._get_cell_value(cells, col_map, "total_time")
                 ),
@@ -298,8 +302,8 @@ class DataManagementService:
             unit = self._get_cell_value(cells, col_map, "unit")
 
             ing_name = str(ingredient_name).strip()
-            ing_cat = str(ingredient_category).strip()
-            ing_unit = str(unit).strip() if unit else None
+            ing_cat = str(ingredient_category).strip().lower()  # Normalize to lowercase
+            ing_unit = str(unit).strip().lower() if unit else None  # Normalize to lowercase
 
             if recipe_key not in ingredients:
                 ingredients[recipe_key] = {}
