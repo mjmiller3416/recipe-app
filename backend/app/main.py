@@ -3,6 +3,7 @@
 Main FastAPI application for Meal Genie.
 """
 
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -17,10 +18,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Get allowed origins from environment or use wildcard for development
+CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*").split(",")
+
 # Configure CORS for Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust this in production to specific origins
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
