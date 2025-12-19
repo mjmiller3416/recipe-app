@@ -133,3 +133,32 @@ export function formatQuantity(value: number | null): string {
   const result = rounded.toString();
   return isNegative ? `-${result}` : result;
 }
+
+/**
+ * Formats a duration in minutes to a human-readable string.
+ *
+ * @param minutes - The duration in minutes
+ * @returns A formatted string (e.g., "30 min", "1h 30m", "2h")
+ */
+export function formatDuration(minutes: number | null | undefined): string {
+  if (minutes === null || minutes === undefined || isNaN(minutes) || minutes < 0) {
+    return "0 min";
+  }
+
+  if (minutes === 0) {
+    return "0 min";
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  if (hours === 0) {
+    return `${mins} min`;
+  }
+
+  if (mins === 0) {
+    return `${hours}h`;
+  }
+
+  return `${hours}h ${mins}m`;
+}

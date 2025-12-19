@@ -1,32 +1,16 @@
-"use client";
+import { MealPlannerPage } from "@/components/meal-planner";
 
-import {
-  PageHeader,
-  PageHeaderContent,
-  PageHeaderTitle,
-} from "@/components/layout/PageHeader";
-
-// ============================================================================
-// MAIN MEAL PLANNER PAGE
-// ============================================================================
-
-export default function MealPlannerPage() {
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <PageHeader>
-        <PageHeaderContent>
-          <PageHeaderTitle
-            title="Meal Planner"
-            description="Plan and organize your meals for the week"
-          />
-        </PageHeaderContent>
-      </PageHeader>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
-        {/* Content will be rebuilt here */}
-      </div>
-    </div>
-  );
+/**
+ * Meal Planner Page
+ * 
+ * Route: /meal-planner
+ * 
+ * Features:
+ * - Weekly meal queue (not calendar-based)
+ * - Selected meal hero view
+ * - Shopping list integration
+ * - Saved meals library
+ */
+export default function Page() {
+  return <MealPlannerPage />;
 }

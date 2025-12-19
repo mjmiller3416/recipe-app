@@ -13,6 +13,8 @@ interface RecipeImageProps {
   className?: string;
   placeholderClassName?: string;
   iconSize?: "sm" | "md" | "lg" | "xl";
+  fill?: boolean;
+  priority?: boolean;
 }
 
 const ICON_SIZES = {
@@ -37,6 +39,7 @@ export function RecipeImage({
   className,
   placeholderClassName,
   iconSize = "lg",
+  fill = false,
 }: RecipeImageProps) {
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -44,12 +47,16 @@ export function RecipeImage({
   // Show placeholder if no src or if there was an error loading the image
   const showPlaceholder = !src || hasError;
 
+  // Classes for fill mode (absolute positioning to fill container)
+  const fillClasses = fill ? "absolute inset-0 w-full h-full object-cover" : "";
+
   if (showPlaceholder) {
     return (
       <div
         className={cn(
           "w-full h-full flex items-center justify-center",
           "bg-gradient-to-br from-elevated via-hover to-elevated",
+          fill && "absolute inset-0",
           placeholderClassName
         )}
       >
@@ -72,11 +79,12 @@ export function RecipeImage({
           <ChefHat className={cn(ICON_SIZES[iconSize], "text-muted opacity-40 animate-pulse")} />
         </div>
       )}
-      
+
       <img
         src={src}
         alt={alt}
         className={cn(
+          fillClasses,
           className,
           !isLoaded && "opacity-0",
           isLoaded && "opacity-100",
