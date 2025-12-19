@@ -5,3 +5,5 @@
 __pycache__/
 *.pyc
 *.pyo
+backend/.env
+backend/app/core/database/app_data.db
