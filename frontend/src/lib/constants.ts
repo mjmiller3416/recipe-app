@@ -19,7 +19,7 @@ export const RECIPE_CATEGORIES = [
   { value: "chicken", label: "Chicken" },
   { value: "pork", label: "Pork" },
   { value: "seafood", label: "Seafood" },
-  { value: "veggie", label: "Veggie" },
+  { value: "vegetarian", label: "Vegetarian" },
   { value: "other", label: "Other" },
 ] as const;
 
