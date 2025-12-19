@@ -528,20 +528,23 @@ export interface IngredientBreakdownDTO {
 
 export const uploadApi = {
   /**
-   * Upload a recipe image
+   * Upload a recipe image to Cloudinary
    * @param file - The image file to upload
-   * @param recipeId - The recipe ID (used to name the file)
+   * @param recipeId - The recipe ID (used to organize the file)
+   * @param imageType - Either "reference" (thumbnail) or "banner" (hero image)
    * @returns The path to the uploaded image
    */
   uploadRecipeImage: async (
     file: File,
-    recipeId: number
+    recipeId: number,
+    imageType: "reference" | "banner" = "reference"
   ): Promise<{ success: boolean; path: string; filename: string }> => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("recipeId", recipeId.toString());
+    formData.append("imageType", imageType);
 
-    const response = await fetch("/api/upload", {
+    const response = await fetch(`${API_BASE}/api/upload`, {
       method: "POST",
       body: formData,
     });
@@ -549,7 +552,7 @@ export const uploadApi = {
     if (!response.ok) {
       const error = await response.json();
       throw new ApiError(
-        error.error || "Failed to upload image",
+        error.detail || "Failed to upload image",
         response.status
       );
     }
