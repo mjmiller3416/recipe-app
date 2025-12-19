@@ -11,7 +11,7 @@ export const MEAL_TYPES = [
 
 export const RECIPE_CATEGORIES = [
   { value: "all", label: "All" },
-  { value: "ground-beef", label: "Ground Beef" },
+  { value: "beef", label: "Beef" },
   { value: "chicken", label: "Chicken" },
   { value: "seafood", label: "Seafood" },
   { value: "veggie", label: "Veggie" },

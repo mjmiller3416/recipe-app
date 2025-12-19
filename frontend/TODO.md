@@ -18,5 +18,10 @@
 ## Medium Priority
 
 ## Low Priority
+**Ingredients on Recipe View Page**
+- **Location**: `src/app/recipes/[id]/page.tsx` (lines 45-60)
+- **Issue**: Reorder ingredients based on the following categories: "Meat", 
+
+
 
 ## Completed

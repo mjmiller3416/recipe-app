@@ -47,6 +47,7 @@ import {
 import { useSettings, DEFAULT_SETTINGS } from "@/hooks/useSettings";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { cn } from "@/lib/utils";
+import { DataManagementSection } from "@/components/settings/DataManagementSection";
 
 // ============================================================================
 // TYPES
@@ -570,13 +571,7 @@ export default function SettingsPage() {
         );
 
       case "dataManagement":
-        return (
-          <PlaceholderSection
-            icon={Database}
-            title="Data Management"
-            description="Export recipes, import data, and manage backups"
-          />
-        );
+        return <DataManagementSection />;
 
       default:
         return null;

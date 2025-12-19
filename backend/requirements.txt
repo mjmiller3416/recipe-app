@@ -9,6 +9,9 @@ alembic>=1.13.0
 # Data Validation
 pydantic>=2.0.0
 
+# Excel file handling
+openpyxl>=3.1.0
+
 # Environment
 python-dotenv>=1.0.0
 

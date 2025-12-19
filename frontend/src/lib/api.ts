@@ -11,6 +11,10 @@ import type {
   ShoppingItemResponseDTO,
   ShoppingListGenerationResultDTO,
   IngredientResponseDTO,
+  ImportPreviewDTO,
+  ImportResultDTO,
+  DuplicateResolutionDTO,
+  ExportFilterDTO,
 } from "@/types";
 
 // API base URL from environment variable or default to localhost
@@ -551,6 +555,105 @@ export const uploadApi = {
     }
 
     return response.json();
+  },
+};
+
+// ============================================================================
+// Data Management API (Import/Export)
+// ============================================================================
+
+export const dataManagementApi = {
+  /**
+   * Upload xlsx file and get import preview
+   * @param file - The xlsx file to import
+   * @returns Preview with duplicate info and validation errors
+   */
+  previewImport: async (file: File): Promise<ImportPreviewDTO> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${API_BASE}/api/data-management/import/preview`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new ApiError(
+        error.detail || "Failed to preview import",
+        response.status
+      );
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Execute import with duplicate resolutions
+   * @param file - The xlsx file to import
+   * @param resolutions - How to handle each duplicate
+   * @returns Result with counts and errors
+   */
+  executeImport: async (
+    file: File,
+    resolutions: DuplicateResolutionDTO[]
+  ): Promise<ImportResultDTO> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("resolutions", JSON.stringify(resolutions));
+
+    const response = await fetch(`${API_BASE}/api/data-management/import/execute`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new ApiError(
+        error.detail || "Failed to execute import",
+        response.status
+      );
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Export recipes to xlsx file
+   * @param filters - Optional filters for which recipes to export
+   * @returns Blob of the xlsx file
+   */
+  exportRecipes: async (filters?: ExportFilterDTO): Promise<Blob> => {
+    const query = filters ? buildQueryString(filters as Record<string, unknown>) : "";
+    const response = await fetch(`${API_BASE}/api/data-management/export${query}`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new ApiError(
+        error.detail || "Failed to export recipes",
+        response.status
+      );
+    }
+
+    return response.blob();
+  },
+
+  /**
+   * Download xlsx template for import
+   * @returns Blob of the template file
+   */
+  downloadTemplate: async (): Promise<Blob> => {
+    const response = await fetch(`${API_BASE}/api/data-management/template`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new ApiError(
+        error.detail || "Failed to download template",
+        response.status
+      );
+    }
+
+    return response.blob();
   },
 };
 

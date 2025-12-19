@@ -299,6 +299,53 @@ export interface IngredientBreakdownDTO {
 }
 
 // ============================================================================
+// Data Management Types (Import/Export)
+// ============================================================================
+
+export type DuplicateAction = "skip" | "update" | "rename";
+
+export interface DuplicateRecipeDTO {
+  recipe_name: string;
+  recipe_category: string;
+  existing_id: number;
+  row_number: number;
+}
+
+export interface ValidationErrorDTO {
+  row_number: number;
+  field: string;
+  message: string;
+}
+
+export interface ImportPreviewDTO {
+  total_recipes: number;
+  new_recipes: number;
+  duplicate_recipes: DuplicateRecipeDTO[];
+  validation_errors: ValidationErrorDTO[];
+}
+
+export interface ImportResultDTO {
+  success: boolean;
+  created_count: number;
+  updated_count: number;
+  skipped_count: number;
+  errors: string[];
+}
+
+export interface DuplicateResolutionDTO {
+  recipe_name: string;
+  recipe_category: string;
+  action: DuplicateAction;
+  new_name?: string;
+}
+
+export interface ExportFilterDTO {
+  recipe_category?: string | null;
+  meal_type?: string | null;
+  favorites_only?: boolean;
+}
+
+// ============================================================================
 // Utility Types
 // ============================================================================
 
