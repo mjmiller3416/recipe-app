@@ -19,11 +19,13 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # Rename default_image_path to reference_image_path
-    op.alter_column('recipe', 'default_image_path', new_column_name='reference_image_path')
+    # This migration was intended to rename default_image_path to reference_image_path,
+    # but the previous migration (a72f23af2b57) already creates reference_image_path directly.
+    # This is now a no-op for fresh databases.
+    pass
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    # Rename reference_image_path back to default_image_path
-    op.alter_column('recipe', 'reference_image_path', new_column_name='default_image_path')
+    # No-op - see upgrade comment
+    pass
