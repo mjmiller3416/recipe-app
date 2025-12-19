@@ -658,6 +658,26 @@ export const dataManagementApi = {
 
     return response.blob();
   },
+
+  /**
+   * Delete all data from the database
+   * @returns Object with success status and counts of deleted records
+   */
+  clearAllData: async (): Promise<{ success: boolean; deleted_counts: Record<string, number> }> => {
+    const response = await fetch(`${API_BASE}/api/data-management/clear-all`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new ApiError(
+        error.detail || "Failed to clear data",
+        response.status
+      );
+    }
+
+    return response.json();
+  },
 };
 
 // Export the error class for use in components

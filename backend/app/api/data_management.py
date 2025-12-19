@@ -189,3 +189,20 @@ async def download_template():
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": "attachment; filename=recipe_import_template.xlsx"},
     )
+
+
+@router.delete("/clear-all")
+async def clear_all_data(
+    session: Session = Depends(get_session),
+):
+    """
+    Delete all data from the database.
+
+    WARNING: This is a destructive operation. All recipes, ingredients,
+    meal plans, and shopping lists will be permanently deleted.
+
+    Returns counts of deleted records per table.
+    """
+    service = DataManagementService(session)
+    counts = service.clear_all_data()
+    return {"success": True, "deleted_counts": counts}
