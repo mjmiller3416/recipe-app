@@ -38,7 +38,7 @@ import {
 import {
   IngredientRow,
   Ingredient,
-} from "@/components/forms/IngredientRow";
+} from "@/components/add-recipe";
 import {
   MEAL_TYPE_OPTIONS,
   RECIPE_CATEGORY_OPTIONS,

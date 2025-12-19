@@ -69,6 +69,7 @@ export default function AddRecipePage() {
             {/* Ingredients Section */}
             <IngredientsCard
               ingredients={form.ingredients}
+              availableIngredients={form.availableIngredients}
               onUpdate={form.updateIngredient}
               onDelete={form.deleteIngredient}
               onAdd={form.addIngredient}

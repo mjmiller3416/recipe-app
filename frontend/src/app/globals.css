@@ -61,6 +61,11 @@
      ============================================ */
   --accent: #3d3d3d;            /* Accent surfaces - dietary badges */
   --accent-foreground: #f5f5f5; /* Text on accent background */
+  --popover: #2f2f2f;           /* Popover/dropdown backgrounds */
+  --popover-foreground: #f5f5f5; /* Text in popovers */
+  --card: #2f2f2f;              /* Card backgrounds */
+  --card-foreground: #f5f5f5;   /* Text on cards */
+  --muted-foreground: #a3a3a3;  /* Secondary/muted text (shadcn compat) */
   --border: #3d3d3d;            /* Border color */
   --border-subtle: #2d2d2d;     /* Lighter than main border */
   --border-strong: #525252;     /* Stronger than main border */
@@ -182,6 +187,11 @@
      ============================================ */
   --accent: #e5e7eb;            /* Accent surfaces - light gray for dietary badges */
   --accent-foreground: #374151; /* Dark gray text on light accent */
+  --popover: #ffffff;           /* Popover/dropdown backgrounds */
+  --popover-foreground: #1a1a1a; /* Text in popovers */
+  --card: #ffffff;              /* Card backgrounds */
+  --card-foreground: #1a1a1a;   /* Text on cards */
+  --muted-foreground: #6b7280;  /* Secondary/muted text (shadcn compat) */
   --border: #d6d6d6;            /* Softer border color */
   --border-subtle: #e5e5e5;     /* Lighter than main border */
   --border-strong: #a3a3a3;     /* Stronger than main border */
@@ -290,6 +300,11 @@
   /* UI */
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-border-subtle: var(--border-subtle);
   --color-border-strong: var(--border-strong);

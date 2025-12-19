@@ -1,7 +1,6 @@
 "use client";
 
 import { GripVertical, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { QuantityInput } from "@/components/forms/QuantityInput";
 import {
   Select,
@@ -11,6 +10,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { INGREDIENT_UNITS, INGREDIENT_CATEGORIES } from "@/lib/constants";
+import {
+  IngredientAutocomplete,
+  Ingredient as AutocompleteIngredient,
+} from "./IngredientAutoComplete";
 
 export interface Ingredient {
   id: string;
@@ -22,17 +25,58 @@ export interface Ingredient {
 
 interface IngredientRowProps {
   ingredient: Ingredient;
+  availableIngredients?: AutocompleteIngredient[];
   onUpdate: (id: string, field: keyof Ingredient, value: string | number | null) => void;
   onDelete: (id: string) => void;
   showLabels?: boolean;
 }
 
+// Helper to find matching category value from INGREDIENT_CATEGORIES
+const findCategoryValue = (categoryFromDb: string): string => {
+  // Try exact match first
+  const exactMatch = INGREDIENT_CATEGORIES.find(
+    (cat) => cat.value === categoryFromDb
+  );
+  if (exactMatch) return exactMatch.value;
+
+  // Try case-insensitive match on value
+  const caseInsensitiveValue = INGREDIENT_CATEGORIES.find(
+    (cat) => cat.value.toLowerCase() === categoryFromDb.toLowerCase()
+  );
+  if (caseInsensitiveValue) return caseInsensitiveValue.value;
+
+  // Try case-insensitive match on label
+  const labelMatch = INGREDIENT_CATEGORIES.find(
+    (cat) => cat.label.toLowerCase() === categoryFromDb.toLowerCase()
+  );
+  if (labelMatch) return labelMatch.value;
+
+  // Return original if no match (Select will show placeholder)
+  return categoryFromDb;
+};
+
 export function IngredientRow({
   ingredient,
+  availableIngredients = [],
   onUpdate,
   onDelete,
   showLabels = false,
 }: IngredientRowProps) {
+  // Handle selecting an existing ingredient from autocomplete
+  const handleIngredientSelect = (selected: AutocompleteIngredient) => {
+    onUpdate(ingredient.id, "name", selected.name);
+    // Auto-fill category from the selected ingredient (normalized to match Select values)
+    if (selected.category) {
+      const normalizedCategory = findCategoryValue(selected.category);
+      onUpdate(ingredient.id, "category", normalizedCategory);
+    }
+  };
+
+  // Handle creating a new ingredient (just updates the name)
+  const handleNewIngredient = (name: string) => {
+    onUpdate(ingredient.id, "name", name);
+  };
+
   return (
     <div className="group bg-elevated hover:bg-hover transition-colors rounded-lg p-3 border border-border">
       <div className="flex items-center gap-3">
@@ -75,14 +119,15 @@ export function IngredientRow({
             </Select>
           </div>
 
-          {/* Ingredient Name */}
+          {/* Ingredient Name with Autocomplete */}
           <div className="flex-1 min-w-0">
-            <Input
-              id={`name-${ingredient.id}`}
-              type="text"
-              placeholder="Ingredient name"
+            <IngredientAutocomplete
+              ingredients={availableIngredients}
               value={ingredient.name}
-              onChange={(e) => onUpdate(ingredient.id, "name", e.target.value)}
+              onValueChange={(value) => onUpdate(ingredient.id, "name", value)}
+              onIngredientSelect={handleIngredientSelect}
+              onNewIngredient={handleNewIngredient}
+              placeholder="Ingredient name"
               className="h-9"
             />
           </div>

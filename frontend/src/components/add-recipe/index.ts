@@ -4,3 +4,7 @@ export { RecipeInfoCard } from "./RecipeInfoCard";
 export { IngredientsCard } from "./IngredientsCard";
 export { DirectionsNotesCard } from "./DirectionsNotesCard";
 export { ImageUploadCard } from "./ImageUploadCard";
+export { IngredientRow } from "./IngredientRow";
+export type { Ingredient } from "./IngredientRow";
+export { IngredientAutocomplete } from "./IngredientAutoComplete";
+export type { Ingredient as AutocompleteIngredient } from "./IngredientAutoComplete";

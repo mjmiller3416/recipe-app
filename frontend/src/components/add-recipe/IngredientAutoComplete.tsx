@@ -5,13 +5,6 @@ import { Check, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
   Popover,
   PopoverContent,
   PopoverAnchor,
@@ -64,18 +57,18 @@ export function IngredientAutocomplete({
   autoFocus = false,
 }: IngredientAutocompleteProps) {
   const [open, setOpen] = React.useState(false);
-  const [highlightedIndex, setHighlightedIndex] = React.useState<number>(-1);
+  const [highlightedIndex, setHighlightedIndex] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const listRef = React.useRef<HTMLDivElement>(null);
 
-  // Filter ingredients based on input value (case-insensitive)
+  // Filter ingredients based on input value (matches start of any word)
   const filteredIngredients = React.useMemo(() => {
     if (!value.trim()) return [];
-
     const searchTerm = value.toLowerCase().trim();
-    return ingredients.filter((ing) =>
-      ing.name.toLowerCase().includes(searchTerm)
-    );
+    return ingredients.filter((ing) => {
+      const words = ing.name.toLowerCase().split(/\s+/);
+      return words.some((word) => word.startsWith(searchTerm));
+    });
   }, [ingredients, value]);
 
   // Check if the current input exactly matches an existing ingredient
@@ -85,57 +78,64 @@ export function IngredientAutocomplete({
   }, [ingredients, value]);
 
   // Show "create new" option if there's input text and no exact match
-  const showCreateOption = value.trim() && !exactMatch;
+  const showCreateOption = value.trim() && !exactMatch && onNewIngredient;
 
-  // Total items for keyboard navigation (filtered + optional create)
-  const totalItems = filteredIngredients.length + (showCreateOption ? 1 : 0);
+  // Build the list of selectable items
+  const items = React.useMemo(() => {
+    const list: Array<{ type: "ingredient"; data: Ingredient } | { type: "create"; name: string }> = 
+      filteredIngredients.map((ing) => ({ type: "ingredient" as const, data: ing }));
+    
+    if (showCreateOption) {
+      list.push({ type: "create" as const, name: value.trim() });
+    }
+    return list;
+  }, [filteredIngredients, showCreateOption, value]);
 
-  // Reset highlight when filtered results change
+  // Reset highlight when items change
   React.useEffect(() => {
-    setHighlightedIndex(-1);
-  }, [filteredIngredients.length, showCreateOption]);
+    setHighlightedIndex(0);
+  }, [items.length]);
+
+  // Scroll highlighted item into view
+  React.useEffect(() => {
+    if (open && listRef.current) {
+      const highlighted = listRef.current.children[highlightedIndex] as HTMLElement;
+      highlighted?.scrollIntoView({ block: "nearest" });
+    }
+  }, [highlightedIndex, open]);
+
+  // Handle selecting an item
+  const handleSelect = (index: number) => {
+    const item = items[index];
+    if (!item) return;
+
+    if (item.type === "ingredient") {
+      onValueChange(item.data.name);
+      onIngredientSelect(item.data);
+    } else if (item.type === "create" && onNewIngredient) {
+      onNewIngredient(item.name);
+    }
+    setOpen(false);
+  };
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onValueChange(newValue);
-
-    // Open dropdown when there's text
-    if (newValue.trim()) {
-      setOpen(true);
-    } else {
-      setOpen(false);
-    }
-  };
-
-  // Handle selecting an existing ingredient
-  const handleSelectIngredient = (ingredient: Ingredient) => {
-    onValueChange(ingredient.name);
-    onIngredientSelect(ingredient);
-    setOpen(false);
-    setHighlightedIndex(-1);
-  };
-
-  // Handle creating a new ingredient
-  const handleCreateNew = () => {
-    const trimmedValue = value.trim();
-    if (trimmedValue && onNewIngredient) {
-      onNewIngredient(trimmedValue);
-    }
-    setOpen(false);
-    setHighlightedIndex(-1);
+    setOpen(newValue.trim().length > 0);
+    setHighlightedIndex(0);
   };
 
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!open || totalItems === 0) {
-      // If dropdown is closed and user presses Enter with a valid value
+    if (!open || items.length === 0) {
       if (e.key === "Enter" && value.trim()) {
         e.preventDefault();
         if (exactMatch) {
-          handleSelectIngredient(exactMatch);
+          onValueChange(exactMatch.name);
+          onIngredientSelect(exactMatch);
         } else if (onNewIngredient) {
-          handleCreateNew();
+          onNewIngredient(value.trim());
         }
       }
       return;
@@ -144,71 +144,49 @@ export function IngredientAutocomplete({
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
-        setHighlightedIndex((prev) => {
-          const next = prev + 1;
-          return next >= totalItems ? prev : next; // Stop at bottom, don't cycle
-        });
+        setHighlightedIndex((prev) => 
+          prev < items.length - 1 ? prev + 1 : prev
+        );
         break;
 
       case "ArrowUp":
         e.preventDefault();
-        setHighlightedIndex((prev) => {
-          const next = prev - 1;
-          return next < 0 ? prev : next; // Stop at top, don't cycle
-        });
+        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : prev));
         break;
 
       case "Enter":
         e.preventDefault();
-        if (highlightedIndex >= 0) {
-          // Select highlighted item
-          if (highlightedIndex < filteredIngredients.length) {
-            handleSelectIngredient(filteredIngredients[highlightedIndex]);
-          } else if (showCreateOption) {
-            handleCreateNew();
-          }
-        } else if (filteredIngredients.length === 1) {
-          // Auto-select single match
-          handleSelectIngredient(filteredIngredients[0]);
-        } else if (exactMatch) {
-          handleSelectIngredient(exactMatch);
-        } else if (showCreateOption && onNewIngredient) {
-          handleCreateNew();
-        }
+        handleSelect(highlightedIndex);
         break;
 
       case "Escape":
         e.preventDefault();
         setOpen(false);
-        setHighlightedIndex(-1);
         break;
 
       case "Tab":
-        // Allow natural tab behavior but close dropdown
         setOpen(false);
-        setHighlightedIndex(-1);
-        // If single match, auto-select before tabbing away
-        if (filteredIngredients.length === 1) {
-          handleSelectIngredient(filteredIngredients[0]);
+        // Auto-select single match when tabbing away
+        if (items.length === 1 && items[0].type === "ingredient") {
+          onValueChange(items[0].data.name);
+          onIngredientSelect(items[0].data);
         }
         break;
     }
   };
 
-  // Handle focus events
   const handleFocus = () => {
-    if (value.trim()) {
+    if (value.trim() && items.length > 0) {
       setOpen(true);
+      setHighlightedIndex(0);
     }
   };
 
   const handleBlur = (e: React.FocusEvent) => {
-    // Delay closing to allow click events on dropdown items
+    // Delay to allow click events on list items
     setTimeout(() => {
-      // Only close if focus isn't within the popover
       if (!listRef.current?.contains(document.activeElement)) {
         setOpen(false);
-        setHighlightedIndex(-1);
       }
     }, 150);
   };
@@ -228,10 +206,7 @@ export function IngredientAutocomplete({
           disabled={disabled}
           autoFocus={autoFocus}
           autoComplete="off"
-          className={cn(
-            "w-full",
-            className
-          )}
+          className={cn("w-full", className)}
         />
       </PopoverAnchor>
 
@@ -240,70 +215,61 @@ export function IngredientAutocomplete({
         align="start"
         side="bottom"
         sideOffset={4}
-        onOpenAutoFocus={(e) => e.preventDefault()} // Keep focus on input
+        onOpenAutoFocus={(e) => e.preventDefault()}
         onInteractOutside={(e) => {
-          // Don't close if clicking the input
           if (e.target === inputRef.current) {
             e.preventDefault();
           }
         }}
       >
-        <Command
+        <div
           ref={listRef}
-          shouldFilter={false} // We handle filtering ourselves
-          className="max-h-[200px]"
+          className="max-h-[200px] overflow-y-auto p-1"
+          role="listbox"
         >
-          <CommandList>
-            {filteredIngredients.length === 0 && !showCreateOption && (
-              <CommandEmpty className="py-3 text-center text-sm text-muted-foreground">
-                No ingredients found.
-              </CommandEmpty>
-            )}
+          {items.length === 0 && (
+            <div className="py-3 text-center text-sm text-muted-foreground">
+              No ingredients found.
+            </div>
+          )}
 
-            {filteredIngredients.length > 0 && (
-              <CommandGroup>
-                {filteredIngredients.map((ingredient, index) => (
-                  <CommandItem
-                    key={ingredient.id}
-                    value={ingredient.name}
-                    onSelect={() => handleSelectIngredient(ingredient)}
-                    className={cn(
-                      "flex items-center justify-between cursor-pointer",
-                      highlightedIndex === index && "bg-accent"
-                    )}
-                  >
-                    <div className="flex flex-col">
-                      <span>{ingredient.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {ingredient.category}
-                      </span>
-                    </div>
-                    {exactMatch?.id === ingredient.id && (
-                      <Check className="h-4 w-4 text-primary" />
-                    )}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-
-            {showCreateOption && onNewIngredient && (
-              <CommandGroup>
-                <CommandItem
-                  onSelect={handleCreateNew}
-                  className={cn(
-                    "flex items-center gap-2 cursor-pointer text-primary",
-                    highlightedIndex === filteredIngredients.length && "bg-accent"
+          {items.map((item, index) => (
+            <div
+              key={item.type === "ingredient" ? item.data.id : "create-new"}
+              role="option"
+              aria-selected={highlightedIndex === index}
+              className={cn(
+                "flex items-center justify-between rounded-sm px-2 py-1.5 text-sm cursor-pointer transition-colors duration-150",
+                highlightedIndex === index
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-accent/50"
+              )}
+              onClick={() => handleSelect(index)}
+              onMouseEnter={() => setHighlightedIndex(index)}
+            >
+              {item.type === "ingredient" ? (
+                <>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-medium">{item.data.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {item.data.category}
+                    </span>
+                  </div>
+                  {exactMatch?.id === item.data.id && (
+                    <Check className="h-4 w-4 shrink-0 text-primary" />
                   )}
-                >
-                  <Plus className="h-4 w-4" />
+                </>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Plus className="h-4 w-4 shrink-0 text-primary" />
                   <span>
-                    Create &quot;{value.trim()}&quot;
+                    Create <span className="font-medium text-primary">&quot;{item.name}&quot;</span>
                   </span>
-                </CommandItem>
-              </CommandGroup>
-            )}
-          </CommandList>
-        </Command>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </PopoverContent>
     </Popover>
   );

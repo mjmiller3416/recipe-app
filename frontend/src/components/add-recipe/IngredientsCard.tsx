@@ -1,15 +1,15 @@
 "use client";
 
+import { useRef, useEffect } from "react";
 import { Plus, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  IngredientRow,
-  Ingredient,
-} from "@/components/forms/IngredientRow";
+import { IngredientRow, Ingredient } from "./IngredientRow";
+import { Ingredient as AutocompleteIngredient } from "./IngredientAutoComplete";
 
 interface IngredientsCardProps {
   ingredients: Ingredient[];
+  availableIngredients?: AutocompleteIngredient[];
   onUpdate: (id: string, field: keyof Ingredient, value: string | number | null) => void;
   onDelete: (id: string) => void;
   onAdd: () => void;
@@ -18,11 +18,42 @@ interface IngredientsCardProps {
 
 export function IngredientsCard({
   ingredients,
+  availableIngredients = [],
   onUpdate,
   onDelete,
   onAdd,
   getError,
 }: IngredientsCardProps) {
+  // Track if the add was triggered via keyboard (spacebar)
+  const addedViaKeyboardRef = useRef(false);
+  const prevIngredientsLengthRef = useRef(ingredients.length);
+
+  // Focus the qty input of the new ingredient row when added via keyboard
+  useEffect(() => {
+    if (
+      ingredients.length > prevIngredientsLengthRef.current &&
+      addedViaKeyboardRef.current
+    ) {
+      // Small delay to ensure the new row is rendered
+      setTimeout(() => {
+        const qtyInputs = document.querySelectorAll<HTMLInputElement>(
+          'input[placeholder="Qty"]'
+        );
+        const lastInput = qtyInputs[qtyInputs.length - 1];
+        lastInput?.focus();
+      }, 0);
+      addedViaKeyboardRef.current = false;
+    }
+    prevIngredientsLengthRef.current = ingredients.length;
+  }, [ingredients.length]);
+
+  // Detect spacebar press on the Add button
+  const handleAddKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === " " || e.key === "Spacebar") {
+      addedViaKeyboardRef.current = true;
+    }
+  };
+
   return (
     <Card data-field="ingredients">
       <CardContent className="pt-6">
@@ -52,6 +83,7 @@ export function IngredientsCard({
             <IngredientRow
               key={ingredient.id}
               ingredient={ingredient}
+              availableIngredients={availableIngredients}
               onUpdate={onUpdate}
               onDelete={onDelete}
             />
@@ -64,6 +96,7 @@ export function IngredientsCard({
           variant="secondary"
           size="sm"
           onClick={onAdd}
+          onKeyDown={handleAddKeyDown}
           className="w-full gap-2"
         >
           <Plus className="h-4 w-4" />

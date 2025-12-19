@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useId } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { recipeApi } from "@/lib/api";
+import { recipeApi, ingredientApi } from "@/lib/api";
 import type { RecipeCreateDTO, RecipeIngredientDTO } from "@/types";
-import type { Ingredient } from "@/components/forms/IngredientRow";
+import type { Ingredient } from "./IngredientRow";
+import type { Ingredient as AutocompleteIngredient } from "./IngredientAutoComplete";
 import {
   validateString,
   validateInteger,
@@ -46,6 +47,9 @@ export interface RecipeFormState {
   setNotes: (value: string) => void;
   imagePreview: string | null;
 
+  // Available ingredients for autocomplete
+  availableIngredients: AutocompleteIngredient[];
+
   // Ingredient handlers
   addIngredient: () => void;
   updateIngredient: (id: string, field: keyof Ingredient, value: string | number | null) => void;
@@ -68,6 +72,9 @@ export interface RecipeFormState {
 export function useRecipeForm(): RecipeFormState {
   const router = useRouter();
 
+  // Generate a stable ID for the initial ingredient (prevents hydration mismatch)
+  const initialIngredientId = useId();
+
   // Recipe basic info state
   const [recipeName, setRecipeName] = useState("");
   const [totalTime, setTotalTime] = useState("");
@@ -76,10 +83,10 @@ export function useRecipeForm(): RecipeFormState {
   const [category, setCategory] = useState("");
   const [dietaryPreference, setDietaryPreference] = useState("");
 
-  // Ingredients state
-  const [ingredients, setIngredients] = useState<Ingredient[]>([
+  // Ingredients state - use stable ID for initial ingredient
+  const [ingredients, setIngredients] = useState<Ingredient[]>(() => [
     {
-      id: uuidv4(),
+      id: initialIngredientId,
       quantity: null,
       unit: "",
       name: "",
@@ -94,6 +101,29 @@ export function useRecipeForm(): RecipeFormState {
   // Image state
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  // Available ingredients for autocomplete
+  const [availableIngredients, setAvailableIngredients] = useState<AutocompleteIngredient[]>([]);
+
+  // Fetch available ingredients on mount
+  useEffect(() => {
+    const fetchIngredients = async () => {
+      try {
+        const ingredients = await ingredientApi.list();
+        // Transform to autocomplete format
+        const transformed: AutocompleteIngredient[] = ingredients.map((ing) => ({
+          id: ing.id,
+          name: ing.ingredient_name,
+          category: ing.ingredient_category,
+        }));
+        setAvailableIngredients(transformed);
+      } catch (error) {
+        console.error("Failed to fetch ingredients:", error);
+        // Silently fail - autocomplete will just be empty
+      }
+    };
+    fetchIngredients();
+  }, []);
+
   // Form validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,8 +131,8 @@ export function useRecipeForm(): RecipeFormState {
 
   // Ingredient handlers
   const addIngredient = () => {
-    setIngredients([
-      ...ingredients,
+    setIngredients((prevIngredients) => [
+      ...prevIngredients,
       {
         id: uuidv4(),
         quantity: null,
@@ -118,17 +148,20 @@ export function useRecipeForm(): RecipeFormState {
     field: keyof Ingredient,
     value: string | number | null
   ) => {
-    setIngredients(
-      ingredients.map((ing) =>
+    setIngredients((prevIngredients) =>
+      prevIngredients.map((ing) =>
         ing.id === id ? { ...ing, [field]: value } : ing
       )
     );
   };
 
   const deleteIngredient = (id: string) => {
-    if (ingredients.length > 1) {
-      setIngredients(ingredients.filter((ing) => ing.id !== id));
-    }
+    setIngredients((prevIngredients) => {
+      if (prevIngredients.length > 1) {
+        return prevIngredients.filter((ing) => ing.id !== id);
+      }
+      return prevIngredients;
+    });
   };
 
   // Image upload handler
@@ -304,6 +337,9 @@ export function useRecipeForm(): RecipeFormState {
     notes,
     setNotes,
     imagePreview,
+
+    // Available ingredients for autocomplete
+    availableIngredients,
 
     // Ingredient handlers
     addIngredient,
