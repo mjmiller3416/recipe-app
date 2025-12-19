@@ -4,13 +4,29 @@ Service for data management operations (import/export recipes via xlsx).
 """
 
 # ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
+import os
+import re
 from io import BytesIO
 from typing import Dict, List, Optional, Tuple
 
+import cloudinary
+import cloudinary.uploader
+from dotenv import load_dotenv
 from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+
+# Load environment variables for Cloudinary config
+load_dotenv()
+
+# Configure Cloudinary
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 from ..dtos.data_management_dtos import (   
     DuplicateAction,
@@ -23,7 +39,16 @@ from ..dtos.data_management_dtos import (
     ValidationErrorDTO,
 )
 from ..dtos.recipe_dtos import RecipeCreateDTO, RecipeIngredientDTO, RecipeUpdateDTO
-from ..models.recipe import Recipe
+from ..models import (
+    Ingredient,
+    Meal,
+    PlannerEntry,
+    Recipe,
+    RecipeHistory,
+    RecipeIngredient,
+    ShoppingItem,
+    ShoppingState,
+)
 from ..repositories.ingredient_repo import IngredientRepo
 from ..repositories.recipe_repo import RecipeRepo
 
@@ -615,3 +640,98 @@ class DataManagementService:
         workbook.save(output)
         output.seek(0)
         return output.getvalue()
+
+    # ── Clear All Data ─────────────────────────────────────────────────────────────────────────────────────────
+    def _extract_cloudinary_public_id(self, url: str) -> Optional[str]:
+        """
+        Extract the public_id from a Cloudinary URL.
+
+        Cloudinary URLs look like:
+        https://res.cloudinary.com/{cloud}/image/upload/v{version}/{public_id}.{ext}
+
+        Returns the public_id without the file extension.
+        """
+        if not url:
+            return None
+
+        # Match the path after /upload/ and before the file extension
+        # Example: .../upload/v1234567890/meal-genie/recipes/123/reference_123.jpg
+        match = re.search(r"/upload/(?:v\d+/)?(.+)\.\w+$", url)
+        if match:
+            return match.group(1)
+        return None
+
+    def _delete_cloudinary_images(self, recipes: List[Recipe]) -> int:
+        """
+        Delete all Cloudinary images for the given recipes.
+
+        Returns the count of successfully deleted images.
+        """
+        deleted_count = 0
+
+        for recipe in recipes:
+            for image_path in [recipe.reference_image_path, recipe.banner_image_path]:
+                if image_path:
+                    public_id = self._extract_cloudinary_public_id(image_path)
+                    if public_id:
+                        try:
+                            result = cloudinary.uploader.destroy(public_id)
+                            if result.get("result") == "ok":
+                                deleted_count += 1
+                        except Exception:
+                            # Continue even if individual deletion fails
+                            pass
+
+        return deleted_count
+
+    def clear_all_data(self) -> Dict[str, int]:
+        """
+        Delete all data from all tables, including Cloudinary images.
+
+        Deletes Cloudinary images first, then tables in the correct order
+        to respect foreign key constraints.
+
+        Returns:
+            Dict with counts of deleted records per table.
+        """
+        counts = {}
+
+        # First, delete Cloudinary images before removing recipe records
+        recipes_with_images = (
+            self.session.query(Recipe)
+            .filter(
+                (Recipe.reference_image_path.isnot(None))
+                | (Recipe.banner_image_path.isnot(None))
+            )
+            .all()
+        )
+        counts["cloudinary_images"] = self._delete_cloudinary_images(recipes_with_images)
+
+        # Delete in order to respect foreign key constraints
+        # Shopping items depend on ShoppingState and Ingredient
+        counts["shopping_items"] = self.session.query(ShoppingItem).delete()
+
+        # Shopping state is top-level
+        counts["shopping_states"] = self.session.query(ShoppingState).delete()
+
+        # Planner entries depend on Recipe
+        counts["planner_entries"] = self.session.query(PlannerEntry).delete()
+
+        # Recipe ingredients depend on Recipe and Ingredient
+        counts["recipe_ingredients"] = self.session.query(RecipeIngredient).delete()
+
+        # Recipe history depends on Recipe
+        counts["recipe_history"] = self.session.query(RecipeHistory).delete()
+
+        # Recipes
+        counts["recipes"] = self.session.query(Recipe).delete()
+
+        # Meals
+        counts["meals"] = self.session.query(Meal).delete()
+
+        # Ingredients (can be deleted after recipe_ingredients)
+        counts["ingredients"] = self.session.query(Ingredient).delete()
+
+        self.session.commit()
+
+        return counts

@@ -1,10 +1,12 @@
 # Web Framework
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
 
 # Database
 sqlalchemy>=2.0.0
 alembic>=1.13.0
+psycopg2-binary>=2.9.0
 
 # Data Validation
 pydantic>=2.0.0
@@ -14,6 +16,9 @@ openpyxl>=3.1.0
 
 # Environment
 python-dotenv>=1.0.0
+
+# Image Upload
+cloudinary>=1.36.0
 
 # AI Integration (optional - for recipe generation features)
 openai>=1.0.0
