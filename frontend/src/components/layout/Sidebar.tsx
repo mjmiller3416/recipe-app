@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -8,11 +9,18 @@ import {
   ShoppingCart,
   Plus,
   Settings,
+  MessageSquarePlus,
 } from "lucide-react";
 import { Logo } from "@/components/layout/Logo";
 import { NavButton } from "@/components/layout/NavButton";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
+import { FeedbackDialog } from "@/components/common/FeedbackDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { appConfig } from "@/lib/config";
 
 const navigation = [
@@ -26,6 +34,7 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-[280px] bg-sidebar flex flex-col overflow-x-hidden overflow-y-auto">
@@ -56,11 +65,23 @@ export function Sidebar() {
 
       {/* Bottom Section - User Profile & Theme Toggle */}
       <div className="p-4 border-t border-border space-y-3">
-        {/* Theme Toggle */}
-        <div className="flex items-center justify-between">
-          <span className="text-[15px] text-muted">Theme</span>
+        {/* Feedback & Theme Toggle */}
+        <div className="flex items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setFeedbackOpen(true)}
+                className="p-2.5 rounded-lg bg-elevated hover:bg-hover transition-colors group"
+                aria-label="Send feedback"
+              >
+                <MessageSquarePlus className="w-5 h-5 text-foreground group-hover:text-primary transition-colors" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Send feedback</TooltipContent>
+          </Tooltip>
           <ThemeToggle />
         </div>
+        <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
         
         {/* User Profile */}
         <div className="flex items-center gap-3 rounded-lg p-3 bg-elevated">

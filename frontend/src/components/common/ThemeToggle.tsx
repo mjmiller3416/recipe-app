@@ -2,6 +2,11 @@
 
 import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
@@ -42,18 +47,24 @@ export function ThemeToggle() {
     );
   }
 
+  const tooltipText = `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`;
+
   return (
-    <button
-      onClick={toggleTheme}
-      className="p-2.5 rounded-lg bg-elevated hover:bg-hover transition-colors group"
-      aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-      title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-    >
-      {theme === 'dark' ? (
-        <Sun className="w-5 h-5 text-foreground group-hover:text-primary transition-colors" />
-      ) : (
-        <Moon className="w-5 h-5 text-foreground group-hover:text-primary transition-colors" />
-      )}
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={toggleTheme}
+          className="p-2.5 rounded-lg bg-elevated hover:bg-hover transition-colors group"
+          aria-label={tooltipText}
+        >
+          {theme === 'dark' ? (
+            <Sun className="w-5 h-5 text-foreground group-hover:text-primary transition-colors" />
+          ) : (
+            <Moon className="w-5 h-5 text-foreground group-hover:text-primary transition-colors" />
+          )}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>{tooltipText}</TooltipContent>
+    </Tooltip>
   );
 }
