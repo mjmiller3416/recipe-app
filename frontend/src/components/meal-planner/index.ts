@@ -4,7 +4,7 @@
 export { MealPlannerPage } from "./MealPlannerPage";
 export { SelectedMealHero } from "./SelectedMealHero";
 export { SideDishGrid, SideDishCard } from "./SideDishGrid";
-export { WeeklyMenuSidebar } from "./WeeklyMenuSidebar";
+export { WeeklyMenuSidebar } from "./WeeklyMenu";
 export { MealQueueCard } from "./MealQueueCard";
 export { ShoppingListIndicator, ShoppingListLegend } from "./ShoppingListIndicator";
 export { EmptyMenuState } from "./EmptyMenuState";

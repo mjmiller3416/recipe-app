@@ -77,7 +77,8 @@ frontend/
 │   │   ├── common/                # Shared components
 │   │   ├── forms/                 # Form components
 │   │   ├── recipe/                # Recipe-specific components
-│   │   └── layout/                # Layout components
+│   │   ├── layout/                # Layout components
+│   │   └── meal-planner/          # Meal planner components
 │   ├── hooks/                     # Custom React hooks
 │   ├── lib/                       # Utilities and API client
 │   └── types/                     # TypeScript type definitions
@@ -247,6 +248,33 @@ import { ThemeToggle } from "@/components/common/ThemeToggle";
 
 <ThemeToggle />
 ```
+
+#### FeedbackDialog
+
+User feedback submission dialog that creates GitHub issues.
+
+```tsx
+import { FeedbackDialog } from "@/components/common/FeedbackDialog";
+
+const [feedbackOpen, setFeedbackOpen] = useState(false);
+
+<FeedbackDialog
+  open={feedbackOpen}
+  onOpenChange={setFeedbackOpen}
+/>
+```
+
+**Props:**
+| Prop | Type | Description |
+|------|------|-------------|
+| `open` | `boolean` | Dialog open state |
+| `onOpenChange` | `(open: boolean) => void` | State change handler |
+
+**Features:**
+- Category selection: Feature Request, Bug Report, General Feedback, Question
+- Minimum 10 character message requirement
+- Submits to `feedbackApi` which creates GitHub issues
+- Auto-resets form on close
 
 ### Form Components (`/components/forms/`)
 
@@ -461,6 +489,252 @@ import { Logo } from "@/components/layout/Logo";
 <Logo className="h-8 w-8" />
 ```
 
+#### PageLayout
+
+Standardized page wrapper providing consistent structure across pages.
+
+```tsx
+import { PageLayout } from "@/components/layout/PageLayout";
+
+// Basic usage
+<PageLayout
+  title="Shopping List"
+  description="Auto-generated from your meal plan"
+  actions={<Button>Add Item</Button>}
+>
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    {content}
+  </div>
+</PageLayout>
+
+// Custom header content (e.g., with back button)
+<PageLayout
+  title="Edit Recipe"
+  headerContent={
+    <PageHeaderContent>
+      <div className="flex items-center gap-4 flex-1">
+        <Button variant="ghost" size="icon"><ArrowLeft /></Button>
+        <PageHeaderTitle title="Edit Recipe" description="..." />
+      </div>
+      <PageHeaderActions>...</PageHeaderActions>
+    </PageHeaderContent>
+  }
+>
+  {content}
+</PageLayout>
+```
+
+**Props:**
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `title` | `string` | Yes | Page title displayed in the header |
+| `description` | `string` | No | Description displayed below the title |
+| `actions` | `ReactNode` | No | Actions (buttons) on the right side of header |
+| `headerContent` | `ReactNode` | No | Custom header content replacing default layout |
+| `children` | `ReactNode` | Yes | Page content |
+| `className` | `string` | No | Class for outer wrapper |
+| `contentClassName` | `string` | No | Class for content container |
+
+### Meal Planner Components (`/components/meal-planner/`)
+
+Specialized components for the weekly meal planning interface with queue management.
+
+#### MealPlannerPage
+
+Main layout component for the meal planner with absolute positioning.
+
+```tsx
+import { MealPlannerPage } from "@/components/meal-planner/MealPlannerPage";
+
+<MealPlannerPage />
+```
+
+**Features:**
+- Uses absolute positioning to fill parent space without scrolling
+- Integrates SelectedMealHero and WeeklyMenuSidebar
+- Manages modal state for creating new meals
+
+#### SelectedMealHero
+
+Hero display for the currently selected meal.
+
+```tsx
+import { SelectedMealHero } from "@/components/meal-planner/SelectedMealHero";
+
+<SelectedMealHero
+  meal={selectedMeal}
+  onComplete={handleComplete}
+  onEdit={handleEdit}
+  onRemove={handleRemove}
+/>
+```
+
+**Features:**
+- Displays meal image with optional completion overlay
+- Shows recipe info (servings, prep/cook times, tags)
+- Side dish grid display (up to 3 sides)
+- Action buttons (complete, edit, remove)
+
+#### WeeklyMenuSidebar
+
+Fixed sidebar with scrollable meal list.
+
+```tsx
+import { WeeklyMenuSidebar } from "@/components/meal-planner/WeeklyMenuSidebar";
+
+<WeeklyMenuSidebar
+  activeMeals={activeMeals}
+  completedMeals={completedMeals}
+  selectedId={selectedId}
+  onSelectMeal={handleSelect}
+  onToggleShoppingList={handleToggleShoppingList}
+  onToggleComplete={handleToggleComplete}
+  onClearCompleted={handleClearCompleted}
+  onOpenCreateModal={handleOpenModal}
+/>
+```
+
+**Features:**
+- Displays active and completed meals in sections
+- Independently scrolling content area
+- Dropdown for browsing saved meals
+- Clear completed meals action
+
+#### CreateMealModal
+
+Two-column modal for composing meals.
+
+```tsx
+import { CreateMealModal } from "@/components/meal-planner/CreateMealModal";
+
+<CreateMealModal
+  open={isModalOpen}
+  onOpenChange={setIsModalOpen}
+  recipes={recipes}
+  onSave={handleSave}
+  onSaveAndAdd={handleSaveAndAdd}
+/>
+```
+
+**Features:**
+- Left panel: Recipe browser with search/filter
+- Right panel: Meal composition (main + up to 3 side dishes)
+- Save or "Save and Add to Queue" options
+
+#### MealQueueCard
+
+Card component for individual meal entries in the sidebar.
+
+```tsx
+import { MealQueueCard } from "@/components/meal-planner/MealQueueCard";
+
+<MealQueueCard
+  meal={meal}
+  isSelected={isSelected}
+  onSelect={handleSelect}
+  onToggleShoppingList={handleToggleShoppingList}
+  onToggleComplete={handleToggleComplete}
+/>
+```
+
+**Props:**
+| Prop | Type | Description |
+|------|------|-------------|
+| `meal` | `MealQueueEntry` | Meal data with UI state |
+| `isSelected` | `boolean` | Selection state |
+| `onSelect` | `() => void` | Selection handler |
+| `onToggleShoppingList` | `() => void` | Shopping list toggle |
+| `onToggleComplete` | `() => void` | Completion toggle |
+
+#### ShoppingListIndicator
+
+Visual indicator for shopping list inclusion.
+
+```tsx
+import { ShoppingListIndicator } from "@/components/meal-planner/ShoppingListIndicator";
+
+<ShoppingListIndicator
+  included={isIncluded}
+  disabled={isCompleted}
+  onToggle={handleToggle}
+/>
+```
+
+#### SideDishGrid
+
+Grid display for side dishes in the hero section.
+
+```tsx
+import { SideDishGrid } from "@/components/meal-planner/SideDishGrid";
+
+<SideDishGrid sideRecipes={meal.sideRecipes} />
+```
+
+#### EmptyMenuState
+
+Placeholder when no meals are in the queue.
+
+```tsx
+import { EmptyMenuState } from "@/components/meal-planner/EmptyMenuState";
+
+<EmptyMenuState onCreateMeal={handleOpenModal} />
+```
+
+#### Meal Planner Types
+
+Local type definitions for meal planner components (`/components/meal-planner/types.ts`):
+
+```typescript
+interface SelectableRecipe {
+  id: number;
+  name: string;
+  imageUrl?: string;
+  category?: string;
+  mealType?: string;
+  prepTime?: number;
+  cookTime?: number;
+  servings?: number;
+  tags?: string[];
+}
+
+interface MealQueueEntry {
+  id: number;
+  name: string;
+  mainRecipe: MealMainRecipe;
+  sideRecipes: MealSideRecipe[];  // max 3
+  completed: boolean;
+  includeInShoppingList: boolean;
+  position: number;
+}
+
+interface SavedMeal {
+  id: number;
+  name: string;
+  mainRecipeImageUrl?: string;
+  sideCount: number;
+}
+
+interface UseMealQueueReturn {
+  meals: MealQueueEntry[];
+  selectedId: number | null;
+  activeMeals: MealQueueEntry[];
+  completedMeals: MealQueueEntry[];
+  selectedMeal: MealQueueEntry | undefined;
+  savedMeals: SavedMeal[];
+  isLoading: boolean;
+  error: string | null;
+  actions: {
+    setSelectedId: (id: number) => void;
+    toggleShoppingList: (id: number) => void;
+    toggleComplete: (id: number) => void;
+    removeFromMenu: (id: number) => void;
+    clearCompleted: () => void;
+    addMealToQueue: (savedMealId: number) => void;
+    reorderMeals: (fromIndex: number, toIndex: number) => void;
+  };
+}
+```
+
 ---
 
 ## API Client
@@ -617,6 +891,61 @@ import { uploadApi } from "@/lib/api";
 
 // Upload recipe image
 const imagePath = await uploadApi.uploadRecipeImage(file, recipeId);
+```
+
+### Image Generation API
+
+```typescript
+import { imageGenerationApi } from "@/lib/api";
+
+// Generate AI image for a recipe
+const response = await imageGenerationApi.generate("Chicken Parmesan");
+
+if (response.success && response.image_data) {
+  // response.image_data is base64 encoded
+  const imageSrc = `data:image/png;base64,${response.image_data}`;
+}
+```
+
+### Data Management API
+
+```typescript
+import { dataManagementApi } from "@/lib/api";
+
+// Preview Excel import
+const preview = await dataManagementApi.previewImport(file);
+// preview.total_recipes, preview.new_recipes, preview.duplicate_recipes
+
+// Execute import with duplicate resolution
+const result = await dataManagementApi.executeImport(file, resolutions);
+// result.created_count, result.updated_count
+
+// Export recipes to Excel
+const blob = await dataManagementApi.exportRecipes();
+// Download the blob as .xlsx file
+
+// Download import template
+const templateBlob = await dataManagementApi.downloadTemplate();
+
+// Clear all data
+await dataManagementApi.clearAllData();
+```
+
+### Feedback API
+
+```typescript
+import { feedbackApi, FeedbackSubmitDTO, FeedbackResponseDTO } from "@/lib/api";
+
+// Submit user feedback (creates GitHub issue)
+const response: FeedbackResponseDTO = await feedbackApi.submit({
+  category: "Feature Request",  // or "Bug Report", "General Feedback", "Question"
+  message: "I would love a dark mode toggle in the sidebar..."
+});
+
+if (response.success) {
+  console.log(response.message);
+  // response.issue_url contains the GitHub issue URL if available
+}
 ```
 
 ---
@@ -798,6 +1127,65 @@ interface ShoppingListFilterDTO {
 }
 ```
 
+### Data Management Types
+
+```typescript
+interface ImportPreviewDTO {
+  total_recipes: number;
+  new_recipes: number;
+  duplicate_recipes: DuplicateRecipeDTO[];
+  validation_errors: ValidationErrorDTO[];
+}
+
+interface ImportResultDTO {
+  success: boolean;
+  created_count: number;
+  updated_count: number;
+  errors: string[];
+}
+
+interface DuplicateRecipeDTO {
+  name: string;
+  existing_id: number;
+  row_number: number;
+}
+
+interface ValidationErrorDTO {
+  row_number: number;
+  field: string;
+  message: string;
+}
+```
+
+### Image Generation Types
+
+```typescript
+interface ImageGenerationRequestDTO {
+  recipe_name: string;
+}
+
+interface ImageGenerationResponseDTO {
+  success: boolean;
+  image_data?: string; // Base64 encoded image
+  error?: string;
+}
+```
+
+### Feedback Types
+
+```typescript
+interface FeedbackSubmitDTO {
+  category: string;  // "Feature Request" | "Bug Report" | "General Feedback" | "Question"
+  message: string;
+}
+
+interface FeedbackResponseDTO {
+  success: boolean;
+  issue_url?: string;
+  message: string;
+}
+```
+
 ---
 
 ## Custom Hooks
@@ -957,6 +1345,80 @@ interface AppSettings {
 }
 ```
 
+### useMealQueue
+
+Comprehensive state management for the weekly meal queue. Handles queue state, selection, shopping list toggles, and API synchronization.
+
+```typescript
+import { useMealQueue } from "@/hooks/useMealQueue";
+
+function MealPlanner() {
+  const {
+    meals,
+    selectedId,
+    activeMeals,
+    completedMeals,
+    selectedMeal,
+    savedMeals,
+    isLoading,
+    error,
+    recipes,
+    createMeal,
+    refetch,
+    actions: {
+      setSelectedId,
+      toggleShoppingList,
+      toggleComplete,
+      removeFromMenu,
+      clearCompleted,
+      addMealToQueue,
+      reorderMeals,
+    },
+  } = useMealQueue();
+
+  // Create a new meal
+  const handleSave = (name: string, mainId: number, sideIds: number[]) => {
+    createMeal(name, mainId, sideIds, true); // true = add to queue
+  };
+
+  // Toggle shopping list inclusion
+  const handleToggleShopping = (id: number) => {
+    actions.toggleShoppingList(id);
+  };
+
+  // Mark meal as complete (auto-excludes from shopping list)
+  const handleComplete = (id: number) => {
+    actions.toggleComplete(id);
+  };
+}
+```
+
+**Return Values:**
+| Property | Type | Description |
+|----------|------|-------------|
+| `meals` | `MealQueueEntry[]` | All meals in the queue |
+| `selectedId` | `number \| null` | Currently selected meal ID |
+| `activeMeals` | `MealQueueEntry[]` | Non-completed meals, sorted by position |
+| `completedMeals` | `MealQueueEntry[]` | Completed meals |
+| `selectedMeal` | `MealQueueEntry \| undefined` | Currently selected meal object |
+| `savedMeals` | `SavedMeal[]` | All saved meals for dropdown |
+| `isLoading` | `boolean` | Loading state |
+| `error` | `string \| null` | Error message if any |
+| `recipes` | `SelectableRecipe[]` | Available recipes for selection |
+| `createMeal` | `function` | Create new meal with optional queue add |
+| `refetch` | `function` | Refetch data from API |
+
+**Actions:**
+| Action | Signature | Description |
+|--------|-----------|-------------|
+| `setSelectedId` | `(id: number) => void` | Select a meal |
+| `toggleShoppingList` | `(id: number) => void` | Toggle shopping list inclusion |
+| `toggleComplete` | `(id: number) => void` | Toggle completion (auto-excludes from shopping) |
+| `removeFromMenu` | `(id: number) => void` | Delete meal from queue and API |
+| `clearCompleted` | `() => void` | Remove all completed meals |
+| `addMealToQueue` | `(savedMealId: number) => void` | Add existing saved meal to queue |
+| `reorderMeals` | `(from: number, to: number) => void` | Reorder meals (drag-and-drop) |
+
 ---
 
 ## Utility Functions
@@ -1080,7 +1542,7 @@ const bannerPath = generateRecipeBannerPath(recipeId, "jpg");
 ### Quantity Utilities (`lib/quantityUtils.ts`)
 
 ```typescript
-import { parseQuantity, formatQuantity } from "@/lib/quantityUtils";
+import { parseQuantity, formatQuantity, formatDuration } from "@/lib/quantityUtils";
 
 // Parse various formats to number
 parseQuantity("1.5");      // → 1.5
@@ -1093,6 +1555,13 @@ formatQuantity(1.5);       // → "1 1/2"
 formatQuantity(0.333);     // → "1/3"
 formatQuantity(0.25);      // → "1/4"
 formatQuantity(2);         // → "2"
+
+// Format duration in minutes to human-readable string
+formatDuration(30);        // → "30 min"
+formatDuration(60);        // → "1h"
+formatDuration(90);        // → "1h 30m"
+formatDuration(120);       // → "2h"
+formatDuration(0);         // → "0 min"
 ```
 
 ### Recipe Card Mapper (`lib/recipeCardMapper.ts`)
@@ -1557,6 +2026,7 @@ Quick reference for common file locations:
 | Add form component | `src/components/forms/` |
 | Add recipe component | `src/components/recipe/` |
 | Add layout component | `src/components/layout/` |
+| Add meal planner component | `src/components/meal-planner/` |
 | Add API method | `src/lib/api.ts` |
 | Add TypeScript type | `src/types/index.ts` |
 | Add custom hook | `src/hooks/` |

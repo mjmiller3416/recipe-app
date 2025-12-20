@@ -1,5 +1,7 @@
 import * as React from "react";
+import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   PageHeader,
   PageHeaderContent,
@@ -16,6 +18,10 @@ interface PageLayoutProps {
   actions?: React.ReactNode;
   /** Optional custom header content that replaces the default title/actions layout */
   headerContent?: React.ReactNode;
+  /** Optional back button href - when provided, shows a back arrow before the title */
+  backHref?: string;
+  /** Optional callback when back button is clicked (for custom navigation with unsaved changes) */
+  onBackClick?: () => void;
   /** Page content */
   children: React.ReactNode;
   /** Optional className for the outer wrapper */
@@ -66,17 +72,46 @@ export function PageLayout({
   description,
   actions,
   headerContent,
+  backHref,
+  onBackClick,
   children,
   className,
   contentClassName,
 }: PageLayoutProps) {
+  // Determine if we should show a back button
+  const showBackButton = backHref || onBackClick;
+
+  // Handle back button click
+  const handleBackClick = () => {
+    if (onBackClick) {
+      onBackClick();
+    } else if (backHref) {
+      // Use window.location for simple navigation
+      window.location.href = backHref;
+    }
+  };
+
   return (
     <div className={cn("min-h-screen bg-background", className)}>
       {/* Header */}
       <PageHeader>
         {headerContent ?? (
           <PageHeaderContent>
-            <PageHeaderTitle title={title} description={description} />
+            {showBackButton ? (
+              <div className="flex items-center gap-4 flex-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleBackClick}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <PageHeaderTitle title={title} description={description} />
+              </div>
+            ) : (
+              <PageHeaderTitle title={title} description={description} />
+            )}
             {actions && <PageHeaderActions>{actions}</PageHeaderActions>}
           </PageHeaderContent>
         )}

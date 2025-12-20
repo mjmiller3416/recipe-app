@@ -1,27 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { SelectedMealHero } from "./SelectedMealHero";
-import { WeeklyMenuSidebar } from "./WeeklyMenuSidebar";
-import { EmptyMenuState } from "./EmptyMenuState";
+import { PageLayout } from "@/components/layout/PageLayout";
+import { WeeklyMenuSidebar } from "./WeeklyMenu";
 import { CreateMealModal, type NewMealData } from "./CreateMealModal";
 import { useMealQueue } from "@/hooks/useMealQueue";
 
 /**
  * MealPlannerPage - Main layout for Meal Planner
- * 
- * CRITICAL: This page should NEVER scroll. Only the sidebar meal list scrolls.
- * Uses absolute positioning to guarantee height constraints.
+ *
+ * Uses PageLayout for consistent structure with other pages.
+ * WeeklyMenu sidebar aligned to the right.
  */
 export function MealPlannerPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const {
-    meals,
     selectedId,
     activeMeals,
     completedMeals,
-    selectedMeal,
     savedMeals,
     recipes,
     createMeal,
@@ -29,7 +26,6 @@ export function MealPlannerPage() {
       setSelectedId,
       toggleShoppingList,
       toggleComplete,
-      removeFromMenu,
       clearCompleted,
       addMealToQueue,
     },
@@ -44,37 +40,32 @@ export function MealPlannerPage() {
   };
 
   return (
-    // Absolute fill to guarantee we take exactly the parent's space, no more
-    <div className="absolute inset-0 flex overflow-hidden p-6 gap-6">
-      {/* Main Content - fills remaining space, never scrolls */}
-      <main className="flex-1 min-w-0 overflow-hidden">
-        {selectedMeal ? (
-          <SelectedMealHero
-            meal={selectedMeal}
-            onToggleComplete={() => toggleComplete(selectedMeal.id)}
-            onRemove={() => removeFromMenu(selectedMeal.id)}
-          />
-        ) : (
-          <EmptyMenuState
-            onCreateMeal={() => setIsCreateModalOpen(true)}
-            onBrowseSaved={() => {}}
-          />
-        )}
-      </main>
+    <PageLayout
+      title="Meal Planner"
+      description="Plan your weekly meals"
+      className="h-screen flex flex-col overflow-hidden"
+      contentClassName="flex-1 min-h-0 overflow-hidden py-6"
+    >
+      <div className="flex gap-6 h-full">
+        {/* Main Content Area - placeholder for now */}
+        <div className="flex-1">
+          {/* Content will go here */}
+        </div>
 
-      {/* Sidebar - fixed width, has its own internal scroll */}
-      <WeeklyMenuSidebar
-        activeMeals={activeMeals}
-        completedMeals={completedMeals}
-        selectedId={selectedId}
-        savedMeals={savedMeals}
-        onSelectMeal={setSelectedId}
-        onToggleShoppingList={toggleShoppingList}
-        onToggleComplete={toggleComplete}
-        onClearCompleted={clearCompleted}
-        onAddMeal={addMealToQueue}
-        onCreateMeal={() => setIsCreateModalOpen(true)}
-      />
+        {/* Weekly Menu - Right Sidebar */}
+        <WeeklyMenuSidebar
+          activeMeals={activeMeals}
+          completedMeals={completedMeals}
+          selectedId={selectedId}
+          savedMeals={savedMeals}
+          onSelectMeal={setSelectedId}
+          onToggleShoppingList={toggleShoppingList}
+          onToggleComplete={toggleComplete}
+          onClearCompleted={clearCompleted}
+          onAddMeal={addMealToQueue}
+          onCreateMeal={() => setIsCreateModalOpen(true)}
+        />
+      </div>
 
       <CreateMealModal
         open={isCreateModalOpen}
@@ -83,6 +74,6 @@ export function MealPlannerPage() {
         onSave={handleSaveMeal}
         onSaveAndAdd={handleSaveAndAddMeal}
       />
-    </div>
+    </PageLayout>
   );
 }

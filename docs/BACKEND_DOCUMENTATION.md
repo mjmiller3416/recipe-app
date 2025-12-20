@@ -30,6 +30,9 @@ The Meal Genie backend is a RESTful API built with FastAPI and Python. It provid
 - **Shopping Lists** - Generate shopping lists from planned meals
 - **Ingredient Management** - Manage ingredient database
 - **Data Import/Export** - Excel import/export functionality
+- **Image Upload** - Cloudinary integration for recipe images
+- **AI Image Generation** - Gemini AI-powered recipe image generation
+- **User Feedback** - GitHub issue integration for feedback
 
 ---
 
@@ -62,7 +65,9 @@ backend/
 │   │   ├── shopping.py                  # Shopping list endpoints
 │   │   ├── ingredients.py               # Ingredient endpoints
 │   │   ├── data_management.py           # Import/export endpoints
-│   │   └── feedback.py                  # User feedback endpoints
+│   │   ├── feedback.py                  # User feedback endpoints
+│   │   ├── upload.py                    # Image upload endpoints (Cloudinary)
+│   │   └── image_generation.py          # AI image generation endpoints
 │   └── core/
 │       ├── models/                      # SQLAlchemy ORM models
 │       │   ├── recipe.py
@@ -86,7 +91,8 @@ backend/
 │       │   ├── shopping_service.py
 │       │   ├── ingredient_service.py
 │       │   ├── data_management_service.py
-│       │   └── feedback_service.py
+│       │   ├── feedback_service.py
+│       │   └── image_generation_service.py  # AI image generation
 │       ├── dtos/                        # Pydantic validation models
 │       │   ├── recipe_dtos.py
 │       │   ├── meal_dtos.py
@@ -94,7 +100,8 @@ backend/
 │       │   ├── shopping_dtos.py
 │       │   ├── ingredient_dtos.py
 │       │   ├── data_management_dtos.py
-│       │   └── feedback.py
+│       │   ├── feedback.py
+│       │   └── image_generation_dtos.py     # AI image generation DTOs
 │       └── database/
 │           ├── db.py                    # Database connection & session
 │           ├── base.py                  # SQLAlchemy declarative base
@@ -149,8 +156,20 @@ pip install -r requirements.txt
 cp .env.example .env
 
 # Edit .env file with your settings
-# SQLALCHEMY_DATABASE_URL=sqlite:///./app/core/database/app_data.db
 ```
+
+**Environment Variables:**
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `SQLALCHEMY_DATABASE_URL` | No | Database URL (default: SQLite) |
+| `CLOUDINARY_CLOUD_NAME` | No | Cloudinary cloud name for image uploads |
+| `CLOUDINARY_API_KEY` | No | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | No | Cloudinary API secret |
+| `GEMINI_API_KEY` | No | Google Gemini API key for AI image generation |
+| `GITHUB_TOKEN` | No | GitHub PAT for feedback submission |
+| `GITHUB_REPO` | No | GitHub repo for feedback issues |
+| `CORS_ORIGINS` | No | Comma-separated allowed origins (default: *) |
 
 ### Running the Server
 
@@ -207,14 +226,16 @@ GET /api/recipes
 **Query Parameters:**
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `category` | string | Filter by category |
+| `recipe_category` | string | Filter by category |
 | `meal_type` | string | Filter by meal type |
 | `diet_pref` | string | Filter by dietary preference |
 | `search_term` | string | Search in name/description |
-| `is_favorite` | boolean | Filter favorites only |
-| `sort_by` | string | Sort field (name, created_at, total_time) |
-| `sort_direction` | string | asc or desc |
-| `limit` | integer | Max results (default: 100) |
+| `favorites_only` | boolean | Filter favorites only (default: false) |
+| `cook_time` | integer | Filter by max cooking time (minutes) |
+| `servings` | integer | Filter by number of servings |
+| `sort_by` | string | Sort field: recipe_name, created_at, total_time, servings |
+| `sort_order` | string | asc or desc (default: asc) |
+| `limit` | integer | Max results (1-100) |
 | `offset` | integer | Skip results for pagination |
 
 **Response:** `RecipeResponseDTO[]`
@@ -910,6 +931,93 @@ Get empty xlsx template for importing recipes.
 
 ---
 
+### Upload Endpoints (`/api/upload`)
+
+Image upload and management via Cloudinary.
+
+#### Upload Recipe Image
+```http
+POST /api/upload
+Content-Type: multipart/form-data
+```
+
+**Form Data:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `file` | File | Image file to upload |
+| `recipeId` | string | Recipe ID for organizing |
+| `imageType` | string | "reference" (thumbnail) or "banner" (hero) |
+
+**Response:**
+```json
+{
+  "success": true,
+  "path": "https://res.cloudinary.com/...",
+  "filename": "reference_123"
+}
+```
+
+#### Delete Recipe Image
+```http
+DELETE /api/upload/{public_id:path}
+```
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `public_id` | string | Cloudinary public ID of the image |
+
+**Response:**
+```json
+{
+  "success": true
+}
+```
+
+---
+
+### Image Generation Endpoints (`/api/generate-image`)
+
+AI-powered recipe image generation using Google Gemini.
+
+#### Generate Recipe Image
+```http
+POST /api/generate-image
+```
+
+**Request Body:** `ImageGenerationRequestDTO`
+```json
+{
+  "recipe_name": "Pasta Carbonara"
+}
+```
+
+**Response:** `ImageGenerationResponseDTO`
+```json
+{
+  "success": true,
+  "image_data": "base64_encoded_image_data...",
+  "error": null
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "image_data": null,
+  "error": "Image generation failed: reason"
+}
+```
+
+**Notes:**
+- Uses Gemini AI model `gemini-2.5-flash-image`
+- Returns base64-encoded image data
+- Generates professional food photography style images
+- Requires `GEMINI_API_KEY` environment variable
+
+---
+
 ## Database Models
 
 ### Recipe
@@ -1430,6 +1538,38 @@ class DataManagementService:
 - `UPDATE` - Update existing recipe
 - `RENAME` - Create new with different name
 
+### ImageGenerationService
+
+```python
+class ImageGenerationService:
+    def __init__(self):
+        """Initialize with GEMINI_API_KEY from environment."""
+
+    def generate_recipe_image(self, recipe_name: str) -> dict:
+        """
+        Generate an AI image for a recipe.
+
+        Args:
+            recipe_name: The name of the recipe to generate an image for.
+
+        Returns:
+            dict with 'success', 'image_data' (base64), and optional 'error'
+        """
+
+# Singleton accessor
+def get_image_generation_service() -> ImageGenerationService:
+    """Get the singleton instance of the image generation service."""
+```
+
+**Configuration:**
+- Uses Google Gemini AI model `gemini-2.5-flash-image`
+- Requires `GEMINI_API_KEY` environment variable
+- Generates professional food photography style images
+- Returns base64-encoded image data
+
+**Exceptions:**
+- Raises `ValueError` if `GEMINI_API_KEY` is not set
+
 ---
 
 ## DTOs (Data Transfer Objects)
@@ -1441,6 +1581,7 @@ All DTOs use Pydantic v2 with `ConfigDict(from_attributes=True)` for ORM compati
 ```python
 # Ingredient in recipe
 class RecipeIngredientDTO(BaseModel):
+    existing_ingredient_id: Optional[int] = None  # For linking to existing ingredient
     ingredient_name: str
     ingredient_category: str
     quantity: Optional[float] = None
@@ -1456,18 +1597,21 @@ class RecipeBaseDTO(BaseModel):
     servings: Optional[int] = None
     directions: Optional[str] = None
     notes: Optional[str] = None
+    reference_image_path: Optional[str] = None
+    banner_image_path: Optional[str] = None
 
 # Lightweight card for lists
 class RecipeCardDTO(BaseModel):
     id: int
     recipe_name: str
-    recipe_category: str
-    meal_type: str
-    total_time: Optional[int]
-    servings: Optional[int]
-    reference_image_path: Optional[str]
-    is_favorite: bool
-    created_at: datetime
+    is_favorite: bool = False
+    reference_image_path: Optional[str] = None
+    servings: Optional[int] = None
+    total_time: Optional[int] = None
+
+    @classmethod
+    def from_recipe(cls, recipe: Recipe) -> "RecipeCardDTO"
+        """Convert a Recipe model to RecipeCardDTO."""
 
 # Create request
 class RecipeCreateDTO(RecipeBaseDTO):
@@ -1483,7 +1627,10 @@ class RecipeUpdateDTO(BaseModel):
     servings: Optional[int] = None
     directions: Optional[str] = None
     notes: Optional[str] = None
+    reference_image_path: Optional[str] = None
+    banner_image_path: Optional[str] = None
     ingredients: Optional[List[RecipeIngredientDTO]] = None
+    is_favorite: Optional[bool] = None
 
 # Full response
 class RecipeResponseDTO(RecipeBaseDTO):
@@ -1496,15 +1643,17 @@ class RecipeResponseDTO(RecipeBaseDTO):
 
 # Filter parameters
 class RecipeFilterDTO(BaseModel):
-    category: Optional[str] = None
+    recipe_category: Optional[str] = None
     meal_type: Optional[str] = None
     diet_pref: Optional[str] = None
+    cook_time: Optional[int] = None      # ge=0
+    servings: Optional[int] = None       # ge=1
+    sort_by: Optional[str] = None        # pattern: recipe_name|created_at|total_time|servings
+    sort_order: Optional[str] = "asc"    # pattern: asc|desc
+    favorites_only: bool = False
     search_term: Optional[str] = None
-    is_favorite: Optional[bool] = None
-    sort_by: Optional[str] = "created_at"
-    sort_direction: Optional[str] = "desc"
-    limit: int = 100
-    offset: int = 0
+    limit: Optional[int] = None          # ge=1, le=100
+    offset: Optional[int] = None         # ge=0
 ```
 
 ### Meal DTOs
@@ -1751,6 +1900,20 @@ class ExportFilterDTO(BaseModel):
     category: Optional[str] = None
     meal_type: Optional[str] = None
     favorites_only: bool = False
+```
+
+### Image Generation DTOs
+
+```python
+# Request for AI image generation
+class ImageGenerationRequestDTO(BaseModel):
+    recipe_name: str
+
+# Response from image generation
+class ImageGenerationResponseDTO(BaseModel):
+    success: bool
+    image_data: Optional[str] = None  # Base64 encoded image data
+    error: Optional[str] = None
 ```
 
 ---
@@ -2143,6 +2306,8 @@ def filter_items(self, filter_dto: FilterDTO) -> List[Item]:
 | Ingredient | `/api/ingredients/{id}` | GET, PUT, DELETE |
 | Import | `/api/data-management/import/*` | POST |
 | Export | `/api/data-management/export` | GET |
+| Upload | `/api/upload` | POST, DELETE |
+| Image Generation | `/api/generate-image` | POST |
 | Feedback | `/api/feedback` | POST |
 
 ---

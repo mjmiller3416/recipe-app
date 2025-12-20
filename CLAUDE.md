@@ -13,7 +13,7 @@ Meal Genie - A recipe management and meal planning application with a Python/Fas
 npm run dev          # Start dev server (binds to 0.0.0.0:3000)
 npm run build        # Production build
 npm run lint         # Run ESLint
-npx tsc              # TypeScript type checking
+npx tsc --noEmit     # TypeScript type checking (no output)
 npx shadcn@latest add <component>  # Add shadcn/ui components
 ```
 
@@ -21,6 +21,14 @@ npx shadcn@latest add <component>  # Add shadcn/ui components
 ```bash
 # Windows (using venv)
 venv/Scripts/python.exe -m uvicorn app.main:app --reload --port 8000
+
+# Run tests
+venv/Scripts/python.exe -m pytest tests/ -v               # Run all tests
+venv/Scripts/python.exe -m pytest tests/test_meal_and_planner.py -v  # Run specific test file
+
+# Database migrations (Alembic)
+venv/Scripts/alembic.exe upgrade head      # Apply all migrations
+venv/Scripts/alembic.exe revision --autogenerate -m "description"  # Create new migration
 
 # Database seeding/clearing
 venv/Scripts/python.exe scripts/seed_database.py                    # Clear and reseed all data (default)
@@ -34,6 +42,7 @@ venv/Scripts/python.exe scripts/seed_database.py --verbose          # Show detai
 ### Environment Setup
 - Backend: Copy `backend/.env.example` to `backend/.env`
 - Frontend API URL: Set `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8000`)
+- Optional: `CLOUDINARY_*` for image uploads, `GEMINI_API_KEY` for AI image generation
 
 ## Architecture
 
@@ -52,7 +61,7 @@ backend/app/
 │   └── database/        # SQLite connection, migrations (Alembic)
 ```
 
-**API Prefixes:** `/api/recipes`, `/api/planner`, `/api/shopping`, `/api/ingredients`
+**API Prefixes:** `/api/recipes`, `/api/meals`, `/api/planner`, `/api/shopping`, `/api/ingredients`, `/api/data-management`, `/api/upload`
 
 ### Frontend (`frontend/`)
 Next.js 16 with App Router, React 19, Tailwind CSS 4:
@@ -86,3 +95,10 @@ frontend/src/
 
 ## UI Components
 Uses shadcn/ui (new-york style) with Lucide icons. Components installed to `src/components/ui/`. Import path alias: `@/components/ui/<component>`.
+
+## Documentation
+Comprehensive documentation available in `docs/`:
+- `docs/INDEX.md` - Quick reference for all API endpoints, models, and components
+- `docs/BACKEND_DOCUMENTATION.md` - Detailed backend architecture and API
+- `docs/FRONTEND_DOCUMENTATION.md` - Frontend components and utilities
+- `docs/INTEGRATION.md` - Frontend/backend integration patterns

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useId } from "react";
+import { useState, useEffect, useId, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { recipeApi, ingredientApi, uploadApi } from "@/lib/api";
 import { base64ToFile } from "@/lib/utils";
-import type { RecipeCreateDTO, RecipeIngredientDTO } from "@/types";
+import type { RecipeCreateDTO, RecipeUpdateDTO, RecipeIngredientDTO, RecipeResponseDTO } from "@/types";
 import type { Ingredient } from "./IngredientRow";
 import type { Ingredient as AutocompleteIngredient } from "./IngredientAutoComplete";
 import {
@@ -13,6 +13,10 @@ import {
   validateInteger,
 } from "@/lib/formValidation";
 import { v4 as uuidv4 } from 'uuid';
+
+// ============================================================================
+// TYPES
+// ============================================================================
 
 export interface RecipeFormValues {
   recipeName: string;
@@ -27,7 +31,26 @@ export interface RecipeFormValues {
   imagePreview: string | null;
 }
 
+/**
+ * Options for configuring the recipe form hook behavior.
+ * Supports both 'create' mode (new recipes) and 'edit' mode (existing recipes).
+ */
+export interface UseRecipeFormOptions {
+  /** Form mode - 'create' for new recipes, 'edit' for existing */
+  mode?: 'create' | 'edit';
+  /** Recipe ID (required for edit mode) */
+  recipeId?: number;
+  /** Initial recipe data to populate the form (for edit mode) */
+  initialData?: RecipeResponseDTO | null;
+  /** Callback fired when form dirty state changes (for unsaved changes tracking) */
+  onDirtyChange?: (isDirty: boolean) => void;
+}
+
 export interface RecipeFormState {
+  // Mode info
+  mode: 'create' | 'edit';
+  isLoading: boolean;
+
   // Form values
   recipeName: string;
   setRecipeName: (value: string) => void;
@@ -74,21 +97,44 @@ export interface RecipeFormState {
   hasError: (field: string) => boolean;
   getError: (field: string) => string | undefined;
   hasAttemptedSubmit: boolean;
+
+  // Dirty tracking (for edit mode)
+  isDirty: boolean;
 }
 
-export function useRecipeForm(): RecipeFormState {
+// ============================================================================
+// HOOK IMPLEMENTATION
+// ============================================================================
+
+export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormState {
+  const {
+    mode = 'create',
+    recipeId,
+    initialData,
+    onDirtyChange,
+  } = options;
+
   const router = useRouter();
 
   // Generate a stable ID for the initial ingredient (prevents hydration mismatch)
   const initialIngredientId = useId();
 
+  // Loading state (for edit mode - waiting for initial data)
+  const [isLoading, setIsLoading] = useState(mode === 'edit' && !initialData);
+
+  // Track if form has been initialized with data (for edit mode)
+  const [isInitialized, setIsInitialized] = useState(mode === 'create');
+
+  // Dirty tracking for unsaved changes
+  const [isDirty, setIsDirty] = useState(false);
+
   // Recipe basic info state
-  const [recipeName, setRecipeName] = useState("");
-  const [totalTime, setTotalTime] = useState("");
-  const [servings, setServings] = useState("");
-  const [mealType, setMealType] = useState("");
-  const [category, setCategory] = useState("");
-  const [dietaryPreference, setDietaryPreference] = useState("");
+  const [recipeName, setRecipeNameState] = useState("");
+  const [totalTime, setTotalTimeState] = useState("");
+  const [servings, setServingsState] = useState("");
+  const [mealType, setMealTypeState] = useState("");
+  const [category, setCategoryState] = useState("");
+  const [dietaryPreference, setDietaryPreferenceState] = useState("");
 
   // Ingredients state - use stable ID for initial ingredient
   const [ingredients, setIngredients] = useState<Ingredient[]>(() => [
@@ -102,12 +148,14 @@ export function useRecipeForm(): RecipeFormState {
   ]);
 
   // Directions and notes state
-  const [directions, setDirections] = useState("");
-  const [notes, setNotes] = useState("");
+  const [directions, setDirectionsState] = useState("");
+  const [notes, setNotesState] = useState("");
 
   // Image state
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  // Track original image path (for edit mode - to know if image changed)
+  const [originalImagePath, setOriginalImagePath] = useState<string | null>(null);
 
   // AI Image generation state
   const [isAiGenerated, setIsAiGenerated] = useState(false);
@@ -115,6 +163,92 @@ export function useRecipeForm(): RecipeFormState {
 
   // Available ingredients for autocomplete
   const [availableIngredients, setAvailableIngredients] = useState<AutocompleteIngredient[]>([]);
+
+  // Form validation state
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+
+  // Helper to mark form as dirty (only after initialization)
+  const markDirty = useCallback(() => {
+    if (isInitialized && !isDirty) {
+      setIsDirty(true);
+      onDirtyChange?.(true);
+    }
+  }, [isInitialized, isDirty, onDirtyChange]);
+
+  // Wrapped setters that track dirty state
+  const setRecipeName = useCallback((value: string) => {
+    markDirty();
+    setRecipeNameState(value);
+  }, [markDirty]);
+
+  const setTotalTime = useCallback((value: string) => {
+    markDirty();
+    setTotalTimeState(value);
+  }, [markDirty]);
+
+  const setServings = useCallback((value: string) => {
+    markDirty();
+    setServingsState(value);
+  }, [markDirty]);
+
+  const setMealType = useCallback((value: string) => {
+    markDirty();
+    setMealTypeState(value);
+  }, [markDirty]);
+
+  const setCategory = useCallback((value: string) => {
+    markDirty();
+    setCategoryState(value);
+  }, [markDirty]);
+
+  const setDietaryPreference = useCallback((value: string) => {
+    markDirty();
+    setDietaryPreferenceState(value);
+  }, [markDirty]);
+
+  const setDirections = useCallback((value: string) => {
+    markDirty();
+    setDirectionsState(value);
+  }, [markDirty]);
+
+  const setNotes = useCallback((value: string) => {
+    markDirty();
+    setNotesState(value);
+  }, [markDirty]);
+
+  // Initialize form with data when in edit mode and initialData is provided
+  useEffect(() => {
+    if (mode === 'edit' && initialData && !isInitialized) {
+      setRecipeNameState(initialData.recipe_name);
+      setTotalTimeState(initialData.total_time?.toString() || "");
+      setServingsState(initialData.servings?.toString() || "");
+      setMealTypeState(initialData.meal_type || "");
+      setCategoryState(initialData.recipe_category || "");
+      setDietaryPreferenceState(initialData.diet_pref || "");
+      setDirectionsState(initialData.directions || "");
+      setNotesState(initialData.notes || "");
+      setImagePreview(initialData.reference_image_path || null);
+      setOriginalImagePath(initialData.reference_image_path || null);
+
+      // Populate ingredients
+      if (initialData.ingredients && initialData.ingredients.length > 0) {
+        setIngredients(
+          initialData.ingredients.map((ing) => ({
+            id: uuidv4(),
+            quantity: ing.quantity,
+            unit: ing.unit || "",
+            name: ing.ingredient_name,
+            category: ing.ingredient_category || "",
+          }))
+        );
+      }
+
+      setIsLoading(false);
+      setIsInitialized(true);
+    }
+  }, [mode, initialData, isInitialized]);
 
   // Fetch available ingredients on mount
   useEffect(() => {
@@ -136,13 +270,9 @@ export function useRecipeForm(): RecipeFormState {
     fetchIngredients();
   }, []);
 
-  // Form validation state
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
-
   // Ingredient handlers
-  const addIngredient = () => {
+  const addIngredient = useCallback(() => {
+    markDirty();
     setIngredients((prevIngredients) => [
       ...prevIngredients,
       {
@@ -153,33 +283,36 @@ export function useRecipeForm(): RecipeFormState {
         category: "",
       },
     ]);
-  };
+  }, [markDirty]);
 
-  const updateIngredient = (
+  const updateIngredient = useCallback((
     id: string,
     field: keyof Ingredient,
     value: string | number | null
   ) => {
+    markDirty();
     setIngredients((prevIngredients) =>
       prevIngredients.map((ing) =>
         ing.id === id ? { ...ing, [field]: value } : ing
       )
     );
-  };
+  }, [markDirty]);
 
-  const deleteIngredient = (id: string) => {
+  const deleteIngredient = useCallback((id: string) => {
+    markDirty();
     setIngredients((prevIngredients) => {
       if (prevIngredients.length > 1) {
         return prevIngredients.filter((ing) => ing.id !== id);
       }
       return prevIngredients;
     });
-  };
+  }, [markDirty]);
 
   // Image upload handler
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      markDirty();
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -190,18 +323,19 @@ export function useRecipeForm(): RecipeFormState {
       };
       reader.readAsDataURL(file);
     }
-  };
+  }, [markDirty]);
 
   // AI-generated image accept handler
-  // Convert base64 to File immediately (matches Edit Recipe pattern)
-  const handleGeneratedImageAccept = (base64Data: string, dataUrl: string) => {
+  // Convert base64 to File immediately so it's ready for upload
+  const handleGeneratedImageAccept = useCallback((base64Data: string, dataUrl: string) => {
+    markDirty();
     setImagePreview(dataUrl);
     setGeneratedImageData(base64Data);
     setIsAiGenerated(true);
     // Convert to File immediately so it's ready for upload
     const file = base64ToFile(base64Data, `recipe-ai-generated.png`);
     setImageFile(file);
-  };
+  }, [markDirty]);
 
   // Validate entire form and return normalized values
   const validateForm = () => {
@@ -292,7 +426,7 @@ export function useRecipeForm(): RecipeFormState {
     };
   };
 
-  // Handle form submission
+  // Handle form submission (works for both create and edit modes)
   const handleSubmit = async () => {
     setHasAttemptedSubmit(true);
     const { isValid, errors: validationErrors, values } = validateForm();
@@ -316,40 +450,82 @@ export function useRecipeForm(): RecipeFormState {
         unit: ing.unit || null,
       }));
 
-      // Build the recipe create payload
-      const payload: RecipeCreateDTO = {
-        recipe_name: values.recipeName as string,
-        recipe_category: values.category as string,
-        meal_type: values.mealType as string,
-        diet_pref: values.dietaryPreference,
-        total_time: values.totalTime as number | null,
-        servings: values.servings as number | null,
-        directions: values.directions as string,
-        notes: values.notes,
-        ingredients: apiIngredients,
-      };
+      if (mode === 'create') {
+        // ===== CREATE MODE =====
+        const payload: RecipeCreateDTO = {
+          recipe_name: values.recipeName as string,
+          recipe_category: values.category as string,
+          meal_type: values.mealType as string,
+          diet_pref: values.dietaryPreference,
+          total_time: values.totalTime as number | null,
+          servings: values.servings as number | null,
+          directions: values.directions as string,
+          notes: values.notes,
+          ingredients: apiIngredients,
+        };
 
-      const createdRecipe = await recipeApi.create(payload);
+        const createdRecipe = await recipeApi.create(payload);
 
-      // Upload image if one exists (AI-generated or user-uploaded)
-      if (imageFile) {
-        try {
-          const uploadResult = await uploadApi.uploadRecipeImage(imageFile, createdRecipe.id);
-          // Update recipe with the image path
-          await recipeApi.update(createdRecipe.id, {
-            reference_image_path: uploadResult.path,
-          });
-        } catch (uploadError) {
-          console.error("Failed to upload image:", uploadError);
-          toast.warning("Recipe created, but image upload failed. You can add it later by editing the recipe.");
+        // Upload image if one exists (AI-generated or user-uploaded)
+        if (imageFile) {
+          try {
+            const uploadResult = await uploadApi.uploadRecipeImage(imageFile, createdRecipe.id);
+            // Update recipe with the image path
+            await recipeApi.update(createdRecipe.id, {
+              reference_image_path: uploadResult.path,
+            });
+          } catch (uploadError) {
+            console.error("Failed to upload image:", uploadError);
+            toast.warning("Recipe created, but image upload failed. You can add it later by editing the recipe.");
+          }
         }
-      }
 
-      toast.success("Recipe created successfully!");
-      router.push(`/recipes/${createdRecipe.id}`);
+        toast.success("Recipe created successfully!");
+        router.push(`/recipes/${createdRecipe.id}`);
+      } else {
+        // ===== EDIT MODE =====
+        if (!recipeId) {
+          throw new Error("Recipe ID is required for edit mode");
+        }
+
+        // Upload new image if one was selected
+        let imagePath = originalImagePath;
+        if (imageFile) {
+          try {
+            const uploadResult = await uploadApi.uploadRecipeImage(imageFile, recipeId);
+            imagePath = uploadResult.path;
+          } catch (uploadError) {
+            console.error("Failed to upload image:", uploadError);
+            toast.error("Failed to upload image. Recipe will be saved without the new image.");
+          }
+        }
+
+        // Build the recipe update payload
+        const payload: RecipeUpdateDTO = {
+          recipe_name: values.recipeName as string,
+          recipe_category: values.category as string,
+          meal_type: values.mealType as string,
+          diet_pref: values.dietaryPreference,
+          total_time: values.totalTime as number | null,
+          servings: values.servings as number | null,
+          directions: values.directions as string,
+          notes: values.notes,
+          reference_image_path: imagePath,
+          ingredients: apiIngredients,
+        };
+
+        await recipeApi.update(recipeId, payload);
+
+        // Reset dirty state after successful save
+        setIsDirty(false);
+        onDirtyChange?.(false);
+
+        toast.success("Recipe updated successfully!");
+        router.push(`/recipes/${recipeId}`);
+      }
     } catch (error) {
       console.error("Failed to save recipe:", error);
-      toast.error("Failed to save recipe. Please try again.");
+      toast.error(`Failed to ${mode === 'create' ? 'create' : 'update'} recipe. Please try again.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -360,6 +536,10 @@ export function useRecipeForm(): RecipeFormState {
   const getError = (field: string) => (hasAttemptedSubmit ? errors[field] : undefined);
 
   return {
+    // Mode info
+    mode,
+    isLoading,
+
     // Form values
     recipeName,
     setRecipeName,
@@ -406,5 +586,8 @@ export function useRecipeForm(): RecipeFormState {
     hasError,
     getError,
     hasAttemptedSubmit,
+
+    // Dirty tracking
+    isDirty,
   };
 }

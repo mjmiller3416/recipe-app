@@ -46,7 +46,7 @@ export function WeeklyMenuSidebar({
   const [showSavedMeals, setShowSavedMeals] = useState(false);
 
   return (
-    <Card className="w-[320px] shrink-0 gap-0 pt-0 pb-0 overflow-hidden">
+    <Card className="w-[320px] shrink-0 h-full flex flex-col gap-0 pt-0 pb-0 overflow-hidden">
       <CardHeader className="px-4 py-5 shrink-0">
         <CardTitle className="text-lg">This Week's Menu</CardTitle>
       </CardHeader>
