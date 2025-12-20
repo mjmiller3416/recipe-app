@@ -20,7 +20,7 @@ class RecipeIngredient(Base):
     """Join table linking recipes and ingredients with quantities and units."""
     __tablename__ = "recipe_ingredients"
 
-    recipe_id: Mapped[int] = mapped_column(ForeignKey("recipe.id"), primary_key=True)
+    recipe_id: Mapped[int] = mapped_column(ForeignKey("recipe.id", ondelete="CASCADE"), primary_key=True)
     ingredient_id: Mapped[int] = mapped_column(ForeignKey("ingredients.id"), primary_key=True)
     quantity: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     unit: Mapped[Optional[str]] = mapped_column(String, nullable=True)

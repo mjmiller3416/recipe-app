@@ -14,6 +14,7 @@ export type { NewMealData } from "./CreateMealModal";
 
 // Types
 export type {
+  SelectableRecipe,
   MealQueueEntry,
   MealMainRecipe,
   MealSideRecipe,

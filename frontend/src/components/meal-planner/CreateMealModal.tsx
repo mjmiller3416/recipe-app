@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, X, Plus, ChefHat } from "lucide-react";
+import { Search, X, Plus, ChefHat, Clock, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,19 +11,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
 import { cn } from "@/lib/utils";
-
-// Simplified recipe type for selection
-interface SelectableRecipe {
-  id: number;
-  name: string;
-  imageUrl?: string;
-  category?: string;
-  mealType?: string;
-  prepTime?: number;
-  cookTime?: number;
-}
+import type { SelectableRecipe } from "./types";
 
 interface CreateMealModalProps {
   open: boolean;
@@ -43,7 +35,7 @@ export interface NewMealData {
  * CreateMealModal - Modal for composing a new meal from existing recipes
  * 
  * Two-column layout:
- * - Left: Recipe browser with search
+ * - Left: Recipe browser with search (list view for readability)
  * - Right: Meal composition (main + up to 3 sides)
  */
 export function CreateMealModal({
@@ -72,9 +64,16 @@ export function CreateMealModal({
     );
   }, [recipes, searchQuery]);
 
+  // Get selection state for a recipe
+  const getSelectionState = (recipeId: number): "main" | "side" | null => {
+    if (mainRecipe?.id === recipeId) return "main";
+    if (sideRecipes.some((s) => s.id === recipeId)) return "side";
+    return null;
+  };
+
   // Check if recipe is already selected
   const isSelected = (recipeId: number) => {
-    return mainRecipe?.id === recipeId || sideRecipes.some((s) => s.id === recipeId);
+    return getSelectionState(recipeId) !== null;
   };
 
   // Handle recipe click
@@ -140,23 +139,39 @@ export function CreateMealModal({
   };
 
   const canSave = !!mainRecipe;
+  const canAddSides = mainRecipe && sideRecipes.length < MAX_SIDES;
+
+  // Format time helper
+  const formatTime = (minutes?: number) => {
+    if (!minutes) return null;
+    if (minutes < 60) return `${minutes}m`;
+    const hrs = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl h-[80vh] flex flex-col p-0 gap-0">
+      <DialogContent 
+        className={cn(
+          // Override the default sm:max-w-lg with our larger size
+          "sm:max-w-[950px] w-[95vw] h-[85vh]",
+          "flex flex-col p-0 gap-0 overflow-hidden"
+        )}
+      >
         {/* Header */}
-        <DialogHeader className="px-6 py-4 border-b border-border">
-          <DialogTitle>Create Meal</DialogTitle>
+        <DialogHeader className="px-6 py-4 border-b border-border shrink-0">
+          <DialogTitle className="text-xl">Create Meal</DialogTitle>
         </DialogHeader>
 
         {/* Body - Two Column Layout */}
-        <div className="flex-1 flex min-h-0">
+        <div className="flex flex-1 min-h-0 overflow-hidden">
           {/* Left Column - Recipe Browser */}
-          <div className="flex-1 border-r border-border flex flex-col min-h-0">
+          <div className="flex-[3] min-w-0 border-r border-border flex flex-col bg-background">
             {/* Search */}
-            <div className="p-4 border-b border-border">
+            <div className="p-4 border-b border-border shrink-0">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search recipes..."
                   value={searchQuery}
@@ -164,38 +179,52 @@ export function CreateMealModal({
                   className="pl-10"
                 />
               </div>
+              {/* Results count */}
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                <span>{filteredRecipes.length} recipes</span>
+                {!canAddSides && mainRecipe && (
+                  <span className="text-amber-500">• Max sides reached</span>
+                )}
+              </div>
             </div>
 
-            {/* Recipe Grid */}
-            <div className="flex-1 overflow-y-auto p-4">
+            {/* Recipe List with ScrollArea */}
+            <ScrollArea className="flex-1">
               {filteredRecipes.length === 0 ? (
-                <div className="text-center py-8 text-muted">
-                  <p>No recipes found</p>
+                <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                  <ChefHat className="h-12 w-12 mb-3 opacity-50" />
+                  <p className="text-sm">No recipes found</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-3 gap-3">
-                  {filteredRecipes.map((recipe) => (
-                    <RecipeSelectCard
-                      key={recipe.id}
-                      recipe={recipe}
-                      selected={isSelected(recipe.id)}
-                      disabled={!mainRecipe ? false : sideRecipes.length >= MAX_SIDES}
-                      onClick={() => handleRecipeClick(recipe)}
-                    />
-                  ))}
+                <div className="divide-y divide-border">
+                  {filteredRecipes.map((recipe) => {
+                    const selectionState = getSelectionState(recipe.id);
+                    const isDisabled = !selectionState && !canAddSides && mainRecipe !== null;
+                    
+                    return (
+                      <RecipeListItem
+                        key={recipe.id}
+                        recipe={recipe}
+                        selectionState={selectionState}
+                        disabled={isDisabled}
+                        onClick={() => handleRecipeClick(recipe)}
+                        formatTime={formatTime}
+                      />
+                    );
+                  })}
                 </div>
               )}
-            </div>
+            </ScrollArea>
           </div>
 
           {/* Right Column - Meal Composition */}
-          <div className="w-80 flex flex-col min-h-0 bg-background-subtle">
-            <div className="p-4 border-b border-border">
-              <h3 className="font-semibold text-foreground mb-3">Your Meal</h3>
+          <div className="flex-[2] min-w-0 flex flex-col bg-elevated/50">
+            {/* Meal Name Section */}
+            <div className="p-5 border-b border-border shrink-0">
+              <h3 className="font-semibold text-foreground text-lg mb-4">Your Meal</h3>
               
-              {/* Meal Name Input */}
               <div className="space-y-2">
-                <Label htmlFor="meal-name" className="text-sm text-muted">
+                <Label htmlFor="meal-name" className="text-sm text-muted-foreground">
                   Meal Name
                 </Label>
                 <Input
@@ -203,55 +232,83 @@ export function CreateMealModal({
                   placeholder="Enter meal name..."
                   value={mealName}
                   onChange={(e) => setMealName(e.target.value)}
+                  className="bg-background"
                 />
               </div>
             </div>
 
-            {/* Composition */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {/* Main Dish */}
-              <div>
-                <Label className="text-xs text-muted uppercase tracking-wider">
-                  Main Dish
-                </Label>
-                <div className="mt-2">
-                  {mainRecipe ? (
-                    <SelectedRecipeCard
-                      recipe={mainRecipe}
-                      onRemove={removeMain}
-                      variant="main"
-                    />
-                  ) : (
-                    <EmptySlot label="Select a main dish" />
-                  )}
+            {/* Composition - Scrollable */}
+            <ScrollArea className="flex-1">
+              <div className="p-5 space-y-6">
+                {/* Main Dish */}
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+                    Main Dish
+                  </Label>
+                  <div className="mt-3">
+                    {mainRecipe ? (
+                      <SelectedRecipeCard
+                        recipe={mainRecipe}
+                        onRemove={removeMain}
+                        variant="main"
+                      />
+                    ) : (
+                      <EmptySlot 
+                        label="Select a main dish" 
+                        hint="Click a recipe from the list"
+                      />
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Side Dishes */}
-              <div>
-                <Label className="text-xs text-muted uppercase tracking-wider">
-                  Side Dishes ({sideRecipes.length}/{MAX_SIDES})
-                </Label>
-                <div className="mt-2 space-y-2">
-                  {sideRecipes.map((recipe) => (
-                    <SelectedRecipeCard
-                      key={recipe.id}
-                      recipe={recipe}
-                      onRemove={() => removeSide(recipe.id)}
-                      variant="side"
-                    />
-                  ))}
-                  {sideRecipes.length < MAX_SIDES && mainRecipe && (
-                    <EmptySlot label="Add a side dish" />
-                  )}
+                {/* Side Dishes */}
+                <div>
+                  <Label className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
+                    Side Dishes ({sideRecipes.length}/{MAX_SIDES})
+                  </Label>
+                  <div className="mt-3 space-y-2">
+                    {sideRecipes.map((recipe, index) => (
+                      <SelectedRecipeCard
+                        key={recipe.id}
+                        recipe={recipe}
+                        onRemove={() => removeSide(recipe.id)}
+                        variant="side"
+                        sideNumber={index + 1}
+                      />
+                    ))}
+                    {sideRecipes.length < MAX_SIDES && mainRecipe && (
+                      <EmptySlot 
+                        label={`Add side dish ${sideRecipes.length + 1}`}
+                        hint="Optional"
+                        subtle
+                      />
+                    )}
+                    {!mainRecipe && (
+                      <p className="text-xs text-muted-foreground italic py-2">
+                        Select a main dish first
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            </ScrollArea>
+
+            {/* Summary */}
+            {mainRecipe && (
+              <div className="p-5 border-t border-border bg-background/50 shrink-0">
+                <div className="text-sm text-muted-foreground">
+                  <span className="font-medium text-foreground">
+                    {1 + sideRecipes.length}
+                  </span>
+                  {" "}recipe{1 + sideRecipes.length !== 1 ? "s" : ""} selected
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border flex justify-end gap-3">
+        <div className="px-6 py-4 border-t border-border flex justify-end gap-3 shrink-0 bg-background">
           <Button variant="outline" onClick={handleClose}>
             Cancel
           </Button>
@@ -278,75 +335,111 @@ export function CreateMealModal({
 // Sub-components
 // ============================================================================
 
-interface RecipeSelectCardProps {
+interface RecipeListItemProps {
   recipe: SelectableRecipe;
-  selected: boolean;
+  selectionState: "main" | "side" | null;
   disabled: boolean;
   onClick: () => void;
+  formatTime: (minutes?: number) => string | null;
 }
 
 /**
- * RecipeSelectCard - Compact recipe card for selection grid
+ * RecipeListItem - Horizontal list item for recipe selection
+ * Shows full name, category, time, and selection state
  */
-function RecipeSelectCard({
+function RecipeListItem({
   recipe,
-  selected,
+  selectionState,
   disabled,
   onClick,
-}: RecipeSelectCardProps) {
+  formatTime,
+}: RecipeListItemProps) {
+  const isSelectedState = selectionState !== null;
+  const totalTime = (recipe.prepTime || 0) + (recipe.cookTime || 0);
+  const timeDisplay = formatTime(totalTime);
+  
+  // Build metadata string
+  const metadata: string[] = [];
+  if (recipe.category) metadata.push(recipe.category);
+  if (recipe.mealType && recipe.mealType !== recipe.category) {
+    metadata.push(recipe.mealType);
+  }
+
   return (
     <button
       onClick={onClick}
-      disabled={selected || disabled}
+      disabled={isSelectedState || disabled}
       className={cn(
-        "relative rounded-xl overflow-hidden text-left transition-all",
-        "focus:outline-none focus:ring-2 focus:ring-primary",
-        selected
-          ? "ring-2 ring-primary opacity-50 cursor-not-allowed"
+        "w-full flex items-center gap-4 px-4 py-3 text-left transition-colors",
+        "focus:outline-none focus-visible:bg-accent",
+        isSelectedState
+          ? "bg-primary/10"
           : disabled
             ? "opacity-40 cursor-not-allowed"
-            : "hover:ring-2 hover:ring-primary/50 cursor-pointer"
+            : "hover:bg-hover cursor-pointer"
       )}
     >
-      {/* Image */}
-      <div className="aspect-square relative">
+      {/* Thumbnail */}
+      <div className={cn(
+        "w-12 h-12 rounded-lg overflow-hidden shrink-0 relative bg-elevated",
+        isSelectedState && "ring-2 ring-primary ring-offset-1 ring-offset-background"
+      )}>
         <RecipeImage
           src={recipe.imageUrl}
           alt={recipe.name}
           fill
           className="object-cover"
         />
-        {selected && (
-          <div className="absolute inset-0 bg-primary/30 flex items-center justify-center">
-            <div className="bg-primary text-primary-foreground rounded-full p-1">
-              <Check className="h-4 w-4" />
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Name */}
-      <div className="p-2 bg-elevated">
-        <p className="text-xs font-medium text-foreground truncate">
+      {/* Content - grows to fill space */}
+      <div className="flex-1 min-w-0">
+        <p className={cn(
+          "font-medium text-sm leading-tight",
+          isSelectedState ? "text-primary" : "text-foreground"
+        )}>
           {recipe.name}
         </p>
+        
+        {/* Metadata row */}
+        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+          {metadata.length > 0 && (
+            <span>{metadata.join(" • ")}</span>
+          )}
+          {timeDisplay && (
+            <>
+              {metadata.length > 0 && <span className="opacity-50">|</span>}
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {timeDisplay}
+              </span>
+            </>
+          )}
+          {!metadata.length && !timeDisplay && (
+            <span className="italic opacity-70">No details</span>
+          )}
+        </div>
+      </div>
+
+      {/* Selection State Badge */}
+      <div className="shrink-0">
+        {selectionState === "main" && (
+          <Badge className="bg-primary text-primary-foreground text-xs px-2 py-0.5">
+            <Check className="h-3 w-3 mr-1" />
+            Main
+          </Badge>
+        )}
+        {selectionState === "side" && (
+          <Badge className="bg-secondary text-secondary-foreground text-xs px-2 py-0.5">
+            <Check className="h-3 w-3 mr-1" />
+            Side
+          </Badge>
+        )}
+        {!isSelectedState && !disabled && (
+          <Plus className="h-5 w-5 text-muted-foreground" />
+        )}
       </div>
     </button>
-  );
-}
-
-// Check icon for selected state
-function Check({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={3}
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-    </svg>
   );
 }
 
@@ -354,6 +447,7 @@ interface SelectedRecipeCardProps {
   recipe: SelectableRecipe;
   onRemove: () => void;
   variant: "main" | "side";
+  sideNumber?: number;
 }
 
 /**
@@ -363,16 +457,19 @@ function SelectedRecipeCard({
   recipe,
   onRemove,
   variant,
+  sideNumber,
 }: SelectedRecipeCardProps) {
   return (
     <div
       className={cn(
-        "flex items-center gap-3 p-2 rounded-xl",
-        variant === "main" ? "bg-primary/10" : "bg-elevated"
+        "flex items-center gap-3 p-3 rounded-xl transition-all",
+        variant === "main" 
+          ? "bg-primary/15 border border-primary/30" 
+          : "bg-secondary/20 border border-secondary/30"
       )}
     >
       {/* Thumbnail */}
-      <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 relative">
+      <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 relative bg-elevated">
         <RecipeImage
           src={recipe.imageUrl}
           alt={recipe.name}
@@ -381,15 +478,23 @@ function SelectedRecipeCard({
         />
       </div>
 
-      {/* Name */}
-      <span className="flex-1 text-sm font-medium text-foreground truncate">
-        {recipe.name}
-      </span>
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <span className="text-sm font-medium text-foreground block truncate">
+          {recipe.name}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {variant === "main" ? "Main dish" : `Side ${sideNumber}`}
+        </span>
+      </div>
 
       {/* Remove Button */}
       <button
         onClick={onRemove}
-        className="p-1 rounded-md text-muted hover:text-destructive hover:bg-destructive/10 transition-colors"
+        className={cn(
+          "p-1.5 rounded-md transition-colors shrink-0",
+          "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+        )}
         aria-label={`Remove ${recipe.name}`}
       >
         <X className="h-4 w-4" />
@@ -400,22 +505,34 @@ function SelectedRecipeCard({
 
 interface EmptySlotProps {
   label: string;
+  hint?: string;
+  subtle?: boolean;
 }
 
 /**
  * EmptySlot - Placeholder for unselected slots
  */
-function EmptySlot({ label }: EmptySlotProps) {
+function EmptySlot({ label, hint, subtle }: EmptySlotProps) {
   return (
     <div
       className={cn(
-        "flex items-center justify-center gap-2 p-4 rounded-xl",
-        "border-2 border-dashed border-border",
-        "text-muted"
+        "flex flex-col items-center justify-center gap-1 py-5 rounded-xl",
+        "border-2 border-dashed",
+        subtle 
+          ? "border-border/50" 
+          : "border-border bg-background/30"
       )}
     >
-      <Plus className="h-4 w-4" />
-      <span className="text-sm">{label}</span>
+      <div className={cn(
+        "flex items-center gap-2",
+        subtle ? "text-muted-foreground/60" : "text-muted-foreground"
+      )}>
+        <Plus className="h-4 w-4" />
+        <span className="text-sm">{label}</span>
+      </div>
+      {hint && (
+        <span className="text-xs text-muted-foreground/50">{hint}</span>
+      )}
     </div>
   );
 }

@@ -6,6 +6,22 @@
  */
 
 /**
+ * Recipe data for selection in CreateMealModal
+ * Simplified subset of full recipe for the picker UI
+ */
+export interface SelectableRecipe {
+  id: number;
+  name: string;
+  imageUrl?: string;
+  category?: string;
+  mealType?: string;
+  prepTime?: number;
+  cookTime?: number;
+  servings?: number;
+  tags?: string[];
+}
+
+/**
  * Side recipe in a meal (subset of full recipe data)
  */
 export interface MealSideRecipe {

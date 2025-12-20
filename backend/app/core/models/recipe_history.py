@@ -24,7 +24,7 @@ class RecipeHistory(Base):
     __tablename__ = "recipe_history"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    recipe_id: Mapped[int] = mapped_column(ForeignKey("recipe.id"), nullable=False)
+    recipe_id: Mapped[int] = mapped_column(ForeignKey("recipe.id", ondelete="CASCADE"), nullable=False)
     cooked_at: Mapped[datetime] = mapped_column(default=_utcnow)
 
     # ── Relationships ───────────────────────────────────────────────────────────────────────────────────────
