@@ -45,9 +45,9 @@ export function MealPlannerPage() {
 
   return (
     // Absolute fill to guarantee we take exactly the parent's space, no more
-    <div className="absolute inset-0 flex overflow-hidden">
+    <div className="absolute inset-0 flex overflow-hidden p-6 gap-6">
       {/* Main Content - fills remaining space, never scrolls */}
-      <main className="flex-1 min-w-0 p-6 overflow-hidden">
+      <main className="flex-1 min-w-0 overflow-hidden">
         {selectedMeal ? (
           <SelectedMealHero
             meal={selectedMeal}

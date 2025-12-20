@@ -49,12 +49,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  PageHeader,
-  PageHeaderContent,
-  PageHeaderTitle,
-  PageHeaderActions,
-} from "@/components/layout/PageHeader";
+import { PageLayout } from "@/components/layout/PageLayout";
 import { useSettings, DEFAULT_SETTINGS } from "@/hooks/useSettings";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { cn } from "@/lib/utils";
@@ -752,15 +747,12 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <PageHeader>
-        <PageHeaderContent>
-          <PageHeaderTitle
-            title="Settings"
-            description="Manage your preferences and account settings"
-          />
-          <PageHeaderActions>
+    <>
+      <PageLayout
+        title="Settings"
+        description="Manage your preferences and account settings"
+        actions={
+          <>
             {hasUnsavedChanges && (
               <div className="flex items-center gap-2 mr-2 text-sm">
                 <div className="h-2 w-2 rounded-full bg-secondary animate-pulse" />
@@ -786,12 +778,9 @@ export default function SettingsPage() {
               <Save className="h-4 w-4" />
               Save Changes
             </Button>
-          </PageHeaderActions>
-        </PageHeaderContent>
-      </PageHeader>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+          </>
+        }
+      >
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Left Sidebar - Category Navigation */}
           <div className="lg:col-span-1">
@@ -817,7 +806,7 @@ export default function SettingsPage() {
           {/* Right Content - Settings Form */}
           <div className="lg:col-span-3 space-y-6">{renderCategoryContent()}</div>
         </div>
-      </div>
+      </PageLayout>
 
       {/* Unsaved Changes Confirmation Dialog */}
       <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
@@ -840,6 +829,6 @@ export default function SettingsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }

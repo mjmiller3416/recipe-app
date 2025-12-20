@@ -7,7 +7,6 @@ export { SideDishGrid, SideDishCard } from "./SideDishGrid";
 export { WeeklyMenuSidebar } from "./WeeklyMenuSidebar";
 export { MealQueueCard } from "./MealQueueCard";
 export { ShoppingListIndicator, ShoppingListLegend } from "./ShoppingListIndicator";
-export { SavedMealsDropdown } from "./SavedMealsDropdown";
 export { EmptyMenuState } from "./EmptyMenuState";
 export { CreateMealModal } from "./CreateMealModal";
 export type { NewMealData } from "./CreateMealModal";

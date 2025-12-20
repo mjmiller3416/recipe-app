@@ -16,12 +16,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  PageHeader,
-  PageHeaderContent,
-  PageHeaderTitle,
-  PageHeaderActions,
-} from "@/components/layout/PageHeader";
+import { PageLayout } from "@/components/layout/PageLayout";
 import { StatsCard } from "@/components/common/StatsCard";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AddItemForm, type AddItemFormData } from "@/components/forms/AddItemForm";
@@ -196,136 +191,128 @@ export default function ShoppingListPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <PageHeader>
-        <PageHeaderContent>
-          <PageHeaderTitle
-            title="Shopping List"
-            description="Auto-generated from your meal plan"
+    <PageLayout
+      title="Shopping List"
+      description="Auto-generated from your meal plan"
+      actions={
+        <>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearChecked}
+            className="gap-2"
+            disabled={stats.checked === 0}
+          >
+            <Trash2 className="h-4 w-4" />
+            Clear Checked
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            className="gap-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Regenerate
+          </Button>
+        </>
+      }
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Shopping List */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Statistics Card */}
+          <StatsCard
+            icon={ShoppingCart}
+            primaryValue={stats.remaining}
+            primaryLabel="items remaining"
+            secondaryValue={`${stats.checked}/${stats.total}`}
+            secondaryLabel="completed"
+            progress={{ current: stats.checked, total: stats.total }}
           />
-          <PageHeaderActions>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleClearChecked}
-              className="gap-2"
-              disabled={stats.checked === 0}
-            >
-              <Trash2 className="h-4 w-4" />
-              Clear Checked
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              className="gap-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Regenerate
-            </Button>
-          </PageHeaderActions>
-        </PageHeaderContent>
-      </PageHeader>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Shopping List */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Statistics Card */}
-            <StatsCard
-              icon={ShoppingCart}
-              primaryValue={stats.remaining}
-              primaryLabel="items remaining"
-              secondaryValue={`${stats.checked}/${stats.total}`}
-              secondaryLabel="completed"
-              progress={{ current: stats.checked, total: stats.total }}
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+            <Input
+              placeholder="Search ingredients..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
             />
+          </div>
 
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-              <Input
-                placeholder="Search ingredients..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            {/* Shopping List Accordions */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-3 mb-6">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <ShoppingCart className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-lg font-semibold text-foreground">
-                      Auto Generated Ingredients
-                    </h2>
-                    <p className="text-sm text-muted mt-0.5">
-                      From this week's meal plan
-                    </p>
-                  </div>
+          {/* Shopping List Accordions */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3 mb-6">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <ShoppingCart className="h-5 w-5 text-primary" />
                 </div>
+                <div className="flex-1">
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Auto Generated Ingredients
+                  </h2>
+                  <p className="text-sm text-muted mt-0.5">
+                    From this week's meal plan
+                  </p>
+                </div>
+              </div>
 
-                {groupedItems.length > 0 ? (
-                  <Accordion
-                    type="multiple"
-                    defaultValue={allCategories}
-                    className="space-y-2"
-                  >
-                    {groupedItems.map(([category, categoryItems]) => (
-                      <AccordionItem
-                        key={category}
-                        value={category}
-                        className="border border-border rounded-lg overflow-hidden bg-elevated"
-                      >
-                        <AccordionTrigger className="px-4 hover:no-underline hover:bg-hover">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{category}</span>
-                            <span className="text-xs text-muted bg-background px-2 py-0.5 rounded-full">
-                              {categoryItems.length}
-                            </span>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-2 pb-2">
-                          <div className="space-y-1">
-                            {categoryItems.map((item) => (
-                              <ShoppingItem
-                                key={item.id}
-                                item={item}
-                                onToggle={handleToggle}
-                              />
-                            ))}
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                ) : (
-                  <div className="text-center py-12 text-muted">
-                    <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No items found</p>
-                    {searchTerm && (
-                      <p className="text-sm mt-1">
-                        Try adjusting your search term
-                      </p>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+              {groupedItems.length > 0 ? (
+                <Accordion
+                  type="multiple"
+                  defaultValue={allCategories}
+                  className="space-y-2"
+                >
+                  {groupedItems.map(([category, categoryItems]) => (
+                    <AccordionItem
+                      key={category}
+                      value={category}
+                      className="border border-border rounded-lg overflow-hidden bg-elevated"
+                    >
+                      <AccordionTrigger className="px-4 hover:no-underline hover:bg-hover">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{category}</span>
+                          <span className="text-xs text-muted bg-background px-2 py-0.5 rounded-full">
+                            {categoryItems.length}
+                          </span>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-2 pb-2">
+                        <div className="space-y-1">
+                          {categoryItems.map((item) => (
+                            <ShoppingItem
+                              key={item.id}
+                              item={item}
+                              onToggle={handleToggle}
+                            />
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              ) : (
+                <div className="text-center py-12 text-muted">
+                  <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No items found</p>
+                  {searchTerm && (
+                    <p className="text-sm mt-1">
+                      Try adjusting your search term
+                    </p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-          {/* Right Column - Add Item */}
-          <div className="lg:col-span-1">
-            <AddItemForm onAddItem={handleAddItem} />
-          </div>
+        {/* Right Column - Add Item */}
+        <div className="lg:col-span-1">
+          <AddItemForm onAddItem={handleAddItem} />
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 }
