@@ -27,7 +27,7 @@
   - **Issue**: When adding new ingredients, the window should scroll to the newly added ingredient row to improve user experience.
   - **Solution**: Implement a scrollIntoView call after adding a new ingredient row.
 
-### Fix Ingredient Autocomplete for Multi-Word Ingredients
+### Fix Ingredient Autocomplete for Multi-Word Ingredients ✅
   - **Location**: `frontend\src\components\add-recipe\IngredientAutoComplete.tsx`
   - **Issue**: The ingredient autocomplete stops suggesting ingredients once the user types a space. This makes it difficult to enter multi-word ingredients like "olive oil" or "baking soda".
   - **Solution**: Update the autocomplete logic to continue suggesting ingredients even after spaces are typed

@@ -428,10 +428,13 @@ export default function RecipeDetailPage() {
     });
   };
   
-  const handleDelete = () => {
-    console.log(`Deleting recipe ${recipeId}`);
-    // In production: await fetch(`/api/recipes/${recipeId}`, { method: 'DELETE' })
-    router.push("/recipes");
+  const handleDelete = async () => {
+    try {
+      await recipeApi.delete(recipeId);
+      router.push("/recipes");
+    } catch (error) {
+      console.error("Failed to delete recipe:", error);
+    }
   };
   
   const handlePrint = () => {
