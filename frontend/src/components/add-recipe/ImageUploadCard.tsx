@@ -78,10 +78,9 @@ export function ImageUploadCard({
       const result = await imageGenerationApi.generate(recipeName);
       if (result.success && result.image_data) {
         const dataUrl = `data:image/png;base64,${result.image_data}`;
-        setPendingGeneratedImage({
-          base64: result.image_data,
-          dataUrl: dataUrl,
-        });
+        // Auto-accept the generated image (no confirmation step needed)
+        onGeneratedImageAccept(result.image_data, dataUrl);
+        onAiGeneratedChange?.(true);
         setImageState("generated");
       } else {
         throw new Error(result.error || "Failed to generate image");
