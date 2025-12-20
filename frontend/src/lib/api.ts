@@ -15,6 +15,7 @@ import type {
   ImportResultDTO,
   DuplicateResolutionDTO,
   ExportFilterDTO,
+  ImageGenerationResponseDTO,
 } from "@/types";
 
 // API base URL from environment variable or default to localhost
@@ -559,6 +560,23 @@ export const uploadApi = {
 
     return response.json();
   },
+};
+
+// ============================================================================
+// Image Generation API
+// ============================================================================
+
+export const imageGenerationApi = {
+  /**
+   * Generate an AI image for a recipe based on its name
+   * @param recipeName - The name of the recipe to generate an image for
+   * @returns Response with base64 encoded image data on success
+   */
+  generate: (recipeName: string): Promise<ImageGenerationResponseDTO> =>
+    fetchApi<ImageGenerationResponseDTO>("/api/generate-image", {
+      method: "POST",
+      body: JSON.stringify({ recipe_name: recipeName }),
+    }),
 };
 
 // ============================================================================

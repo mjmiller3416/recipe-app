@@ -57,3 +57,35 @@ export function formatQuantity(quantity: number | null): string {
 
   return quantity.toString();
 }
+
+/**
+ * Converts a base64 data URL or raw base64 string to a File object
+ * Useful for converting AI-generated images to uploadable files
+ *
+ * @param base64Data - Base64 encoded data (with or without data URL prefix)
+ * @param filename - The filename to use for the File object
+ * @param mimeType - The MIME type (defaults to image/png)
+ * @returns A File object that can be uploaded
+ */
+export function base64ToFile(
+  base64Data: string,
+  filename: string,
+  mimeType: string = "image/png"
+): File {
+  // Remove data URL prefix if present (e.g., "data:image/png;base64,")
+  const base64Content = base64Data.includes(",")
+    ? base64Data.split(",")[1]
+    : base64Data;
+
+  // Decode base64 to binary
+  const byteCharacters = atob(base64Content);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+
+  // Create blob and file
+  const blob = new Blob([byteArray], { type: mimeType });
+  return new File([blob], filename, { type: mimeType });
+}

@@ -47,6 +47,11 @@ export interface RecipeFormState {
   setNotes: (value: string) => void;
   imagePreview: string | null;
 
+  // AI Image generation state
+  isAiGenerated: boolean;
+  setIsAiGenerated: (value: boolean) => void;
+  generatedImageData: string | null; // Base64 image data
+
   // Available ingredients for autocomplete
   availableIngredients: AutocompleteIngredient[];
 
@@ -55,8 +60,9 @@ export interface RecipeFormState {
   updateIngredient: (id: string, field: keyof Ingredient, value: string | number | null) => void;
   deleteIngredient: (id: string) => void;
 
-  // Image handler
+  // Image handlers
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleGeneratedImageAccept: (base64Data: string, dataUrl: string) => void;
 
   // Form submission
   handleSubmit: () => Promise<void>;
@@ -100,6 +106,10 @@ export function useRecipeForm(): RecipeFormState {
 
   // Image state
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  // AI Image generation state
+  const [isAiGenerated, setIsAiGenerated] = useState(false);
+  const [generatedImageData, setGeneratedImageData] = useState<string | null>(null);
 
   // Available ingredients for autocomplete
   const [availableIngredients, setAvailableIngredients] = useState<AutocompleteIngredient[]>([]);
@@ -171,9 +181,19 @@ export function useRecipeForm(): RecipeFormState {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
+        // Clear AI-generated state when user uploads a new image
+        setIsAiGenerated(false);
+        setGeneratedImageData(null);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // AI-generated image accept handler
+  const handleGeneratedImageAccept = (base64Data: string, dataUrl: string) => {
+    setImagePreview(dataUrl);
+    setGeneratedImageData(base64Data);
+    setIsAiGenerated(true);
   };
 
   // Validate entire form and return normalized values
@@ -338,6 +358,11 @@ export function useRecipeForm(): RecipeFormState {
     setNotes,
     imagePreview,
 
+    // AI Image generation state
+    isAiGenerated,
+    setIsAiGenerated,
+    generatedImageData,
+
     // Available ingredients for autocomplete
     availableIngredients,
 
@@ -346,8 +371,9 @@ export function useRecipeForm(): RecipeFormState {
     updateIngredient,
     deleteIngredient,
 
-    // Image handler
+    // Image handlers
     handleImageUpload,
+    handleGeneratedImageAccept,
 
     // Form submission
     handleSubmit,

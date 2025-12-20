@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { Plus, Upload, ImageIcon, Info, Clock, Users, Tag, ChefHat, Leaf, ListOrdered, FileText, Save, AlertCircle, ArrowLeft, Loader2, AlertTriangle } from "lucide-react";
+import { Plus, Info, Clock, Users, Tag, ChefHat, Leaf, ListOrdered, FileText, Save, AlertCircle, ArrowLeft, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { recipeApi, uploadApi } from "@/lib/api";
+import { base64ToFile } from "@/lib/utils";
 import type { RecipeUpdateDTO, RecipeIngredientDTO, RecipeResponseDTO } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,7 @@ import {
 import {
   IngredientRow,
   Ingredient,
+  ImageUploadCard,
 } from "@/components/add-recipe";
 import {
   MEAL_TYPE_OPTIONS,
@@ -129,6 +131,9 @@ export default function EditRecipePage() {
   // Image state
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+
+  // AI Image generation state
+  const [isAiGenerated, setIsAiGenerated] = useState(false);
 
   // Form validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -240,12 +245,23 @@ export default function EditRecipePage() {
     if (file) {
       markDirty();
       setImageFile(file);
+      setIsAiGenerated(false);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // AI-generated image accept handler
+  const handleGeneratedImageAccept = (base64Data: string, dataUrl: string) => {
+    markDirty();
+    setImagePreview(dataUrl);
+    // Convert base64 to File for Cloudinary upload
+    const file = base64ToFile(base64Data, `recipe-${recipeId}-ai.png`);
+    setImageFile(file);
+    setIsAiGenerated(true);
   };
 
   // Validate entire form and return normalized values
@@ -705,66 +721,14 @@ export default function EditRecipePage() {
 
           {/* Right Column - Image Upload */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-8">
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-3 mb-6">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <ImageIcon className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-lg font-semibold text-foreground">
-                      Recipe Image
-                    </h2>
-                    <p className="text-sm text-muted mt-0.5">
-                      Upload an appetizing photo of your dish
-                    </p>
-                  </div>
-                </div>
-
-                {/* Image Preview */}
-                <div className="aspect-square rounded-lg overflow-hidden bg-elevated border-2 border-dashed border-border mb-4">
-                  {imagePreview ? (
-                    <img
-                      src={imagePreview}
-                      alt="Recipe preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-muted">
-                      <div className="p-4 bg-primary/10 rounded-full mb-4">
-                        <ImageIcon className="h-12 w-12 text-primary" />
-                      </div>
-                      <p className="text-sm font-medium">No image uploaded</p>
-                      <p className="text-xs mt-1">Click below to add one</p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Upload Button */}
-                <div>
-                  <input
-                    type="file"
-                    id="recipe-image"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                  <Label htmlFor="recipe-image">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="w-full gap-2"
-                      onClick={() =>
-                        document.getElementById("recipe-image")?.click()
-                      }
-                    >
-                      <Upload className="h-4 w-4" />
-                      {imagePreview ? "Change Image" : "Upload Image"}
-                    </Button>
-                  </Label>
-                </div>
-              </CardContent>
-            </Card>
+            <ImageUploadCard
+              imagePreview={imagePreview}
+              onImageUpload={handleImageUpload}
+              onGeneratedImageAccept={handleGeneratedImageAccept}
+              recipeName={recipeName}
+              isAiGenerated={isAiGenerated}
+              onAiGeneratedChange={setIsAiGenerated}
+            />
           </div>
         </div>
       </div>

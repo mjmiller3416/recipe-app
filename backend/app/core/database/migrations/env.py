@@ -37,8 +37,8 @@ sys.path.append(str(Path(__file__).resolve().parents[4]))
 config = context.config
 fileConfig(config.config_file_name)
 
-# Override URL if DATABASE_URL is set
-database_url = os.getenv("DATABASE_URL")
+# Override URL if SQLALCHEMY_DATABASE_URL is set (matches db.py)
+database_url = os.getenv("SQLALCHEMY_DATABASE_URL")
 if database_url:
     config.set_main_option("sqlalchemy.url", database_url)
 

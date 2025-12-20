@@ -359,3 +359,17 @@ export interface ApiError {
   status: number;
   details?: Record<string, unknown>;
 }
+
+// ============================================================================
+// Image Generation Types
+// ============================================================================
+
+export interface ImageGenerationRequestDTO {
+  recipe_name: string;
+}
+
+export interface ImageGenerationResponseDTO {
+  success: boolean;
+  image_data?: string; // Base64 encoded image
+  error?: string;
+}

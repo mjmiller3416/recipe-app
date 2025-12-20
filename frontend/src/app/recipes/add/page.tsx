@@ -92,6 +92,10 @@ export default function AddRecipePage() {
             <ImageUploadCard
               imagePreview={form.imagePreview}
               onImageUpload={form.handleImageUpload}
+              onGeneratedImageAccept={form.handleGeneratedImageAccept}
+              recipeName={form.recipeName}
+              isAiGenerated={form.isAiGenerated}
+              onAiGeneratedChange={form.setIsAiGenerated}
             />
           </div>
         </div>
