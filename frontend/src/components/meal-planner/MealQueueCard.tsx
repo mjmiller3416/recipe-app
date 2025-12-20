@@ -39,7 +39,7 @@ export function MealQueueCard({
     <div
       onClick={onSelect}
       className={cn(
-        "group relative flex items-center gap-3 p-2 rounded-xl cursor-pointer transition-all",
+        "group relative flex items-center gap-2 p-2 rounded-xl cursor-pointer transition-all",
         isSelected
           ? "bg-primary/20 ring-2 ring-primary"
           : isCompleted
@@ -50,7 +50,7 @@ export function MealQueueCard({
       {/* Drag Handle - visible on hover */}
       <GripVertical
         className={cn(
-          "h-4 w-4 text-muted flex-shrink-0",
+          "h-4 w-4 text-muted shrink-0",
           "opacity-0 group-hover:opacity-100 transition-opacity",
           "cursor-grab active:cursor-grabbing"
         )}
@@ -59,7 +59,7 @@ export function MealQueueCard({
       {/* Meal Thumbnail */}
       <div
         className={cn(
-          "w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 relative",
+          "w-10 h-10 rounded-lg overflow-hidden shrink-0 relative",
           isCompleted && "grayscale"
         )}
       >
@@ -71,34 +71,35 @@ export function MealQueueCard({
         />
       </div>
 
-      {/* Meal Name */}
+      {/* Meal Name - flexible, truncates */}
       <span
         className={cn(
-          "flex-1 text-sm font-medium truncate",
+          "flex-1 text-sm font-medium truncate min-w-0",
           isCompleted ? "text-muted line-through" : "text-foreground"
         )}
       >
         {meal.name}
       </span>
 
-      {/* Shopping List Indicator */}
+      {/* Shopping List Indicator - fixed */}
       <ShoppingListIndicator
         included={meal.includeInShoppingList}
         disabled={isCompleted}
+        size="sm"
         onToggle={(e) => {
           e.stopPropagation();
           if (!isCompleted) onToggleShoppingList();
         }}
       />
 
-      {/* Completion Checkmark */}
+      {/* Completion Checkmark - fixed */}
       <button
         onClick={(e) => {
           e.stopPropagation();
           onToggleComplete();
         }}
         className={cn(
-          "p-1.5 rounded-md transition-all flex-shrink-0",
+          "p-1 rounded-md transition-all shrink-0",
           isCompleted
             ? "text-success bg-success/20"
             : "text-muted hover:bg-hover hover:text-success"
