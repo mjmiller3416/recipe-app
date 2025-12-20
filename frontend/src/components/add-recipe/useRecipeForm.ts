@@ -3,7 +3,8 @@
 import { useState, useEffect, useId } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { recipeApi, ingredientApi } from "@/lib/api";
+import { recipeApi, ingredientApi, uploadApi } from "@/lib/api";
+import { base64ToFile } from "@/lib/utils";
 import type { RecipeCreateDTO, RecipeIngredientDTO } from "@/types";
 import type { Ingredient } from "./IngredientRow";
 import type { Ingredient as AutocompleteIngredient } from "./IngredientAutoComplete";
@@ -106,6 +107,7 @@ export function useRecipeForm(): RecipeFormState {
 
   // Image state
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   // AI Image generation state
   const [isAiGenerated, setIsAiGenerated] = useState(false);
@@ -178,6 +180,7 @@ export function useRecipeForm(): RecipeFormState {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -190,10 +193,14 @@ export function useRecipeForm(): RecipeFormState {
   };
 
   // AI-generated image accept handler
+  // Convert base64 to File immediately (matches Edit Recipe pattern)
   const handleGeneratedImageAccept = (base64Data: string, dataUrl: string) => {
     setImagePreview(dataUrl);
     setGeneratedImageData(base64Data);
     setIsAiGenerated(true);
+    // Convert to File immediately so it's ready for upload
+    const file = base64ToFile(base64Data, `recipe-ai-generated.png`);
+    setImageFile(file);
   };
 
   // Validate entire form and return normalized values
@@ -323,6 +330,21 @@ export function useRecipeForm(): RecipeFormState {
       };
 
       const createdRecipe = await recipeApi.create(payload);
+
+      // Upload image if one exists (AI-generated or user-uploaded)
+      if (imageFile) {
+        try {
+          const uploadResult = await uploadApi.uploadRecipeImage(imageFile, createdRecipe.id);
+          // Update recipe with the image path
+          await recipeApi.update(createdRecipe.id, {
+            reference_image_path: uploadResult.path,
+          });
+        } catch (uploadError) {
+          console.error("Failed to upload image:", uploadError);
+          toast.warning("Recipe created, but image upload failed. You can add it later by editing the recipe.");
+        }
+      }
+
       toast.success("Recipe created successfully!");
       router.push(`/recipes/${createdRecipe.id}`);
     } catch (error) {

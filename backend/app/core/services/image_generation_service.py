@@ -24,8 +24,8 @@ def _get_genai_client():
 
 # Prompt template for food photography
 PROMPT_TEMPLATE = (
-    "{recipe_name}, professional food photography, 45-degree angle, "
-    "warm golden lighting, rustic wooden table with cutting board, "
+    "A professional food photograph of {recipe_name} captured at a 45-degree "
+    "angle. The dish is placed on a rustic wooden table with cutting board, "
     "shallow depth of field, steam rising, scattered herbs and seasonings, "
     "complementary ingredients as props in soft-focus background, "
     "cozy home kitchen atmosphere, appetizing, high detail, "
