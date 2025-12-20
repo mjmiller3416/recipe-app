@@ -26,12 +26,10 @@ interface WeeklyMenuSidebarProps {
 /**
  * WeeklyMenuSidebar - Right sidebar showing the meal queue
  * 
- * Sections:
- * - Active meals (ordered list)
- * - Completed meals (greyed, below divider)
- * - Add Meal button
- * - Browse Saved Meals expandable section
- * - Shopping list legend
+ * Structure:
+ * - Fixed header
+ * - Scrollable meal list (only this part scrolls)
+ * - Fixed footer with actions and legend
  */
 export function WeeklyMenuSidebar({
   activeMeals,
@@ -48,16 +46,16 @@ export function WeeklyMenuSidebar({
   const [showSavedMeals, setShowSavedMeals] = useState(false);
 
   return (
-    <aside className="w-[340px] shrink-0 bg-sidebar border-l border-border flex flex-col h-full overflow-hidden">
-      {/* Header */}
+    <aside className="w-[340px] shrink-0 bg-sidebar border-l border-border flex flex-col h-full">
+      {/* Fixed Header */}
       <div className="p-4 border-b border-border shrink-0">
         <h2 className="text-lg font-semibold text-foreground">
           This Week's Menu
         </h2>
       </div>
 
-      {/* Scrollable Queue Area with themed ScrollArea */}
-      <ScrollArea className="flex-1">
+      {/* Scrollable Meal List - ONLY this section scrolls */}
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-4 space-y-2">
           {/* Active Meals */}
           {activeMeals.map((meal) => (
@@ -71,7 +69,7 @@ export function WeeklyMenuSidebar({
             />
           ))}
 
-          {/* Empty state for active */}
+          {/* Empty state */}
           {activeMeals.length === 0 && completedMeals.length === 0 && (
             <div className="text-center py-8 text-muted">
               <p className="text-sm">No meals planned yet</p>
@@ -121,44 +119,47 @@ export function WeeklyMenuSidebar({
         </div>
       </ScrollArea>
 
-      {/* Footer - Add Meal Actions */}
-      <div className="p-4 border-t border-border space-y-2 shrink-0">
-        <Button
-          onClick={onCreateMeal}
-          className="w-full flex items-center justify-center gap-2"
-        >
-          <Plus className="h-5 w-5" />
-          Add Meal
-        </Button>
+      {/* Fixed Footer - Always visible */}
+      <div className="shrink-0 border-t border-border bg-sidebar">
+        {/* Add Meal Actions */}
+        <div className="p-4 space-y-2">
+          <Button
+            onClick={onCreateMeal}
+            className="w-full flex items-center justify-center gap-2"
+          >
+            <Plus className="h-5 w-5" />
+            Add Meal
+          </Button>
 
-        {/* Browse Saved Meals Toggle */}
-        <button
-          onClick={() => setShowSavedMeals(!showSavedMeals)}
-          className={cn(
-            "w-full py-2 px-4 text-sm",
-            "text-primary hover:text-primary-hover",
-            "flex items-center justify-center gap-2",
-            "transition-colors"
+          {/* Browse Saved Meals Toggle */}
+          <button
+            onClick={() => setShowSavedMeals(!showSavedMeals)}
+            className={cn(
+              "w-full py-2 px-4 text-sm",
+              "text-primary hover:text-primary-hover",
+              "flex items-center justify-center gap-2",
+              "transition-colors"
+            )}
+          >
+            <Bookmark className="h-4 w-4" />
+            Browse Saved Meals
+            {showSavedMeals ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </button>
+
+          {/* Saved Meals Dropdown */}
+          {showSavedMeals && (
+            <SavedMealsDropdown meals={savedMeals} onAddMeal={onAddMeal} />
           )}
-        >
-          <Bookmark className="h-4 w-4" />
-          Browse Saved Meals
-          {showSavedMeals ? (
-            <ChevronUp className="h-4 w-4" />
-          ) : (
-            <ChevronDown className="h-4 w-4" />
-          )}
-        </button>
+        </div>
 
-        {/* Saved Meals Dropdown */}
-        {showSavedMeals && (
-          <SavedMealsDropdown meals={savedMeals} onAddMeal={onAddMeal} />
-        )}
-      </div>
-
-      {/* Shopping List Legend */}
-      <div className="p-4 border-t border-border shrink-0">
-        <ShoppingListLegend />
+        {/* Shopping List Legend */}
+        <div className="px-4 pb-4">
+          <ShoppingListLegend />
+        </div>
       </div>
     </aside>
   );

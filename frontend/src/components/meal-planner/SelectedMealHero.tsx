@@ -16,11 +16,13 @@ interface SelectedMealHeroProps {
 }
 
 /**
- * SelectedMealHero - Balanced hero section displaying the currently selected meal
+ * SelectedMealHero - Hero section that fills available space
  * 
- * Layout fills available space:
- * - Top row: Image (left) + Info (right)
- * - Bottom: Side dishes + Actions
+ * Layout:
+ * - Top: Image (left) + Info & Actions (right)
+ * - Bottom: Side dishes row
+ * 
+ * Uses flex-1 to fill available vertical space
  */
 export function SelectedMealHero({
   meal,
@@ -31,19 +33,19 @@ export function SelectedMealHero({
   const { mainRecipe, sideRecipes, completed } = meal;
 
   return (
-    <div className="h-full flex flex-col max-w-4xl">
+    <div className="h-full flex flex-col">
       {/* Section Header */}
       <h1 className="text-sm font-semibold text-muted uppercase tracking-wider mb-4 shrink-0">
         Selected Meal
       </h1>
 
-      {/* Main Content Area */}
+      {/* Main Content - Fills available space */}
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Top Section: Image + Info */}
-        <div className="flex gap-8 mb-6">
-          {/* Main Dish Image - Larger, maintains aspect ratio */}
-          <div className="w-[400px] shrink-0">
-            <div className="relative rounded-2xl overflow-hidden aspect-[4/3]">
+        {/* Top Section: Image + Info - Takes most of the space */}
+        <div className="flex-1 flex gap-8 min-h-0">
+          {/* Main Dish Image - Fills height, maintains aspect ratio */}
+          <div className="h-full aspect-[4/3] max-w-[50%] shrink-0">
+            <div className="relative rounded-2xl overflow-hidden h-full w-full">
               <RecipeImage
                 src={mainRecipe.imageUrl}
                 alt={mainRecipe.name}
@@ -64,10 +66,10 @@ export function SelectedMealHero({
             </div>
           </div>
 
-          {/* Meal Info */}
-          <div className="flex-1 flex flex-col min-w-0">
+          {/* Meal Info - Fills remaining width */}
+          <div className="flex-1 flex flex-col min-w-0 py-2">
             {/* Meal Name */}
-            <h2 className="text-3xl font-bold text-foreground mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4 line-clamp-2">
               {mainRecipe.name}
             </h2>
 
@@ -101,8 +103,11 @@ export function SelectedMealHero({
               </RecipeBadgeGroup>
             )}
 
-            {/* Action Buttons - In the info area */}
-            <div className="mt-auto flex flex-wrap gap-3">
+            {/* Spacer to push buttons to bottom */}
+            <div className="flex-1" />
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-3">
               <Button
                 onClick={onToggleComplete}
                 variant={completed ? "outline" : "default"}
@@ -136,8 +141,8 @@ export function SelectedMealHero({
           </div>
         </div>
 
-        {/* Side Dishes Section */}
-        <div className="shrink-0">
+        {/* Side Dishes Section - Fixed at bottom */}
+        <div className="shrink-0 pt-6">
           <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-3">
             Side Dishes
           </h3>
@@ -145,12 +150,12 @@ export function SelectedMealHero({
             {sideRecipes.map((side) => (
               <SideDishCard key={side.id} side={side} />
             ))}
-            {/* Empty slots to show available space */}
+            {/* Empty slots */}
             {Array.from({ length: 3 - sideRecipes.length }).map((_, i) => (
               <div
                 key={`empty-${i}`}
                 className={cn(
-                  "w-32 aspect-[4/3] rounded-xl",
+                  "w-36 aspect-[4/3] rounded-xl",
                   "border-2 border-dashed border-border/50",
                   "flex items-center justify-center opacity-40"
                 )}
@@ -170,7 +175,7 @@ export function SelectedMealHero({
  */
 function SideDishCard({ side }: { side: MealSideRecipe }) {
   return (
-    <div className="w-32 bg-elevated rounded-xl overflow-hidden">
+    <div className="w-36 bg-elevated rounded-xl overflow-hidden">
       <div className="aspect-[4/3] relative overflow-hidden">
         <RecipeImage
           src={side.imageUrl}
@@ -180,7 +185,7 @@ function SideDishCard({ side }: { side: MealSideRecipe }) {
         />
       </div>
       <div className="p-2">
-        <p className="text-xs font-medium text-foreground truncate">
+        <p className="text-sm font-medium text-foreground truncate">
           {side.name}
         </p>
       </div>
