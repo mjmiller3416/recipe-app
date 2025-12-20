@@ -8,14 +8,10 @@ import { CreateMealModal, type NewMealData } from "./CreateMealModal";
 import { useMealQueue } from "@/hooks/useMealQueue";
 
 /**
- * MealPlannerPage - Main layout orchestrator for the Meal Planner feature
+ * MealPlannerPage - Main layout for Meal Planner
  * 
- * Layout: Hero section (selected meal) + Right sidebar (weekly menu queue)
- * 
- * Uses existing patterns:
- * - CSS variables for theming
- * - cn() for class merging
- * - Follows page layout conventions from Settings page
+ * CRITICAL: This page should NEVER scroll. Only the sidebar meal list scrolls.
+ * Uses absolute positioning to guarantee height constraints.
  */
 export function MealPlannerPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -39,20 +35,19 @@ export function MealPlannerPage() {
     },
   } = useMealQueue();
 
-  // Handle save meal (library only)
   const handleSaveMeal = (mealData: NewMealData) => {
     createMeal(mealData.name, mealData.mainRecipeId, mealData.sideRecipeIds, false);
   };
 
-  // Handle save and add to menu
   const handleSaveAndAddMeal = (mealData: NewMealData) => {
     createMeal(mealData.name, mealData.mainRecipeId, mealData.sideRecipeIds, true);
   };
 
   return (
-    <div className="flex h-full min-h-0 overflow-hidden">
-      {/* Hero Section - Selected Meal */}
-      <main className="flex-1 p-6 min-w-0 overflow-hidden">
+    // Absolute fill to guarantee we take exactly the parent's space, no more
+    <div className="absolute inset-0 flex overflow-hidden">
+      {/* Main Content - fills remaining space, never scrolls */}
+      <main className="flex-1 min-w-0 p-6 overflow-hidden">
         {selectedMeal ? (
           <SelectedMealHero
             meal={selectedMeal}
@@ -62,12 +57,12 @@ export function MealPlannerPage() {
         ) : (
           <EmptyMenuState
             onCreateMeal={() => setIsCreateModalOpen(true)}
-            onBrowseSaved={() => {/* TODO: Scroll to saved meals in sidebar */}}
+            onBrowseSaved={() => {}}
           />
         )}
       </main>
 
-      {/* Right Sidebar - Weekly Menu Queue (has its own scroll) */}
+      {/* Sidebar - fixed width, has its own internal scroll */}
       <WeeklyMenuSidebar
         activeMeals={activeMeals}
         completedMeals={completedMeals}
@@ -81,7 +76,6 @@ export function MealPlannerPage() {
         onCreateMeal={() => setIsCreateModalOpen(true)}
       />
 
-      {/* Create Meal Modal */}
       <CreateMealModal
         open={isCreateModalOpen}
         onOpenChange={setIsCreateModalOpen}

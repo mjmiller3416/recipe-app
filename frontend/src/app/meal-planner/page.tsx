@@ -5,12 +5,14 @@ import { MealPlannerPage } from "@/components/meal-planner";
  * 
  * Route: /meal-planner
  * 
- * Features:
- * - Weekly meal queue (not calendar-based)
- * - Selected meal hero view
- * - Shopping list integration
- * - Saved meals library
+ * IMPORTANT: The wrapper div with h-full and relative is required
+ * for the MealPlannerPage's absolute positioning to work correctly.
+ * This ensures the page never scrolls - only the sidebar meal list scrolls.
  */
 export default function Page() {
-  return <MealPlannerPage />;
+  return (
+    <div className="h-full relative">
+      <MealPlannerPage />
+    </div>
+  );
 }

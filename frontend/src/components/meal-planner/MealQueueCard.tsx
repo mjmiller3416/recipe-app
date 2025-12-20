@@ -1,6 +1,6 @@
 "use client";
 
-import { GripVertical, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
 import { cn } from "@/lib/utils";
 import { ShoppingListIndicator } from "./ShoppingListIndicator";
@@ -16,16 +16,7 @@ interface MealQueueCardProps {
 }
 
 /**
- * MealQueueCard - Individual meal card in the queue sidebar
- * 
- * Features:
- * - Thumbnail image
- * - Meal name (truncated)
- * - Shopping list indicator (teal = included, grey + X = excluded)
- * - Completion checkmark
- * - Drag handle (on hover)
- * - Selected state (purple ring)
- * - Completed state (greyed, strikethrough)
+ * MealQueueCard - Compact card for sidebar meal list
  */
 export function MealQueueCard({
   meal,
@@ -39,27 +30,18 @@ export function MealQueueCard({
     <div
       onClick={onSelect}
       className={cn(
-        "group relative flex items-center gap-2 p-2 rounded-xl cursor-pointer transition-all",
+        "flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all",
         isSelected
-          ? "bg-primary/20 ring-2 ring-primary"
+          ? "bg-primary/15 ring-2 ring-primary"
           : isCompleted
             ? "bg-elevated/30 opacity-60 hover:opacity-80"
             : "bg-elevated hover:bg-hover"
       )}
     >
-      {/* Drag Handle - visible on hover */}
-      <GripVertical
-        className={cn(
-          "h-4 w-4 text-muted shrink-0",
-          "opacity-0 group-hover:opacity-100 transition-opacity",
-          "cursor-grab active:cursor-grabbing"
-        )}
-      />
-
-      {/* Meal Thumbnail */}
+      {/* Thumbnail */}
       <div
         className={cn(
-          "w-10 h-10 rounded-lg overflow-hidden shrink-0 relative",
+          "w-12 h-12 rounded-lg overflow-hidden shrink-0 relative",
           isCompleted && "grayscale"
         )}
       >
@@ -71,7 +53,7 @@ export function MealQueueCard({
         />
       </div>
 
-      {/* Meal Name - flexible, truncates */}
+      {/* Name */}
       <span
         className={cn(
           "flex-1 text-sm font-medium truncate min-w-0",
@@ -81,7 +63,7 @@ export function MealQueueCard({
         {meal.name}
       </span>
 
-      {/* Shopping List Indicator - fixed */}
+      {/* Shopping List */}
       <ShoppingListIndicator
         included={meal.includeInShoppingList}
         disabled={isCompleted}
@@ -92,20 +74,18 @@ export function MealQueueCard({
         }}
       />
 
-      {/* Completion Checkmark - fixed */}
+      {/* Complete */}
       <button
         onClick={(e) => {
           e.stopPropagation();
           onToggleComplete();
         }}
         className={cn(
-          "p-1 rounded-md transition-all shrink-0",
+          "p-1.5 rounded-md transition-all shrink-0",
           isCompleted
             ? "text-success bg-success/20"
-            : "text-muted hover:bg-hover hover:text-success"
+            : "text-muted hover:text-success hover:bg-success/10"
         )}
-        title={isCompleted ? "Mark as not cooked" : "Mark as cooked"}
-        aria-label={isCompleted ? "Mark as not cooked" : "Mark as cooked"}
       >
         <Check className="h-4 w-4" />
       </button>
