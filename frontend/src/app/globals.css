@@ -354,9 +354,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-html {
-  scrollbar-gutter: stable;
-}
 
 body {
   background: var(--background);
@@ -404,4 +401,69 @@ body {
 
 .shadow-xl {
   box-shadow: var(--shadow-xl);
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+
+/* Custom scrollbar variables (derived from theme) */
+:root {
+  --scrollbar-width: 16px;
+  --scrollbar-track: var(--elevated);
+  --scrollbar-thumb: var(--border-strong);
+  --scrollbar-thumb-hover: var(--muted);
+  --scrollbar-radius: 8px;
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: var(--scrollbar-width) !important;
+  height: var(--scrollbar-width) !important;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: var(--scrollbar-radius);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: var(--scrollbar-radius);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* ============================================
+   SCROLLBAR UTILITIES
+   ============================================ */
+
+/* Hide scrollbar while maintaining scroll functionality */
+.scrollbar-hidden {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Hide scrollbars for all scrollable descendants in fixed viewport layouts */
+.fixed-viewport-scrollbar-hidden,
+.fixed-viewport-scrollbar-hidden * {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.fixed-viewport-scrollbar-hidden::-webkit-scrollbar,
+.fixed-viewport-scrollbar-hidden *::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }

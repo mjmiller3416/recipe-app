@@ -46,7 +46,6 @@ const mockRecipeBreakdown: Record<string, { recipe_name: string; quantity: numbe
     { recipe_name: "Spaghetti Carbonara", quantity: 4, unit: "slices" },
     { recipe_name: "BLT Sandwich", quantity: 4, unit: "slices" },
   ],
-  // Single-recipe items for testing tooltips
   "mozzarella_oz": [
     { recipe_name: "Caprese Salad", quantity: 8, unit: "oz" },
   ],
@@ -118,6 +117,40 @@ function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
   }
 
   return itemContent;
+}
+
+// Sticky Header Component with Stats and Search
+interface StickyHeaderProps {
+  stats: { remaining: number; checked: number; total: number };
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+}
+
+function StickyHeader({ stats, searchTerm, onSearchChange }: StickyHeaderProps) {
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-4 space-y-4">
+      {/* Statistics */}
+      <StatsCard
+        icon={ShoppingCart}
+        primaryValue={stats.remaining}
+        primaryLabel="items remaining"
+        secondaryValue={`${stats.checked}/${stats.total}`}
+        secondaryLabel="completed"
+        progress={{ current: stats.checked, total: stats.total }}
+      />
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
+        <Input
+          placeholder="Search ingredients..."
+          value={searchTerm}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+    </div>
+  );
 }
 
 export default function ShoppingListPage() {
@@ -194,6 +227,14 @@ export default function ShoppingListPage() {
     <PageLayout
       title="Shopping List"
       description="Auto-generated from your meal plan"
+      fixedViewport
+      stickyHeader={
+        <StickyHeader
+          stats={stats}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+        />
+      }
       actions={
         <>
           <Button
@@ -218,31 +259,9 @@ export default function ShoppingListPage() {
         </>
       }
     >
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Shopping List */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Statistics Card */}
-          <StatsCard
-            icon={ShoppingCart}
-            primaryValue={stats.remaining}
-            primaryLabel="items remaining"
-            secondaryValue={`${stats.checked}/${stats.total}`}
-            secondaryLabel="completed"
-            progress={{ current: stats.checked, total: stats.total }}
-          />
-
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted" />
-            <Input
-              placeholder="Search ingredients..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
-          {/* Shopping List Accordions */}
+      <div className="flex gap-6 h-full">
+        {/* Left Column - Shopping List (scrolls) */}
+        <div className="flex-1 min-w-0 overflow-y-auto">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-start gap-3 mb-6">
@@ -308,8 +327,8 @@ export default function ShoppingListPage() {
           </Card>
         </div>
 
-        {/* Right Column - Add Item */}
-        <div className="lg:col-span-1">
+        {/* Right Column - Add Item (fixed, doesn't scroll) */}
+        <div className="w-80 flex-shrink-0">
           <AddItemForm onAddItem={handleAddItem} />
         </div>
       </div>

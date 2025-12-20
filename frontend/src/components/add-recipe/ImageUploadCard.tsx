@@ -126,7 +126,7 @@ export function ImageUploadCard({
   const displayImage = pendingGeneratedImage?.dataUrl || imagePreview;
 
   return (
-    <Card className="sticky top-8">
+    <Card>
       <CardContent className="pt-6">
         {/* Header */}
         <div className="flex items-start gap-3 mb-6">

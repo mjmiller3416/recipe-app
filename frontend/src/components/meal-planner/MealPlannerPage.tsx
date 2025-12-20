@@ -43,8 +43,7 @@ export function MealPlannerPage() {
     <PageLayout
       title="Meal Planner"
       description="Plan your weekly meals"
-      className="h-screen flex flex-col overflow-hidden"
-      contentClassName="flex-1 min-h-0 overflow-hidden py-6"
+      fixedViewport
     >
       <div className="flex gap-6 h-full">
         {/* Main Content Area - placeholder for now */}

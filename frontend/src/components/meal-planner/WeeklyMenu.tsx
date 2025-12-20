@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { MealQueueCard } from "./MealQueueCard";
 import type { MealQueueEntry, SavedMeal } from "./types";
@@ -51,7 +51,8 @@ export function WeeklyMenuSidebar({
         <CardTitle className="text-lg">This Week's Menu</CardTitle>
       </CardHeader>
 
-      <CardContent className="flex-1 min-h-0 overflow-y-auto px-4 pb-4">
+      {/* TEST: Native overflow instead of ScrollArea */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-4">
         <div className="space-y-2">
           {/* Active Meals */}
           {activeMeals.map((meal) => (
@@ -110,7 +111,7 @@ export function WeeklyMenuSidebar({
             </>
           )}
         </div>
-      </CardContent>
+      </div>
 
       <CardFooter className="shrink-0 p-4 border-t border-border">
         <Button

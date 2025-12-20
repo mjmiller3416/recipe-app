@@ -18,6 +18,7 @@ export default function AddRecipePage() {
     <PageLayout
       title="Add New Recipe"
       description="Create a new recipe for your collection"
+      fixedViewport
       actions={
         <Button
           variant="outline"
@@ -31,9 +32,9 @@ export default function AddRecipePage() {
         </Button>
       }
     >
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Main Form */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="flex gap-6 h-full">
+        {/* Left Column - Form Cards (scrolls) */}
+        <div className="flex-1 min-w-0 overflow-y-auto space-y-6">
           {/* Recipe Info Section */}
           <RecipeInfoCard
             recipeName={form.recipeName}
@@ -73,8 +74,8 @@ export default function AddRecipePage() {
           />
         </div>
 
-        {/* Right Column - Image Upload */}
-        <div className="lg:col-span-1">
+        {/* Right Column - Image Upload (fixed, doesn't scroll) */}
+        <div className="w-80 flex-shrink-0">
           <ImageUploadCard
             imagePreview={form.imagePreview}
             onImageUpload={form.handleImageUpload}

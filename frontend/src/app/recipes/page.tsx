@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   Search,
   SlidersHorizontal,
-  ArrowUpDown,
   ArrowUp,
   ArrowDown,
   X,
@@ -30,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PageLayout } from "@/components/layout/PageLayout";
 import { RecipeCard, RecipeCardGrid } from "@/components/recipe/RecipeCard";
 import { recipeApi } from "@/lib/api";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
@@ -271,10 +271,10 @@ function FilterChip({ label, type, onRemove }: FilterChipProps) {
 }
 
 // ============================================================================
-// Section Header Component
+// Sticky Header Bar Component (Sort + Active Filters)
 // ============================================================================
 
-interface SectionHeaderProps {
+interface StickyHeaderBarProps {
   resultCount: number;
   totalCount: number;
   sortBy: SortOption;
@@ -283,9 +283,12 @@ interface SectionHeaderProps {
   onSortDirectionToggle: () => void;
   showFilters: boolean;
   onToggleFilters: () => void;
+  activeFilters: ActiveFilter[];
+  onRemoveFilter: (filter: ActiveFilter) => void;
+  onClearAllFilters: () => void;
 }
 
-function SectionHeader({
+function StickyHeaderBar({
   resultCount,
   totalCount,
   sortBy,
@@ -294,58 +297,91 @@ function SectionHeader({
   onSortDirectionToggle,
   showFilters,
   onToggleFilters,
-}: SectionHeaderProps) {
+  activeFilters,
+  onRemoveFilter,
+  onClearAllFilters,
+}: StickyHeaderBarProps) {
   return (
-    <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center gap-3">
-        <Sparkles className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-semibold text-foreground">Your Recipes</h2>
-        <span className="text-sm text-muted">
-          {resultCount === totalCount
-            ? `${totalCount} recipes`
-            : `${resultCount} of ${totalCount} recipes`}
-        </span>
+    <div className="max-w-7xl mx-auto px-6 py-4">
+      {/* Section Header with Sort */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <Sparkles className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-semibold text-foreground">Your Recipes</h2>
+          <span className="text-sm text-muted">
+            {resultCount === totalCount
+              ? `${totalCount} recipes`
+              : `${resultCount} of ${totalCount} recipes`}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted">Sort by:</span>
+          <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortOption)}>
+            <SelectTrigger className="w-[140px] h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  <span className="flex items-center gap-2">
+                    <option.icon className="h-4 w-4" />
+                    {option.label}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onSortDirectionToggle}
+            className="h-9 w-9"
+            aria-label={`Sort ${sortDirection === "asc" ? "ascending" : "descending"}`}
+          >
+            {sortDirection === "asc" ? (
+              <ArrowUp className="h-4 w-4" />
+            ) : (
+              <ArrowDown className="h-4 w-4" />
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onToggleFilters}
+            className="gap-2 ml-2"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            {showFilters ? "Hide Filters" : "Show Filters"}
+          </Button>
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted">Sort by:</span>
-        <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortOption)}>
-          <SelectTrigger className="w-[140px] h-9">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SORT_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                <span className="flex items-center gap-2">
-                  <option.icon className="h-4 w-4" />
-                  {option.label}
-                </span>
-              </SelectItem>
+
+      {/* Active Filters - Always visible when filters are applied */}
+      {activeFilters.length > 0 && (
+        <div className="p-4 bg-elevated rounded-lg border border-border">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-medium text-foreground">Active Filters</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClearAllFilters}
+              className="text-xs text-muted hover:text-foreground h-auto py-1 px-2"
+            >
+              Clear All
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {activeFilters.map((filter, index) => (
+              <FilterChip
+                key={`${filter.type}-${filter.value}-${index}`}
+                label={filter.label}
+                type={filter.type}
+                onRemove={() => onRemoveFilter(filter)}
+              />
             ))}
-          </SelectContent>
-        </Select>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={onSortDirectionToggle}
-          className="h-9 w-9"
-          aria-label={`Sort ${sortDirection === "asc" ? "ascending" : "descending"}`}
-        >
-          {sortDirection === "asc" ? (
-            <ArrowUp className="h-4 w-4" />
-          ) : (
-            <ArrowDown className="h-4 w-4" />
-          )}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onToggleFilters}
-          className="gap-2 ml-2"
-        >
-          <SlidersHorizontal className="h-4 w-4" />
-          {showFilters ? "Hide Filters" : "Show Filters"}
-        </Button>
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -700,173 +736,148 @@ export default function RecipeBrowserPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <HeroSection
-        recipeCount={recipes.length}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        onSearch={() => {}}
-        activeQuickFilters={activeQuickFilters}
-        onQuickFilterToggle={handleQuickFilterToggle}
-      />
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex gap-6">
-          {/* Filter Sidebar */}
-          {showFilters && (
-            <aside className="w-64 flex-shrink-0">
-              <Card className="sticky top-24">
-                <CardContent className="pt-6">
-                  {/* Sidebar Header */}
-                  <div className="flex items-center justify-between mb-4 pb-4 border-b border-border">
-                    <div className="flex items-center gap-2">
-                      <SlidersHorizontal className="h-4 w-4 text-primary" />
-                      <span className="font-medium text-foreground">Refine Results</span>
-                    </div>
-                    {hasActiveFilters && (
-                      <button
-                        onClick={handleClearAllFilters}
-                        className="text-xs text-primary hover:text-primary/80 transition-colors"
-                      >
-                        Reset
-                      </button>
-                    )}
+    <PageLayout
+      title="Recipes"
+      hero={
+        <HeroSection
+          recipeCount={recipes.length}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          onSearch={() => {}}
+          activeQuickFilters={activeQuickFilters}
+          onQuickFilterToggle={handleQuickFilterToggle}
+        />
+      }
+      stickyHeader={
+        <StickyHeaderBar
+          resultCount={filteredRecipes.length}
+          totalCount={recipes.length}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSortChange={setSortBy}
+          onSortDirectionToggle={toggleSortDirection}
+          showFilters={showFilters}
+          onToggleFilters={() => setShowFilters(!showFilters)}
+          activeFilters={activeFilters}
+          onRemoveFilter={handleRemoveFilter}
+          onClearAllFilters={handleClearAllFilters}
+        />
+      }
+    >
+      <div className="flex gap-6 h-full">
+        {/* Filter Sidebar - scrolls internally */}
+        {showFilters && (
+          <aside className="w-64 flex-shrink-0 overflow-y-auto">
+            <Card>
+              <CardContent className="pt-6">
+                {/* Sidebar Header */}
+                <div className="flex items-center justify-between mb-4 pb-4 border-b border-border">
+                  <div className="flex items-center gap-2">
+                    <SlidersHorizontal className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-foreground">Refine Results</span>
                   </div>
-
-                  {/* Favorites Toggle */}
-                  <label className="flex items-center gap-3 py-3 px-2 mb-2 rounded-md cursor-pointer hover:bg-hover transition-colors">
-                    <Checkbox
-                      checked={filters.favoritesOnly}
-                      onCheckedChange={(checked) => {
-                        setFilters((prev) => ({ ...prev, favoritesOnly: checked as boolean }));
-                        setActiveQuickFilters((prev) => {
-                          const next = new Set(prev);
-                          if (checked) {
-                            next.add("favorites");
-                          } else {
-                            next.delete("favorites");
-                          }
-                          return next;
-                        });
-                      }}
-                    />
-                    <Heart
-                      className={cn(
-                        "h-4 w-4 transition-colors",
-                        filters.favoritesOnly ? "text-[var(--error)] fill-current" : "text-muted"
-                      )}
-                    />
-                    <span className="text-sm text-foreground">Favorites Only</span>
-                  </label>
-
-                  {/* Filter Sections */}
-                  <div className="space-y-2 divide-y divide-border">
-                    <FilterSection
-                      title="Category"
-                      icon={ChefHat}
-                      options={categoryOptions.map((c) => c.label)}
-                      selected={filters.categories}
-                      onChange={handleCategoryChange}
-                    />
-                    <FilterSection
-                      title="Meal Type"
-                      icon={Clock}
-                      options={mealTypeOptions.map((m) => m.label)}
-                      selected={filters.mealTypes}
-                      onChange={handleMealTypeChange}
-                    />
-                    {dietaryOptions.length > 0 && (
-                      <FilterSection
-                        title="Dietary Preference"
-                        icon={BookOpen}
-                        options={dietaryOptions.map((d) => d.label)}
-                        selected={filters.dietaryPreferences}
-                        onChange={handleDietaryChange}
-                      />
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </aside>
-          )}
-
-          {/* Recipe Grid */}
-          <main className="flex-1 min-w-0">
-            {/* Section Header with Sort */}
-            <SectionHeader
-              resultCount={filteredRecipes.length}
-              totalCount={recipes.length}
-              sortBy={sortBy}
-              sortDirection={sortDirection}
-              onSortChange={setSortBy}
-              onSortDirectionToggle={toggleSortDirection}
-              showFilters={showFilters}
-              onToggleFilters={() => setShowFilters(!showFilters)}
-            />
-
-            {/* Active Filters Display */}
-            {activeFilters.length > 0 && (
-              <div className="mb-6 p-4 bg-elevated rounded-lg border border-border">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-foreground">Active Filters</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleClearAllFilters}
-                    className="text-xs text-muted hover:text-foreground h-auto py-1 px-2"
-                  >
-                    Clear All
-                  </Button>
+                  {hasActiveFilters && (
+                    <button
+                      onClick={handleClearAllFilters}
+                      className="text-xs text-primary hover:text-primary/80 transition-colors"
+                    >
+                      Reset
+                    </button>
+                  )}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {activeFilters.map((filter, index) => (
-                    <FilterChip
-                      key={`${filter.type}-${filter.value}-${index}`}
-                      label={filter.label}
-                      type={filter.type}
-                      onRemove={() => handleRemoveFilter(filter)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {/* Results */}
-            {filteredRecipes.length > 0 ? (
-              <RecipeCardGrid size="medium">
-                {filteredRecipes.map((recipe) => (
-                  <RecipeCard
-                    key={recipe.id}
-                    recipe={recipe}
-                    size="medium"
-                    onClick={handleRecipeClick}
-                    onFavoriteToggle={handleFavoriteToggle}
+                {/* Favorites Toggle */}
+                <label className="flex items-center gap-3 py-3 px-2 mb-2 rounded-md cursor-pointer hover:bg-hover transition-colors">
+                  <Checkbox
+                    checked={filters.favoritesOnly}
+                    onCheckedChange={(checked) => {
+                      setFilters((prev) => ({ ...prev, favoritesOnly: checked as boolean }));
+                      setActiveQuickFilters((prev) => {
+                        const next = new Set(prev);
+                        if (checked) {
+                          next.add("favorites");
+                        } else {
+                          next.delete("favorites");
+                        }
+                        return next;
+                      });
+                    }}
                   />
-                ))}
-              </RecipeCardGrid>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="p-4 bg-elevated rounded-full mb-4">
-                  <ChefHat className="h-12 w-12 text-muted" />
+                  <Heart
+                    className={cn(
+                      "h-4 w-4 transition-colors",
+                      filters.favoritesOnly ? "text-[var(--error)] fill-current" : "text-muted"
+                    )}
+                  />
+                  <span className="text-sm text-foreground">Favorites Only</span>
+                </label>
+
+                {/* Filter Sections */}
+                <div className="space-y-2 divide-y divide-border">
+                  <FilterSection
+                    title="Category"
+                    icon={ChefHat}
+                    options={categoryOptions.map((c) => c.label)}
+                    selected={filters.categories}
+                    onChange={handleCategoryChange}
+                  />
+                  <FilterSection
+                    title="Meal Type"
+                    icon={Clock}
+                    options={mealTypeOptions.map((m) => m.label)}
+                    selected={filters.mealTypes}
+                    onChange={handleMealTypeChange}
+                  />
+                  {dietaryOptions.length > 0 && (
+                    <FilterSection
+                      title="Dietary Preference"
+                      icon={BookOpen}
+                      options={dietaryOptions.map((d) => d.label)}
+                      selected={filters.dietaryPreferences}
+                      onChange={handleDietaryChange}
+                    />
+                  )}
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">No Recipes Found</h3>
-                <p className="text-sm text-muted max-w-sm mb-4">
-                  {hasActiveFilters
-                    ? "Try adjusting your filters or search term to find more recipes."
-                    : "Your recipe collection is empty. Start by adding some recipes!"}
-                </p>
-                {hasActiveFilters && (
-                  <Button variant="outline" onClick={handleClearAllFilters}>
-                    Clear All Filters
-                  </Button>
-                )}
+              </CardContent>
+            </Card>
+          </aside>
+        )}
+
+        {/* Recipe Grid - scrolls internally */}
+        <main className="flex-1 min-w-0 overflow-y-auto">
+          {/* Results */}
+          {filteredRecipes.length > 0 ? (
+            <RecipeCardGrid size="medium">
+              {filteredRecipes.map((recipe) => (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  size="medium"
+                  onClick={handleRecipeClick}
+                  onFavoriteToggle={handleFavoriteToggle}
+                />
+              ))}
+            </RecipeCardGrid>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="p-4 bg-elevated rounded-full mb-4">
+                <ChefHat className="h-12 w-12 text-muted" />
               </div>
-            )}
-          </main>
-        </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">No Recipes Found</h3>
+              <p className="text-sm text-muted max-w-sm mb-4">
+                {hasActiveFilters
+                  ? "Try adjusting your filters or search term to find more recipes."
+                  : "Your recipe collection is empty. Start by adding some recipes!"}
+              </p>
+              {hasActiveFilters && (
+                <Button variant="outline" onClick={handleClearAllFilters}>
+                  Clear All Filters
+                </Button>
+              )}
+            </div>
+          )}
+        </main>
       </div>
-    </div>
+    </PageLayout>
   );
 }
