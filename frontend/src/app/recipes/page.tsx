@@ -764,10 +764,10 @@ export default function RecipeBrowserPage() {
         />
       }
     >
-      <div className="flex gap-6 h-full">
-        {/* Filter Sidebar - scrolls internally */}
+      <div className="flex gap-6">
+        {/* Filter Sidebar */}
         {showFilters && (
-          <aside className="w-64 flex-shrink-0 overflow-y-auto">
+          <aside className="w-64 flex-shrink-0">
             <Card>
               <CardContent className="pt-6">
                 {/* Sidebar Header */}
@@ -843,8 +843,8 @@ export default function RecipeBrowserPage() {
           </aside>
         )}
 
-        {/* Recipe Grid - scrolls internally */}
-        <main className="flex-1 min-w-0 overflow-y-auto">
+        {/* Recipe Grid */}
+        <main className="flex-1 min-w-0">
           {/* Results */}
           {filteredRecipes.length > 0 ? (
             <RecipeCardGrid size="medium">

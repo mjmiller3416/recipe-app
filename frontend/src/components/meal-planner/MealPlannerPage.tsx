@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { WeeklyMenuSidebar } from "./WeeklyMenu";
 import { CreateMealModal, type NewMealData } from "./CreateMealModal";
+import { EmptyMenuState } from "./EmptyMenuState";
 import { useMealQueue } from "@/hooks/useMealQueue";
 
 /**
@@ -43,27 +44,35 @@ export function MealPlannerPage() {
     <PageLayout
       title="Meal Planner"
       description="Plan your weekly meals"
-      fixedViewport
     >
-      <div className="flex gap-6 h-full">
-        {/* Main Content Area - placeholder for now */}
+      <div className="flex gap-6">
+        {/* Main Content Area (scrolls with page) */}
         <div className="flex-1">
-          {/* Content will go here */}
+          {activeMeals.length === 0 ? (
+            <EmptyMenuState onCreateMeal={() => setIsCreateModalOpen(true)} />
+          ) : (
+            /* Future: Selected meal hero, side dishes, etc. */
+            null
+          )}
         </div>
 
-        {/* Weekly Menu - Right Sidebar */}
-        <WeeklyMenuSidebar
-          activeMeals={activeMeals}
-          completedMeals={completedMeals}
-          selectedId={selectedId}
-          savedMeals={savedMeals}
-          onSelectMeal={setSelectedId}
-          onToggleShoppingList={toggleShoppingList}
-          onToggleComplete={toggleComplete}
-          onClearCompleted={clearCompleted}
-          onAddMeal={addMealToQueue}
-          onCreateMeal={() => setIsCreateModalOpen(true)}
-        />
+        {/* Weekly Menu - Right Sidebar (sticky - stays visible while scrolling) */}
+        <div className="w-80 flex-shrink-0">
+          <div className="sticky top-24">
+            <WeeklyMenuSidebar
+              activeMeals={activeMeals}
+              completedMeals={completedMeals}
+              selectedId={selectedId}
+              savedMeals={savedMeals}
+              onSelectMeal={setSelectedId}
+              onToggleShoppingList={toggleShoppingList}
+              onToggleComplete={toggleComplete}
+              onClearCompleted={clearCompleted}
+              onAddMeal={addMealToQueue}
+              onCreateMeal={() => setIsCreateModalOpen(true)}
+            />
+          </div>
+        </div>
       </div>
 
       <CreateMealModal

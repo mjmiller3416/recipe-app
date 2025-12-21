@@ -119,16 +119,16 @@ function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
   return itemContent;
 }
 
-// Sticky Header Component with Stats and Search
-interface StickyHeaderProps {
+// Stats and Search Component (inline in content)
+interface StatsSearchProps {
   stats: { remaining: number; checked: number; total: number };
   searchTerm: string;
   onSearchChange: (value: string) => void;
 }
 
-function StickyHeader({ stats, searchTerm, onSearchChange }: StickyHeaderProps) {
+function StatsSearch({ stats, searchTerm, onSearchChange }: StatsSearchProps) {
   return (
-    <div className="max-w-7xl mx-auto px-6 py-4 space-y-4">
+    <div className="space-y-4 mb-6">
       {/* Statistics */}
       <StatsCard
         icon={ShoppingCart}
@@ -227,14 +227,6 @@ export default function ShoppingListPage() {
     <PageLayout
       title="Shopping List"
       description="Auto-generated from your meal plan"
-      fixedViewport
-      stickyHeader={
-        <StickyHeader
-          stats={stats}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-        />
-      }
       actions={
         <>
           <Button
@@ -259,9 +251,16 @@ export default function ShoppingListPage() {
         </>
       }
     >
-      <div className="flex gap-6 h-full">
-        {/* Left Column - Shopping List (scrolls) */}
-        <div className="flex-1 min-w-0 overflow-y-auto">
+      <div className="flex gap-6">
+        {/* Left Column - Shopping List (scrolls with page) */}
+        <div className="flex-1 min-w-0">
+          {/* Stats and Search */}
+          <StatsSearch
+            stats={stats}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+          />
+
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-start gap-3 mb-6">
@@ -327,9 +326,11 @@ export default function ShoppingListPage() {
           </Card>
         </div>
 
-        {/* Right Column - Add Item (fixed, doesn't scroll) */}
+        {/* Right Column - Add Item (sticky - stays visible while scrolling) */}
         <div className="w-80 flex-shrink-0">
-          <AddItemForm onAddItem={handleAddItem} />
+          <div className="sticky top-24">
+            <AddItemForm onAddItem={handleAddItem} />
+          </div>
         </div>
       </div>
     </PageLayout>

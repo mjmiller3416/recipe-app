@@ -1,25 +1,21 @@
 "use client";
 
-import { ChefHat, Plus, Bookmark } from "lucide-react";
+import { ChefHat, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface EmptyMenuStateProps {
   onCreateMeal?: () => void;
-  onBrowseSaved?: () => void;
 }
 
 /**
  * EmptyMenuState - Shown when the weekly menu has no meals
- * 
+ *
  * Follows existing empty state patterns from the codebase:
  * - Centered icon
  * - Heading + description
- * - Primary and secondary CTAs
+ * - Primary CTA button
  */
-export function EmptyMenuState({
-  onCreateMeal,
-  onBrowseSaved,
-}: EmptyMenuStateProps) {
+export function EmptyMenuState({ onCreateMeal }: EmptyMenuStateProps) {
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 px-8 h-full">
       {/* Icon */}
@@ -34,28 +30,17 @@ export function EmptyMenuState({
 
       {/* Description */}
       <p className="text-muted mb-8 max-w-md">
-        Start planning your week by creating a new meal or adding from your saved meals.
+        Start planning your week by creating a new meal.
       </p>
 
-      {/* Actions */}
-      <div className="flex gap-4">
-        <Button
-          onClick={onCreateMeal}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-5 w-5" />
-          Create New Meal
-        </Button>
-
-        <Button
-          variant="outline"
-          onClick={onBrowseSaved}
-          className="flex items-center gap-2"
-        >
-          <Bookmark className="h-5 w-5" />
-          Browse Saved Meals
-        </Button>
-      </div>
+      {/* Action */}
+      <Button
+        onClick={onCreateMeal}
+        className="flex items-center gap-2"
+      >
+        <Plus className="h-5 w-5" />
+        Create New Meal
+      </Button>
     </div>
   );
 }

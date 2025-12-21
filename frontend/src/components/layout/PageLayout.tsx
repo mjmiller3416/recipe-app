@@ -28,40 +28,42 @@ interface PageLayoutProps {
   className?: string;
   /** Optional className for the content container */
   contentClassName?: string;
-  /** Enable fixed viewport mode - page doesn't scroll, children manage their own scroll */
-  fixedViewport?: boolean;
-  /** Optional hero section that scrolls away (only used with fixedViewport) */
+  /** Optional hero section that replaces the standard header */
   hero?: React.ReactNode;
-  /** Optional sticky header bar below the main header (for sort options, active filters, etc.) */
+  /** Optional sticky header bar below the hero (for sort options, active filters, etc.) */
   stickyHeader?: React.ReactNode;
 }
 
 /**
  * PageLayout - Standard page layout wrapper
  *
- * Supports three modes:
- * 1. Standard (default) - Page scrolls normally
- * 2. Fixed Viewport (fixedViewport=true) - No page scroll, content fills viewport
- * 3. Hero + Fixed (hero + fixedViewport) - Hero scrolls away, then content locks
+ * Supports two modes:
+ * 1. Standard (default) - Page scrolls normally with sticky header
+ * 2. Hero mode - Hero section at top, sticky subheader for filters/sort
+ *
+ * For sticky sidebars, use CSS `position: sticky` on child elements.
  *
  * @example
  * // Standard scrolling page
- * <PageLayout title="Shopping List">
+ * <PageLayout title="Settings">
  *   {content}
  * </PageLayout>
  *
  * @example
- * // Fixed viewport (MealPlanner)
- * <PageLayout title="Meal Planner" fixedViewport>
- *   {content}
+ * // Page with sticky sidebar (use sticky positioning on the sidebar element)
+ * <PageLayout title="Add Recipe">
+ *   <div className="flex gap-6">
+ *     <main className="flex-1">{formContent}</main>
+ *     <aside className="sticky top-24 self-start">{sidebar}</aside>
+ *   </div>
  * </PageLayout>
  *
  * @example
- * // Hero + fixed content (RecipeBrowser)
+ * // Hero mode (RecipeBrowser)
  * <PageLayout
+ *   title="Recipes"
  *   hero={<HeroSection />}
  *   stickyHeader={<SortAndFilters />}
- *   fixedViewport
  * >
  *   {content}
  * </PageLayout>
@@ -76,7 +78,6 @@ export function PageLayout({
   children,
   className,
   contentClassName,
-  fixedViewport = false,
   hero,
   stickyHeader,
 }: PageLayoutProps) {
@@ -119,13 +120,24 @@ export function PageLayout({
   );
 
   // ============================================
-  // MODE 1: Standard scrolling page (default)
+  // HERO MODE: Hero section with sticky subheader
+  // Used by: RecipeBrowser
   // ============================================
-  if (!fixedViewport && !hero) {
+  if (hero) {
     return (
       <div className={cn("min-h-screen bg-background", className)}>
-        {headerElement}
-        <div className={cn("max-w-7xl mx-auto px-6 py-8", contentClassName)}>
+        {/* Hero section */}
+        {hero}
+
+        {/* Sticky header bar (sort options, active filters) */}
+        {stickyHeader && (
+          <div className="sticky top-0 z-40 bg-background border-b border-border">
+            {stickyHeader}
+          </div>
+        )}
+
+        {/* Main content area */}
+        <div className={cn("max-w-7xl mx-auto w-full px-6 py-6", contentClassName)}>
           {children}
         </div>
       </div>
@@ -133,58 +145,15 @@ export function PageLayout({
   }
 
   // ============================================
-  // MODE 2: Fixed viewport (no hero)
-  // Used by: MealPlanner
+  // STANDARD MODE: Normal scrolling page
+  // Used by: Settings, Add Recipe, Edit Recipe, Shopping List, Meal Planner
   // ============================================
-  if (fixedViewport && !hero) {
-    return (
-      <div className={cn("h-screen flex flex-col overflow-hidden bg-background", className)}>
-        {headerElement}
-        {stickyHeader && (
-          <div className="flex-shrink-0 bg-background border-b border-border">
-            {stickyHeader}
-          </div>
-        )}
-        <div className={cn("flex-1 min-h-0 overflow-hidden fixed-viewport-scrollbar-hidden", contentClassName)}>
-          <div className="h-full max-w-7xl mx-auto w-full px-6 py-6">
-            {children}
-          </div>
-        </div>
+  return (
+    <div className={cn("min-h-screen bg-background", className)}>
+      {headerElement}
+      <div className={cn("max-w-7xl mx-auto px-6 py-6", contentClassName)}>
+        {children}
       </div>
-    );
-  }
-
-  // ============================================
-  // MODE 3: Hero + fixed viewport
-  // Used by: RecipeBrowser
-  // Hero scrolls away, then content locks in place
-  // ============================================
-  if (hero) {
-    return (
-      <div className={cn("h-screen flex flex-col bg-background", className)}>
-        {/* Scrollable container for hero */}
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          {/* Hero section - scrolls with content */}
-          <div className="flex-shrink-0">
-            {hero}
-          </div>
-
-          {/* Sticky header bar (sort options, active filters) */}
-          {stickyHeader && (
-            <div className="sticky top-0 z-40 bg-background border-b border-border">
-              {stickyHeader}
-            </div>
-          )}
-
-          {/* Main content area */}
-          <div className={cn("max-w-7xl mx-auto w-full px-6 py-6", contentClassName)}>
-            {children}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Fallback (shouldn't reach here)
-  return null;
+    </div>
+  );
 }
