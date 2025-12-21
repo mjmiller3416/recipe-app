@@ -77,7 +77,17 @@ frontend/
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
 | GET | `/api/planner/summary` | Get meal plan summary |
+| GET | `/api/planner/entries` | List planner entries (optional `?completed=true/false`) |
+| POST | `/api/planner/entries/{mealId}` | Add meal to planner |
+| POST | `/api/planner/entries/{entryId}/toggle` | Toggle entry completion |
+| POST | `/api/planner/entries/{entryId}/complete` | Mark entry complete |
+| POST | `/api/planner/entries/{entryId}/incomplete` | Mark entry incomplete |
+| DELETE | `/api/planner/entries/{entryId}` | Remove entry from planner |
+| PUT | `/api/planner/entries/reorder` | Reorder entries (body: `{entry_ids: number[]}`) |
 | DELETE | `/api/planner/clear` | Clear all planner entries |
+| DELETE | `/api/planner/clear-completed` | Clear completed entries only |
+
+> **See also:** [MEAL_PLANNER_DOCUMENTATION.md](./MEAL_PLANNER_DOCUMENTATION.md) for complete meal planner feature documentation.
 
 ### Shopping (`/api/shopping`)
 | Method | Endpoint | Purpose |
@@ -210,6 +220,24 @@ shadcn/ui components - use `npx shadcn@latest add <name>` to add more
 |-----------|---------|
 | `DataManagementSection` | Import/export controls |
 
+### Meal Planner (`components/meal-planner/`)
+| Component | Purpose |
+|-----------|---------|
+| `MealPlannerPage` | Main page with two-column layout |
+| `SelectedMealView` | Left column - displays selected meal with actions |
+| `WeeklyMenuSidebar` | Right column - draggable meal queue |
+| `CreateMealDialog` | Modal for creating/editing meals |
+| `MainDishCard` | Hero card for main dish (16:9 aspect) |
+| `SideDishCard` | Compact card for side dishes |
+| `SideDishGrid` | 3-column grid of side dishes |
+| `MealSidebarCard` | Card for meals in sidebar queue |
+| `SortableMealSidebarCard` | Draggable wrapper for sidebar cards |
+| `RecipeDetailPopup` | Quick preview popup for recipes |
+| `EmptyPlannerState` | Large empty state for main area |
+| `EmptySidebarState` | Compact empty state for sidebar |
+
+> **See also:** [MEAL_PLANNER_DOCUMENTATION.md](./MEAL_PLANNER_DOCUMENTATION.md) for complete component documentation.
+
 ---
 
 ## Utilities (`lib/`)
@@ -234,6 +262,7 @@ shadcn/ui components - use `npx shadcn@latest add <name>` to add more
 |------|---------|
 | `useSettings` | Theme management, settings persistence |
 | `useUnsavedChanges` | **Warn on navigation** - tracks dirty state, shows confirmation dialog, handles browser back/refresh |
+| `useMealPlanner` | **Meal planner state** - entries, savedMeals, recipes, selection, CRUD actions, optimistic updates |
 
 ---
 
@@ -246,6 +275,17 @@ All TypeScript interfaces matching backend DTOs. Key types:
 - **Shopping**: `ShoppingItemResponseDTO`, `ShoppingListResponseDTO`, `ShoppingListFilterDTO`
 - **Ingredient**: `IngredientResponseDTO`, `IngredientDetailDTO`, `IngredientSearchDTO`
 - **Data**: `ImportPreviewDTO`, `ImportResultDTO`, `ExportFilterDTO`
+
+### Meal Planner Types (`components/meal-planner/types.ts`)
+
+Local types for the meal planner feature:
+
+- **Recipe**: `SelectableRecipe`, `MealSideRecipe`, `MealMainRecipe`
+- **Entries**: `MealQueueEntry`, `SavedMeal`
+- **API Responses**: `PlannerEntryResponse`, `RecipeCardResponse`, `MealSelectionResponse`, `PlannerSummaryResponse`
+- **Hook**: `UseMealPlannerReturn`
+
+> **See also:** [MEAL_PLANNER_DOCUMENTATION.md](./MEAL_PLANNER_DOCUMENTATION.md) for complete type definitions.
 
 ---
 
