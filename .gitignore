@@ -9,3 +9,8 @@ __pycache__/
 # SQLite databases
 *.db
 backend/.env
+.idea/vcs.xml
+.idea/recipe-app.iml
+.idea/modules.xml
+.idea/dataSources.xml
+.idea/data_source_mapping.xml
