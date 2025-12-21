@@ -9,3 +9,15 @@ __pycache__/
 # SQLite databases
 *.db
 backend/.env
+.idea/data_source_mapping.xml
+.idea/dataSources.local.xml
+.idea/dataSources.xml
+.idea/modules.xml
+.idea/recipe-app.iml
+.idea/vcs.xml
+.idea/workspace.xml
+.idea/dataSources/8ea0af60-5ab4-41ee-b59b-dc75736d0627.xml
+.idea/dataSources/8ea0af60-5ab4-41ee-b59b-dc75736d0627/storage_v2/_src_/database/railway.Hf4GOg.meta
+.idea/dataSources/8ea0af60-5ab4-41ee-b59b-dc75736d0627/storage_v2/_src_/database/railway.Hf4GOg/schema/information_schema.FNRwLQ.meta
+.idea/dataSources/8ea0af60-5ab4-41ee-b59b-dc75736d0627/storage_v2/_src_/database/railway.Hf4GOg/schema/pg_catalog.0S1ZNQ.meta
+.idea/dataSources/8ea0af60-5ab4-41ee-b59b-dc75736d0627/storage_v2/_src_/database/railway.Hf4GOg/schema/public.abK9xQ.meta
