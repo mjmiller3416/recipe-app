@@ -68,26 +68,6 @@ export interface SavedMeal {
 }
 
 /**
- * Props for the queue card component
- */
-export interface MealQueueCardProps {
-  meal: MealQueueEntry;
-  isSelected: boolean;
-  onSelect: () => void;
-  onToggleShoppingList: () => void;
-  onToggleComplete: () => void;
-}
-
-/**
- * Props for the shopping list indicator
- */
-export interface ShoppingListIndicatorProps {
-  included: boolean;
-  disabled?: boolean;
-  onToggle: () => void;
-}
-
-/**
  * Return type for useMealQueue hook
  */
 export interface UseMealQueueReturn {
