@@ -20,6 +20,7 @@ from ..dtos.meal_dtos import (
     RecipeCardDTO,
 )
 from ..models.meal import Meal
+from ..models.recipe import Recipe
 from ..repositories.meal_repo import MealRepo
 
 
@@ -526,8 +527,27 @@ class MealService:
             meal: Meal model
 
         Returns:
-            MealResponseDTO
+            MealResponseDTO with hydrated main_recipe and side_recipes
         """
+        # Hydrate side recipes by fetching from database
+        side_recipes: List[RecipeCardDTO] = []
+        side_ids = meal.side_recipe_ids
+        if side_ids:
+            # Fetch all side recipes in a single query
+            recipes = (
+                self.session.query(Recipe)
+                .filter(Recipe.id.in_(side_ids))
+                .all()
+            )
+            # Create a lookup dict to preserve order
+            recipe_lookup = {r.id: r for r in recipes}
+            # Build the list in the same order as side_recipe_ids
+            for recipe_id in side_ids:
+                if recipe_id in recipe_lookup:
+                    side_recipes.append(
+                        RecipeCardDTO.from_recipe(recipe_lookup[recipe_id])
+                    )
+
         return MealResponseDTO(
             id=meal.id,
             meal_name=meal.meal_name,
@@ -537,4 +557,5 @@ class MealService:
             tags=meal.tags,
             created_at=meal.created_at.isoformat() if meal.created_at else None,
             main_recipe=RecipeCardDTO.from_recipe(meal.main_recipe),
+            side_recipes=side_recipes,
         )

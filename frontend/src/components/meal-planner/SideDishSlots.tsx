@@ -106,7 +106,7 @@ export function SideDishSlots({ recipes, onSlotClick, className }: SideDishSlots
   ];
 
   return (
-    <div className={cn("grid grid-cols-3 gap-4 items-stretch", className)}>
+    <div className={cn("grid grid-cols-3 gap-4 items-stretch auto-rows-[minmax(6.25rem,auto)]", className)}>
       {slots.map((recipe, index) => (
         <SideDishCard
           key={index}

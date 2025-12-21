@@ -427,6 +427,7 @@ export const mockMealSelections: MealSelectionResponseDTO[] = [
     tags: ["italian", "dinner"],
     created_at: "2025-01-15T12:00:00Z",
     main_recipe: mockRecipeCards.find((r) => r.id === 1) ?? null,
+    side_recipes: mockRecipeCards.filter((r) => [5].includes(r.id as number)),
   },
   {
     id: 2,
@@ -437,6 +438,7 @@ export const mockMealSelections: MealSelectionResponseDTO[] = [
     tags: ["healthy", "quick"],
     created_at: "2025-01-14T12:00:00Z",
     main_recipe: mockRecipeCards.find((r) => r.id === 2) ?? null,
+    side_recipes: mockRecipeCards.filter((r) => [10].includes(r.id as number)),
   },
   {
     id: 3,
@@ -447,6 +449,7 @@ export const mockMealSelections: MealSelectionResponseDTO[] = [
     tags: ["mexican", "tuesday"],
     created_at: "2025-01-13T12:00:00Z",
     main_recipe: mockRecipeCards.find((r) => r.id === 3) ?? null,
+    side_recipes: [],
   },
   {
     id: 4,
@@ -457,6 +460,7 @@ export const mockMealSelections: MealSelectionResponseDTO[] = [
     tags: ["quick", "easy"],
     created_at: "2025-01-12T12:00:00Z",
     main_recipe: mockRecipeCards.find((r) => r.id === 4) ?? null,
+    side_recipes: [],
   },
   {
     id: 5,
@@ -467,6 +471,7 @@ export const mockMealSelections: MealSelectionResponseDTO[] = [
     tags: ["fancy", "weekend"],
     created_at: "2025-01-11T12:00:00Z",
     main_recipe: mockRecipeCards.find((r) => r.id === 6) ?? null,
+    side_recipes: mockRecipeCards.filter((r) => [8].includes(r.id as number)),
   },
   {
     id: 6,
@@ -477,6 +482,7 @@ export const mockMealSelections: MealSelectionResponseDTO[] = [
     tags: ["meal-prep", "sunday"],
     created_at: "2025-01-10T12:00:00Z",
     main_recipe: mockRecipeCards.find((r) => r.id === 9) ?? null,
+    side_recipes: [],
   },
   {
     id: 7,
@@ -487,6 +493,7 @@ export const mockMealSelections: MealSelectionResponseDTO[] = [
     tags: ["mediterranean", "healthy"],
     created_at: "2025-01-09T12:00:00Z",
     main_recipe: mockRecipeCards.find((r) => r.id === 12) ?? null,
+    side_recipes: mockRecipeCards.filter((r) => [5].includes(r.id as number)),
   },
 ];
 

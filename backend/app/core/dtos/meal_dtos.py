@@ -87,6 +87,7 @@ class MealResponseDTO(MealBaseDTO):
     id: int
     created_at: Optional[str] = None  # ISO format datetime string
     main_recipe: Optional[RecipeCardDTO] = None
+    side_recipes: List[RecipeCardDTO] = Field(default_factory=list)
 
 
 # -- Filter DTO ----------------------------------------------------------------------------------

@@ -108,6 +108,7 @@ export interface MealSelectionResponseDTO extends MealSelectionBaseDTO {
   id: number;
   created_at: string | null;
   main_recipe: RecipeCardDTO | null;
+  side_recipes: RecipeCardDTO[];
 }
 
 export interface MealPlanSummaryDTO {
