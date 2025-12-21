@@ -1,5 +1,6 @@
 // components/RecipeImage.tsx
-// A wrapper for recipe images with built-in error handling and placeholder fallback
+// A unified recipe image component with error handling and placeholder fallback
+// This is the foundation component - use directly or via convenience wrappers
 
 "use client";
 
@@ -7,15 +8,35 @@ import { useState } from "react";
 import { ChefHat } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// ============================================================================
+// TYPES
+// ============================================================================
+
 interface RecipeImageProps {
-  src: string | undefined;
+  src: string | null | undefined;
   alt: string;
   className?: string;
   placeholderClassName?: string;
   iconSize?: "sm" | "md" | "lg" | "xl";
   fill?: boolean;
-  priority?: boolean;
+  /**
+   * Show animated loading state while image loads.
+   * Set to false for lists/grids where many images render at once.
+   * @default true
+   */
+  showLoadingState?: boolean;
 }
+
+interface RecipeHeroImageProps {
+  src: string | null | undefined;
+  alt: string;
+  className?: string;
+  children?: React.ReactNode;
+}
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
 
 const ICON_SIZES = {
   sm: "h-6 w-6",
@@ -24,14 +45,62 @@ const ICON_SIZES = {
   xl: "h-32 w-32",
 };
 
+// ============================================================================
+// INTERNAL COMPONENTS
+// ============================================================================
+
 /**
- * RecipeImage component with automatic fallback to placeholder on error
- * 
+ * Placeholder component - displays ChefHat icon with gradient background
+ * Used for empty states and loading states
+ */
+function ImagePlaceholder({
+  iconSize = "lg",
+  animate = false,
+  fill = false,
+  className,
+}: {
+  iconSize?: "sm" | "md" | "lg" | "xl";
+  animate?: boolean;
+  fill?: boolean;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "w-full h-full flex items-center justify-center",
+        "bg-gradient-to-br from-elevated via-hover to-elevated",
+        fill && "absolute inset-0",
+        className
+      )}
+    >
+      <ChefHat
+        className={cn(
+          ICON_SIZES[iconSize],
+          "text-muted opacity-40",
+          animate && "animate-pulse"
+        )}
+      />
+    </div>
+  );
+}
+
+// ============================================================================
+// RECIPE IMAGE - Foundation Component
+// ============================================================================
+
+/**
+ * RecipeImage - The foundation component for all recipe images
+ *
  * Features:
  * - Shows placeholder if src is undefined/empty
  * - Shows placeholder if image fails to load (404, network error, etc.)
- * - Smooth transitions between loading states
+ * - Optional smooth loading transitions with animated placeholder
  * - Consistent placeholder styling across the app
+ *
+ * Usage:
+ * - Direct: <RecipeImage src={url} alt="..." /> for custom components
+ * - Via RecipeCardImage: optimized for card grids (no loading animation)
+ * - Via RecipeHeroImage: for detail page heroes (with gradient overlay)
  */
 export function RecipeImage({
   src,
@@ -40,6 +109,7 @@ export function RecipeImage({
   placeholderClassName,
   iconSize = "lg",
   fill = false,
+  showLoadingState = true,
 }: RecipeImageProps) {
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -50,33 +120,35 @@ export function RecipeImage({
   // Classes for fill mode (absolute positioning to fill container)
   const fillClasses = fill ? "absolute inset-0 w-full h-full object-cover" : "";
 
+  // Empty/error state - show static placeholder
   if (showPlaceholder) {
     return (
-      <div
-        className={cn(
-          "w-full h-full flex items-center justify-center",
-          "bg-gradient-to-br from-elevated via-hover to-elevated",
-          fill && "absolute inset-0",
-          placeholderClassName
-        )}
-      >
-        <ChefHat className={cn(ICON_SIZES[iconSize], "text-muted opacity-40")} />
-      </div>
+      <ImagePlaceholder
+        iconSize={iconSize}
+        fill={fill}
+        className={placeholderClassName}
+      />
     );
   }
 
+  // Without loading state - simple render (optimized for lists/grids)
+  if (!showLoadingState) {
+    return (
+      <img
+        src={src}
+        alt={alt}
+        className={cn(fillClasses, className)}
+        onError={() => setHasError(true)}
+      />
+    );
+  }
+
+  // With loading state - animated transition
   return (
     <>
-      {/* Loading placeholder - shown until image loads */}
       {!isLoaded && (
-        <div
-          className={cn(
-            "absolute inset-0 w-full h-full flex items-center justify-center",
-            "bg-gradient-to-br from-elevated via-hover to-elevated",
-            placeholderClassName
-          )}
-        >
-          <ChefHat className={cn(ICON_SIZES[iconSize], "text-muted opacity-40 animate-pulse")} />
+        <div className={cn("absolute inset-0", placeholderClassName)}>
+          <ImagePlaceholder iconSize={iconSize} animate />
         </div>
       )}
 
@@ -97,53 +169,56 @@ export function RecipeImage({
   );
 }
 
+// ============================================================================
+// RECIPE CARD IMAGE - Convenience Wrapper for Cards
+// ============================================================================
+
 /**
- * Simplified version for use in RecipeCard where we just need error handling
- * This can be used as a drop-in replacement for the current img tags
+ * RecipeCardImage - Optimized for recipe cards in lists/grids
+ *
+ * This is a thin wrapper around RecipeImage with:
+ * - Loading animation disabled (better performance for many images)
+ * - Simplified props (no placeholderClassName needed)
+ *
+ * Use this in RecipeCard components (small, medium, large variants)
  */
 export function RecipeCardImage({
   src,
   alt,
   className,
   iconSize = "lg",
-}: Omit<RecipeImageProps, "placeholderClassName">) {
-  const [hasError, setHasError] = useState(false);
-
-  if (!src || hasError) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-elevated via-hover to-elevated">
-        <ChefHat className={cn(ICON_SIZES[iconSize], "text-muted opacity-40")} />
-      </div>
-    );
-  }
-
+}: Omit<RecipeImageProps, "placeholderClassName" | "fill" | "showLoadingState">) {
   return (
-    <img
+    <RecipeImage
       src={src}
       alt={alt}
       className={className}
-      onError={() => setHasError(true)}
+      iconSize={iconSize}
+      showLoadingState={false}
     />
   );
 }
 
+// ============================================================================
+// RECIPE HERO IMAGE - Convenience Wrapper for Detail Pages
+// ============================================================================
+
 /**
- * Hero image component for recipe detail pages
- * Features gradient overlay and responsive height
- * Accepts children for overlay elements (back button, favorite button, etc.)
+ * RecipeHeroImage - Hero image for recipe detail pages
+ *
+ * This wraps RecipeImage with:
+ * - Fixed responsive height (300px mobile, 400px desktop)
+ * - Gradient overlay for text readability
+ * - Children slot for overlay elements (back button, favorite button, etc.)
+ *
+ * Use this at the top of recipe detail pages
  */
-interface RecipeHeroImageProps {
-  src: string | null | undefined;
-  alt: string;
-  className?: string;
-  children?: React.ReactNode;
-}
-
-export function RecipeHeroImage({ src, alt, className, children }: RecipeHeroImageProps) {
-  const [hasError, setHasError] = useState(false);
-
-  const showPlaceholder = !src || hasError;
-
+export function RecipeHeroImage({
+  src,
+  alt,
+  className,
+  children,
+}: RecipeHeroImageProps) {
   return (
     <div
       className={cn(
@@ -151,21 +226,21 @@ export function RecipeHeroImage({ src, alt, className, children }: RecipeHeroIma
         className
       )}
     >
-      {showPlaceholder ? (
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-elevated via-hover to-elevated">
-          <ChefHat className="h-32 w-32 text-muted opacity-30" />
-        </div>
-      ) : (
-        <>
-          <img
-            src={src}
-            alt={alt}
-            className="w-full h-full object-cover"
-            onError={() => setHasError(true)}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-        </>
+      <RecipeImage
+        src={src}
+        alt={alt}
+        fill
+        iconSize="xl"
+        showLoadingState={false}
+        className="w-full h-full object-cover"
+      />
+
+      {/* Gradient overlay - only shown when image is present */}
+      {src && (
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
       )}
+
+      {/* Overlay content (back button, favorite, etc.) */}
       {children}
     </div>
   );
