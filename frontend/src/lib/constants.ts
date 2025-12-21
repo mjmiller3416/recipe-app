@@ -60,6 +60,7 @@ export const INGREDIENT_UNITS = [
 export const INGREDIENT_CATEGORIES = [
 { value: "produce", label: "Produce" },
   { value: "dairy", label: "Dairy" },
+  { value: "deli", label: "Deli" },
   { value: "meat", label: "Meat" },
   { value: "seafood", label: "Seafood" },
   { value: "pantry", label: "Pantry" },
