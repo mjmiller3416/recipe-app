@@ -1,71 +1,46 @@
-# Component Breakdown
+# Meal Genie - Feature Concept
 
-## A. Container / Page Level
+## 1. The Meal Planner Page 
 
-### `WeeklyMenuPage` (page.tsx)
+This is your main command center. It is designed as a **"fixed viewport"** app, meaning the window doesn't scroll like a website; instead, specific panels scroll internally.
 
-- **Responsibility:** Fetches data, holds the state for the `selectedMealId`, and manages the layout grid.
-- **Next.js Specific:** Uses the `next/image` component for optimization.
+### The Sidebar (Right Column)
 
----
+**Purpose:** This is your schedule at a glance. It holds the queue of meals you planned for the week.
 
-## B. Left Column: Selected Meal View
+- **Scrollable List:** Shows your meal cards (e.g., "Monday: Tacos") in a vertical list. It uses the "shadow fix" we discussed so it looks clean while scrolling.
+- **Sticky Footer:** The "Add Meal" button stays fixed at the bottom so you can always add to your plan without hunting for the button.
 
-### `SelectedMealDisplay` (Container)
+### The Selected Meal View (Left Column)
 
-Wraps the hero image, details, sides, and action buttons.
+**Purpose:** This is the "Execution" view. When you click a card in the sidebar, this panel updates to show you the full details for cooking.
 
-### `MealHero`
-
-The large image component at the top.
-
-### `MealHeader`
-
-Contains the Title ("Chicken Tikka Masala"), Metadata (Servings, Time), and Badges (Dinner, Indian, etc.).
-
-**Sub-components:**
-
-- `MetaItem` — Reusable icon + text (e.g., `<UserIcon /> 4 servings`).
-- `Badge` — The pill-shaped tags (e.g., "Gluten-Free").
-
-### `SideDishGrid`
-
-A flexible container for the side dishes.
-
-**Sub-component:**
-
-- `SideDishCard` — The small cards (Garlic Naan, Rice, Raita) containing a thumbnail and title.
-
-### `MealActionBar`
-
-Contains the primary interaction buttons.
-
-**Buttons:**
-
-- "Mark Complete" (Primary/Purple)
-- "Edit Meal" (Secondary/Outline)
-- "Remove from Menu" (Destructive/Red Outline)
+- **Hero Section:** A large, beautiful image of the main dish with the title, prep times, and serving sizes.
+- **Side Dish Grid:** A row of smaller cards showing the accompanying sides (e.g., Rice, Naan, Salad).
+- **Action Bar:** Buttons to "Mark Complete" (logs it to history), "Edit" (change sides), or "Remove" (delete from plan).
 
 ---
 
-## C. Right Column: Sidebar Menu
+## 2. The Create Meal Dialog (The Popup)
 
-### `WeeklyMenuList` (Container)
+This appears when you click "Add Meal." It is designed to bridge the gap between your database (which stores lists) and your user experience (which uses "slots").
 
-Wraps the list of meals and the "Add" button.
+### The Tabs (Top)
 
-### `MenuListItem`
+- **Create Meal:** The default view for building something new from scratch.
+- **Saved Meals:** A browser for pre-configured meal templates (like your "Sunday Roast" bundle) so you don't have to rebuild them every time.
 
-The individual cards for each meal in the list.
+### The Composition Area (Left Side)
 
-**Props:**
+**Purpose:** This is your canvas. It visually represents the meal you are building.
 
-- `meal: Meal`
-- `isActive: boolean`
-- `onClick: () => void`
+- **Main Dish Slot:** A large, cinematic box. When empty, it asks you to "Select Main Dish." When filled, it shows the recipe image.
+- **Side Dish Slots:** A row of three smaller boxes for your sides.
+- **Interaction:** Clicking any of these boxes makes it the "Active" slot (it glows purple), telling the app, "The next recipe I click goes here."
 
-**Visuals:** Needs conditional border styling (Purple border if `isActive` is true).
+### The Recipe Picker (Right Side)
 
-### `AddMealButton`
+**Purpose:** Your library of ingredients.
 
-The large purple button at the bottom of the sidebar.
+- **Search Bar:** Filters your recipe database by name or tag.
+- **Recipe List:** A scrollable list of recipe cards. Clicking one instantly fills the currently "Active" slot on the left.
