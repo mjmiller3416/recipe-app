@@ -12,15 +12,18 @@ import type { RecipeCardData } from "@/types";
 
 interface SideDishCardProps {
   recipe?: RecipeCardData | null;
-  onClick?: () => void;
+  onFilledClick?: () => void;
+  onEmptyClick?: () => void;
   className?: string;
 }
 
 interface SideDishSlotsProps {
   /** Array of recipes for each slot (use null/undefined for empty slots) */
   recipes: (RecipeCardData | null | undefined)[];
-  /** Called when any slot is clicked, with the slot index */
-  onSlotClick?: (index: number) => void;
+  /** Called when a filled slot is clicked, with the recipe and slot index */
+  onFilledSlotClick?: (recipe: RecipeCardData, index: number) => void;
+  /** Called when an empty slot is clicked, with the slot index (disabled if not provided) */
+  onEmptySlotClick?: (index: number) => void;
   className?: string;
 }
 
@@ -28,26 +31,32 @@ interface SideDishSlotsProps {
 // SIDE DISH CARD - Internal Component
 // ============================================================================
 
-function SideDishCard({ recipe, onClick, className }: SideDishCardProps) {
-  // Empty state (No changes needed)
+function SideDishCard({ recipe, onFilledClick, onEmptyClick, className }: SideDishCardProps) {
+  // Empty state - disabled unless onEmptyClick is provided
   if (!recipe) {
+    const isDisabled = !onEmptyClick;
     return (
       <Card
         className={cn(
-          "group cursor-pointer overflow-hidden transition-all duration-200 ease-in-out",
-          "hover:shadow-lg hover:shadow-primary/5 hover:bg-hover hover:border-primary/30",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "overflow-hidden transition-all duration-200 ease-in-out",
           "border-dashed border-2 border-muted",
           "pb-0 pt-0 gap-0 h-full",
+          isDisabled
+            ? "opacity-60 cursor-not-allowed"
+            : "group cursor-pointer hover:shadow-lg hover:shadow-primary/5 hover:bg-hover hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           className
         )}
-        onClick={onClick}
-        tabIndex={0}
+        onClick={isDisabled ? undefined : onEmptyClick}
+        tabIndex={isDisabled ? -1 : 0}
         role="button"
         aria-label="Add side dish"
+        aria-disabled={isDisabled}
       >
         <div className="flex items-center justify-center p-6 h-full">
-          <div className="flex flex-col items-center gap-2 text-muted group-hover:text-primary transition-colors">
+          <div className={cn(
+            "flex flex-col items-center gap-2 text-muted transition-colors",
+            !isDisabled && "group-hover:text-primary"
+          )}>
             <Plus className="h-6 w-6" />
             <span className="text-xs font-medium">Add Side</span>
           </div>
@@ -56,7 +65,7 @@ function SideDishCard({ recipe, onClick, className }: SideDishCardProps) {
     );
   }
 
-  // Filled state (UPDATED)
+  // Filled state - clickable to view recipe
   return (
     <Card
       className={cn(
@@ -66,10 +75,10 @@ function SideDishCard({ recipe, onClick, className }: SideDishCardProps) {
         "pb-0 pt-0 gap-0 h-full",
         className
       )}
-      onClick={onClick}
+      onClick={onFilledClick}
       tabIndex={0}
       role="button"
-      aria-label={`${recipe.name} - click to change`}
+      aria-label={`${recipe.name} - click to view`}
     >
       <div className="flex items-center gap-4 p-2.5 h-full">
         {/* UPDATED WRAPPER & IMAGE */}
@@ -77,8 +86,8 @@ function SideDishCard({ recipe, onClick, className }: SideDishCardProps) {
           <RecipeCardImage
             src={recipe.imageUrl}
             alt={recipe.name}
-            // Added 'absolute inset-0' so the image fills the box but doesn't PUSH the box size
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            // Scale-150 zooms the image in for a tighter crop
+            className="absolute inset-0 w-full h-full object-cover scale-150"
             iconSize="md"
           />
         </div>
@@ -98,7 +107,7 @@ function SideDishCard({ recipe, onClick, className }: SideDishCardProps) {
 // SIDE DISH SLOTS - Public Component
 // ============================================================================
 
-export function SideDishSlots({ recipes, onSlotClick, className }: SideDishSlotsProps) {
+export function SideDishSlots({ recipes, onFilledSlotClick, onEmptySlotClick, className }: SideDishSlotsProps) {
   // Ensure we always have exactly 3 slots
   const slots = [
     recipes[0] ?? null,
@@ -112,7 +121,8 @@ export function SideDishSlots({ recipes, onSlotClick, className }: SideDishSlots
         <SideDishCard
           key={index}
           recipe={recipe}
-          onClick={() => onSlotClick?.(index)}
+          onFilledClick={recipe ? () => onFilledSlotClick?.(recipe, index) : undefined}
+          onEmptyClick={onEmptySlotClick ? () => onEmptySlotClick(index) : undefined}
         />
       ))}
     </div>

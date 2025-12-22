@@ -42,8 +42,12 @@ export default function TestPage() {
     fetchRecipes();
   }, []);
 
-  const handleSlotClick = (index: number) => {
-    console.log(`Slot ${index} clicked`);
+  const handleFilledSlotClick = (recipe: RecipeCardData, index: number) => {
+    console.log(`Filled slot ${index} clicked - Recipe: ${recipe.name}`);
+  };
+
+  const handleEmptySlotClick = (index: number) => {
+    console.log(`Empty slot ${index} clicked`);
   };
 
   return (
@@ -71,11 +75,8 @@ export default function TestPage() {
             {/* MealSelection - Full meal display with data fetching */}
             <section className="space-y-3">
               <h2 className="text-lg font-semibold">MealSelection (Meal ID: 10)</h2>
-              <MealSelection
-                mealId={10}
-                onMainDishClick={() => console.log("Main dish clicked")}
-                onSideSlotClick={(index) => console.log(`Side slot ${index} clicked`)}
-              />
+              <p className="text-sm text-muted-foreground">Click main dish or side dishes to navigate to recipe detail</p>
+              <MealSelection mealId={10} />
             </section>
 
             {/* MainDishCard - Hero card for main dish */}
@@ -112,7 +113,8 @@ export default function TestPage() {
               <h2 className="text-lg font-semibold">SideDishSlots (All Filled)</h2>
               <SideDishSlots
                 recipes={recipes}
-                onSlotClick={handleSlotClick}
+                onFilledSlotClick={handleFilledSlotClick}
+                onEmptySlotClick={handleEmptySlotClick}
               />
             </section>
 
@@ -121,16 +123,16 @@ export default function TestPage() {
               <h2 className="text-lg font-semibold">SideDishSlots (1 Filled, 2 Empty)</h2>
               <SideDishSlots
                 recipes={[recipes[0], null, null]}
-                onSlotClick={handleSlotClick}
+                onFilledSlotClick={handleFilledSlotClick}
+                onEmptySlotClick={handleEmptySlotClick}
               />
             </section>
 
-            {/* SideDishSlots - All empty */}
+            {/* SideDishSlots - All empty (disabled) */}
             <section className="space-y-3">
-              <h2 className="text-lg font-semibold">SideDishSlots (All Empty)</h2>
+              <h2 className="text-lg font-semibold">SideDishSlots (All Empty - Disabled)</h2>
               <SideDishSlots
                 recipes={[]}
-                onSlotClick={handleSlotClick}
               />
             </section>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { plannerApi } from "@/lib/api";
 import { MainDishCard } from "./MainDishCard";
 import { SideDishSlots } from "./SideDishSlots";
@@ -18,10 +19,8 @@ import type {
 interface MealSelectionProps {
   /** The meal ID to fetch and display */
   mealId: number;
-  /** Called when the main dish card is clicked */
-  onMainDishClick?: () => void;
-  /** Called when a side dish slot is clicked, with the slot index */
-  onSideSlotClick?: (index: number) => void;
+  /** Called when an empty side dish slot is clicked (disabled if not provided) */
+  onEmptySideSlotClick?: (index: number) => void;
   className?: string;
 }
 
@@ -69,13 +68,18 @@ function MealSelectionSkeleton({ className }: { className?: string }) {
 
 export function MealSelection({
   mealId,
-  onMainDishClick,
-  onSideSlotClick,
+  onEmptySideSlotClick,
   className,
 }: MealSelectionProps) {
+  const router = useRouter();
   const [meal, setMeal] = useState<MealSelectionResponseDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Navigate to recipe detail page
+  const handleRecipeClick = (recipeId: number) => {
+    router.push(`/recipes/${recipeId}`);
+  };
 
   useEffect(() => {
     async function fetchMeal() {
@@ -142,7 +146,7 @@ export function MealSelection({
           category={meal.main_recipe.recipe_category}
           mealType={meal.main_recipe.meal_type}
           dietaryPreference={meal.main_recipe.diet_pref}
-          onClick={onMainDishClick}
+          onClick={() => handleRecipeClick(meal.main_recipe!.id)}
         />
       ) : (
         <div className="p-6 text-center rounded-lg border border-dashed border-muted">
@@ -151,7 +155,11 @@ export function MealSelection({
       )}
 
       {/* Side Dishes */}
-      <SideDishSlots recipes={sideRecipes} onSlotClick={onSideSlotClick} />
+      <SideDishSlots
+        recipes={sideRecipes}
+        onFilledSlotClick={(recipe) => handleRecipeClick(Number(recipe.id))}
+        onEmptySlotClick={onEmptySideSlotClick}
+      />
     </div>
   );
 }
