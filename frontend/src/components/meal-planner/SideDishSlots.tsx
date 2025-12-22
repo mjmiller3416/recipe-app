@@ -29,7 +29,7 @@ interface SideDishSlotsProps {
 // ============================================================================
 
 function SideDishCard({ recipe, onClick, className }: SideDishCardProps) {
-  // Empty state
+  // Empty state (No changes needed)
   if (!recipe) {
     return (
       <Card
@@ -56,7 +56,7 @@ function SideDishCard({ recipe, onClick, className }: SideDishCardProps) {
     );
   }
 
-  // Filled state
+  // Filled state (UPDATED)
   return (
     <Card
       className={cn(
@@ -72,12 +72,13 @@ function SideDishCard({ recipe, onClick, className }: SideDishCardProps) {
       aria-label={`${recipe.name} - click to change`}
     >
       <div className="flex items-center gap-4 p-3 h-full">
-        {/* Thumbnail */}
-        <div className="relative aspect-square self-stretch flex-shrink-0 overflow-hidden rounded-xl bg-elevated">
+        {/* UPDATED WRAPPER & IMAGE */}
+        <div className="relative h-full aspect-square w-auto flex-shrink-0 overflow-hidden rounded-xl bg-elevated">
           <RecipeCardImage
             src={recipe.imageUrl}
             alt={recipe.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            // Added 'absolute inset-0' so the image fills the box but doesn't PUSH the box size
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
             iconSize="md"
           />
         </div>
