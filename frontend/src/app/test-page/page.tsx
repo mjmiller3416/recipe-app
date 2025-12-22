@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { RecipeCard } from "@/components/recipe/RecipeCard";
-import { SideDishSlots } from "@/components/meal-planner/SideDishSlots";
+import { SideDishSlots } from "@/components/meal-planner/meal-display/SideDishSlots";
+import { MainDishCard } from "@/components/meal-planner/meal-display/MainDishCard";
 import { recipeApi } from "@/lib/api";
 import type { RecipeCardData, RecipeResponseDTO } from "@/types";
 
@@ -66,6 +67,35 @@ export default function TestPage() {
 
         {!loading && !error && (
           <>
+            {/* MainDishCard - Hero card for main dish */}
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold">MainDishCard</h2>
+              {recipes[0] && (
+                <MainDishCard
+                  name={recipes[0].name}
+                  imageUrl={recipes[0].imageUrl}
+                  servings={recipes[0].servings}
+                  totalTime={recipes[0].totalTime}
+                  category={recipes[0].category}
+                  mealType={recipes[0].mealType}
+                  dietaryPreference={recipes[0].dietaryPreference}
+                  onClick={() => console.log("MainDishCard clicked")}
+                />
+              )}
+            </section>
+
+            {/* MainDishCard - No image (placeholder) */}
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold">MainDishCard (No Image)</h2>
+              <MainDishCard
+                name="Recipe Without Image"
+                servings={4}
+                totalTime={45}
+                category="Italian"
+                mealType="Dinner"
+              />
+            </section>
+
             {/* SideDishSlots - All filled */}
             <section className="space-y-3">
               <h2 className="text-lg font-semibold">SideDishSlots (All Filled)</h2>
