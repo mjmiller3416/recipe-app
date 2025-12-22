@@ -62,6 +62,8 @@ interface ActiveFilter {
 // Constants
 // ============================================================================
 
+const SCROLL_POSITION_KEY = "recipe-browser-scroll-position";
+
 const SORT_OPTIONS: { value: SortOption; label: string; icon: React.ElementType }[] = [
   { value: "alphabetical", label: "Alphabetical", icon: SortAsc },
   { value: "cookTime", label: "Cook Time", icon: Clock },
@@ -583,8 +585,24 @@ export default function RecipeBrowserPage() {
     return result;
   }, [recipes, searchTerm, filters, sortBy, sortDirection]);
 
+  // Restore scroll position after recipes load
+  useEffect(() => {
+    if (!isLoading && recipes.length > 0) {
+      const savedPosition = sessionStorage.getItem(SCROLL_POSITION_KEY);
+      if (savedPosition) {
+        // Use requestAnimationFrame to ensure DOM has rendered
+        requestAnimationFrame(() => {
+          window.scrollTo(0, parseInt(savedPosition, 10));
+          sessionStorage.removeItem(SCROLL_POSITION_KEY);
+        });
+      }
+    }
+  }, [isLoading, recipes.length]);
+
   // Handlers
   const handleRecipeClick = (recipe: RecipeCardData) => {
+    // Save scroll position before navigating
+    sessionStorage.setItem(SCROLL_POSITION_KEY, String(window.scrollY));
     router.push(`/recipes/${recipe.id}`);
   };
 
