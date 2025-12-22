@@ -134,8 +134,7 @@ function HeroSection({
           </div>
           <Button
             onClick={onSearch}
-            size="lg"
-            className="h-12 px-6 bg-primary hover:bg-primary/90"
+            size="xl"
           >
             Search
           </Button>

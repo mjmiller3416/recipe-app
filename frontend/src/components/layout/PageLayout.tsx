@@ -32,6 +32,8 @@ interface PageLayoutProps {
   hero?: React.ReactNode;
   /** Optional sticky header bar below the hero (for sort options, active filters, etc.) */
   stickyHeader?: React.ReactNode;
+  /** When true, page fills viewport height exactly with no scrolling (content must manage its own overflow) */
+  fillViewport?: boolean;
 }
 
 /**
@@ -80,6 +82,7 @@ export function PageLayout({
   contentClassName,
   hero,
   stickyHeader,
+  fillViewport = false,
 }: PageLayoutProps) {
   // Determine if we should show a back button
   const showBackButton = backHref || onBackClick;
@@ -148,6 +151,20 @@ export function PageLayout({
   // STANDARD MODE: Normal scrolling page
   // Used by: Settings, Add Recipe, Edit Recipe, Shopping List, Meal Planner
   // ============================================
+
+  // fillViewport mode: fixed height, no page scroll, content fills available space
+  if (fillViewport) {
+    return (
+      <div className={cn("h-screen flex flex-col overflow-hidden bg-background", className)}>
+        {headerElement}
+        <div className={cn("flex-1 max-w-7xl mx-auto w-full px-6 py-6 overflow-hidden", contentClassName)}>
+          {children}
+        </div>
+      </div>
+    );
+  }
+
+  // Default: scrollable page
   return (
     <div className={cn("min-h-screen bg-background", className)}>
       {headerElement}

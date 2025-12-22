@@ -135,7 +135,7 @@ export function MealSelection({
   const sideRecipes = meal.side_recipes.map(mapToCardData);
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-6", className)}>
       {/* Main Dish */}
       {meal.main_recipe ? (
         <MainDishCard
