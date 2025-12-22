@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { MessageSquare, Send, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -21,14 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { feedbackApi } from "@/lib/api";
-
-const FEEDBACK_CATEGORIES = [
-  { value: "Feature Request", label: "Feature Request" },
-  { value: "Bug Report", label: "Bug Report" },
-  { value: "General Feedback", label: "General Feedback" },
-  { value: "Question", label: "Question" },
-];
+import { useFeedbackForm } from "@/hooks/useFeedbackForm";
 
 interface FeedbackDialogProps {
   open: boolean;
@@ -36,42 +29,38 @@ interface FeedbackDialogProps {
 }
 
 export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
-  const [category, setCategory] = useState("");
-  const [message, setMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const pathname = usePathname();
 
-  const canSubmit = category && message.trim().length >= 10;
+  // Build metadata with page context (only for dialog version)
+  const metadata = {
+    page_url: pathname,
+    viewport: typeof window !== "undefined"
+      ? `${window.innerWidth}x${window.innerHeight}`
+      : undefined,
+  };
+
+  const {
+    category,
+    setCategory,
+    message,
+    setMessage,
+    isSubmitting,
+    canSubmit,
+    handleSubmit,
+    reset,
+    remainingChars,
+    categories,
+  } = useFeedbackForm({
+    metadata,
+    onSuccess: () => onOpenChange(false),
+  });
 
   // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
-      setCategory("");
-      setMessage("");
+      reset();
     }
-  }, [open]);
-
-  const handleSubmit = async () => {
-    if (!canSubmit) return;
-
-    setIsSubmitting(true);
-    try {
-      const response = await feedbackApi.submit({
-        category,
-        message: message.trim(),
-      });
-
-      if (response.success) {
-        toast.success(response.message);
-        onOpenChange(false);
-      } else {
-        toast.error(response.message);
-      }
-    } catch {
-      toast.error("Failed to submit feedback. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  }, [open, reset]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -97,7 +86,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
                 <SelectValue placeholder="Select a category..." />
               </SelectTrigger>
               <SelectContent>
-                {FEEDBACK_CATEGORIES.map((cat) => (
+                {categories.map((cat) => (
                   <SelectItem key={cat.value} value={cat.value}>
                     {cat.label}
                   </SelectItem>
@@ -116,9 +105,9 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
               onChange={(e) => setMessage(e.target.value)}
               className="min-h-[120px] resize-none"
             />
-            {message.length > 0 && message.length < 10 && (
+            {message.length > 0 && remainingChars > 0 && (
               <p className="text-xs text-muted-foreground">
-                {10 - message.length} more characters needed
+                {remainingChars} more character{remainingChars !== 1 ? "s" : ""} needed
               </p>
             )}
           </div>

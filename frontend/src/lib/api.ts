@@ -705,6 +705,8 @@ export const dataManagementApi = {
 export interface FeedbackSubmitDTO {
   category: string;
   message: string;
+  /** Optional metadata included with feedback (e.g., page URL, viewport) */
+  metadata?: Record<string, string | undefined>;
 }
 
 export interface FeedbackResponseDTO {
