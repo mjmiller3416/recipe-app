@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { RecipeCard } from "@/components/recipe/RecipeCard";
 import { SideDishSlots } from "@/components/meal-planner/meal-display/SideDishSlots";
 import { MainDishCard } from "@/components/meal-planner/meal-display/MainDishCard";
+import { MealSelection } from "@/components/meal-planner/meal-display/MealSelection";
 import { recipeApi } from "@/lib/api";
 import type { RecipeCardData, RecipeResponseDTO } from "@/types";
 
@@ -67,6 +68,16 @@ export default function TestPage() {
 
         {!loading && !error && (
           <>
+            {/* MealSelection - Full meal display with data fetching */}
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold">MealSelection (Meal ID: 10)</h2>
+              <MealSelection
+                mealId={10}
+                onMainDishClick={() => console.log("Main dish clicked")}
+                onSideSlotClick={(index) => console.log(`Side slot ${index} clicked`)}
+              />
+            </section>
+
             {/* MainDishCard - Hero card for main dish */}
             <section className="space-y-3">
               <h2 className="text-lg font-semibold">MainDishCard</h2>

@@ -70,6 +70,10 @@ class RecipeCardDTO(BaseModel):
     reference_image_path: Optional[str] = None
     servings: Optional[int] = None
     total_time: Optional[int] = None
+    # Optional metadata for badge display
+    recipe_category: Optional[str] = None
+    meal_type: Optional[str] = None
+    diet_pref: Optional[str] = None
 
     @classmethod
     def from_recipe(cls, recipe: Optional[Recipe]) -> Optional["RecipeCardDTO"]:
@@ -83,6 +87,9 @@ class RecipeCardDTO(BaseModel):
             reference_image_path=recipe.reference_image_path,
             servings=recipe.servings,
             total_time=recipe.total_time,
+            recipe_category=recipe.recipe_category,
+            meal_type=recipe.meal_type,
+            diet_pref=recipe.diet_pref,
         )
 
 # ── Create DTO ──────────────────────────────────────────────────────────────────────────────────────────────

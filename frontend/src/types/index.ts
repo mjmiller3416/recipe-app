@@ -72,6 +72,10 @@ export interface RecipeCardDTO {
   reference_image_path: string | null;
   servings: number | null;
   total_time: number | null;
+  // Optional metadata for badge display
+  recipe_category?: string | null;
+  meal_type?: string | null;
+  diet_pref?: string | null;
 }
 
 // ============================================================================
