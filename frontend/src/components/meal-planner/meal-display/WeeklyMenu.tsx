@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
 import { Plus } from "lucide-react";
 
@@ -107,23 +108,25 @@ export function WeeklyMenu({
         This Week&apos;s Menu
       </h2>
 
-      {/* Scrollable List Area */}
-      <div className="flex-1 overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-        {items.length === 0 ? (
-          <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
-            No meals planned yet
-          </div>
-        ) : (
-          items.map((item) => (
-            <MenuListCard
-              key={item.id}
-              item={item}
-              isSelected={selectedId === item.id}
-              onClick={() => onItemClick?.(item)}
-            />
-          ))
-        )}
-      </div>
+      {/* Scrollable List Area (scrollbar hidden) */}
+      <ScrollArea className="flex-1 [&_[data-slot=scroll-area-scrollbar]]:hidden">
+        <div className="space-y-4 pr-1">
+          {items.length === 0 ? (
+            <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+              No meals planned yet
+            </div>
+          ) : (
+            items.map((item) => (
+              <MenuListCard
+                key={item.id}
+                item={item}
+                isSelected={selectedId === item.id}
+                onClick={() => onItemClick?.(item)}
+              />
+            ))
+          )}
+        </div>
+      </ScrollArea>
 
       {/* Footer - Sticky Add Meal Button */}
       <div className="flex-shrink-0 pt-6">

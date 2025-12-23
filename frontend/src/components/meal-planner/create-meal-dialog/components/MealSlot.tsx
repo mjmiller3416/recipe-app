@@ -1,8 +1,8 @@
 "use client";
 
-import { UtensilsCrossed, Clock, X } from "lucide-react";
+import { UtensilsCrossed, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { RecipeCardImage } from "@/components/recipe/RecipeImage";
+import { CircularImage } from "@/components/common/CircularImage";
 import { cn } from "@/lib/utils";
 import type { RecipeCardData } from "@/types";
 
@@ -76,8 +76,8 @@ export function MealSlot({
             : "border-muted hover:border-primary/30 hover:bg-hover",
           // Focus state
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          // Size variants
-          isMain ? "min-h-[120px]" : "min-h-[100px]",
+          // Size variants - fixed height to prevent growth
+          isMain ? "h-[120px]" : "h-[100px]",
           className
         )}
         onClick={onClick}
@@ -127,8 +127,8 @@ export function MealSlot({
           : "border border-border hover:shadow-lg hover:shadow-primary/5 hover:bg-hover",
         // Focus state
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        // Size variants
-        isMain ? "min-h-[120px]" : "min-h-[100px]",
+        // Size variants - fixed height to match empty state
+        isMain ? "h-[120px]" : "h-[100px]",
         className
       )}
       onClick={onClick}
@@ -154,29 +154,23 @@ export function MealSlot({
         </button>
       )}
 
+      {/* Centered vertical layout */}
       <div
         className={cn(
-          "flex items-center h-full",
-          isMain ? "gap-4 p-3" : "gap-3 p-2.5"
+          "flex flex-col items-center justify-center h-full text-center",
+          isMain ? "gap-2 p-4" : "gap-1.5 p-3"
         )}
       >
-        {/* Recipe Image */}
-        <div
-          className={cn(
-            "relative flex-shrink-0 overflow-hidden rounded-lg bg-elevated",
-            isMain ? "w-20 h-20" : "w-14 h-14"
-          )}
-        >
-          <RecipeCardImage
-            src={recipe.imageUrl}
-            alt={recipe.name}
-            className="absolute inset-0 w-full h-full object-cover"
-            iconSize={isMain ? "md" : "sm"}
-          />
-        </div>
+        {/* Circular Recipe Image */}
+        <CircularImage
+          src={recipe.imageUrl}
+          alt={recipe.name}
+          size={isMain ? "xl" : "lg"}
+          zoom={1.3}
+        />
 
         {/* Recipe Info */}
-        <div className="flex-1 min-w-0">
+        <div className="flex flex-col items-center min-w-0 w-full">
           <h4
             className={cn(
               "font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors",
@@ -186,15 +180,14 @@ export function MealSlot({
             {recipe.name}
           </h4>
           {recipe.totalTime > 0 && (
-            <div
+            <span
               className={cn(
-                "flex items-center gap-1 mt-1 text-muted-foreground",
+                "text-muted-foreground mt-0.5",
                 isMain ? "text-xs" : "text-[10px]"
               )}
             >
-              <Clock className={cn(isMain ? "h-3 w-3" : "h-2.5 w-2.5")} />
-              <span>{formatTime(recipe.totalTime)}</span>
-            </div>
+              {formatTime(recipe.totalTime)}
+            </span>
           )}
         </div>
       </div>

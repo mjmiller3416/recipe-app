@@ -95,8 +95,8 @@ export const QUICK_FILTERS = [
   { id: "lunch", label: "Lunch", type: "mealType", value: "lunch" },
   { id: "dinner", label: "Dinner", type: "mealType", value: "dinner" },
   { id: "dessert", label: "Dessert", type: "mealType", value: "dessert" },
+  { id: "sauce", label: "Sauce", type: "mealType", value: "sauce" },
   { id: "under30", label: "Under 30m", type: "time", value: 30 },
-  { id: "dinner", label: "Dinner", type: "mealType", value: "dinner" },
   { id: "vegetarian", label: "Vegetarian", type: "dietary", value: "vegetarian" },
   { id: "favorites", label: "Favorites", type: "favorite", value: true },
 ] as const;

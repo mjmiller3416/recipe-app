@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -284,9 +285,12 @@ export function CreateMealDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col p-0"
+        className="sm:max-w-3xl max-h-[85vh] overflow-hidden flex flex-col p-0"
         showCloseButton={false}
       >
+        {/* Visually hidden title for screen reader accessibility */}
+        <DialogTitle className="sr-only">Create or Select a Meal</DialogTitle>
+
         <Tabs
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as "create" | "saved")}
