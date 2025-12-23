@@ -8,6 +8,7 @@ import { MealSelection } from "./meal-display/MealSelection";
 import { WeeklyMenu, MenuListItem } from "./meal-display/WeeklyMenu";
 import { plannerApi } from "@/lib/api";
 import { MealSelectionResponseDTO } from "@/types";
+import { CreateMealDialog } from "./create-meal-dialog/CreateMealDialog";
 
 export function MealPlannerPage() {
   // State for meals list
@@ -15,6 +16,7 @@ export function MealPlannerPage() {
   const [selectedMealId, setSelectedMealId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   // Fetch meals on mount
   useEffect(() => {
@@ -51,9 +53,15 @@ export function MealPlannerPage() {
     setSelectedMealId(item.id);
   };
 
-  // Handle Add Meal button click (placeholder for now)
+  // Handle Add Meal button click - opens the create meal dialog
   const handleAddMealClick = () => {
-    console.log("Add Meal clicked - to be implemented");
+    setShowCreateDialog(true);
+  };
+
+  // Handle meal created - refresh the meals list and select the new meal
+  const handleMealCreated = (meal: MealSelectionResponseDTO) => {
+    setMeals((prev) => [...prev, meal]);
+    setSelectedMealId(meal.id);
   };
 
   // Placeholder handlers for footer buttons
@@ -130,6 +138,13 @@ export function MealPlannerPage() {
           />
         </div>
       </div>
+
+      {/* Create Meal Dialog */}
+      <CreateMealDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onMealCreated={handleMealCreated}
+      />
     </PageLayout>
   );
 }
