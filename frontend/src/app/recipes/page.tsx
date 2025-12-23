@@ -402,10 +402,10 @@ export default function RecipeBrowserPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter options from constants (already exclude "all", plus filter "none" from dietary)
+  // Filter options from constants (already exclude "all")
   const categoryOptions = RECIPE_CATEGORY_OPTIONS;
   const mealTypeOptions = MEAL_TYPE_OPTIONS;
-  const dietaryOptions = DIETARY_PREFERENCES.filter((d) => d.value !== "none");
+  const dietaryOptions = [...DIETARY_PREFERENCES];
 
   // State
   const [searchTerm, setSearchTerm] = useState("");

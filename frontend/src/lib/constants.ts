@@ -29,7 +29,6 @@ export const RECIPE_CATEGORY_OPTIONS = RECIPE_CATEGORIES.filter(c => c.value !==
 
 export const DIETARY_PREFERENCES = [
   { value: "none", label: "None" },
-  { value: "vegetarian", label: "Vegetarian" },
   { value: "vegan", label: "Vegan" },
   { value: "gluten-free", label: "Gluten-Free" },
   { value: "dairy-free", label: "Dairy-Free" },
