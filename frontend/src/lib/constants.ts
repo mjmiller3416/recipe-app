@@ -76,23 +76,23 @@ export const INGREDIENT_CATEGORIES = [
 // ============================================================================
 // These are the one-click filter pills shown in the hero section.
 // Edit this array to change what quick filters are available.
-// 
+//
 // Types:
-//   - "mealType": filters by meal type (value should match MEAL_TYPES label)
-//   - "dietary": filters by dietary preference (value should match DIETARY_PREFERENCES label)  
+//   - "mealType": filters by meal type (value should match MEAL_TYPES value, e.g., "breakfast")
+//   - "dietary": filters by dietary preference (value should match DIETARY_PREFERENCES value, e.g., "vegetarian")
 //   - "favorite": filters to show only favorites (value should be true)
 //   - "time": filters recipes under X minutes (value should be a number)
 //
 // To add a new quick filter:
 //   1. Add an entry to this array with a unique id
-//   2. Set the appropriate type and value
+//   2. Set the appropriate type and value (use lowercase values from the constants above)
 //   3. The label is what users see in the UI
 
 export const QUICK_FILTERS = [
-  { id: "breakfast", label: "Breakfast", type: "mealType", value: "Breakfast" },
+  { id: "breakfast", label: "Breakfast", type: "mealType", value: "breakfast" },
   { id: "under30", label: "Under 30m", type: "time", value: 30 },
-  { id: "dinner", label: "Dinner", type: "mealType", value: "Dinner" },
-  { id: "vegetarian", label: "Vegetarian", type: "dietary", value: "Vegetarian" },
+  { id: "dinner", label: "Dinner", type: "mealType", value: "dinner" },
+  { id: "vegetarian", label: "Vegetarian", type: "dietary", value: "vegetarian" },
   { id: "favorites", label: "Favorites", type: "favorite", value: true },
 ] as const;
 

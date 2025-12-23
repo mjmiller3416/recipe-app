@@ -134,13 +134,19 @@ export function PageLayout({
 
         {/* Sticky header bar (sort options, active filters) */}
         {stickyHeader && (
-          <div className="sticky top-0 z-40 bg-background border-b border-border">
+          <div
+            data-sticky-header
+            className="sticky top-0 z-40 bg-background border-b border-border"
+          >
             {stickyHeader}
           </div>
         )}
 
         {/* Main content area */}
-        <div className={cn("max-w-7xl mx-auto w-full px-6 py-6", contentClassName)}>
+        <div
+          data-page-content
+          className={cn("max-w-7xl mx-auto w-full px-6 py-6", contentClassName)}
+        >
           {children}
         </div>
       </div>

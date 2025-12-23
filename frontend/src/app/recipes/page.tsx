@@ -170,10 +170,15 @@ function HeroSection({
 // Filter Section Component
 // ============================================================================
 
+interface FilterOption {
+  value: string;
+  label: string;
+}
+
 interface FilterSectionProps {
   title: string;
   icon: React.ElementType;
-  options: string[];
+  options: FilterOption[];
   selected: string[];
   onChange: (value: string, checked: boolean) => void;
   defaultOpen?: boolean;
@@ -215,14 +220,14 @@ function FilterSection({
         <div className="pt-2 pb-4 space-y-1">
           {options.map((option) => (
             <label
-              key={option}
+              key={option.value}
               className="flex items-center gap-3 py-1.5 px-2 rounded-md cursor-pointer hover:bg-hover transition-colors"
             >
               <Checkbox
-                checked={selected.includes(option)}
-                onCheckedChange={(checked) => onChange(option, checked as boolean)}
+                checked={selected.includes(option.value)}
+                onCheckedChange={(checked) => onChange(option.value, checked as boolean)}
               />
-              <span className="text-sm text-foreground">{option}</span>
+              <span className="text-sm text-foreground">{option.label}</span>
             </label>
           ))}
         </div>
@@ -479,20 +484,37 @@ export default function RecipeBrowserPage() {
 
       return next;
     });
+
+    // Scroll to show content right below sticky header
+    const contentEl = document.querySelector("[data-page-content]");
+    const stickyHeader = document.querySelector("[data-sticky-header]");
+    if (contentEl) {
+      const contentTop = contentEl.getBoundingClientRect().top + window.scrollY;
+      const headerHeight = stickyHeader?.getBoundingClientRect().height ?? 0;
+      window.scrollTo({ top: contentTop - headerHeight, behavior: "smooth" });
+    }
   };
 
   // Build active filters list for display
   const activeFilters: ActiveFilter[] = useMemo(() => {
     const active: ActiveFilter[] = [];
 
+    // Helper to find label from value
+    const getCategoryLabel = (value: string) =>
+      categoryOptions.find((c) => c.value === value)?.label ?? value;
+    const getMealTypeLabel = (value: string) =>
+      mealTypeOptions.find((m) => m.value === value)?.label ?? value;
+    const getDietaryLabel = (value: string) =>
+      dietaryOptions.find((d) => d.value === value)?.label ?? value;
+
     filters.categories.forEach((cat) => {
-      active.push({ type: "category", value: cat, label: cat });
+      active.push({ type: "category", value: cat, label: getCategoryLabel(cat) });
     });
     filters.mealTypes.forEach((type) => {
-      active.push({ type: "mealType", value: type, label: type });
+      active.push({ type: "mealType", value: type, label: getMealTypeLabel(type) });
     });
     filters.dietaryPreferences.forEach((pref) => {
-      active.push({ type: "dietary", value: pref, label: pref });
+      active.push({ type: "dietary", value: pref, label: getDietaryLabel(pref) });
     });
     if (filters.favoritesOnly) {
       active.push({ type: "favorite", value: "favorites", label: "Favorites Only" });
@@ -506,7 +528,7 @@ export default function RecipeBrowserPage() {
     }
 
     return active;
-  }, [filters]);
+  }, [filters, categoryOptions, mealTypeOptions, dietaryOptions]);
 
   // Filter and sort recipes
   const filteredRecipes = useMemo(() => {
@@ -605,6 +627,19 @@ export default function RecipeBrowserPage() {
     }
   };
 
+  // Scroll to show content right below sticky header when filters change
+  const scrollToResults = () => {
+    const contentEl = document.querySelector("[data-page-content]");
+    const stickyHeader = document.querySelector("[data-sticky-header]");
+
+    if (contentEl) {
+      const contentTop = contentEl.getBoundingClientRect().top + window.scrollY;
+      const headerHeight = stickyHeader?.getBoundingClientRect().height ?? 0;
+      // Scroll so content top aligns with bottom of sticky header
+      window.scrollTo({ top: contentTop - headerHeight, behavior: "smooth" });
+    }
+  };
+
   const handleCategoryChange = (value: string, checked: boolean) => {
     setFilters((prev) => ({
       ...prev,
@@ -612,6 +647,7 @@ export default function RecipeBrowserPage() {
         ? [...prev.categories, value]
         : prev.categories.filter((c) => c !== value),
     }));
+    scrollToResults();
   };
 
   const handleMealTypeChange = (value: string, checked: boolean) => {
@@ -634,6 +670,7 @@ export default function RecipeBrowserPage() {
         return next;
       });
     }
+    scrollToResults();
   };
 
   const handleDietaryChange = (value: string, checked: boolean) => {
@@ -656,6 +693,7 @@ export default function RecipeBrowserPage() {
         return next;
       });
     }
+    scrollToResults();
   };
 
   const handleRemoveFilter = (filter: ActiveFilter) => {
@@ -676,6 +714,7 @@ export default function RecipeBrowserPage() {
           next.delete("favorites");
           return next;
         });
+        scrollToResults();
         break;
       case "time":
         setFilters((prev) => ({ ...prev, maxCookTime: null }));
@@ -684,6 +723,7 @@ export default function RecipeBrowserPage() {
           next.delete("under30");
           return next;
         });
+        scrollToResults();
         break;
     }
   };
@@ -800,6 +840,7 @@ export default function RecipeBrowserPage() {
                         }
                         return next;
                       });
+                      scrollToResults();
                     }}
                   />
                   <Heart
@@ -816,14 +857,14 @@ export default function RecipeBrowserPage() {
                   <FilterSection
                     title="Category"
                     icon={ChefHat}
-                    options={categoryOptions.map((c) => c.label)}
+                    options={categoryOptions}
                     selected={filters.categories}
                     onChange={handleCategoryChange}
                   />
                   <FilterSection
                     title="Meal Type"
                     icon={Clock}
-                    options={mealTypeOptions.map((m) => m.label)}
+                    options={mealTypeOptions}
                     selected={filters.mealTypes}
                     onChange={handleMealTypeChange}
                   />
@@ -831,7 +872,7 @@ export default function RecipeBrowserPage() {
                     <FilterSection
                       title="Dietary Preference"
                       icon={BookOpen}
-                      options={dietaryOptions.map((d) => d.label)}
+                      options={dietaryOptions}
                       selected={filters.dietaryPreferences}
                       onChange={handleDietaryChange}
                     />

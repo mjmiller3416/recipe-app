@@ -38,6 +38,7 @@ class RecipeRepo:
             recipe_name=recipe_dto.recipe_name,
             recipe_category=recipe_dto.recipe_category,
             meal_type=recipe_dto.meal_type,
+            diet_pref=recipe_dto.diet_pref,
             total_time=recipe_dto.total_time,
             servings=recipe_dto.servings,
             directions=recipe_dto.directions,
