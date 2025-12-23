@@ -62,6 +62,9 @@ interface ActiveFilter {
 // Constants
 // ============================================================================
 
+const SCROLL_POSITION_KEY = "recipe-browser-scroll-position";
+const FILTER_VISIBILITY_KEY = "recipe-browser-show-filters";
+
 const SORT_OPTIONS: { value: SortOption; label: string; icon: React.ElementType }[] = [
   { value: "alphabetical", label: "Alphabetical", icon: SortAsc },
   { value: "cookTime", label: "Cook Time", icon: Clock },
@@ -418,7 +421,14 @@ export default function RecipeBrowserPage() {
   });
   const [sortBy, setSortBy] = useState<SortOption>("alphabetical");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(() => {
+    // Initialize from sessionStorage, default to true if not set
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem(FILTER_VISIBILITY_KEY);
+      return saved !== null ? saved === "true" : true;
+    }
+    return true;
+  });
   const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(new Set());
 
   // Fetch recipes on mount
@@ -439,6 +449,11 @@ export default function RecipeBrowserPage() {
 
     fetchRecipes();
   }, []);
+
+  // Persist filter visibility preference
+  useEffect(() => {
+    sessionStorage.setItem(FILTER_VISIBILITY_KEY, String(showFilters));
+  }, [showFilters]);
 
   // Handle quick filter toggle
   const handleQuickFilterToggle = (filterId: string) => {
@@ -604,8 +619,24 @@ export default function RecipeBrowserPage() {
     return result;
   }, [recipes, searchTerm, filters, sortBy, sortDirection]);
 
+  // Restore scroll position after recipes load
+  useEffect(() => {
+    if (!isLoading && recipes.length > 0) {
+      const savedPosition = sessionStorage.getItem(SCROLL_POSITION_KEY);
+      if (savedPosition) {
+        // Use requestAnimationFrame to ensure DOM has rendered
+        requestAnimationFrame(() => {
+          window.scrollTo(0, parseInt(savedPosition, 10));
+          sessionStorage.removeItem(SCROLL_POSITION_KEY);
+        });
+      }
+    }
+  }, [isLoading, recipes.length]);
+
   // Handlers
   const handleRecipeClick = (recipe: RecipeCardData) => {
+    // Save scroll position before navigating
+    sessionStorage.setItem(SCROLL_POSITION_KEY, String(window.scrollY));
     router.push(`/recipes/${recipe.id}`);
   };
 

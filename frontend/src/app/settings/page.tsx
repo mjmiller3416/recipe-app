@@ -53,7 +53,6 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { useSettings, DEFAULT_SETTINGS } from "@/hooks/useSettings";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { cn } from "@/lib/utils";
-import { feedbackApi } from "@/lib/api";
 import { DataManagementSection } from "@/components/settings/DataManagementSection";
 
 // ============================================================================
@@ -496,43 +495,19 @@ function AppearanceSection({ theme, onThemeChange }: AppearanceSectionProps) {
 // FEEDBACK SECTION
 // ============================================================================
 
-const FEEDBACK_CATEGORIES = [
-  { value: "Feature Request", label: "Feature Request" },
-  { value: "Bug Report", label: "Bug Report" },
-  { value: "General Feedback", label: "General Feedback" },
-  { value: "Question", label: "Question" },
-];
+import { useFeedbackForm, FEEDBACK_CATEGORIES } from "@/hooks/useFeedbackForm";
 
 function FeedbackSection() {
-  const [category, setCategory] = useState("");
-  const [message, setMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const canSubmit = category && message.trim().length >= 10;
-
-  const handleSubmit = async () => {
-    if (!canSubmit) return;
-
-    setIsSubmitting(true);
-    try {
-      const response = await feedbackApi.submit({
-        category,
-        message: message.trim(),
-      });
-
-      if (response.success) {
-        toast.success(response.message);
-        setCategory("");
-        setMessage("");
-      } else {
-        toast.error(response.message);
-      }
-    } catch (error) {
-      toast.error("Failed to submit feedback. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const {
+    category,
+    setCategory,
+    message,
+    setMessage,
+    isSubmitting,
+    canSubmit,
+    handleSubmit,
+    remainingChars,
+  } = useFeedbackForm();
 
   return (
     <Card>
@@ -606,9 +581,9 @@ function FeedbackSection() {
                 </>
               )}
             </Button>
-            {!canSubmit && category && message.length > 0 && message.length < 10 && (
+            {!canSubmit && category && message.length > 0 && remainingChars > 0 && (
               <p className="text-sm text-muted">
-                Message must be at least 10 characters
+                {remainingChars} more character{remainingChars !== 1 ? "s" : ""} needed
               </p>
             )}
           </div>

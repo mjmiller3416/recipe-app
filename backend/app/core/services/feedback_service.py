@@ -38,11 +38,24 @@ class FeedbackService:
         # Build issue title and body
         title = f"[{feedback.category}] User Feedback"
         timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+
+        # Build metadata section if present
+        metadata_section = ""
+        if feedback.metadata:
+            # Filter out None values and build formatted list
+            metadata_items = [
+                f"- **{key.replace('_', ' ').title()}:** {value}"
+                for key, value in feedback.metadata.items()
+                if value is not None
+            ]
+            if metadata_items:
+                metadata_section = "\n### Context\n" + "\n".join(metadata_items) + "\n"
+
         body = f"""## User Feedback
 
 **Category:** {feedback.category}
 **Submitted:** {timestamp}
-
+{metadata_section}
 ---
 
 {feedback.message}
