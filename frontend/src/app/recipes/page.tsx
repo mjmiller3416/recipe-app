@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/select";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { RecipeCard, RecipeCardGrid } from "@/components/recipe/RecipeCard";
+import { FilterPillGroup } from "@/components/common/FilterPillGroup";
 import { recipeApi } from "@/lib/api";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
 import { RECIPE_CATEGORY_OPTIONS, MEAL_TYPE_OPTIONS, DIETARY_PREFERENCES, QUICK_FILTERS } from "@/lib/constants";
@@ -144,26 +145,13 @@ function HeroSection({
         </div>
 
         {/* Quick Filter Pills */}
-        <div className="flex flex-wrap justify-center gap-2">
-          {QUICK_FILTERS.map((filter) => {
-            const isActive = activeQuickFilters.has(filter.id);
-            return (
-              <button
-                key={filter.id}
-                onClick={() => onQuickFilterToggle(filter.id)}
-                className={cn(
-                  "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
-                  "border backdrop-blur-sm",
-                  isActive
-                    ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25"
-                    : "bg-elevated/80 text-foreground border-border/50 hover:bg-elevated hover:border-border"
-                )}
-              >
-                {filter.label}
-              </button>
-            );
-          })}
-        </div>
+        <FilterPillGroup
+          options={QUICK_FILTERS}
+          activeIds={activeQuickFilters}
+          onToggle={onQuickFilterToggle}
+          variant="glass"
+          align="center"
+        />
       </div>
     </div>
   );
