@@ -97,6 +97,7 @@ export function RecipeGrid({
           size="small"
           onClick={() => onRecipeSelect(recipe)}
           showCategory={false}
+          showFavorite={false}
         />
       ))}
     </div>

@@ -26,8 +26,8 @@ interface FilterBarProps {
 // CONSTANTS
 // ============================================================================
 
-// Filter to only meal type filters (breakfast, lunch, dinner, dessert)
-const MEAL_TYPE_FILTER_IDS = ["breakfast", "lunch", "dinner", "dessert"];
+// Filter to only meal type filters for Create Meal dialog
+const MEAL_TYPE_FILTER_IDS = ["breakfast", "lunch", "dinner", "dessert", "sides", "sauce"];
 const MEAL_TYPE_FILTERS = QUICK_FILTERS.filter(
   (f) => f.type === "mealType" && MEAL_TYPE_FILTER_IDS.includes(f.id)
 );

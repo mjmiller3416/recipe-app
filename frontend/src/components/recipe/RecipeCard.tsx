@@ -17,6 +17,7 @@ interface RecipeCardBaseProps {
   className?: string;
   size?: "small" | "medium" | "large";
   showCategory?: boolean;
+  showFavorite?: boolean;
   maxIngredientsDisplay?: number; // For large card
 }
 
@@ -24,13 +25,14 @@ interface RecipeCardBaseProps {
 // UNIFIED RECIPE CARD - Supports all 3 sizes
 // ============================================================================
 
-export function RecipeCard({ 
-  recipe, 
-  onClick, 
+export function RecipeCard({
+  recipe,
+  onClick,
   onFavoriteToggle,
   className,
   size = "medium",
   showCategory = true,
+  showFavorite = true,
   maxIngredientsDisplay = 8,
 }: RecipeCardBaseProps) {
   const router = useRouter();
@@ -71,39 +73,42 @@ export function RecipeCard({
 
   // Render different sizes
   if (size === "small") {
-    return <RecipeCardSmall 
-      recipe={recipe} 
+    return <RecipeCardSmall
+      recipe={recipe}
       onClick={handleClick}
       onFavoriteClick={handleFavoriteClick}
       onKeyDown={handleKeyDown}
       formatTime={formatTime}
       className={className}
       showCategory={showCategory}
+      showFavorite={showFavorite}
     />;
   }
 
   if (size === "large") {
-    return <RecipeCardLarge 
-      recipe={recipe} 
+    return <RecipeCardLarge
+      recipe={recipe}
       onClick={handleClick}
       onFavoriteClick={handleFavoriteClick}
       onKeyDown={handleKeyDown}
       formatTime={formatTime}
       className={className}
       showCategory={showCategory}
+      showFavorite={showFavorite}
       maxIngredientsDisplay={maxIngredientsDisplay}
     />;
   }
 
   // Medium (default)
-  return <RecipeCardMedium 
-    recipe={recipe} 
+  return <RecipeCardMedium
+    recipe={recipe}
     onClick={handleClick}
     onFavoriteClick={handleFavoriteClick}
     onKeyDown={handleKeyDown}
     formatTime={formatTime}
     className={className}
     showCategory={showCategory}
+    showFavorite={showFavorite}
   />;
 }
 
@@ -119,16 +124,18 @@ interface CardVariantProps {
   formatTime: (minutes: number) => string;
   className?: string;
   showCategory: boolean;
+  showFavorite: boolean;
   maxIngredientsDisplay?: number;
 }
 
-function RecipeCardSmall({ 
-  recipe, 
-  onClick, 
+function RecipeCardSmall({
+  recipe,
+  onClick,
   onFavoriteClick,
   onKeyDown,
   formatTime,
   className,
+  showFavorite,
 }: CardVariantProps) {
   return (
     <Card
@@ -161,7 +168,7 @@ function RecipeCardSmall({
           <h3 className="text-sm font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
             {recipe.name}
           </h3>
-          
+
           <div className="flex items-center gap-3 mt-1 text-xs text-muted">
             <div className="flex items-center gap-1">
               <Users className="h-3 w-3" />
@@ -176,12 +183,14 @@ function RecipeCardSmall({
         </div>
 
         {/* Favorite Button */}
-        <FavoriteButton
-          isFavorite={recipe.isFavorite || false}
-          onToggle={onFavoriteClick}
-          variant="inline"
-          size="sm"
-        />
+        {showFavorite && (
+          <FavoriteButton
+            isFavorite={recipe.isFavorite || false}
+            onToggle={onFavoriteClick}
+            variant="inline"
+            size="sm"
+          />
+        )}
       </div>
     </Card>
   );
