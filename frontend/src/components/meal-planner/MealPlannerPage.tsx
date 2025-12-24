@@ -114,6 +114,13 @@ export function MealPlannerPage() {
     }
   };
 
+  // Handle empty side slot click - opens edit dialog
+  const handleEmptySideSlotClick = () => {
+    if (selectedMealId) {
+      setShowEditDialog(true);
+    }
+  };
+
   // Handle meal updated - refresh entry data in local state
   const handleMealUpdated = (updatedMeal: MealSelectionResponseDTO) => {
     setEntries((prev) =>
@@ -207,7 +214,7 @@ export function MealPlannerPage() {
             <>
               {/* Scrollable Area for the meal display */}
               <ScrollArea className="flex-1 -mr-4 pr-4">
-                <MealSelection key={`meal-${selectedMealId}-${mealRefreshKey}`} mealId={selectedMealId} isCompleted={selectedEntry?.is_completed} />
+                <MealSelection key={`meal-${selectedMealId}-${mealRefreshKey}`} mealId={selectedMealId} isCompleted={selectedEntry?.is_completed} onEmptySideSlotClick={handleEmptySideSlotClick} />
                 <div className="h-4" />
               </ScrollArea>
 
