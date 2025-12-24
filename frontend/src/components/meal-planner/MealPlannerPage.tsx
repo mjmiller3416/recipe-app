@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { MealSelection } from "./meal-display/MealSelection";
 import { WeeklyMenu, MenuListItem } from "./meal-display/WeeklyMenu";
 import { plannerApi } from "@/lib/api";
-import { PlannerEntryResponseDTO } from "@/types";
+import { PlannerEntryResponseDTO, MealSelectionResponseDTO } from "@/types";
 import { CreateMealDialog } from "./create-meal-dialog/CreateMealDialog";
+import { EditMealDialog } from "./edit-meal-dialog/EditMealDialog";
 
 export function MealPlannerPage() {
   // State for planner entries (not meals directly)
@@ -17,6 +18,8 @@ export function MealPlannerPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [mealRefreshKey, setMealRefreshKey] = useState(0);
 
   // Fetch planner entries on mount
   useEffect(() => {
@@ -73,8 +76,28 @@ export function MealPlannerPage() {
     console.log("Mark Complete clicked - to be implemented");
   };
 
+  // Handle Edit Meal button click - opens the edit meal dialog
   const handleEditMeal = () => {
-    console.log("Edit Meal clicked - to be implemented");
+    if (selectedMealId) {
+      setShowEditDialog(true);
+    }
+  };
+
+  // Handle meal updated - refresh entry data in local state
+  const handleMealUpdated = (updatedMeal: MealSelectionResponseDTO) => {
+    setEntries((prev) =>
+      prev.map((entry) =>
+        entry.meal_id === updatedMeal.id
+          ? {
+              ...entry,
+              meal_name: updatedMeal.meal_name,
+              main_recipe: updatedMeal.main_recipe,
+            }
+          : entry
+      )
+    );
+    // Trigger MealSelection to re-fetch by changing its key
+    setMealRefreshKey((prev) => prev + 1);
   };
 
   const handleRemoveFromMenu = async () => {
@@ -123,7 +146,7 @@ export function MealPlannerPage() {
             <>
               {/* Scrollable Area for the meal display */}
               <ScrollArea className="flex-1 -mr-4 pr-4">
-                <MealSelection mealId={selectedMealId} />
+                <MealSelection key={`meal-${selectedMealId}-${mealRefreshKey}`} mealId={selectedMealId} />
                 <div className="h-4" />
               </ScrollArea>
 
@@ -187,6 +210,14 @@ export function MealPlannerPage() {
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         onEntryCreated={handleEntryCreated}
+      />
+
+      {/* Edit Meal Dialog */}
+      <EditMealDialog
+        open={showEditDialog}
+        mealId={selectedMealId}
+        onOpenChange={setShowEditDialog}
+        onMealUpdated={handleMealUpdated}
       />
     </PageLayout>
   );
