@@ -277,33 +277,43 @@ interface IngredientItemProps {
 function IngredientItem({ ingredient, checked, onToggle }: IngredientItemProps) {
   const quantity = formatQuantity(ingredient.quantity);
   const unit = ingredient.unit || "";
-  
+
   return (
-    <button
-      onClick={onToggle}
-      className={cn(
-        "flex items-start gap-3 w-full text-left p-3 rounded-lg transition-all",
-        "hover:bg-hover group",
-        checked && "opacity-50"
-      )}
-    >
-      <div className={cn(
-        "w-5 h-5 rounded border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all",
-        checked 
-          ? "border-primary bg-primary" 
-          : "border-muted group-hover:border-primary"
-      )}>
-        {checked && <Check className="h-3 w-3 text-primary-foreground" />}
-      </div>
-      <span className={cn(
-        "flex-1 text-foreground transition-all",
-        checked && "line-through"
-      )}>
+    <>
+      {/* Web version - interactive checkbox */}
+      <button
+        onClick={onToggle}
+        className={cn(
+          "flex items-start gap-3 w-full text-left p-3 rounded-lg transition-all",
+          "hover:bg-hover group print:hidden",
+          checked && "opacity-50"
+        )}
+      >
+        <div className={cn(
+          "w-5 h-5 rounded border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all",
+          checked
+            ? "border-primary bg-primary"
+            : "border-muted group-hover:border-primary"
+        )}>
+          {checked && <Check className="h-3 w-3 text-primary-foreground" />}
+        </div>
+        <span className={cn(
+          "flex-1 text-foreground transition-all",
+          checked && "line-through"
+        )}>
+          <span className="font-semibold">{quantity} {unit}</span>
+          {(quantity || unit) && " "}
+          {ingredient.ingredient_name}
+        </span>
+      </button>
+
+      {/* Print version - simple text */}
+      <div className="hidden print:block py-0.5 text-sm text-black">
         <span className="font-semibold">{quantity} {unit}</span>
         {(quantity || unit) && " "}
         {ingredient.ingredient_name}
-      </span>
-    </button>
+      </div>
+    </>
   );
 }
 
@@ -320,29 +330,38 @@ interface DirectionStepProps {
 
 function DirectionStep({ step, index, completed, onToggle }: DirectionStepProps) {
   return (
-    <button
-      onClick={onToggle}
-      className={cn(
-        "flex gap-4 w-full text-left p-4 rounded-lg transition-all",
-        "hover:bg-hover group",
-        completed && "opacity-50"
-      )}
-    >
-      <div className={cn(
-        "w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-sm transition-all",
-        completed 
-          ? "bg-primary text-primary-foreground" 
-          : "bg-elevated text-muted group-hover:bg-primary/20 group-hover:text-primary"
-      )}>
-        {completed ? <Check className="h-4 w-4" /> : index + 1}
-      </div>
-      <p className={cn(
-        "flex-1 text-foreground leading-relaxed pt-1",
-        completed && "line-through"
-      )}>
+    <>
+      {/* Web version - interactive step */}
+      <button
+        onClick={onToggle}
+        className={cn(
+          "flex gap-4 w-full text-left p-4 rounded-lg transition-all",
+          "hover:bg-hover group print:hidden",
+          completed && "opacity-50"
+        )}
+      >
+        <div className={cn(
+          "w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-sm transition-all",
+          completed
+            ? "bg-primary text-primary-foreground"
+            : "bg-elevated text-muted group-hover:bg-primary/20 group-hover:text-primary"
+        )}>
+          {completed ? <Check className="h-4 w-4" /> : index + 1}
+        </div>
+        <p className={cn(
+          "flex-1 text-foreground leading-relaxed pt-1",
+          completed && "line-through"
+        )}>
+          {step}
+        </p>
+      </button>
+
+      {/* Print version - numbered text */}
+      <div className="hidden print:block py-1 text-sm text-black leading-relaxed">
+        <span className="font-semibold mr-2">{index + 1}.</span>
         {step}
-      </p>
-    </button>
+      </div>
+    </>
   );
 }
 
@@ -462,39 +481,125 @@ export default function RecipeDetailPage() {
   return (
     <>
       <div className="min-h-screen bg-background print:bg-white">
-        {/* Hero Image Section */}
-        <RecipeHeroImage
-          src={recipe.reference_image_path}
-          alt={recipe.recipe_name}
-        >
-          {/* Back Button - Fixed Position */}
-          <div className="absolute top-6 left-6 print:hidden">
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2 bg-background/80 backdrop-blur-sm hover:bg-background"
-              onClick={() => router.back()}
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
+        {/* Hero Image Section - Hidden for Print */}
+        <div className="print:hidden">
+          <RecipeHeroImage
+            src={recipe.reference_image_path}
+            alt={recipe.recipe_name}
+          >
+            {/* Back Button - Fixed Position */}
+            <div className="absolute top-6 left-6">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-background/80 backdrop-blur-sm hover:bg-background"
+                onClick={() => router.back()}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
+            </div>
+
+            {/* Favorite Button - Fixed Position */}
+            <div className="absolute top-6 right-6">
+              <FavoriteButton
+                isFavorite={isFavorite}
+                onToggle={handleFavoriteToggle}
+                variant="overlay"
+                size="lg"
+              />
+            </div>
+          </RecipeHeroImage>
+        </div>
+
+        {/* Print-Only Layout */}
+        <div className="hidden print:block p-8">
+          {/* Header: Title and Meta */}
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h1 className="text-3xl font-bold text-black uppercase tracking-wide">
+                {recipe.recipe_name}
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                {[recipe.meal_type, recipe.recipe_category, recipe.diet_pref].filter(Boolean).join(" • ")}
+              </p>
+            </div>
+            <div className="text-right text-sm text-gray-700">
+              <div className="flex items-center justify-end gap-1 mb-1">
+                <span>{recipe.servings || "—"} servings</span>
+              </div>
+              <div className="flex items-center justify-end gap-1">
+                <span>{formatTime(recipe.total_time)}</span>
+              </div>
+            </div>
           </div>
 
-          {/* Favorite Button - Fixed Position */}
-          <div className="absolute top-6 right-6 print:hidden">
-            <FavoriteButton
-              isFavorite={isFavorite}
-              onToggle={handleFavoriteToggle}
-              variant="overlay"
-              size="lg"
-            />
+          {/* Recipe Image */}
+          {recipe.reference_image_path && (
+            <div className="mb-6">
+              <img
+                src={recipe.reference_image_path}
+                alt={recipe.recipe_name}
+                className="w-full max-h-64 object-cover rounded-lg"
+              />
+            </div>
+          )}
+
+          {/* Two Column: Ingredients & Directions */}
+          <div className="flex gap-6">
+            {/* Ingredients Column */}
+            <div className="w-1/3 border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <h2 className="text-lg font-bold text-black uppercase tracking-wide mb-3 border-b border-gray-300 pb-2">
+                Ingredients
+              </h2>
+              <div className="space-y-1 text-sm">
+                {Array.from(groupedIngredients.entries()).map(([category, ingredients]) => (
+                  <div key={category}>
+                    {groupedIngredients.size > 1 && (
+                      <p className="font-semibold text-gray-700 mt-3 mb-1 first:mt-0 text-xs uppercase">
+                        {category}
+                      </p>
+                    )}
+                    {ingredients.map((ingredient: RecipeResponseDTO["ingredients"][0]) => (
+                      <p key={ingredient.id} className="text-black py-0.5">
+                        <span className="font-medium">{formatQuantity(ingredient.quantity)} {ingredient.unit || ""}</span>
+                        {(ingredient.quantity || ingredient.unit) && " "}
+                        {ingredient.ingredient_name}
+                      </p>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Directions Column */}
+            <div className="w-2/3 border border-gray-200 rounded-lg p-4">
+              <h2 className="text-lg font-bold text-black uppercase tracking-wide mb-3 border-b border-gray-300 pb-2">
+                Directions
+              </h2>
+              <ol className="space-y-2 text-sm list-decimal list-outside ml-4">
+                {directions.map((step, index) => (
+                  <li key={index} className="text-black leading-relaxed pl-1">
+                    {step}
+                  </li>
+                ))}
+              </ol>
+            </div>
           </div>
-        </RecipeHeroImage>
+
+          {/* Chef's Notes */}
+          {recipe.notes && (
+            <div className="mt-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
+              <h3 className="text-base font-bold text-black mb-2">Chef's Notes</h3>
+              <p className="text-sm text-gray-800">{recipe.notes}</p>
+            </div>
+          )}
+        </div>
         
-        {/* Main Content */}
-        <div className="max-w-5xl mx-auto px-6 -mt-16 relative z-10 pb-12">
+        {/* Main Content - Hidden for Print */}
+        <div className="max-w-5xl mx-auto px-6 -mt-16 relative z-10 pb-12 print:hidden">
           {/* Recipe Header Card */}
-          <Card className="mb-8 shadow-xl print:shadow-none print:border-0">
+          <Card className="mb-8 shadow-xl">
             <CardContent className="p-6 md:p-8">
               {/* Recipe Name */}
               <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4 leading-tight">
@@ -631,18 +736,18 @@ export default function RecipeDetailPage() {
           </Card>
           
           {/* Two Column Layout: Ingredients & Directions */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 print:block print:space-y-6">
             {/* Ingredients Column */}
-            <div className="lg:col-span-4">
-              <Card className="sticky top-6 print:static">
-                <CardContent className="p-6">
+            <div className="lg:col-span-4 print:w-full">
+              <Card className="sticky top-6 print:static print:shadow-none print:border print:border-gray-200">
+                <CardContent className="p-6 print:p-4">
                   {/* Section Header */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-secondary/10 rounded-lg">
+                  <div className="flex items-center justify-between mb-4 print:mb-2">
+                    <div className="flex items-center gap-3 print:gap-0">
+                      <div className="p-2 bg-secondary/10 rounded-lg print:hidden">
                         <BookOpen className="h-5 w-5 text-secondary" />
                       </div>
-                      <h2 className="text-xl font-bold text-foreground">
+                      <h2 className="text-xl font-bold text-foreground print:text-lg print:text-black">
                         Ingredients
                       </h2>
                     </div>
@@ -694,16 +799,16 @@ export default function RecipeDetailPage() {
             </div>
             
             {/* Directions Column */}
-            <div className="lg:col-span-8">
-              <Card>
-                <CardContent className="p-6">
+            <div className="lg:col-span-8 print:w-full">
+              <Card className="print:shadow-none print:border print:border-gray-200">
+                <CardContent className="p-6 print:p-4">
                   {/* Section Header */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
+                  <div className="flex items-center justify-between mb-4 print:mb-2">
+                    <div className="flex items-center gap-3 print:gap-0">
+                      <div className="p-2 bg-primary/10 rounded-lg print:hidden">
                         <UtensilsCrossed className="h-5 w-5 text-primary" />
                       </div>
-                      <h2 className="text-xl font-bold text-foreground">
+                      <h2 className="text-xl font-bold text-foreground print:text-lg print:text-black">
                         Directions
                       </h2>
                     </div>
@@ -747,17 +852,17 @@ export default function RecipeDetailPage() {
               
               {/* Notes Section */}
               {recipe.notes && (
-                <Card className="mt-8 border-warning/30 bg-warning/5">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="p-2 bg-warning/20 rounded-lg flex-shrink-0">
+                <Card className="mt-8 border-warning/30 bg-warning/5 print:mt-4 print:border print:border-gray-300 print:bg-gray-50 print:shadow-none">
+                  <CardContent className="p-6 print:p-4">
+                    <div className="flex items-start gap-4 print:gap-2">
+                      <div className="p-2 bg-warning/20 rounded-lg flex-shrink-0 print:hidden">
                         <Lightbulb className="h-5 w-5 text-warning" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-foreground mb-2">
+                        <h3 className="text-lg font-bold text-foreground mb-2 print:text-base print:text-black print:mb-1">
                           Chef's Notes
                         </h3>
-                        <p className="text-foreground/80 leading-relaxed">
+                        <p className="text-foreground/80 leading-relaxed print:text-sm print:text-black">
                           {recipe.notes}
                         </p>
                       </div>
@@ -781,30 +886,145 @@ export default function RecipeDetailPage() {
       {/* Print Styles */}
       <style jsx global>{`
         @media print {
+          /* Page setup */
+          @page {
+            margin: 0.5in;
+            size: letter;
+          }
+
+          /* Base styles */
           body {
             background: white !important;
+            color: black !important;
+            font-size: 11pt !important;
+            line-height: 1.4 !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
-          
+
+          /* Hide interactive/web-only elements */
           .print\\:hidden {
             display: none !important;
           }
-          
+
+          /* Show print-only elements */
+          .hidden.print\\:block {
+            display: block !important;
+          }
+
+          /* Reset positioning */
           .print\\:static {
             position: static !important;
           }
-          
+
+          /* Remove shadows */
           .print\\:shadow-none {
             box-shadow: none !important;
           }
-          
+
+          /* Border utilities */
           .print\\:border-0 {
             border: none !important;
           }
-          
+
+          .print\\:border {
+            border-width: 1px !important;
+          }
+
+          .print\\:border-gray-200 {
+            border-color: #e5e7eb !important;
+          }
+
+          .print\\:border-gray-300 {
+            border-color: #d1d5db !important;
+          }
+
+          /* Background colors */
           .print\\:bg-white {
             background: white !important;
+          }
+
+          .print\\:bg-gray-50 {
+            background: #f9fafb !important;
+          }
+
+          /* Text colors */
+          .print\\:text-black {
+            color: black !important;
+          }
+
+          /* Typography */
+          .print\\:text-lg {
+            font-size: 1.125rem !important;
+          }
+
+          .print\\:text-base {
+            font-size: 1rem !important;
+          }
+
+          .print\\:text-sm {
+            font-size: 0.875rem !important;
+          }
+
+          /* Spacing */
+          .print\\:mt-0 {
+            margin-top: 0 !important;
+          }
+
+          .print\\:mt-4 {
+            margin-top: 1rem !important;
+          }
+
+          .print\\:mb-1 {
+            margin-bottom: 0.25rem !important;
+          }
+
+          .print\\:mb-2 {
+            margin-bottom: 0.5rem !important;
+          }
+
+          .print\\:p-4 {
+            padding: 1rem !important;
+          }
+
+          .print\\:space-y-6 > * + * {
+            margin-top: 1.5rem !important;
+          }
+
+          .print\\:gap-0 {
+            gap: 0 !important;
+          }
+
+          .print\\:gap-2 {
+            gap: 0.5rem !important;
+          }
+
+          /* Width */
+          .print\\:w-full {
+            width: 100% !important;
+          }
+
+          /* Layout */
+          .print\\:block {
+            display: block !important;
+          }
+
+          /* Page break controls */
+          h2, h3 {
+            page-break-after: avoid;
+            break-after: avoid;
+          }
+
+          /* Keep content together */
+          .print\\:border {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+
+          /* Links */
+          a {
+            text-decoration: none !important;
+            color: black !important;
           }
         }
       `}</style>

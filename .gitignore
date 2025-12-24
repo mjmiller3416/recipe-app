@@ -1,6 +1,9 @@
 .claude/settings.local.json
 .vscode/settings.json
 
+# Windows reserved device names
+nul
+
 # Python
 __pycache__/
 *.pyc
