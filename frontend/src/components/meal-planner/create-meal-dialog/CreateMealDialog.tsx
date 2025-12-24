@@ -14,7 +14,7 @@ import { SavedView } from "./views/SavedView";
 import { recipeApi, plannerApi } from "@/lib/api";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
 import { QUICK_FILTERS } from "@/lib/constants";
-import type { RecipeCardData, MealSelectionResponseDTO } from "@/types";
+import type { RecipeCardData, PlannerEntryResponseDTO } from "@/types";
 
 // ============================================================================
 // TYPES
@@ -25,8 +25,8 @@ interface CreateMealDialogProps {
   open: boolean;
   /** Called when dialog open state changes */
   onOpenChange: (open: boolean) => void;
-  /** Called when a meal is successfully created */
-  onMealCreated?: (meal: MealSelectionResponseDTO) => void;
+  /** Called when a meal is created and added to the planner */
+  onEntryCreated?: (entry: PlannerEntryResponseDTO) => void;
 }
 
 // ============================================================================
@@ -47,7 +47,7 @@ interface CreateMealDialogProps {
 export function CreateMealDialog({
   open,
   onOpenChange,
-  onMealCreated,
+  onEntryCreated,
 }: CreateMealDialogProps) {
   // Tab state
   const [activeTab, setActiveTab] = useState<"create" | "saved">("create");
@@ -260,13 +260,17 @@ export function CreateMealDialog({
         .filter((r): r is RecipeCardData => r !== null)
         .map((r) => Number(r.id));
 
+      // Step 1: Create the meal
       const meal = await plannerApi.createMeal({
         meal_name: mealName || mainRecipe.name,
         main_recipe_id: Number(mainRecipe.id),
         side_recipe_ids: sideRecipeIds,
       });
 
-      onMealCreated?.(meal);
+      // Step 2: Add meal to planner (creates PlannerEntry)
+      const entry = await plannerApi.addToPlanner(meal.id);
+
+      onEntryCreated?.(entry);
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to create meal:", error);

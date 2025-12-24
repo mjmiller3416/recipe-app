@@ -115,6 +115,24 @@ export interface MealSelectionResponseDTO extends MealSelectionBaseDTO {
   side_recipes: RecipeCardDTO[];
 }
 
+/**
+ * Planner entry with hydrated meal data.
+ * Represents a meal added to the weekly planner.
+ */
+export interface PlannerEntryResponseDTO {
+  id: number;
+  meal_id: number;
+  position: number;
+  is_completed: boolean;
+  completed_at: string | null;
+  scheduled_date: string | null;
+  // Hydrated meal data
+  meal_name: string | null;
+  main_recipe_id: number | null;
+  side_recipe_ids: number[];
+  main_recipe: RecipeCardDTO | null;
+}
+
 export interface MealPlanSummaryDTO {
   total_meals: number;
   total_recipes: number;

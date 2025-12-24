@@ -7,6 +7,7 @@ import type {
   RecipeFilterDTO,
   MealSelectionResponseDTO,
   MealPlanSummaryDTO,
+  PlannerEntryResponseDTO,
   ShoppingListResponseDTO,
   ShoppingItemResponseDTO,
   ShoppingListGenerationResultDTO,
@@ -235,10 +236,36 @@ export const plannerApi = {
     fetchApi<void>("/api/planner/clear", { method: "DELETE" }),
 
   /**
-   * Remove a meal from the planner (meal persists in Meals table)
+   * Remove a meal from the planner by meal ID (meal persists in Meals table)
    */
   removeFromPlanner: (mealId: number): Promise<{ message: string }> =>
     fetchApi<{ message: string }>(`/api/planner/entries/by-meal/${mealId}`, {
+      method: "DELETE",
+    }),
+
+  // -------------------------------------------------------------------------
+  // Planner Entry Methods (Weekly Menu)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Get all planner entries with hydrated meal data
+   */
+  getEntries: (): Promise<PlannerEntryResponseDTO[]> =>
+    fetchApi<PlannerEntryResponseDTO[]>("/api/planner/entries"),
+
+  /**
+   * Add a meal to the planner (creates a PlannerEntry)
+   */
+  addToPlanner: (mealId: number): Promise<PlannerEntryResponseDTO> =>
+    fetchApi<PlannerEntryResponseDTO>(`/api/planner/entries/${mealId}`, {
+      method: "POST",
+    }),
+
+  /**
+   * Remove a planner entry by entry ID (meal persists)
+   */
+  removeEntry: (entryId: number): Promise<{ message: string }> =>
+    fetchApi<{ message: string }>(`/api/planner/entries/${entryId}`, {
       method: "DELETE",
     }),
 };
