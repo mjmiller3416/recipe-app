@@ -73,8 +73,31 @@ export function MealPlannerPage() {
     console.log("Edit Meal clicked - to be implemented");
   };
 
-  const handleRemoveFromMenu = () => {
-    console.log("Remove from Menu clicked - to be implemented");
+  const handleRemoveFromMenu = async () => {
+    if (selectedMealId === null) return;
+
+    const previousMeals = meals;
+    const mealToRemove = selectedMealId;
+
+    // Optimistic UI update
+    const updatedMeals = meals.filter((m) => m.id !== mealToRemove);
+    setMeals(updatedMeals);
+
+    // Select next meal or null
+    if (updatedMeals.length > 0) {
+      setSelectedMealId(updatedMeals[0].id);
+    } else {
+      setSelectedMealId(null);
+    }
+
+    try {
+      await plannerApi.removeFromPlanner(mealToRemove);
+    } catch (err) {
+      // Rollback on error
+      setMeals(previousMeals);
+      setSelectedMealId(mealToRemove);
+      setError(err instanceof Error ? err.message : "Failed to remove meal");
+    }
   };
 
   return (

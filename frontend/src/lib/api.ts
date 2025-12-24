@@ -233,6 +233,14 @@ export const plannerApi = {
    */
   clearPlan: (): Promise<void> =>
     fetchApi<void>("/api/planner/clear", { method: "DELETE" }),
+
+  /**
+   * Remove a meal from the planner (meal persists in Meals table)
+   */
+  removeFromPlanner: (mealId: number): Promise<{ message: string }> =>
+    fetchApi<{ message: string }>(`/api/planner/entries/by-meal/${mealId}`, {
+      method: "DELETE",
+    }),
 };
 
 // ============================================================================

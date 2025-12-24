@@ -469,12 +469,15 @@ export default function RecipeDetailPage() {
         >
           {/* Back Button - Fixed Position */}
           <div className="absolute top-6 left-6 print:hidden">
-            <Link href="/recipes">
-              <Button variant="outline" size="sm" className="gap-2 bg-background/80 backdrop-blur-sm hover:bg-background">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Recipes
-              </Button>
-            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-background/80 backdrop-blur-sm hover:bg-background"
+              onClick={() => router.back()}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
           </div>
 
           {/* Favorite Button - Fixed Position */}
