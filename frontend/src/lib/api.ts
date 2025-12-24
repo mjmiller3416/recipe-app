@@ -268,6 +268,22 @@ export const plannerApi = {
     fetchApi<{ message: string }>(`/api/planner/entries/${entryId}`, {
       method: "DELETE",
     }),
+
+  /**
+   * Toggle completion status of a planner entry
+   */
+  toggleCompletion: (entryId: number): Promise<PlannerEntryResponseDTO> =>
+    fetchApi<PlannerEntryResponseDTO>(`/api/planner/entries/${entryId}/toggle`, {
+      method: "POST",
+    }),
+
+  /**
+   * Clear all completed planner entries
+   */
+  clearCompleted: (): Promise<{ message: string }> =>
+    fetchApi<{ message: string }>("/api/planner/clear-completed", {
+      method: "DELETE",
+    }),
 };
 
 // ============================================================================

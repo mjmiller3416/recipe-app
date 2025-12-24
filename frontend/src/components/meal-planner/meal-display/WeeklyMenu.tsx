@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
-import { Plus } from "lucide-react";
+import { Plus, Check } from "lucide-react";
 
 // ============================================================================
 // Types
@@ -15,6 +15,7 @@ export interface MenuListItem {
   id: number;
   name: string;
   imageUrl: string | null;
+  isCompleted: boolean;
 }
 
 interface MenuListCardProps {
@@ -47,7 +48,7 @@ export function MenuListCard({
       onClick={onClick}
       tabIndex={0}
       role="button"
-      aria-label={`${item.name} - click to view`}
+      aria-label={`${item.name}${item.isCompleted ? " (completed)" : ""} - click to view`}
       className={cn(
         // Base styles (matching SideDishCard)
         "group cursor-pointer overflow-hidden",
@@ -59,6 +60,8 @@ export function MenuListCard({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         // Selected state
         isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+        // Completed state - subtle opacity
+        item.isCompleted && "opacity-60",
         className
       )}
     >
@@ -74,10 +77,19 @@ export function MenuListCard({
             iconSize="sm"
             showLoadingState={false}
           />
+          {/* Completed checkmark overlay */}
+          {item.isCompleted && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+              <Check className="h-8 w-8 text-green-400" />
+            </div>
+          )}
         </div>
 
         {/* Meal Name */}
-        <span className="text-base font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+        <span className={cn(
+          "text-base font-semibold line-clamp-2 transition-colors",
+          item.isCompleted ? "text-muted-foreground" : "text-foreground group-hover:text-primary"
+        )}>
           {item.name}
         </span>
       </div>
@@ -96,6 +108,10 @@ export function WeeklyMenu({
   onAddMealClick,
   className,
 }: WeeklyMenuProps) {
+  // Split items into incomplete and completed
+  const incompleteItems = items.filter((item) => !item.isCompleted);
+  const completedItems = items.filter((item) => item.isCompleted);
+
   return (
     <div
       className={cn(
@@ -116,14 +132,41 @@ export function WeeklyMenu({
               No meals planned yet
             </div>
           ) : (
-            items.map((item) => (
-              <MenuListCard
-                key={item.id}
-                item={item}
-                isSelected={selectedId === item.id}
-                onClick={() => onItemClick?.(item)}
-              />
-            ))
+            <>
+              {/* Incomplete meals */}
+              {incompleteItems.map((item) => (
+                <MenuListCard
+                  key={item.id}
+                  item={item}
+                  isSelected={selectedId === item.id}
+                  onClick={() => onItemClick?.(item)}
+                />
+              ))}
+
+              {/* Completed meals section */}
+              {completedItems.length > 0 && (
+                <>
+                  {/* Divider */}
+                  <div className="flex items-center gap-3 py-2">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      Completed
+                    </span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
+
+                  {/* Completed items */}
+                  {completedItems.map((item) => (
+                    <MenuListCard
+                      key={item.id}
+                      item={item}
+                      isSelected={selectedId === item.id}
+                      onClick={() => onItemClick?.(item)}
+                    />
+                  ))}
+                </>
+              )}
+            </>
           )}
         </div>
       </ScrollArea>

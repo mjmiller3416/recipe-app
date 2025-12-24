@@ -6,6 +6,7 @@ import { plannerApi } from "@/lib/api";
 import { MainDishCard } from "./MainDishCard";
 import { SideDishSlots } from "./SideDishSlots";
 import { cn } from "@/lib/utils";
+import { CheckCircle } from "lucide-react";
 import type {
   MealSelectionResponseDTO,
   RecipeCardDTO,
@@ -19,6 +20,8 @@ import type {
 interface MealSelectionProps {
   /** The meal ID to fetch and display */
   mealId: number;
+  /** Whether this meal entry is marked as completed */
+  isCompleted?: boolean;
   /** Called when an empty side dish slot is clicked (disabled if not provided) */
   onEmptySideSlotClick?: (index: number) => void;
   className?: string;
@@ -68,6 +71,7 @@ function MealSelectionSkeleton({ className }: { className?: string }) {
 
 export function MealSelection({
   mealId,
+  isCompleted = false,
   onEmptySideSlotClick,
   className,
 }: MealSelectionProps) {
@@ -138,7 +142,8 @@ export function MealSelection({
     <div className={cn("space-y-6", className)}>
       {/* Main Dish */}
       {meal.main_recipe ? (
-        <MainDishCard
+        <div className={cn("relative", isCompleted && "opacity-40")}>
+          <MainDishCard
           name={meal.main_recipe.recipe_name}
           imageUrl={meal.main_recipe.reference_image_path}
           servings={meal.main_recipe.servings}
@@ -147,7 +152,14 @@ export function MealSelection({
           mealType={meal.main_recipe.meal_type}
           dietaryPreference={meal.main_recipe.diet_pref}
           onClick={() => handleRecipeClick(meal.main_recipe!.id)}
-        />
+          />
+          {/* Completed checkmark overlay */}
+          {isCompleted && (
+            <div className="absolute top-4 right-4 flex items-center justify-center w-10 h-10 rounded-full bg-black/50">
+              <CheckCircle className="h-6 w-6 text-green-400" />
+            </div>
+          )}
+        </div>
       ) : (
         <div className="p-6 text-center rounded-lg border border-dashed border-muted">
           <p className="text-muted-foreground">No main dish selected</p>
@@ -155,11 +167,13 @@ export function MealSelection({
       )}
 
       {/* Side Dishes */}
-      <SideDishSlots
-        recipes={sideRecipes}
-        onFilledSlotClick={(recipe) => handleRecipeClick(Number(recipe.id))}
-        onEmptySlotClick={onEmptySideSlotClick}
-      />
+      <div className={cn(isCompleted && "opacity-40")}>
+        <SideDishSlots
+          recipes={sideRecipes}
+          onFilledSlotClick={(recipe) => handleRecipeClick(Number(recipe.id))}
+          onEmptySlotClick={onEmptySideSlotClick}
+        />
+      </div>
     </div>
   );
 }

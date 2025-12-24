@@ -10,6 +10,7 @@ import { plannerApi } from "@/lib/api";
 import { PlannerEntryResponseDTO, MealSelectionResponseDTO } from "@/types";
 import { CreateMealDialog } from "./create-meal-dialog/CreateMealDialog";
 import { EditMealDialog } from "./edit-meal-dialog/EditMealDialog";
+import { Trash2 } from "lucide-react";
 
 export function MealPlannerPage() {
   // State for planner entries (not meals directly)
@@ -53,6 +54,7 @@ export function MealPlannerPage() {
     id: entry.id,
     name: entry.meal_name ?? "Untitled Meal",
     imageUrl: entry.main_recipe?.reference_image_path ?? null,
+    isCompleted: entry.is_completed,
   }));
 
   // Handle entry selection from WeeklyMenu
@@ -71,9 +73,38 @@ export function MealPlannerPage() {
     setSelectedEntryId(entry.id);
   };
 
-  // Placeholder handlers for footer buttons
-  const handleMarkComplete = () => {
-    console.log("Mark Complete clicked - to be implemented");
+  // Handle marking a meal as complete/incomplete (toggle)
+  const handleMarkComplete = async () => {
+    if (selectedEntryId === null) return;
+
+    const previousEntries = entries;
+    const currentEntry = entries.find((e) => e.id === selectedEntryId);
+    if (!currentEntry) return;
+
+    // Optimistic UI update
+    setEntries((prev) =>
+      prev.map((entry) =>
+        entry.id === selectedEntryId
+          ? { ...entry, is_completed: !entry.is_completed }
+          : entry
+      )
+    );
+
+    try {
+      const updatedEntry = await plannerApi.toggleCompletion(selectedEntryId);
+      // Update with server response
+      setEntries((prev) =>
+        prev.map((entry) =>
+          entry.id === selectedEntryId
+            ? { ...entry, is_completed: updatedEntry.is_completed, completed_at: updatedEntry.completed_at }
+            : entry
+        )
+      );
+    } catch (err) {
+      // Rollback on error
+      setEntries(previousEntries);
+      setError(err instanceof Error ? err.message : "Failed to update completion status");
+    }
   };
 
   // Handle Edit Meal button click - opens the edit meal dialog
@@ -127,6 +158,36 @@ export function MealPlannerPage() {
     }
   };
 
+  // Check if there are any completed entries
+  const hasCompletedEntries = entries.some((e) => e.is_completed);
+
+  // Handle clearing all completed entries
+  const handleClearCompleted = async () => {
+    const previousEntries = entries;
+    const completedIds = entries.filter((e) => e.is_completed).map((e) => e.id);
+
+    // Optimistic UI update
+    const updatedEntries = entries.filter((e) => !e.is_completed);
+    setEntries(updatedEntries);
+
+    // Update selection if current selection was completed
+    if (selectedEntryId && completedIds.includes(selectedEntryId)) {
+      if (updatedEntries.length > 0) {
+        setSelectedEntryId(updatedEntries[0].id);
+      } else {
+        setSelectedEntryId(null);
+      }
+    }
+
+    try {
+      await plannerApi.clearCompleted();
+    } catch (err) {
+      // Rollback on error
+      setEntries(previousEntries);
+      setError(err instanceof Error ? err.message : "Failed to clear completed");
+    }
+  };
+
   return (
     <PageLayout
       title="Meal Planner"
@@ -146,7 +207,7 @@ export function MealPlannerPage() {
             <>
               {/* Scrollable Area for the meal display */}
               <ScrollArea className="flex-1 -mr-4 pr-4">
-                <MealSelection key={`meal-${selectedMealId}-${mealRefreshKey}`} mealId={selectedMealId} />
+                <MealSelection key={`meal-${selectedMealId}-${mealRefreshKey}`} mealId={selectedMealId} isCompleted={selectedEntry?.is_completed} />
                 <div className="h-4" />
               </ScrollArea>
 
@@ -157,7 +218,7 @@ export function MealPlannerPage() {
                   size="xl"
                   className="flex-1"
                 >
-                  Mark Complete
+                  {selectedEntry?.is_completed ? "Mark Incomplete" : "Mark Complete"}
                 </Button>
                 <Button
                   onClick={handleEditMeal}
@@ -195,6 +256,20 @@ export function MealPlannerPage() {
 
         {/* RIGHT COLUMN: WEEKLY MENU */}
         <div className="hidden lg:flex flex-col min-h-0">
+          {/* Clear Completed button - only shown when there are completed entries */}
+          {hasCompletedEntries && (
+            <div className="flex justify-end mb-2">
+              <Button
+                onClick={handleClearCompleted}
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Clear Completed
+              </Button>
+            </div>
+          )}
           <WeeklyMenu
             items={menuItems}
             selectedId={selectedEntryId}
