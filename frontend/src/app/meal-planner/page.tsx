@@ -1,4 +1,4 @@
-import { MealPlannerPage } from "@/components/meal-planner";
+import { MealPlannerPage } from "@/app/meal-planner/_components";
 
 /**
  * Meal Planner Page

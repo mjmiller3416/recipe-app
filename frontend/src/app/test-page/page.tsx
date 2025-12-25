@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { RecipeCard } from "@/components/recipe/RecipeCard";
-import { SideDishSlots } from "@/components/meal-planner/meal-display/SideDishSlots";
-import { MainDishCard } from "@/components/meal-planner/meal-display/MainDishCard";
-import { MealSelection } from "@/components/meal-planner/meal-display/MealSelection";
+import { SideDishSlots } from "@/app/meal-planner/_components/meal-display/SideDishSlots";
+import { MainDishCard } from "@/app/meal-planner/_components/meal-display/MainDishCard";
+import { MealSelection } from "@/app/meal-planner/_components/meal-display/MealSelection";
 import { recipeApi } from "@/lib/api";
 import type { RecipeCardData, RecipeResponseDTO } from "@/types";
 
