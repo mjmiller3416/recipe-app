@@ -126,7 +126,7 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
     confirmLeave,
     cancelLeave,
   } = useUnsavedChanges({
-    isDirty: isEditMode ? form.isDirty : false,
+    isDirty: form.isDirty,
     onConfirmLeave: () => {
       // Reset dirty state when user confirms leaving
     },
@@ -230,28 +230,26 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
         </div>
       </PageLayout>
 
-      {/* Unsaved Changes Confirmation Dialog (edit mode only) */}
-      {isEditMode && (
-        <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-secondary" />
-                Unsaved Changes
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={cancelLeave}>Keep Editing</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmLeave} className="bg-secondary hover:bg-secondary/90">
-                Discard Changes
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
+      {/* Unsaved Changes Confirmation Dialog */}
+      <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-secondary" />
+              Unsaved Changes
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelLeave}>Keep Editing</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmLeave} className="bg-secondary hover:bg-secondary/90">
+              Discard Changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
