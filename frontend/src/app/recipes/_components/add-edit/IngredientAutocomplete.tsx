@@ -82,9 +82,9 @@ export function IngredientAutocomplete({
 
   // Build the list of selectable items
   const items = React.useMemo(() => {
-    const list: Array<{ type: "ingredient"; data: Ingredient } | { type: "create"; name: string }> = 
+    const list: Array<{ type: "ingredient"; data: Ingredient } | { type: "create"; name: string }> =
       filteredIngredients.map((ing) => ({ type: "ingredient" as const, data: ing }));
-    
+
     if (showCreateOption) {
       list.push({ type: "create" as const, name: value.trim() });
     }
@@ -144,7 +144,7 @@ export function IngredientAutocomplete({
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
-        setHighlightedIndex((prev) => 
+        setHighlightedIndex((prev) =>
           prev < items.length - 1 ? prev + 1 : prev
         );
         break;

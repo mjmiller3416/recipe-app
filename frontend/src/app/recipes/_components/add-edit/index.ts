@@ -6,5 +6,5 @@ export { DirectionsNotesCard } from "./DirectionsNotesCard";
 export { ImageUploadCard } from "./ImageUploadCard";
 export { IngredientRow } from "./IngredientRow";
 export type { Ingredient } from "./IngredientRow";
-export { IngredientAutocomplete } from "./IngredientAutoComplete";
-export type { Ingredient as AutocompleteIngredient } from "./IngredientAutoComplete";
+export { IngredientAutocomplete } from "./IngredientAutocomplete";
+export type { Ingredient as AutocompleteIngredient } from "./IngredientAutocomplete";

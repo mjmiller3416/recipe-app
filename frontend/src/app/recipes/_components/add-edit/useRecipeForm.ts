@@ -7,7 +7,7 @@ import { recipeApi, ingredientApi, uploadApi } from "@/lib/api";
 import { base64ToFile } from "@/lib/utils";
 import type { RecipeCreateDTO, RecipeUpdateDTO, RecipeIngredientDTO, RecipeResponseDTO } from "@/types";
 import type { Ingredient } from "./IngredientRow";
-import type { Ingredient as AutocompleteIngredient } from "./IngredientAutoComplete";
+import type { Ingredient as AutocompleteIngredient } from "./IngredientAutocomplete";
 import {
   validateString,
   validateInteger,

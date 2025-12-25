@@ -13,7 +13,7 @@ import { INGREDIENT_UNITS, INGREDIENT_CATEGORIES } from "@/lib/constants";
 import {
   IngredientAutocomplete,
   Ingredient as AutocompleteIngredient,
-} from "./IngredientAutoComplete";
+} from "./IngredientAutocomplete";
 
 export interface Ingredient {
   id: string;
