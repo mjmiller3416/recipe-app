@@ -352,6 +352,14 @@ export const shoppingApi = {
     }),
 
   /**
+   * Generate shopping list from active planner entries
+   */
+  generateFromPlanner: (): Promise<ShoppingListGenerationResultDTO> =>
+    fetchApi<ShoppingListGenerationResultDTO>("/api/shopping/generate-from-planner", {
+      method: "POST",
+    }),
+
+  /**
    * Clear entire shopping list
    */
   clear: (): Promise<BulkOperationResultDTO> =>

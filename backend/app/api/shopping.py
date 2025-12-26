@@ -115,6 +115,13 @@ def generate_shopping_list(
     return service.generate_shopping_list(generation_data)
 
 
+@router.post("/generate-from-planner", response_model=ShoppingListGenerationResultDTO)
+def generate_from_planner(session: Session = Depends(get_session)):
+    """Generate shopping list from active (non-completed) planner entries."""
+    service = ShoppingService(session)
+    return service.generate_from_active_planner()
+
+
 @router.delete("/clear", response_model=BulkOperationResultDTO)
 def clear_shopping_list(session: Session = Depends(get_session)):
     """Clear the entire shopping list."""

@@ -1,3 +1,8 @@
+---
+name: roadmap-builder
+description: Decide what to build next with brutal prioritization using impact/effort analysis. Use when planning sprints, evaluating features, or auditing an overgrown roadmap.
+---
+
 # Roadmap Builder
 
 Decide what to build next with brutal prioritization. Cut the noise, focus on what moves the needle.
@@ -13,6 +18,19 @@ Decide what to build next with brutal prioritization. Cut the noise, focus on wh
 - `evaluate [feature]` - Challenge a specific feature idea
 - `audit` - Review current roadmap and cut the fat
 - `prioritize [list of features]` - Rank features using the framework
+
+---
+
+## Before Prioritizing
+
+First, understand the current context. If not provided, ask:
+
+1. **What stage is the product in?** (Pre-launch / Post-launch / Growth)
+2. **What's the core value proposition?** (One sentence)
+3. **What features already exist?** (Brief list)
+4. **What user feedback has been collected?** (Complaints, requests, praise)
+
+**Skip this step if context is already clear from the conversation.**
 
 ---
 
@@ -285,3 +303,11 @@ Repeat these when tempted to add features:
 **When in doubt, don't build it.**
 
 The cost of building the wrong thing is always higher than the cost of waiting. Ship less. Learn faster. Build only what's proven to matter.
+
+---
+
+## Related Skills
+
+- **New idea?** → Use `/idea-validator` first to validate it's worth building
+- **Ready to plan?** → Use `/launch-planner prd [idea]` to create a lean PRD
+- **Scope creep?** → Use `/launch-planner scope [feature]` to evaluate if it belongs in MVP

@@ -1,3 +1,8 @@
+---
+name: idea-validator
+description: Evaluate app ideas with brutal honesty before investing time building them. Use when assessing new product concepts or deciding whether an idea is worth pursuing.
+---
+
 # Idea Validator
 
 Evaluate app ideas with brutal honesty before investing time building them.
@@ -10,7 +15,7 @@ Evaluate app ideas with brutal honesty before investing time building them.
 
 ## Instructions
 
-When evaluating an app idea, perform a rapid but thorough analysis. Be brutally honest—it's better to kill a bad idea early than waste a month building something nobody wants.
+When evaluating an app idea, perform a rapid but thorough analysis. **Use web search to research competitors, market data, and existing solutions.**Be brutally honest—it's better to kill a bad idea early than waste a month building something nobody wants.
 
 ### Evaluation Framework
 
@@ -98,3 +103,11 @@ Always structure your response exactly like this:
 3. If you can't find competitors, that's often a red flag (no market), not a green flag.
 4. Ideas that require network effects, viral growth, or massive scale to work = SKIP for solo builders.
 5. "I would use this" from friends/family means nothing. Look for strangers paying money.
+
+---
+
+## Related Skills
+
+- **After BUILD IT verdict** → Use `/launch-planner prd [idea]` to create a lean PRD
+- **After MAYBE verdict** → Refine the idea based on feedback, then re-evaluate
+- **Post-launch prioritization** → Use `/roadmap-builder` to decide what to build next

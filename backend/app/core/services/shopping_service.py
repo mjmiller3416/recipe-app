@@ -24,6 +24,7 @@ from ..dtos.shopping_dtos import (
     ShoppingListResponseDTO)
 from ..models.shopping_item import ShoppingItem
 from ..repositories.meal_repo import MealRepo
+from ..repositories.planner_repo import PlannerRepo
 from ..repositories.shopping_repo import ShoppingRepo
 
 
@@ -40,6 +41,7 @@ class ShoppingService:
         self.session = session
         self.shopping_repo = ShoppingRepo(self.session)
         self.meal_repo = MealRepo(self.session)
+        self.planner_repo = PlannerRepo(self.session)
 
     # ── Shopping List Generation ────────────────────────────────────────────────────────────────────────────
     def generate_shopping_list(
@@ -168,6 +170,36 @@ class ShoppingService:
             List[int]: Flattened list of recipe IDs used in those meals.
         """
         return self._extract_recipe_ids_from_meals(meal_ids)
+
+    def generate_from_active_planner(self) -> ShoppingListGenerationResultDTO:
+        """
+        Generate shopping list from active (non-completed) planner entries.
+
+        Returns:
+            ShoppingListGenerationResultDTO: Generation result with statistics.
+        """
+        try:
+            # Get incomplete planner entries
+            entries = self.planner_repo.get_incomplete_entries()
+
+            # Extract recipe IDs from all meals in incomplete entries
+            recipe_ids: List[int] = []
+            for entry in entries:
+                if entry.meal:
+                    recipe_ids.extend(entry.meal.get_all_recipe_ids())
+
+            # Generate shopping list from collected recipe IDs
+            return self.generate_shopping_list(recipe_ids)
+
+        except SQLAlchemyError as e:
+            return ShoppingListGenerationResultDTO(
+                success=False,
+                items_created=0,
+                items_updated=0,
+                total_items=0,
+                message="Failed to generate shopping list from planner",
+                errors=[str(e)]
+            )
 
     # ── Shopping List Retrieval ─────────────────────────────────────────────────────────────────────────────
     def get_shopping_list(
