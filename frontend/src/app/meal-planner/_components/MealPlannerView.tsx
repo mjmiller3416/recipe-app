@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { MealSelection } from "./meal-display/MealSelection";
 import { WeeklyMenu, MenuListItem } from "./meal-display/WeeklyMenu";
@@ -202,7 +201,7 @@ export function MealPlannerPage() {
       fillViewport
     >
       {/* GRID CONTAINER */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-8 h-full min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 h-full min-h-0">
 
         {/* LEFT COLUMN: SELECTED MEAL */}
         <div className="flex flex-col min-h-0 overflow-hidden">
@@ -212,14 +211,10 @@ export function MealPlannerPage() {
 
           {selectedMealId !== null ? (
             <>
-              {/* Scrollable Area for the meal display */}
-              <ScrollArea className="flex-1 -mr-4 pr-4">
-                <MealSelection key={`meal-${selectedMealId}-${mealRefreshKey}`} mealId={selectedMealId} isCompleted={selectedEntry?.is_completed} onEmptySideSlotClick={handleEmptySideSlotClick} />
-                <div className="h-4" />
-              </ScrollArea>
+              <MealSelection key={`meal-${selectedMealId}-${mealRefreshKey}`} mealId={selectedMealId} isCompleted={selectedEntry?.is_completed} onEmptySideSlotClick={handleEmptySideSlotClick} className="flex-1" />
 
               {/* Footer - Action Buttons */}
-              <div className="flex-shrink-0 pt-6 flex gap-4">
+              <div className="flex-shrink-0 pt-4 flex gap-4">
                 <Button
                   onClick={handleMarkComplete}
                   size="xl"

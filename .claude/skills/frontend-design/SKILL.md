@@ -1,6 +1,6 @@
 ---
 name: frontend-design
-description: Design system and frontend rules for the Recipe App (Next.js 15 + Tailwind + Shadcn).
+description: Apply when building or auditing UI. Enforces design tokens, Shadcn-first patterns, alignment rules, and the "fun but functional" aesthetic for Recipe App components.
 ---
 
 # Recipe App Frontend Design Skill

@@ -298,7 +298,7 @@ export function CreateMealDialog({
         <Tabs
           value={activeTab}
           onValueChange={(v) => setActiveTab(v as "create" | "saved")}
-          className="flex flex-col h-full"
+          className="flex flex-col flex-1 min-h-0"
         >
           {/* Custom underline-style tabs */}
           <div className="px-6 pt-6 pb-0">
@@ -329,7 +329,7 @@ export function CreateMealDialog({
           {/* Tab Content */}
           <TabsContent
             value="create"
-            className="flex-1 overflow-hidden px-6 py-4 mt-0"
+            className="flex-1 overflow-y-auto px-6 py-4 mt-0"
           >
             <CreateView
               mealName={mealName}
@@ -351,14 +351,14 @@ export function CreateMealDialog({
             />
           </TabsContent>
 
-          <TabsContent value="saved" className="flex-1 overflow-hidden px-6 py-4 mt-0">
+          <TabsContent value="saved" className="flex-1 overflow-y-auto px-6 py-4 mt-0">
             <SavedView />
           </TabsContent>
         </Tabs>
 
         {/* Footer - only show on Create tab */}
         {activeTab === "create" && (
-          <DialogFooter className="px-6 py-4 border-t border-border">
+          <DialogFooter className="px-6 py-4 border-t border-border flex-shrink-0">
             <Button variant="ghost" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

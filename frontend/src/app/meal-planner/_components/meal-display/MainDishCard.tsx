@@ -101,7 +101,7 @@ export function MainDishCard({
          Changed to aspect-[2.4/1]. This makes the image shorter and wider,
          closer to the "cinematic" banner look in the mock.
       */}
-      <div className="relative aspect-[2.4/1] w-full overflow-hidden bg-muted">
+      <div className="relative aspect-[2.4/1] w-full max-h-[30vh] overflow-hidden bg-muted">
         <RecipeCardImage
           src={imageUrl}
           alt={name}
