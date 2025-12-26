@@ -22,19 +22,7 @@ This skill acts as the "Senior Frontend Designer" for the Recipe App. It enforce
 
 > **Rule:** Always use CSS variables — never hardcode color values.
 
-See [tokens.md](tokens.md) for the complete token reference with values, Tailwind classes, and usage examples.
-
-### Quick Reference
-| Purpose | Token | Tailwind |
-|---------|-------|----------|
-| Primary (Purple) | `--primary` | `bg-primary`, `text-primary` |
-| Secondary (Teal) | `--secondary` | `bg-secondary`, `text-secondary` |
-| Page background | `--background` | `bg-background` |
-| Card surface | `--card` | `bg-card` |
-| Primary text | `--foreground` | `text-foreground` |
-| Secondary text | `--muted` | `text-muted` |
-| Borders | `--border` | `border-border` |
-| Destructive | `--destructive` | `bg-destructive`, `text-destructive` |
+For the complete token reference including values, Tailwind classes, and usage examples, see [tokens.md](tokens.md).
 
 ### Typography & Shape
 * **Font:** `Geist Sans` / `Geist Mono`
@@ -57,7 +45,50 @@ To make the app feel alive without breaking utility:
 * **Empty States:** Never leave a blank page. Use a Lucide icon + friendly text (e.g., "No recipes found yet! Time to cook something up?").
 * **Images:** Use `aspect-square` or `aspect-video` consistently. Always add `overflow-hidden` to image containers so zoom effects on hover don't spill out.
 
-## 5. Workflow for Generating Components
+## 5. Motion & Animation Guidelines
+
+> **Rule:** Use animation tokens for consistent timing. Never use arbitrary durations.
+
+### Duration Tokens
+| Token | Value | Use Case |
+|-------|-------|----------|
+| `--duration-instant` | 100ms | Button press, toggle |
+| `--duration-fast` | 150ms | Hover states, micro-feedback |
+| `--duration-normal` | 300ms | Page transitions, modals |
+| `--duration-slow` | 500ms | Complex animations, emphasis |
+
+### Easing Tokens
+| Token | Use Case |
+|-------|----------|
+| `--ease-default` | General purpose, smooth deceleration |
+| `--ease-in` | Exit animations |
+| `--ease-out` | Enter animations |
+| `--ease-bounce` | Playful interactions, confirmations |
+
+### Standard Patterns
+| Element | Animation | Implementation |
+|---------|-----------|----------------|
+| Button hover | Color shift | `transition-colors duration-150` |
+| Button press | Scale down | `active:scale-95 transition-transform duration-100` |
+| Card hover | Subtle lift | `hover:shadow-lg transition-shadow duration-200` |
+| Modal enter | Fade + scale | `animate-scale-in` (custom class) |
+| Page transition | Fade in | `animate-fade-in` (custom class) |
+| Loading spinner | Continuous | `animate-spin` (Tailwind built-in) |
+
+### Custom Animation Classes
+These utility classes are defined in `globals.css`:
+* `.animate-fade-in` / `.animate-fade-out`
+* `.animate-slide-up` / `.animate-slide-down`
+* `.animate-scale-in`
+
+### Framer Motion Conventions
+For complex animations, use Framer Motion with these defaults:
+* `duration: 0.3` (matches `--duration-normal`)
+* `ease: [0.4, 0, 0.2, 1]` (matches `--ease-default`)
+* Use `AnimatePresence` for exit animations
+* Prefer `motion.div` with `initial`, `animate`, `exit` props
+
+## 6. Workflow for Generating Components
 When asked to create or fix a UI component:
 
 1.  **Check Shadcn First:** Before building anything, search the Shadcn registry for an existing component.
@@ -89,48 +120,15 @@ When asked to create or fix a UI component:
     * Add `transition-all duration-200` to interactive elements.
 9.  **Self-Correction Question:** "Are the icons aligned with the text? Is the spacing uniform? Does it look good in Light Mode?"
 
-## 6. Auditing Existing Pages for Consistency
-When asked to review or revise an existing page:
+## 7. Auditing Existing Pages
 
-### Quick Audit Checklist
-1. **Surface Colors:** Are all backgrounds using the correct token?
-   * Page background → `bg-background`
-   * Cards/panels → `bg-card` or `bg-elevated`
-   * Inputs → `bg-input`
-2. **Typography:** Is text using the hierarchy?
-   * Primary text → `text-foreground`
-   * Secondary text → `text-muted`
-   * Disabled → `text-foreground-disabled`
-3. **Spacing:** Are margins/padding from the standard scale?
-   * Look for arbitrary values like `mt-[13px]` → fix to `mt-3`
-   * Verify consistent `gap-*` usage in flex/grid layouts
-4. **Components:** Are base UI elements Shadcn/UI?
-   * Buttons, inputs, cards, dialogs, etc. should come from `/components/ui`
-   * No custom implementations of standard components
-5. **Borders:** Consistent border tokens?
-   * `border-border` for standard, `border-subtle` for light, `border-strong` for emphasis
-6. **Hover/Active States:** Every interactive element should have feedback
-   * Buttons, cards, list items need hover states
+When reviewing or revising an existing page, follow the comprehensive checklist in [audit-checklist.md](audit-checklist.md).
 
-### Common Inconsistencies to Fix
-* **Mixed button styles** — All primary actions use `variant="default"`, secondary use `variant="outline"`
-* **Inconsistent card padding** — Standardize on `p-4` or `p-6`
-* **Random icon sizes** — Use `h-4 w-4` (small), `h-5 w-5` (default), `h-6 w-6` (large)
-* **Mismatched border radius** — Cards use `rounded-lg`, buttons use `rounded-md`
+## 8. Anti-Patterns
 
-### Page-Level Consistency Rules
-* All pages should have the same page header pattern (if applicable)
-* Empty states should follow the same Lucide icon + friendly text pattern
-* Loading states should use the same Skeleton patterns
-* Error states should use consistent destructive styling
+See the Anti-Patterns section in [component-usage.md](component-usage.md) for common mistakes to avoid.
 
-## 7. Anti-Patterns (Do Not Do)
-* **No Arbitrary Margins:** Avoid `m-1.5` unless absolutely necessary for visual balance. Stick to 1, 2, 4, 6, 8.
-* **No "Wall of Text":** Always break recipe instructions with spacing or bullet points.
-* **No Clashing Gradients:** Stick to solid Purple/Teal identity unless specifically asked for a gradient.
-* **No Hardcoded Colors:** Always use CSS variables (`--primary`, `--foreground`, etc.) — never raw hex/hsl values.
-
-## 8. Theme Mode
+## 9. Theme Mode
 * **Dark mode is the DEFAULT** — defined in `:root`
 * **Light mode is opt-in** — activated via `:root.light` class on `<html>`
 * All CSS variables automatically adapt between modes — no conditional styling needed

@@ -286,3 +286,108 @@ Search with suggestions?
 - Icon + text gap: always `gap-2`
 - Card grid gap: always `gap-4` or `gap-6`
 - Section spacing: `py-6` to `py-12`
+
+---
+
+## Loading States (Skeleton)
+
+Use Shadcn's `<Skeleton />` component for loading placeholders.
+
+### Decision Tree
+
+```
+Is the content loading from an async source?
+  ├─ Full page loading? → Use full-page Skeleton layout
+  ├─ List of items loading? → Use repeated Skeleton rows
+  ├─ Single card loading? → Use card-shaped Skeleton
+  └─ Image loading? → Use Skeleton with aspect ratio matching image
+
+Is it a quick operation (<300ms expected)?
+  └─ Consider no skeleton, just show content when ready
+```
+
+### Skeleton Sizing Patterns
+
+| Content Type | Skeleton Pattern |
+|--------------|------------------|
+| Recipe card image | `<Skeleton className="h-48 w-full rounded-xl" />` |
+| Title text | `<Skeleton className="h-6 w-3/4" />` |
+| Body text line | `<Skeleton className="h-4 w-full" />` |
+| Avatar/icon | `<Skeleton className="h-10 w-10 rounded-full" />` |
+| Badge | `<Skeleton className="h-5 w-16 rounded-full" />` |
+| Button | `<Skeleton className="h-10 w-24 rounded-md" />` |
+
+### Example: Recipe Card Skeleton
+
+```tsx
+import { Skeleton } from "@/components/ui/skeleton"
+
+function RecipeCardSkeleton() {
+  return (
+    <div className="bg-card rounded-xl overflow-hidden">
+      <Skeleton className="h-48 w-full" />
+      <div className="p-4 space-y-3">
+        <Skeleton className="h-5 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
+        <div className="flex gap-2">
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="h-5 w-20 rounded-full" />
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+### Rules
+- Match skeleton dimensions to actual content dimensions
+- Use `rounded-*` matching the actual element's border radius
+- Group skeletons with `space-y-*` matching actual content spacing
+- Use `animate-pulse` (default) — don't change the animation
+
+---
+
+## Anti-Patterns (Do Not Do)
+
+These are common mistakes to avoid. If you see these patterns, fix them.
+
+### Spacing Anti-Patterns
+
+| ❌ Don't | ✅ Do Instead |
+|----------|---------------|
+| `m-1.5`, `p-2.5`, `gap-1.5` | Use standard scale: `m-1`, `m-2`, `p-2`, `p-3`, `gap-1`, `gap-2` |
+| `mt-[13px]`, `py-[7px]` | Use standard Tailwind: `mt-3`, `py-2` |
+| Inconsistent padding on similar cards | Pick ONE padding value per card type |
+
+### Color Anti-Patterns
+
+| ❌ Don't | ✅ Do Instead |
+|----------|---------------|
+| `text-gray-500`, `bg-purple-600` | Use tokens: `text-muted`, `bg-primary` |
+| `#8b5cf6`, `hsl(271, 91%, 65%)` | Use CSS vars: `var(--primary)` |
+| Clashing gradients | Stick to solid Purple/Teal identity |
+
+### Typography Anti-Patterns
+
+| ❌ Don't | ✅ Do Instead |
+|----------|---------------|
+| "Wall of text" without breaks | Use spacing, bullets, paragraphs |
+| Random font sizes | Use Tailwind scale: `text-sm`, `text-base`, `text-lg` |
+| Inconsistent heading hierarchy | Follow H1 > H2 > H3 order |
+
+### Component Anti-Patterns
+
+| ❌ Don't | ✅ Do Instead |
+|----------|---------------|
+| Build custom button from scratch | Use `<Button />` from Shadcn |
+| Multiple primary buttons in one section | Only ONE `variant="default"` per logical section |
+| Skip hover states | Every interactive element needs feedback |
+| Misaligned icon + text | Always use `flex items-center gap-2` |
+
+### Layout Anti-Patterns
+
+| ❌ Don't | ✅ Do Instead |
+|----------|---------------|
+| Leave blank/empty pages | Use empty state with icon + friendly text |
+| Inconsistent card grid gaps | Use `gap-4` or `gap-6` consistently |
+| Mixed border radius styles | Cards: `rounded-xl`, Buttons: `rounded-md`, Badges: `rounded-full` |
