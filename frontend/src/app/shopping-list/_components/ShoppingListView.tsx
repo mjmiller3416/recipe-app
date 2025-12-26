@@ -10,6 +10,26 @@ import type { ShoppingItemResponseDTO, ShoppingListResponseDTO } from "@/types";
 import { ShoppingCart, Trash2 } from "lucide-react";
 
 /**
+ * StatCard - Individual stat card for the summary section
+ */
+function StatCard({
+  value,
+  label,
+  colorClass,
+}: {
+  value: number;
+  label: string;
+  colorClass: string;
+}) {
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center py-4 px-3 rounded-xl border border-border bg-elevated/50">
+      <span className={`text-3xl font-bold ${colorClass}`}>{value}</span>
+      <span className="text-sm text-muted mt-1">{label}</span>
+    </div>
+  );
+}
+
+/**
  * ShoppingListView - Main shopping list page component
  *
  * Features:
@@ -204,30 +224,37 @@ export function ShoppingListView() {
     );
   }
 
-  // Progress stats
-  const progress = Math.round(
-    (shoppingData.checked_items / shoppingData.total_items) * 100
-  );
+  // Calculate remaining items
+  const remainingItems = shoppingData.total_items - shoppingData.checked_items;
 
   return (
     <PageLayout
       title="Shopping List"
-      description={`${shoppingData.checked_items} of ${shoppingData.total_items} items collected`}
+      description="Items from your meal plan"
       actions={headerActions}
     >
-      {/* Progress bar */}
-      <div className="mb-6">
-        <div className="h-1.5 bg-elevated rounded-full overflow-hidden">
-          <div
-            className="h-full bg-success transition-all duration-300 ease-out rounded-full"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+      {/* Summary stats */}
+      <div className="flex gap-3 mb-6">
+        <StatCard
+          value={shoppingData.total_items}
+          label="Total Items"
+          colorClass="text-primary"
+        />
+        <StatCard
+          value={shoppingData.checked_items}
+          label="Collected"
+          colorClass="text-warning"
+        />
+        <StatCard
+          value={remainingItems}
+          label="Remaining"
+          colorClass="text-success"
+        />
       </div>
 
       {/* Categories list */}
-      <ScrollArea className="h-[calc(100vh-220px)]">
-        <div className="pr-4">
+      <ScrollArea className="h-[calc(100vh-280px)]">
+        <div className="space-y-4 pr-4">
           {sortedCategories.map((category) => (
             <ShoppingCategory
               key={category}

@@ -15,8 +15,8 @@ interface ShoppingItemProps {
  * Features:
  * - Click anywhere on the row to toggle
  * - Checked items show strikethrough + faded appearance
- * - Smooth transition for check state
- * - Quantity and unit display
+ * - Recipe source display ("from Recipe Name" or "from Multiple recipes")
+ * - Quantity badge on the right
  */
 export function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
   const handleClick = () => {
@@ -28,11 +28,30 @@ export function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
     ? item.quantity.toString()
     : item.quantity.toFixed(2).replace(/\.?0+$/, "");
 
+  // Format quantity with unit for badge display
+  const quantityBadge = item.unit
+    ? `${formattedQuantity} ${item.unit}`
+    : formattedQuantity;
+
+  // Format recipe source display
+  const getRecipeSourceText = () => {
+    if (item.source === "manual") {
+      return "added manually";
+    }
+    if (!item.recipe_sources || item.recipe_sources.length === 0) {
+      return "from recipe";
+    }
+    if (item.recipe_sources.length === 1) {
+      return `from ${item.recipe_sources[0]}`;
+    }
+    return "from Multiple recipes";
+  };
+
   return (
     <div
       onClick={handleClick}
       className={cn(
-        "group flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer",
+        "group flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer",
         "transition-all duration-200 ease-out",
         "hover:bg-hover/50",
         item.have && "opacity-60"
@@ -50,35 +69,38 @@ export function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
       />
 
       {/* Item content */}
-      <div className="flex-1 flex items-baseline gap-2 min-w-0">
+      <div className="flex-1 min-w-0">
         {/* Ingredient name */}
         <span
           className={cn(
-            "text-foreground font-medium truncate transition-all duration-200",
+            "text-foreground font-medium block truncate transition-all duration-200",
             item.have && "line-through text-muted decoration-muted/50"
           )}
         >
           {item.ingredient_name}
         </span>
 
-        {/* Quantity and unit */}
+        {/* Recipe source */}
         <span
           className={cn(
-            "text-sm text-muted whitespace-nowrap transition-all duration-200",
-            item.have && "text-muted/60"
+            "text-xs text-muted/70 block truncate transition-all duration-200",
+            item.have && "text-muted/50"
           )}
         >
-          {formattedQuantity}
-          {item.unit && ` ${item.unit}`}
+          {getRecipeSourceText()}
         </span>
       </div>
 
-      {/* Source indicator (subtle) */}
-      {item.source === "manual" && (
-        <span className="text-xs text-muted/50 uppercase tracking-wider">
-          added
-        </span>
-      )}
+      {/* Quantity badge */}
+      <span
+        className={cn(
+          "text-sm px-3 py-1 rounded-full bg-border text-foreground whitespace-nowrap",
+          "transition-all duration-200",
+          item.have && "bg-border/50 text-muted"
+        )}
+      >
+        {quantityBadge}
+      </span>
     </div>
   );
 }

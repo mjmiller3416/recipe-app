@@ -229,8 +229,14 @@ class ShoppingService:
             else:
                 items = self.shopping_repo.get_all_shopping_items()
 
-            # convert to response DTOs
-            item_dtos = [self._item_to_response_dto(item) for item in items]
+            # Build recipe sources mapping from breakdown data
+            recipe_sources_map = self._build_recipe_sources_map()
+
+            # convert to response DTOs with recipe sources
+            item_dtos = [
+                self._item_to_response_dto(item, recipe_sources_map.get(item.state_key, []))
+                for item in items
+            ]
 
             # get summary statistics
             summary = self.shopping_repo.get_shopping_list_summary()
@@ -253,6 +259,36 @@ class ShoppingService:
                 manual_items=0,
                 categories=[]
             )
+
+    def _build_recipe_sources_map(self) -> Dict[str, List[str]]:
+        """
+        Build a mapping from state_key to list of recipe names.
+        Uses the active planner entries to get recipe IDs, then fetches breakdown.
+        """
+        try:
+            # Get recipe IDs from incomplete planner entries (same as generate_from_active_planner)
+            entries = self.planner_repo.get_incomplete_entries()
+            recipe_ids: List[int] = []
+            for entry in entries:
+                if entry.meal:
+                    recipe_ids.extend(entry.meal.get_all_recipe_ids())
+
+            if not recipe_ids:
+                return {}
+
+            # Get breakdown data
+            breakdown = self.shopping_repo.get_ingredient_breakdown(recipe_ids)
+
+            # Build mapping from state_key -> list of recipe names
+            recipe_sources_map: Dict[str, List[str]] = {}
+            for state_key, contributions in breakdown.items():
+                # contributions is List[Tuple[recipe_name, quantity, unit]]
+                recipe_names = list(set(name for name, _, _ in contributions))
+                recipe_sources_map[state_key] = recipe_names
+
+            return recipe_sources_map
+        except SQLAlchemyError:
+            return {}
 
     # ── Manual Item Management ──────────────────────────────────────────────────────────────────────────────
     def add_manual_item(
@@ -524,7 +560,11 @@ class ShoppingService:
             return resp
 
     # ── Helper Methods ──────────────────────────────────────────────────────────────────────────────────────
-    def _item_to_response_dto(self, item: ShoppingItem) -> ShoppingItemResponseDTO:
+    def _item_to_response_dto(
+            self,
+            item: ShoppingItem,
+            recipe_sources: Optional[List[str]] = None
+        ) -> ShoppingItemResponseDTO:
         """Convert a ShoppingItem model to a response DTO."""
         return ShoppingItemResponseDTO(
             id=item.id,
@@ -534,7 +574,8 @@ class ShoppingService:
             category=item.category,
             source=item.source,
             have=item.have,
-            state_key=item.state_key
+            state_key=item.state_key,
+            recipe_sources=recipe_sources or []
         )
 
     # ── Shopping List Management ────────────────────────────────────────────────────────────────────────────

@@ -159,6 +159,7 @@ export interface ShoppingItemResponseDTO extends ShoppingItemBaseDTO {
   source: ShoppingSource;
   have: boolean;
   state_key: string | null;
+  recipe_sources: string[];  // List of recipe names this ingredient comes from
 }
 
 export interface ShoppingListResponseDTO {

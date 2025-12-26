@@ -78,6 +78,7 @@ class ShoppingItemResponseDTO(ShoppingItemBaseDTO):
     source: Literal["recipe", "manual"]
     have: bool = False
     state_key: Optional[str] = None
+    recipe_sources: List[str] = []  # List of recipe names this ingredient comes from
 
 class ShoppingListResponseDTO(BaseModel):
     """DTO for complete shopping list response."""
