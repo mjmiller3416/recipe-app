@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { ChefHat } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getHeroBannerUrl } from "@/lib/imageUtils";
 
 // ============================================================================
 // TYPES
@@ -210,6 +211,7 @@ export function RecipeCardImage({
  * - Fixed responsive height (300px mobile, 400px desktop)
  * - Gradient overlay for text readability
  * - Children slot for overlay elements (back button, favorite button, etc.)
+ * - Smart crop for Cloudinary images (uses g_auto to detect subject)
  *
  * Use this at the top of recipe detail pages
  */
@@ -219,6 +221,10 @@ export function RecipeHeroImage({
   className,
   children,
 }: RecipeHeroImageProps) {
+  // Transform Cloudinary URLs to use smart crop for banner dimensions
+  // This applies AI-powered subject detection to avoid cropping out the dish
+  const bannerSrc = getHeroBannerUrl(src);
+
   return (
     <div
       className={cn(
@@ -227,7 +233,7 @@ export function RecipeHeroImage({
       )}
     >
       <RecipeImage
-        src={src}
+        src={bannerSrc}
         alt={alt}
         fill
         iconSize="xl"

@@ -101,3 +101,84 @@ export function generateRecipeImagePath(recipeId: number | string, extension = "
 export function generateRecipeBannerPath(recipeId: number | string, extension = "jpg"): string {
   return `/images/recipes/${recipeId}-banner.${extension}`;
 }
+
+// ============================================================================
+// CLOUDINARY TRANSFORMATIONS
+// ============================================================================
+
+/**
+ * Check if a URL is a Cloudinary URL
+ */
+function isCloudinaryUrl(url: string): boolean {
+  return url.includes("res.cloudinary.com");
+}
+
+/**
+ * Transform a Cloudinary URL to apply on-the-fly image transformations.
+ *
+ * Cloudinary URLs follow this structure:
+ * https://res.cloudinary.com/{cloud}/image/upload/v{version}/{public_id}.{ext}
+ *
+ * With transformations:
+ * https://res.cloudinary.com/{cloud}/image/upload/{transformations}/v{version}/{public_id}.{ext}
+ *
+ * @param url - The original Cloudinary URL
+ * @param transformations - Cloudinary transformation string (e.g., "w_1200,h_400,c_fill,g_auto")
+ * @returns The transformed URL, or original URL if not a Cloudinary URL
+ */
+function applyCloudinaryTransformation(url: string, transformations: string): string {
+  if (!isCloudinaryUrl(url)) {
+    return url;
+  }
+
+  // Find the /upload/ segment and insert transformations after it
+  const uploadSegment = "/upload/";
+  const uploadIndex = url.indexOf(uploadSegment);
+
+  if (uploadIndex === -1) {
+    return url;
+  }
+
+  const insertPosition = uploadIndex + uploadSegment.length;
+  return url.slice(0, insertPosition) + transformations + "/" + url.slice(insertPosition);
+}
+
+/**
+ * Transform an image URL for hero/banner display.
+ *
+ * For Cloudinary images: Applies smart crop (g_auto) to intelligently
+ * detect the subject and crop to banner dimensions.
+ *
+ * For non-Cloudinary images: Returns the original URL unchanged.
+ * The CSS object-cover will handle the cropping (existing behavior).
+ *
+ * @param url - The original image URL (can be Cloudinary or local)
+ * @returns URL optimized for banner display
+ *
+ * @example
+ * // Cloudinary URL gets smart crop transformation
+ * getHeroBannerUrl("https://res.cloudinary.com/.../upload/v123/image.jpg")
+ * // → "https://res.cloudinary.com/.../upload/w_1200,h_400,c_fill,g_auto,q_auto/v123/image.jpg"
+ *
+ * // Local URL passes through unchanged
+ * getHeroBannerUrl("/images/recipes/123.jpg")
+ * // → "/images/recipes/123.jpg"
+ */
+export function getHeroBannerUrl(url: string | null | undefined): string | undefined {
+  if (!url) {
+    return undefined;
+  }
+
+  // Only apply transformations to Cloudinary URLs
+  if (isCloudinaryUrl(url)) {
+    // w_1200: width 1200px (good for most screens)
+    // h_400: height 400px (matches our hero container)
+    // c_fill: fill the dimensions, cropping as needed
+    // g_auto: AI-powered gravity - finds the subject automatically
+    // q_auto: automatic quality optimization
+    return applyCloudinaryTransformation(url, "w_1200,h_400,c_fill,g_auto,q_auto");
+  }
+
+  // Non-Cloudinary URLs pass through unchanged
+  return url;
+}
