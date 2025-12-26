@@ -21,8 +21,22 @@ In [PageLayout.tsx:164](frontend/src/components/layout/PageLayout.tsx#L164), the
 
 ## Plan
 
-- [ ] Update `PageLayout.tsx` to use `h-dvh` instead of `h-screen` in fillViewport mode
-- [ ] Verify the change
+- [x] Update `PageLayout.tsx` to use `h-dvh` instead of `h-screen` in fillViewport mode
+- [x] Verify the change
 
-## Files to Change
+## Files Changed
 - `frontend/src/components/layout/PageLayout.tsx` (line 164)
+
+## Review
+
+### Summary
+Changed the viewport height calculation from `h-screen` (100vh) to `h-dvh` (100dvh) in the `fillViewport` mode of PageLayout. This ensures the page content fills exactly the visible viewport height, accounting for browser UI elements.
+
+### What Changed
+- **PageLayout.tsx line 164**: `h-screen` → `h-dvh`
+
+### Why This Fixes the Issue
+The `dvh` (dynamic viewport height) unit was introduced specifically to solve the `100vh` problem. Unlike `vh` which uses the "largest possible viewport", `dvh` uses the actual visible viewport height and dynamically adjusts when browser UI appears or disappears.
+
+### Browser Support
+`dvh` is supported in all modern browsers (Chrome 108+, Firefox 101+, Safari 15.4+, Edge 108+).

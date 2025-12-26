@@ -161,7 +161,7 @@ export function PageLayout({
   // fillViewport mode: fixed height, no page scroll, content fills available space
   if (fillViewport) {
     return (
-      <div className={cn("h-screen flex flex-col overflow-hidden bg-background", className)}>
+      <div className={cn("h-dvh flex flex-col overflow-hidden bg-background", className)}>
         {headerElement}
         <div className={cn("flex-1 max-w-7xl mx-auto w-full px-6 py-6 overflow-hidden", contentClassName)}>
           {children}
