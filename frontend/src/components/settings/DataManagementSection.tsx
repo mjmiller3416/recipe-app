@@ -34,8 +34,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 import { dataManagementApi, recipeApi } from "@/lib/api";
+import { SectionHeader } from "@/app/settings/_components/SectionHeader";
 import type {
   ImportPreviewDTO,
   ImportResultDTO,
@@ -43,30 +43,6 @@ import type {
   DuplicateAction,
   DuplicateRecipeDTO,
 } from "@/types";
-
-// ============================================================================
-// SECTION HEADER (copied from settings page for consistency)
-// ============================================================================
-
-interface SectionHeaderProps {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-}
-
-function SectionHeader({ icon: Icon, title, description }: SectionHeaderProps) {
-  return (
-    <div className="flex items-start gap-3 mb-6">
-      <div className="p-2.5 rounded-xl bg-primary/10">
-        <Icon className="h-5 w-5 text-primary" />
-      </div>
-      <div className="flex-1">
-        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-        <p className="text-sm text-muted mt-0.5">{description}</p>
-      </div>
-    </div>
-  );
-}
 
 // ============================================================================
 // DUPLICATE RESOLUTION ROW

@@ -1,38 +1,28 @@
-# Enable SideDishSlots Empty State Click Functionality
+# Fix: Meal Planner Page Cut Off on Different Screens
 
 ## Problem
-Empty SideDishSlots are currently disabled. When clicked, they should open the EditMealDialog and auto-select that specific slot.
+The Meal Planner page appears cut off on some computers while displaying correctly on others.
 
 ## Analysis
-The codebase already has the infrastructure in place:
-- `SideDishSlots` component accepts `onEmptySlotClick` callback (when provided, enables empty slots)
-- `MealSelection` accepts `onEmptySideSlotClick` and passes it to `SideDishSlots`
-- `EditMealDialog` uses `activeSlotIndex` to track which slot is selected
+In [PageLayout.tsx:164](frontend/src/components/layout/PageLayout.tsx#L164), the `fillViewport` mode uses `h-screen` (CSS `100vh`):
+
+```tsx
+<div className={cn("h-screen flex flex-col overflow-hidden bg-background", className)}>
+```
+
+**Why this causes problems:**
+- `100vh` represents the full viewport height, but on different browsers/systems, this doesn't account for:
+  - Browser chrome (address bar, tabs, toolbars)
+  - Windows display scaling settings
+  - Browser extensions taking up vertical space
+- The result: `100vh` is larger than the actual visible area, causing content to be cut off
+
+**Solution:** Use `h-dvh` (dynamic viewport height) instead of `h-screen`. The `dvh` unit calculates the actual visible viewport height accounting for browser UI.
 
 ## Plan
 
-- [x] 1. Add `initialSlotIndex` prop to `EditMealDialog` to allow pre-selecting a slot when opening
-- [x] 2. In `MealPlannerPage`, add state to track the initial slot index for the edit dialog
-- [x] 3. In `MealPlannerPage`, pass `onEmptySideSlotClick` handler to `MealSelection` that:
-   - Sets the initial slot index (side slot index + 1, since 0 = main dish)
-   - Opens the edit dialog
+- [ ] Update `PageLayout.tsx` to use `h-dvh` instead of `h-screen` in fillViewport mode
+- [ ] Verify the change
 
-## Slot Index Mapping
-- `EditMealDialog` slot indices: 0 = main dish, 1/2/3 = side dishes
-- `SideDishSlots` empty click passes: 0/1/2 (position in side array)
-- So: `editSlotIndex = sideSlotClickIndex + 1`
-
-## Review
-
-### Summary
-Enabled the empty SideDishSlots to be clickable. When clicked, they now open the EditMealDialog with the corresponding slot pre-selected.
-
-### Files Changed
-1. **EditMealDialog.tsx** - Added `initialSlotIndex` prop that overrides the auto-select first empty slot behavior
-2. **MealPlannerPage.tsx** - Added `editInitialSlotIndex` state and `handleEmptySideSlotClick` handler, wired props to child components
-
-### How It Works
-- Empty side dish slots now have hover/click interactions (already supported by SideDishSlots)
-- Clicking an empty slot calls `handleEmptySideSlotClick(index)` where index is 0/1/2
-- Handler converts to edit dialog slot index (adding 1, since 0=main in edit dialog)
-- EditMealDialog opens and uses `initialSlotIndex` to pre-select the clicked slot
+## Files to Change
+- `frontend/src/components/layout/PageLayout.tsx` (line 164)
