@@ -180,7 +180,7 @@ export function IngredientRow({
         <button
           type="button"
           onClick={() => onDelete(ingredient.id)}
-          className="p-1 text-muted hover:text-error transition-colors flex-shrink-0"
+          className="p-1 text-muted hover:text-destructive transition-colors flex-shrink-0"
           aria-label="Delete ingredient"
         >
           <X className="h-5 w-5" />

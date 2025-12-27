@@ -26,8 +26,8 @@ export function NavButton({
         isActive && "text-primary bg-hover font-medium rounded-lg"
       )}
     >
-      <Icon className="h-5.5 w-5.5 flex-shrink-0" />
-      <span className="text-[15px] ml-3 whitespace-nowrap">
+      <Icon className="h-5 w-5 flex-shrink-0" />
+      <span className="text-sm ml-3 whitespace-nowrap">
         {label}
       </span>
     </SafeLink>

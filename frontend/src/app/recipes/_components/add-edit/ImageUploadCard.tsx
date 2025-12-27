@@ -137,7 +137,7 @@ export function ImageUploadCard({
             <h2 className="text-lg font-semibold text-foreground">
               Recipe Image
             </h2>
-            <p className="text-sm text-muted mt-0.5">
+            <p className="text-sm text-muted mt-1">
               Upload or generate an appetizing photo
             </p>
           </div>
@@ -159,10 +159,10 @@ export function ImageUploadCard({
           {/* Generating State */}
           {imageState === "generating" && (
             <div className="flex flex-col items-center justify-center h-full text-muted">
-              <div className="p-4 bg-purple-500/10 rounded-full mb-4">
-                <Sparkles className="h-12 w-12 text-purple-500 animate-pulse" />
+              <div className="p-4 bg-primary/10 rounded-full mb-4">
+                <Sparkles className="h-12 w-12 text-primary animate-pulse" />
               </div>
-              <p className="text-sm font-medium text-purple-500">
+              <p className="text-sm font-medium text-primary">
                 Generating image...
               </p>
               <p className="text-xs mt-1 text-muted">This may take a moment</p>
@@ -202,7 +202,7 @@ export function ImageUploadCard({
                 {/* AI Generated Badge */}
                 {(imageState === "generated" || isAiGenerated) && (
                   <Badge
-                    className="absolute top-3 left-3 bg-purple-500 hover:bg-purple-600 text-white gap-1"
+                    className="absolute top-3 left-3 bg-primary hover:bg-primary-hover text-primary-foreground gap-1"
                   >
                     <Sparkles className="h-3 w-3" />
                     AI Generated
@@ -229,7 +229,7 @@ export function ImageUploadCard({
               <Button
                 type="button"
                 variant="secondary"
-                className="flex-1 gap-2 bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 hover:text-purple-700"
+                className="flex-1 gap-2 bg-primary/10 text-primary hover:bg-primary/20"
                 onClick={handleGenerate}
               >
                 <Sparkles className="h-4 w-4" />
@@ -253,7 +253,7 @@ export function ImageUploadCard({
               <Button
                 type="button"
                 variant="secondary"
-                className="flex-1 gap-2 bg-purple-500/20 text-purple-600"
+                className="flex-1 gap-2 bg-primary/20 text-primary"
                 disabled
               >
                 <Sparkles className="h-4 w-4 animate-pulse" />
@@ -313,7 +313,7 @@ export function ImageUploadCard({
               <Button
                 type="button"
                 variant="secondary"
-                className="flex-1 gap-2 bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 hover:text-purple-700"
+                className="flex-1 gap-2 bg-primary/10 text-primary hover:bg-primary/20"
                 onClick={handleGenerate}
               >
                 <Sparkles className="h-4 w-4" />

@@ -45,7 +45,7 @@ export function PageHeaderTitle({ title, description, className }: PageHeaderTit
         {title}
       </h1>
       {description && (
-        <p className="text-sm text-muted mt-0.5">
+        <p className="text-sm text-muted mt-1">
           {description}
         </p>
       )}

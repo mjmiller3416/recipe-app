@@ -429,7 +429,7 @@ function RecipeCardLarge({
           {/* Footer Metadata */}
           <div className="flex items-center gap-6 pt-4 border-t border-border">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-primary/10 rounded-lg">
+              <div className="p-2 bg-primary/10 rounded-lg">
                 <Clock className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -441,7 +441,7 @@ function RecipeCardLarge({
             <div className="h-12 w-px bg-border" />
 
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-primary/10 rounded-lg">
+              <div className="p-2 bg-primary/10 rounded-lg">
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <div>

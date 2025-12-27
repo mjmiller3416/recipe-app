@@ -63,7 +63,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-[280px] bg-sidebar flex flex-col overflow-x-hidden overflow-y-auto print:hidden">
+    <aside className="fixed left-0 top-0 h-screen w-[var(--sidebar-width)] bg-sidebar flex flex-col overflow-x-hidden overflow-y-auto print:hidden">
       {/* Top Section - App Branding */}
       <div className="flex items-center px-4 py-6 pb-8">
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -129,7 +129,7 @@ export function Sidebar() {
         />
         
         {/* User Profile */}
-        <div className="flex items-center gap-3 rounded-lg p-3 bg-elevated">
+        <div className="flex items-center gap-3 rounded-lg p-3 bg-elevated hover:bg-hover transition-colors">
           <div className="relative flex-shrink-0">
             <Avatar className="h-10 w-10">
               <AvatarImage src={appConfig.user.avatar} />

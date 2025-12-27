@@ -51,8 +51,8 @@ function FilterPill({ option, isActive, onToggle, variant = "default" }: FilterP
     <button
       onClick={() => onToggle(option.id)}
       className={cn(
-        // Base styles
-        "px-4 py-2 rounded-full text-sm font-medium",
+        // Base styles - py-2.5 ensures minimum 44px touch target on mobile
+        "px-4 py-2.5 rounded-full text-sm font-medium",
         "transition-all duration-200",
         "border",
 

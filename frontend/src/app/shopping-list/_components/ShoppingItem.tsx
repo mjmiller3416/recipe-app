@@ -83,8 +83,8 @@ export function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
         {/* Recipe source */}
         <span
           className={cn(
-            "text-xs text-muted/70 block truncate transition-all duration-200",
-            item.have && "text-muted/50"
+            "text-xs text-muted block truncate transition-all duration-200",
+            item.have && "text-foreground-disabled"
           )}
         >
           {getRecipeSourceText()}
@@ -94,9 +94,9 @@ export function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
       {/* Quantity badge */}
       <span
         className={cn(
-          "text-sm px-3 py-1 rounded-full bg-border text-foreground whitespace-nowrap",
+          "text-sm px-3 py-1 rounded-full bg-accent text-accent-foreground whitespace-nowrap",
           "transition-all duration-200",
-          item.have && "bg-border/50 text-muted"
+          item.have && "bg-accent/50 text-foreground-disabled"
         )}
       >
         {quantityBadge}

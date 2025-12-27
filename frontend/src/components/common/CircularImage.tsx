@@ -87,7 +87,7 @@ export function CircularImage({
         <img
           src={src}
           alt={alt}
-          className={cn("w-full h-full object-cover", imageClassName)}
+          className={cn("w-full h-full object-cover transition-opacity duration-300", imageClassName)}
           style={zoom !== 1 ? { transform: `scale(${zoom})` } : undefined}
           onError={() => setHasError(true)}
         />

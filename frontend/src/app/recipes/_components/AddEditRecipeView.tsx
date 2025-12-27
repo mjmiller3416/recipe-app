@@ -8,6 +8,7 @@ import { recipeApi } from "@/lib/api";
 import type { RecipeResponseDTO } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,7 +47,7 @@ function EditRecipeSkeleton() {
     <div className="min-h-screen bg-background">
       <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="h-8 w-48 bg-hover rounded animate-pulse" />
+          <Skeleton className="h-8 w-48" />
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-6 py-8">
@@ -55,15 +56,15 @@ function EditRecipeSkeleton() {
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-4">
-                  <div className="h-10 bg-hover rounded animate-pulse" />
+                  <Skeleton className="h-10 w-full" />
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="h-10 bg-hover rounded animate-pulse" />
-                    <div className="h-10 bg-hover rounded animate-pulse" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
                   </div>
                   <div className="grid grid-cols-3 gap-4">
-                    <div className="h-10 bg-hover rounded animate-pulse" />
-                    <div className="h-10 bg-hover rounded animate-pulse" />
-                    <div className="h-10 bg-hover rounded animate-pulse" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
                   </div>
                 </div>
               </CardContent>
@@ -157,7 +158,7 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
         onBackClick={isEditMode ? () => handleNavigation(`/recipes/${recipeId}`) : undefined}
         actions={
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
             className="gap-2"
             onClick={form.handleSubmit}
@@ -245,7 +246,7 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={cancelLeave}>Keep Editing</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmLeave} className="bg-secondary hover:bg-secondary/90">
+            <AlertDialogAction onClick={confirmLeave} className="bg-destructive text-white hover:bg-destructive/90">
               Discard Changes
             </AlertDialogAction>
           </AlertDialogFooter>

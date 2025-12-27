@@ -59,14 +59,17 @@ export function FavoriteButton({
       className={cn(
         // Base styles
         "transition-all duration-200 flex-shrink-0",
-        
+
         // Hover scale effect
         "hover:scale-110 active:scale-95",
-        
+
+        // Focus states for keyboard accessibility
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+
         // Color states
-        isFavorite 
-          ? "text-[var(--error)]" 
-          : "text-muted hover:text-[var(--error)]",
+        isFavorite
+          ? "text-destructive"
+          : "text-muted hover:text-destructive",
         
         // Size
         sizeClasses[size],

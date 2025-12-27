@@ -27,13 +27,13 @@ interface CategoryConfig {
 }
 
 const CATEGORY_ICONS: Record<string, CategoryConfig> = {
-  "Produce": { icon: Carrot, bgColor: "bg-green-600" },
-  "Dairy & Eggs": { icon: Milk, bgColor: "bg-blue-500" },
-  "Meat & Seafood": { icon: Beef, bgColor: "bg-red-500" },
-  "Bakery": { icon: Croissant, bgColor: "bg-amber-600" },
-  "Pantry": { icon: Package, bgColor: "bg-orange-500" },
-  "Frozen": { icon: Snowflake, bgColor: "bg-cyan-500" },
-  "Beverages": { icon: Coffee, bgColor: "bg-amber-700" },
+  "Produce": { icon: Carrot, bgColor: "bg-success" },
+  "Dairy & Eggs": { icon: Milk, bgColor: "bg-info" },
+  "Meat & Seafood": { icon: Beef, bgColor: "bg-destructive" },
+  "Bakery": { icon: Croissant, bgColor: "bg-warning" },
+  "Pantry": { icon: Package, bgColor: "bg-chart-3" },
+  "Frozen": { icon: Snowflake, bgColor: "bg-secondary" },
+  "Beverages": { icon: Coffee, bgColor: "bg-chart-4" },
   "Other": { icon: ShoppingBag, bgColor: "bg-neutral" },
 };
 
@@ -107,7 +107,7 @@ export function ShoppingCategory({
         </div>
 
         {/* Progress bar */}
-        <div className="w-24 h-1.5 bg-border rounded-full overflow-hidden">
+        <div className="w-20 sm:w-24 h-1 bg-border rounded-full overflow-hidden">
           <div
             className="h-full bg-success transition-all duration-300 ease-out rounded-full"
             style={{ width: `${progress}%` }}

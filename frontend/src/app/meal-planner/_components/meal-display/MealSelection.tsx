@@ -156,7 +156,7 @@ export function MealSelection({
           {/* Completed checkmark overlay */}
           {isCompleted && (
             <div className="absolute top-4 right-4 flex items-center justify-center w-10 h-10 rounded-full bg-black/50">
-              <CheckCircle className="h-6 w-6 text-green-400" />
+              <CheckCircle className="h-6 w-6 text-success" />
             </div>
           )}
         </div>

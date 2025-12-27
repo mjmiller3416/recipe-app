@@ -80,7 +80,7 @@ function SideDishCard({ recipe, onFilledClick, onEmptyClick, className }: SideDi
       role="button"
       aria-label={`${recipe.name} - click to view`}
     >
-      <div className="flex items-center gap-4 p-2.5 h-full">
+      <div className="flex items-center gap-4 p-3 h-full">
         {/* UPDATED WRAPPER & IMAGE */}
         <div className="relative h-full aspect-square w-auto flex-shrink-0 overflow-hidden rounded-xl bg-elevated">
           <RecipeCardImage

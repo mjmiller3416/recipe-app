@@ -449,8 +449,8 @@ export function DataManagementSection() {
             {/* Delete All Section */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <Trash2 className="h-4 w-4 text-red-500" />
-                <Label className="text-base font-medium text-red-500">
+                <Trash2 className="h-4 w-4 text-destructive" />
+                <Label className="text-base font-medium text-destructive">
                   Delete All Data
                 </Label>
               </div>
@@ -492,13 +492,13 @@ export function DataManagementSection() {
                   <p className="text-xs text-muted">Total Recipes</p>
                 </div>
                 <div className="p-3 bg-elevated rounded-lg text-center">
-                  <p className="text-2xl font-bold text-green-500">
+                  <p className="text-2xl font-bold text-success">
                     {importPreview.new_recipes}
                   </p>
                   <p className="text-xs text-muted">New Recipes</p>
                 </div>
                 <div className="p-3 bg-elevated rounded-lg text-center">
-                  <p className="text-2xl font-bold text-amber-500">
+                  <p className="text-2xl font-bold text-warning">
                     {importPreview.duplicate_recipes.length}
                   </p>
                   <p className="text-xs text-muted">Duplicates</p>
@@ -507,10 +507,10 @@ export function DataManagementSection() {
 
               {/* Validation Errors */}
               {importPreview.validation_errors.length > 0 && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <AlertCircle className="h-4 w-4 text-red-500" />
-                    <p className="font-medium text-red-500">Validation Errors</p>
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                    <p className="font-medium text-destructive">Validation Errors</p>
                   </div>
                   <ul className="text-sm text-muted space-y-1">
                     {importPreview.validation_errors.map((err, i) => (
@@ -579,9 +579,9 @@ export function DataManagementSection() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {importResult?.success ? (
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                <CheckCircle2 className="h-5 w-5 text-success" />
               ) : (
-                <XCircle className="h-5 w-5 text-red-500" />
+                <XCircle className="h-5 w-5 text-destructive" />
               )}
               Import {importResult?.success ? "Complete" : "Completed with Errors"}
             </DialogTitle>
@@ -591,13 +591,13 @@ export function DataManagementSection() {
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
                 <div className="p-3 bg-elevated rounded-lg text-center">
-                  <p className="text-2xl font-bold text-green-500">
+                  <p className="text-2xl font-bold text-success">
                     {importResult.created_count}
                   </p>
                   <p className="text-xs text-muted">Created</p>
                 </div>
                 <div className="p-3 bg-elevated rounded-lg text-center">
-                  <p className="text-2xl font-bold text-blue-500">
+                  <p className="text-2xl font-bold text-info">
                     {importResult.updated_count}
                   </p>
                   <p className="text-xs text-muted">Updated</p>
@@ -611,10 +611,10 @@ export function DataManagementSection() {
               </div>
 
               {importResult.errors.length > 0 && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
-                    <AlertCircle className="h-4 w-4 text-red-500" />
-                    <p className="font-medium text-red-500">Errors</p>
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                    <p className="font-medium text-destructive">Errors</p>
                   </div>
                   <ul className="text-sm text-muted space-y-1">
                     {importResult.errors.map((err, i) => (
@@ -636,7 +636,7 @@ export function DataManagementSection() {
       <Dialog open={showDeleteConfirmDialog} onOpenChange={setShowDeleteConfirmDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-500">
+            <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertCircle className="h-5 w-5" />
               Confirm Delete All Data
             </DialogTitle>
@@ -653,7 +653,7 @@ export function DataManagementSection() {
             <li>All saved ingredients</li>
           </ul>
 
-          <p className="text-sm font-medium text-red-500">
+          <p className="text-sm font-medium text-destructive">
             This action cannot be undone!
           </p>
 

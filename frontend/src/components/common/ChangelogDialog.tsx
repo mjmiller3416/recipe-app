@@ -56,7 +56,7 @@ export function ChangelogDialog({ open, onOpenChange }: ChangelogDialogProps) {
                     key={index}
                     className="text-sm text-muted-foreground flex items-start gap-2"
                   >
-                    <span className="text-primary mt-1.5 text-[8px]">●</span>
+                    <span className="text-primary text-xs leading-none mt-0.5">•</span>
                     {change}
                   </li>
                 ))}

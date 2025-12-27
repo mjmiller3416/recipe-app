@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ShoppingCategory } from "./ShoppingCategory";
 import { shoppingApi } from "@/lib/api";
@@ -22,7 +23,7 @@ function StatCard({
   colorClass: string;
 }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center py-4 px-3 rounded-xl border border-border bg-elevated/50">
+    <div className="flex-1 flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-elevated/50">
       <span className={`text-3xl font-bold ${colorClass}`}>{value}</span>
       <span className="text-sm text-muted mt-1">{label}</span>
     </div>
@@ -163,13 +164,13 @@ export function ShoppingListView() {
         title="Shopping List"
         description="Items from your meal plan"
       >
-        <div className="space-y-6 animate-pulse">
+        <div className="space-y-6">
           {[1, 2, 3].map((i) => (
             <div key={i} className="space-y-2">
-              <div className="h-4 w-24 bg-elevated rounded" />
+              <Skeleton className="h-4 w-24" />
               <div className="space-y-1">
                 {[1, 2, 3].map((j) => (
-                  <div key={j} className="h-12 bg-elevated rounded-lg" />
+                  <Skeleton key={j} className="h-12 w-full rounded-xl" />
                 ))}
               </div>
             </div>
@@ -253,7 +254,7 @@ export function ShoppingListView() {
       </div>
 
       {/* Categories list */}
-      <ScrollArea className="h-[calc(100vh-280px)]">
+      <ScrollArea className="h-[calc(100vh-35vh)] max-h-[60vh]">
         <div className="space-y-4 pr-4">
           {sortedCategories.map((category) => (
             <ShoppingCategory

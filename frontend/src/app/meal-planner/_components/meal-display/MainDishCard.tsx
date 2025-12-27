@@ -61,8 +61,8 @@ interface MetadataItemProps {
 
 function MetadataItem({ icon, label }: MetadataItemProps) {
   return (
-    <div className="flex items-center gap-2.5">
-      <span className="text-primary-light [&>svg]:h-[24px] [&>svg]:w-[24px]">
+    <div className="flex items-center gap-3">
+      <span className="text-primary-light [&>svg]:h-6 [&>svg]:w-6">
         {icon}
       </span>
       <span className="text-base font-medium text-muted-foreground">{label}</span>

@@ -195,7 +195,7 @@ function FilterSection({
           <Icon className="h-4 w-4 text-muted" />
           {title}
           {selected.length > 0 && (
-            <span className="ml-1 px-1.5 py-0.5 bg-primary/20 text-primary text-xs rounded-full">
+            <span className="ml-1 px-2 py-1 bg-primary/20 text-primary text-xs rounded-full">
               {selected.length}
             </span>
           )}
@@ -212,7 +212,7 @@ function FilterSection({
           {options.map((option) => (
             <label
               key={option.value}
-              className="flex items-center gap-3 py-1.5 px-2 rounded-md cursor-pointer hover:bg-hover transition-colors"
+              className="flex items-center gap-3 py-2 px-2 rounded-md cursor-pointer hover:bg-hover transition-colors"
             >
               <Checkbox
                 checked={selected.includes(option.value)}
@@ -242,21 +242,21 @@ function FilterChip({ label, type, onRemove }: FilterChipProps) {
     category: "bg-primary/20 text-primary border-primary/30",
     mealType: "bg-secondary/20 text-secondary border-secondary/30",
     dietary: "bg-accent/50 text-foreground border-accent",
-    favorite: "bg-[var(--error)]/20 text-[var(--error)] border-[var(--error)]/30",
+    favorite: "bg-destructive/20 text-destructive border-destructive/30",
     time: "bg-secondary/20 text-secondary border-secondary/30",
   };
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+        "inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border transition-colors",
         typeColors[type] || "bg-elevated text-foreground border-border"
       )}
     >
       {label}
       <button
         onClick={onRemove}
-        className="hover:bg-background/50 rounded-full p-0.5 transition-colors"
+        className="hover:bg-background/50 rounded-full p-1 transition-colors"
         aria-label={`Remove ${label} filter`}
       >
         <X className="h-3 w-3" />
@@ -782,8 +782,8 @@ export function RecipeBrowserView() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-center max-w-md">
-          <div className="p-4 bg-[var(--error)]/10 rounded-full">
-            <X className="h-8 w-8 text-[var(--error)]" />
+          <div className="p-4 bg-destructive/10 rounded-full">
+            <X className="h-8 w-8 text-destructive" />
           </div>
           <h2 className="text-lg font-semibold text-foreground">Failed to Load Recipes</h2>
           <p className="text-muted">{error}</p>
@@ -865,7 +865,7 @@ export function RecipeBrowserView() {
                   <Heart
                     className={cn(
                       "h-4 w-4 transition-colors",
-                      filters.favoritesOnly ? "text-[var(--error)] fill-current" : "text-muted"
+                      filters.favoritesOnly ? "text-destructive fill-current" : "text-muted"
                     )}
                   />
                   <span className="text-sm text-foreground">Favorites Only</span>

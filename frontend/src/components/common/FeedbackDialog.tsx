@@ -103,7 +103,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
               placeholder="Tell us what's on your mind..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="min-h-[120px] resize-none"
+              className="min-h-32 resize-none"
             />
             {message.length > 0 && remainingChars > 0 && (
               <p className="text-xs text-muted-foreground">

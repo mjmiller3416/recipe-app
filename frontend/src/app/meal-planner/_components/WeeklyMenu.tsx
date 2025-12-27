@@ -66,7 +66,7 @@ export function MenuListCard({
       )}
     >
       {/* Inner content wrapper (matching SideDishCard layout) */}
-      <div className="flex items-center gap-4 p-2.5">
+      <div className="flex items-center gap-4 p-3">
         {/* Thumbnail Image - sized to match SideDishCard height (~100px with padding) */}
         <div className="relative w-20 h-20 flex-shrink-0 overflow-hidden rounded-xl bg-elevated">
           <RecipeImage
@@ -80,7 +80,7 @@ export function MenuListCard({
           {/* Completed checkmark overlay */}
           {item.isCompleted && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-              <Check className="h-8 w-8 text-green-400" />
+              <Check className="h-8 w-8 text-success" />
             </div>
           )}
         </div>
