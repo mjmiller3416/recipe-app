@@ -14,6 +14,8 @@ import {
   IngredientAutocomplete,
   Ingredient as AutocompleteIngredient,
 } from "./IngredientAutocomplete";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export interface Ingredient {
   id: string;
@@ -62,6 +64,20 @@ export function IngredientRow({
   onDelete,
   showLabels = false,
 }: IngredientRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: ingredient.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   // Handle selecting an existing ingredient from autocomplete
   const handleIngredientSelect = (selected: AutocompleteIngredient) => {
     onUpdate(ingredient.id, "name", selected.name);
@@ -78,13 +94,21 @@ export function IngredientRow({
   };
 
   return (
-    <div className="group bg-elevated hover:bg-hover transition-colors rounded-lg p-3 border border-border">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group bg-elevated hover:bg-hover transition-colors rounded-lg p-3 border border-border ${
+        isDragging ? "opacity-50 shadow-lg" : ""
+      }`}
+    >
       <div className="flex items-center gap-3">
         {/* Drag Handle - Vertically Centered */}
         <button
           type="button"
-          className="p-1 text-muted hover:text-foreground transition-colors cursor-grab active:cursor-grabbing flex-shrink-0"
+          className="p-1 text-muted hover:text-foreground transition-colors cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
           aria-label="Drag to reorder"
+          {...attributes}
+          {...listeners}
         >
           <GripVertical className="h-5 w-5" />
         </button>

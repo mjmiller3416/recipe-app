@@ -6,6 +6,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { IngredientRow, Ingredient } from "./IngredientRow";
 import { Ingredient as AutocompleteIngredient } from "./IngredientAutocomplete";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 interface IngredientsCardProps {
   ingredients: Ingredient[];
@@ -13,6 +27,7 @@ interface IngredientsCardProps {
   onUpdate: (id: string, field: keyof Ingredient, value: string | number | null) => void;
   onDelete: (id: string) => void;
   onAdd: () => void;
+  onReorder: (activeId: string, overId: string) => void;
   getError: (field: string) => string | undefined;
 }
 
@@ -22,11 +37,27 @@ export function IngredientsCard({
   onUpdate,
   onDelete,
   onAdd,
+  onReorder,
   getError,
 }: IngredientsCardProps) {
   // Track if the add was triggered via keyboard (spacebar)
   const addedViaKeyboardRef = useRef(false);
   const prevIngredientsLengthRef = useRef(ingredients.length);
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      onReorder(active.id as string, over.id as string);
+    }
+  };
 
   // Focus the qty input of the new ingredient row when added via keyboard
   useEffect(() => {
@@ -78,17 +109,28 @@ export function IngredientsCard({
           </div>
         )}
 
-        <div className="space-y-2 mb-4">
-          {ingredients.map((ingredient) => (
-            <IngredientRow
-              key={ingredient.id}
-              ingredient={ingredient}
-              availableIngredients={availableIngredients}
-              onUpdate={onUpdate}
-              onDelete={onDelete}
-            />
-          ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={ingredients.map((ing) => ing.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-2 mb-4">
+              {ingredients.map((ingredient) => (
+                <IngredientRow
+                  key={ingredient.id}
+                  ingredient={ingredient}
+                  availableIngredients={availableIngredients}
+                  onUpdate={onUpdate}
+                  onDelete={onDelete}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
 
         {/* Add Ingredient Button at Bottom */}
         <Button

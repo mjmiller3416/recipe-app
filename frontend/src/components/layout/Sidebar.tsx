@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -10,11 +10,16 @@ import {
   Plus,
   Settings,
   MessageSquarePlus,
+  Newspaper,
 } from "lucide-react";
 import { Logo } from "@/components/layout/Logo";
 import { NavButton } from "@/components/layout/NavButton";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { FeedbackDialog } from "@/components/common/FeedbackDialog";
+import {
+  ChangelogDialog,
+  CHANGELOG_ENTRIES,
+} from "@/components/common/ChangelogDialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Tooltip,
@@ -35,6 +40,27 @@ const navigation = [
 export function Sidebar() {
   const pathname = usePathname();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [changelogOpen, setChangelogOpen] = useState(false);
+  const [hasNewUpdates, setHasNewUpdates] = useState(false);
+
+  useEffect(() => {
+    const lastSeen = localStorage.getItem("lastSeenChangelogVersion");
+    const latestVersion = CHANGELOG_ENTRIES[0]?.version;
+    if (latestVersion && lastSeen !== latestVersion) {
+      setHasNewUpdates(true);
+    }
+  }, []);
+
+  const handleChangelogOpenChange = (open: boolean) => {
+    if (open) {
+      const latestVersion = CHANGELOG_ENTRIES[0]?.version;
+      if (latestVersion) {
+        localStorage.setItem("lastSeenChangelogVersion", latestVersion);
+      }
+      setHasNewUpdates(false);
+    }
+    setChangelogOpen(open);
+  };
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-[280px] bg-sidebar flex flex-col overflow-x-hidden overflow-y-auto print:hidden">
@@ -80,8 +106,27 @@ export function Sidebar() {
             <TooltipContent>Send feedback</TooltipContent>
           </Tooltip>
           <ThemeToggle />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => handleChangelogOpenChange(true)}
+                className="relative p-2.5 rounded-lg bg-elevated hover:bg-hover transition-colors group"
+                aria-label="What's new"
+              >
+                <Newspaper className="w-5 h-5 text-foreground group-hover:text-primary transition-colors" />
+                {hasNewUpdates && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>What&apos;s New</TooltipContent>
+          </Tooltip>
         </div>
         <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+        <ChangelogDialog
+          open={changelogOpen}
+          onOpenChange={handleChangelogOpenChange}
+        />
         
         {/* User Profile */}
         <div className="flex items-center gap-3 rounded-lg p-3 bg-elevated">

@@ -13,6 +13,7 @@ import {
   validateInteger,
 } from "@/lib/formValidation";
 import { v4 as uuidv4 } from 'uuid';
+import { arrayMove } from '@dnd-kit/sortable';
 
 // ============================================================================
 // TYPES
@@ -83,6 +84,7 @@ export interface RecipeFormState {
   addIngredient: () => void;
   updateIngredient: (id: string, field: keyof Ingredient, value: string | number | null) => void;
   deleteIngredient: (id: string) => void;
+  reorderIngredients: (activeId: string, overId: string) => void;
 
   // Image handlers
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -305,6 +307,15 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
         return prevIngredients.filter((ing) => ing.id !== id);
       }
       return prevIngredients;
+    });
+  }, [markDirty]);
+
+  const reorderIngredients = useCallback((activeId: string, overId: string) => {
+    markDirty();
+    setIngredients((prev) => {
+      const oldIndex = prev.findIndex((ing) => ing.id === activeId);
+      const newIndex = prev.findIndex((ing) => ing.id === overId);
+      return arrayMove(prev, oldIndex, newIndex);
     });
   }, [markDirty]);
 
@@ -572,6 +583,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
     addIngredient,
     updateIngredient,
     deleteIngredient,
+    reorderIngredients,
 
     // Image handlers
     handleImageUpload,

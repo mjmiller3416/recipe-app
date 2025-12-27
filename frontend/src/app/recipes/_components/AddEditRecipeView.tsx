@@ -200,6 +200,7 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
               onUpdate={form.updateIngredient}
               onDelete={form.deleteIngredient}
               onAdd={form.addIngredient}
+              onReorder={form.reorderIngredients}
               getError={form.getError}
             />
 

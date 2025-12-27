@@ -49,11 +49,6 @@
 - **Issue**: Selections cannot be selected via the Tab key, only via mouse click or Enter key. This makes keyboard navigation slower.
 - **Solution**: Update the autocomplete selection logic to allow Tab key selection of highlighted suggestions, then move focus to the next input field.
 
-### Implement Drag-and-Drop Reordering of Ingredients
-- **Location**: `frontend/src/components/add-recipe/IngredientRow.tsx`
-- **Issue**: The ingredient row component does not currently support drag-and-drop reordering of ingredients. Implementing this feature would improve the user experience when adding or editing recipes.
-- **Solution**: Integrate a drag-and-drop library (e.g., react-beautiful-dnd) to enable reordering of ingredient rows.
-
 ### Reorder Ingredients on Recipe Page
 - **Location**: `src/app/recipes/[id]/page.tsx`
 - **Issue**: Reorder ingredients on the recipe page so that the "Meat" category always appears first, followed by other categories in a logical order (e.g., Vegetables, Grains, Spices).
@@ -90,6 +85,11 @@
 - **Solution**: Create a print preview modal with toggle controls (image, notes, etc.) that dynamically adjusts the print layout, allowing users to fit most recipes on a single page.
 
 ## ✅ Completed
+
+### Implement Drag-and-Drop Reordering of Ingredients
+- **Location**: `frontend/src/app/recipes/_components/add-edit/IngredientRow.tsx`
+- **Issue**: The ingredient row component did not support drag-and-drop reordering of ingredients.
+- **Solution**: Integrated `@dnd-kit/sortable` (already installed) to enable reordering of ingredient rows with keyboard and touch accessibility.
 
 ### Remove Duplicate "Ranch Seasoning" Ingredient
 - **Location**: Database (ingredients table)
