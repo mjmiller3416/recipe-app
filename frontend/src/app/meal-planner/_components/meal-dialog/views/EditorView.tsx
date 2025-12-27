@@ -11,7 +11,7 @@ import type { RecipeCardData } from "@/types";
 // TYPES
 // ============================================================================
 
-interface CreateViewProps {
+interface EditorViewProps {
   /** Current meal name */
   mealName: string;
   /** Called when meal name changes */
@@ -45,11 +45,11 @@ interface CreateViewProps {
 }
 
 // ============================================================================
-// CREATE VIEW COMPONENT
+// EDITOR VIEW COMPONENT
 // ============================================================================
 
 /**
- * CreateView - Content for the "Create Meal" tab
+ * EditorView - Shared content view for meal creation and editing
  *
  * Layout:
  * 1. Meal name input
@@ -57,7 +57,7 @@ interface CreateViewProps {
  * 3. Search and filter bar
  * 4. Recipe grid
  */
-export function CreateView({
+export function EditorView({
   mealName,
   onMealNameChange,
   slots,
@@ -72,7 +72,7 @@ export function CreateView({
   activeFilters,
   onFilterToggle,
   className,
-}: CreateViewProps) {
+}: EditorViewProps) {
   return (
     <div className={cn("space-y-4", className)}>
       {/* Meal Name Input */}

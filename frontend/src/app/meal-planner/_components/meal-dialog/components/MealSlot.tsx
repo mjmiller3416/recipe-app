@@ -76,8 +76,8 @@ export function MealSlot({
             : "border-muted hover:border-primary/30 hover:bg-hover",
           // Focus state
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          // Size variants - fixed height to prevent growth
-          isMain ? "h-[120px]" : "h-[100px]",
+          // Size variants - aspect ratio for responsive scaling
+          isMain ? "aspect-[4/3]" : "aspect-square",
           className
         )}
         onClick={onClick}
@@ -127,8 +127,8 @@ export function MealSlot({
           : "border border-border hover:shadow-lg hover:shadow-primary/5 hover:bg-hover",
         // Focus state
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        // Size variants - fixed height to match empty state
-        isMain ? "h-[120px]" : "h-[100px]",
+        // Size variants - aspect ratio for responsive scaling
+        isMain ? "aspect-[4/3]" : "aspect-square",
         className
       )}
       onClick={onClick}

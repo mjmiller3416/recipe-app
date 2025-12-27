@@ -4,11 +4,10 @@ import { useEffect, useState } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { MealSelection } from "./meal-display/MealSelection";
-import { WeeklyMenu, MenuListItem } from "./meal-display/WeeklyMenu";
+import { WeeklyMenu, MenuListItem } from "./WeeklyMenu";
 import { plannerApi } from "@/lib/api";
 import { PlannerEntryResponseDTO, MealSelectionResponseDTO } from "@/types";
-import { CreateMealDialog } from "./create-meal-dialog/CreateMealDialog";
-import { EditMealDialog } from "./edit-meal-dialog/EditMealDialog";
+import { MealDialog } from "./meal-dialog/MealDialog";
 import { Trash2 } from "lucide-react";
 
 export function MealPlannerPage() {
@@ -201,7 +200,7 @@ export function MealPlannerPage() {
       fillViewport
     >
       {/* GRID CONTAINER */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 h-full min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_clamp(200px,30%,350px)] gap-6 h-full min-h-0">
 
         {/* LEFT COLUMN: SELECTED MEAL */}
         <div className="flex flex-col min-h-0 overflow-hidden">
@@ -282,18 +281,18 @@ export function MealPlannerPage() {
         </div>
       </div>
 
-      {/* Create Meal Dialog */}
-      <CreateMealDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-        onEntryCreated={handleEntryCreated}
-      />
-
-      {/* Edit Meal Dialog */}
-      <EditMealDialog
-        open={showEditDialog}
+      {/* Meal Dialog - unified create/edit */}
+      <MealDialog
+        open={showCreateDialog || showEditDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowCreateDialog(false);
+            setShowEditDialog(false);
+          }
+        }}
+        mode={showEditDialog ? "edit" : "create"}
         mealId={selectedMealId}
-        onOpenChange={setShowEditDialog}
+        onEntryCreated={handleEntryCreated}
         onMealUpdated={handleMealUpdated}
       />
     </PageLayout>

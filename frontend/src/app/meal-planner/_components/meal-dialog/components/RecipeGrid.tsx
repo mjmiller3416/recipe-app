@@ -84,7 +84,7 @@ export function RecipeGrid({
   return (
     <div
       className={cn(
-        "grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-1",
+        "grid grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto pr-1",
         // Custom scrollbar styling
         "scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent",
         className

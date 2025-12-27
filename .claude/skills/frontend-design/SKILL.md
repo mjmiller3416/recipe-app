@@ -45,7 +45,43 @@ To make the app feel alive without breaking utility:
 * **Empty States:** Never leave a blank page. Use a Lucide icon + friendly text (e.g., "No recipes found yet! Time to cook something up?").
 * **Images:** Use `aspect-square` or `aspect-video` consistently. Always add `overflow-hidden` to image containers so zoom effects on hover don't spill out.
 
-## 5. Motion & Animation Guidelines
+## 5. Responsive Dimensions (Critical)
+
+> **Rule:** Never use fixed pixel values for layout dimensions. Use responsive alternatives.
+
+### ❌ Prohibited Patterns
+
+| Pattern | Problem |
+|---------|---------|
+| `w-[300px]`, `h-[120px]` | Fixed pixels don't scale with viewport |
+| `grid-cols-[1fr_300px]` | Fixed column widths break responsiveness |
+| `max-h-[300px]` | Fixed heights cause scroll issues on smaller screens |
+
+### ✅ Approved Alternatives
+
+| Use Case | Bad | Good |
+|----------|-----|------|
+| **Sidebar widths** | `w-[300px]` | `w-[clamp(200px,25%,400px)]` |
+| **Card heights** | `h-[120px]` | `aspect-[4/3]` or `min-h-24` |
+| **Scrollable areas** | `max-h-[300px]` | `max-h-[40vh]` or `flex-1 overflow-auto` |
+| **Grid columns** | `grid-cols-[1fr_300px]` | `grid-cols-[1fr_clamp(200px,30%,350px)]` |
+| **Thumbnails** | `w-[80px] h-[80px]` | `w-20 h-20` (Tailwind preset) or `w-20 aspect-square` |
+
+### When Fixed Values ARE Acceptable
+- **Tailwind preset sizes** (`w-20`, `h-24`, etc.) — semantic and consistent
+- **Icon sizes** (`h-4 w-4`, `h-6 w-6`) — standardized across the app
+- **Min/max bounds in clamp()** — guardrails, not fixed sizes
+- **Viewport-relative units** (`vh`, `vw`) — scales with screen size
+
+### Responsive Sizing Priority
+Prefer these approaches in order:
+1. **Aspect ratios** (`aspect-square`, `aspect-[3/1]`) — scales proportionally
+2. **Viewport units** (`max-h-[40vh]`) — adapts to screen size
+3. **Clamp with bounds** (`clamp(min, preferred, max)`) — flexible with guardrails
+4. **Tailwind presets** (`w-20`, `h-24`) — consistent, semantic
+5. **Fixed pixels** — LAST RESORT, requires justification in comments
+
+## 6. Motion & Animation Guidelines
 
 > **Rule:** Use animation tokens for consistent timing. Never use arbitrary durations.
 
@@ -88,7 +124,7 @@ For complex animations, use Framer Motion with these defaults:
 * Use `AnimatePresence` for exit animations
 * Prefer `motion.div` with `initial`, `animate`, `exit` props
 
-## 6. Workflow for Generating Components
+## 7. Workflow for Generating Components
 When asked to create or fix a UI component:
 
 1.  **Check Shadcn First:** Before building anything, search the Shadcn registry for an existing component.
@@ -120,15 +156,15 @@ When asked to create or fix a UI component:
     * Add `transition-all duration-200` to interactive elements.
 9.  **Self-Correction Question:** "Are the icons aligned with the text? Is the spacing uniform? Does it look good in Light Mode?"
 
-## 7. Auditing Existing Pages
+## 8. Auditing Existing Pages
 
 When reviewing or revising an existing page, follow the comprehensive checklist in [audit-checklist.md](audit-checklist.md).
 
-## 8. Anti-Patterns
+## 9. Anti-Patterns
 
 See the Anti-Patterns section in [component-usage.md](component-usage.md) for common mistakes to avoid.
 
-## 9. Theme Mode
+## 10. Theme Mode
 * **Dark mode is the DEFAULT** — defined in `:root`
 * **Light mode is opt-in** — activated via `:root.light` class on `<html>`
 * All CSS variables automatically adapt between modes — no conditional styling needed

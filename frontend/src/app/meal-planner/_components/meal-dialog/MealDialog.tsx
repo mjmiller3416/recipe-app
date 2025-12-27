@@ -7,15 +7,18 @@ import {
   DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CreateView } from "../create-meal-dialog/views/CreateView";
+import { EditorView } from "./views/EditorView";
+import { SavedView } from "./views/SavedView";
 import { recipeApi, plannerApi } from "@/lib/api";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
 import { QUICK_FILTERS } from "@/lib/constants";
 import type {
   RecipeCardData,
   RecipeCardDTO,
+  PlannerEntryResponseDTO,
   MealSelectionResponseDTO,
 } from "@/types";
 
@@ -23,14 +26,18 @@ import type {
 // TYPES
 // ============================================================================
 
-interface EditMealDialogProps {
+interface MealDialogProps {
   /** Whether the dialog is open */
   open: boolean;
-  /** The meal ID to edit (null when closed) */
-  mealId: number | null;
   /** Called when dialog open state changes */
   onOpenChange: (open: boolean) => void;
-  /** Called when meal is successfully updated */
+  /** Dialog mode - create new meal or edit existing */
+  mode: "create" | "edit";
+  /** Meal ID to edit (required when mode="edit") */
+  mealId?: number | null;
+  /** Called when a new meal is created and added to planner (create mode) */
+  onEntryCreated?: (entry: PlannerEntryResponseDTO) => void;
+  /** Called when an existing meal is updated (edit mode) */
   onMealUpdated?: (meal: MealSelectionResponseDTO) => void;
 }
 
@@ -59,7 +66,7 @@ function mapRecipeCardDtoToCardData(
 // LOADING SKELETON
 // ============================================================================
 
-function EditMealSkeleton() {
+function EditorSkeleton() {
   return (
     <div className="space-y-4">
       <Skeleton className="h-10 w-full" />
@@ -79,25 +86,30 @@ function EditMealSkeleton() {
 }
 
 // ============================================================================
-// EDIT MEAL DIALOG COMPONENT
+// MEAL DIALOG COMPONENT
 // ============================================================================
 
 /**
- * EditMealDialog - Dialog for editing an existing meal
+ * MealDialog - Unified dialog for creating and editing meals
  *
  * Features:
- * - Fetches existing meal data on open
- * - Pre-populates slots with existing recipes
+ * - Create mode: Tabbed interface (Create Meal / Saved Meals), starts empty
+ * - Edit mode: Simple header, pre-populates from existing meal
  * - Slot-based recipe selection (1 main + 3 sides)
+ * - Auto-advance to next empty slot after selection
  * - Search and filter recipes
- * - Update meal via API
  */
-export function EditMealDialog({
+export function MealDialog({
   open,
-  mealId,
   onOpenChange,
+  mode,
+  mealId,
+  onEntryCreated,
   onMealUpdated,
-}: EditMealDialogProps) {
+}: MealDialogProps) {
+  // Tab state (only used in create mode)
+  const [activeTab, setActiveTab] = useState<"create" | "saved">("create");
+
   // Slot state
   const [mainRecipe, setMainRecipe] = useState<RecipeCardData | null>(null);
   const [sideRecipes, setSideRecipes] = useState<(RecipeCardData | null)[]>([
@@ -109,11 +121,12 @@ export function EditMealDialog({
 
   // Form state
   const [mealName, setMealName] = useState("");
+  const [hasManualName, setHasManualName] = useState(false); // Only used in create mode
 
   // Recipe data state
   const [recipes, setRecipes] = useState<RecipeCardData[]>([]);
   const [isLoadingRecipes, setIsLoadingRecipes] = useState(false);
-  const [isFetchingMeal, setIsFetchingMeal] = useState(false);
+  const [isFetchingMeal, setIsFetchingMeal] = useState(false); // Only used in edit mode
 
   // Filter state
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,26 +139,37 @@ export function EditMealDialog({
   // Effects
   // --------------------------------------------------------------------------
 
-  // Fetch meal data and recipes when dialog opens
+  // Handle dialog open/close
   useEffect(() => {
-    if (open && mealId) {
-      fetchMealData(mealId);
+    if (open) {
+      // Fetch recipes for both modes
       fetchRecipes();
-    }
-  }, [open, mealId]);
 
-  // Reset filter state when dialog closes
-  useEffect(() => {
-    if (!open) {
-      setSearchTerm("");
-      setActiveFilters(new Set());
-      setActiveSlotIndex(0);
+      if (mode === "edit" && mealId) {
+        // Edit mode: fetch existing meal data
+        fetchMealData(mealId);
+      }
+    } else {
+      // Reset state when dialog closes
+      resetState();
     }
-  }, [open]);
+  }, [open, mode, mealId]);
 
   // --------------------------------------------------------------------------
   // Data Fetching
   // --------------------------------------------------------------------------
+
+  const fetchRecipes = async () => {
+    setIsLoadingRecipes(true);
+    try {
+      const data = await recipeApi.list();
+      setRecipes(mapRecipesForCards(data));
+    } catch (error) {
+      console.error("Failed to fetch recipes:", error);
+    } finally {
+      setIsLoadingRecipes(false);
+    }
+  };
 
   const fetchMealData = async (id: number) => {
     setIsFetchingMeal(true);
@@ -167,15 +191,13 @@ export function EditMealDialog({
       setSideRecipes(sides);
 
       // Auto-select first empty slot
-      // Check sides first (index 1, 2, 3), then main (index 0)
       let firstEmptySlot = 0;
       for (let i = 0; i < 3; i++) {
         if (!sides[i]) {
-          firstEmptySlot = i + 1; // Side slots are 1, 2, 3
+          firstEmptySlot = i + 1;
           break;
         }
       }
-      // If all sides filled but no main, select main
       if (firstEmptySlot === 0 && !mainRecipeData) {
         firstEmptySlot = 0;
       }
@@ -187,16 +209,21 @@ export function EditMealDialog({
     }
   };
 
-  const fetchRecipes = async () => {
-    setIsLoadingRecipes(true);
-    try {
-      const data = await recipeApi.list();
-      setRecipes(mapRecipesForCards(data));
-    } catch (error) {
-      console.error("Failed to fetch recipes:", error);
-    } finally {
-      setIsLoadingRecipes(false);
-    }
+  // --------------------------------------------------------------------------
+  // State Management
+  // --------------------------------------------------------------------------
+
+  const resetState = () => {
+    setActiveTab("create");
+    setMainRecipe(null);
+    setSideRecipes([null, null, null]);
+    setActiveSlotIndex(0);
+    setMealName("");
+    setHasManualName(false);
+    setSearchTerm("");
+    setActiveFilters(new Set());
+    setIsSubmitting(false);
+    setIsFetchingMeal(false);
   };
 
   // --------------------------------------------------------------------------
@@ -227,10 +254,7 @@ export function EditMealDialog({
               return false;
             break;
           case "time":
-            if (
-              typeof filter.value === "number" &&
-              recipe.totalTime > filter.value
-            )
+            if (typeof filter.value === "number" && recipe.totalTime > filter.value)
               return false;
             break;
           case "favorite":
@@ -254,6 +278,10 @@ export function EditMealDialog({
   const handleSlotClear = (index: number) => {
     if (index === 0) {
       setMainRecipe(null);
+      // In create mode: clear auto-filled name when main recipe is cleared
+      if (mode === "create" && !hasManualName) {
+        setMealName("");
+      }
     } else {
       const newSides = [...sideRecipes];
       newSides[index - 1] = null;
@@ -265,6 +293,10 @@ export function EditMealDialog({
     (recipe: RecipeCardData) => {
       if (activeSlotIndex === 0) {
         setMainRecipe(recipe);
+        // In create mode: auto-fill name from main recipe (if not manually edited)
+        if (mode === "create" && !hasManualName) {
+          setMealName(recipe.name);
+        }
       } else {
         const newSides = [...sideRecipes];
         newSides[activeSlotIndex - 1] = recipe;
@@ -274,7 +306,7 @@ export function EditMealDialog({
       // Auto-advance to next empty slot
       autoAdvanceSlot(recipe);
     },
-    [activeSlotIndex, sideRecipes, mainRecipe]
+    [activeSlotIndex, hasManualName, sideRecipes, mainRecipe, mode]
   );
 
   const autoAdvanceSlot = (justSelectedRecipe: RecipeCardData) => {
@@ -300,6 +332,9 @@ export function EditMealDialog({
 
   const handleMealNameChange = (name: string) => {
     setMealName(name);
+    if (mode === "create") {
+      setHasManualName(true);
+    }
   };
 
   const handleFilterToggle = (id: string) => {
@@ -314,7 +349,39 @@ export function EditMealDialog({
     });
   };
 
-  const handleSaveChanges = async () => {
+  // --------------------------------------------------------------------------
+  // Submit Handlers
+  // --------------------------------------------------------------------------
+
+  const handleCreateMeal = async () => {
+    if (!mainRecipe) return;
+
+    setIsSubmitting(true);
+    try {
+      const sideRecipeIds = sideRecipes
+        .filter((r): r is RecipeCardData => r !== null)
+        .map((r) => Number(r.id));
+
+      // Step 1: Create the meal
+      const meal = await plannerApi.createMeal({
+        meal_name: mealName || mainRecipe.name,
+        main_recipe_id: Number(mainRecipe.id),
+        side_recipe_ids: sideRecipeIds,
+      });
+
+      // Step 2: Add meal to planner (creates PlannerEntry)
+      const entry = await plannerApi.addToPlanner(meal.id);
+
+      onEntryCreated?.(entry);
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Failed to create meal:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateMeal = async () => {
     if (!mealId || !mainRecipe) return;
 
     setIsSubmitting(true);
@@ -333,17 +400,43 @@ export function EditMealDialog({
       onOpenChange(false);
     } catch (error) {
       console.error("Failed to update meal:", error);
-      // TODO: Show error toast
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleSubmit = mode === "create" ? handleCreateMeal : handleUpdateMeal;
+
   // --------------------------------------------------------------------------
   // Render
   // --------------------------------------------------------------------------
 
-  const canSave = mainRecipe !== null;
+  const canSubmit = mainRecipe !== null;
+  const isLoading = mode === "edit" && isFetchingMeal;
+
+  // Shared editor content
+  const editorContent = isLoading ? (
+    <EditorSkeleton />
+  ) : (
+    <EditorView
+      mealName={mealName}
+      onMealNameChange={handleMealNameChange}
+      slots={{
+        main: mainRecipe,
+        sides: sideRecipes,
+      }}
+      activeSlotIndex={activeSlotIndex}
+      onSlotClick={handleSlotClick}
+      onSlotClear={handleSlotClear}
+      onRecipeSelect={handleRecipeSelect}
+      recipes={filteredRecipes}
+      isLoadingRecipes={isLoadingRecipes}
+      searchTerm={searchTerm}
+      onSearchChange={setSearchTerm}
+      activeFilters={activeFilters}
+      onFilterToggle={handleFilterToggle}
+    />
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -352,51 +445,90 @@ export function EditMealDialog({
         showCloseButton={false}
       >
         {/* Visually hidden title for screen reader accessibility */}
-        <DialogTitle className="sr-only">Edit Meal</DialogTitle>
+        <DialogTitle className="sr-only">
+          {mode === "create" ? "Create or Select a Meal" : "Edit Meal"}
+        </DialogTitle>
 
-        {/* Header */}
-        <div className="px-6 pt-6 pb-4">
-          <h2 className="text-lg font-semibold text-foreground">Edit Meal</h2>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-hidden px-6 py-4">
-          {isFetchingMeal ? (
-            <EditMealSkeleton />
-          ) : (
-            <CreateView
-              mealName={mealName}
-              onMealNameChange={handleMealNameChange}
-              slots={{
-                main: mainRecipe,
-                sides: sideRecipes,
-              }}
-              activeSlotIndex={activeSlotIndex}
-              onSlotClick={handleSlotClick}
-              onSlotClear={handleSlotClear}
-              onRecipeSelect={handleRecipeSelect}
-              recipes={filteredRecipes}
-              isLoadingRecipes={isLoadingRecipes}
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              activeFilters={activeFilters}
-              onFilterToggle={handleFilterToggle}
-            />
-          )}
-        </div>
-
-        {/* Footer */}
-        <DialogFooter className="px-6 py-4 border-t border-border">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSaveChanges}
-            disabled={!canSave || isSubmitting || isFetchingMeal}
+        {mode === "create" ? (
+          // Create mode: Tabbed interface
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as "create" | "saved")}
+            className="flex flex-col flex-1 min-h-0"
           >
-            {isSubmitting ? "Saving..." : "Save Changes"}
-          </Button>
-        </DialogFooter>
+            {/* Tab Headers */}
+            <div className="px-6 pt-6 pb-0">
+              <TabsList className="bg-transparent border-none p-0 gap-6 h-auto w-auto">
+                <TabsTrigger
+                  value="create"
+                  className="bg-transparent px-0 py-2 text-base font-medium
+                             data-[state=active]:bg-transparent data-[state=active]:shadow-none
+                             data-[state=active]:text-primary
+                             border-b-2 border-transparent data-[state=active]:border-primary
+                             rounded-none hover:text-foreground"
+                >
+                  Create Meal
+                </TabsTrigger>
+                <TabsTrigger
+                  value="saved"
+                  className="bg-transparent px-0 py-2 text-base font-medium
+                             data-[state=active]:bg-transparent data-[state=active]:shadow-none
+                             data-[state=active]:text-primary
+                             border-b-2 border-transparent data-[state=active]:border-primary
+                             rounded-none hover:text-foreground"
+                >
+                  Saved Meals
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            {/* Tab Content */}
+            <TabsContent
+              value="create"
+              className="flex-1 overflow-y-auto px-6 py-4 mt-0"
+            >
+              {editorContent}
+            </TabsContent>
+
+            <TabsContent
+              value="saved"
+              className="flex-1 overflow-y-auto px-6 py-4 mt-0"
+            >
+              <SavedView />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          // Edit mode: Simple header with content
+          <>
+            <div className="px-6 pt-6 pb-4">
+              <h2 className="text-lg font-semibold text-foreground">Edit Meal</h2>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {editorContent}
+            </div>
+          </>
+        )}
+
+        {/* Footer - shown in create mode (on Create tab) or edit mode */}
+        {(mode === "edit" || activeTab === "create") && (
+          <DialogFooter className="px-6 py-4 border-t border-border flex-shrink-0">
+            <Button variant="ghost" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={!canSubmit || isSubmitting || isLoading}
+            >
+              {isSubmitting
+                ? mode === "create"
+                  ? "Creating..."
+                  : "Saving..."
+                : mode === "create"
+                ? "Create Meal"
+                : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -40,7 +40,7 @@ function SideDishCard({ recipe, onFilledClick, onEmptyClick, className }: SideDi
         className={cn(
           "overflow-hidden transition-all duration-200 ease-in-out",
           "border-dashed border-2 border-muted",
-          "pb-0 pt-0 gap-0 h-full",
+          "pb-0 pt-0 gap-0 aspect-[3/1]",
           isDisabled
             ? "opacity-60 cursor-not-allowed"
             : "group cursor-pointer hover:shadow-lg hover:shadow-primary/5 hover:bg-hover hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -72,7 +72,7 @@ function SideDishCard({ recipe, onFilledClick, onEmptyClick, className }: SideDi
         "group cursor-pointer overflow-hidden transition-all duration-200 ease-in-out",
         "hover:shadow-lg hover:shadow-primary/5 hover:bg-hover",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        "pb-0 pt-0 gap-0 h-full",
+        "pb-0 pt-0 gap-0 aspect-[3/1]",
         className
       )}
       onClick={onFilledClick}
@@ -116,7 +116,7 @@ export function SideDishSlots({ recipes, onFilledSlotClick, onEmptySlotClick, cl
   ];
 
   return (
-    <div className={cn("grid grid-cols-3 gap-4 items-stretch auto-rows-[minmax(6.25rem,auto)]", className)}>
+    <div className={cn("grid grid-cols-3 gap-4 items-stretch auto-rows-auto", className)}>
       {slots.map((recipe, index) => (
         <SideDishCard
           key={index}
