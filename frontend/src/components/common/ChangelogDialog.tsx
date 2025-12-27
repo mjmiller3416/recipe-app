@@ -7,26 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Sparkles } from "lucide-react";
-
-interface ChangelogEntry {
-  version: string;
-  date: string;
-  title: string;
-  changes: string[];
-}
-
-export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
-  {
-    version: "2024-12-27",
-    date: "December 27, 2024",
-    title: "Latest Updates",
-    changes: [
-      "Drag-and-drop reordering of ingredients when adding or editing recipes",
-      "Fixed ingredient autocomplete for multi-word ingredients like 'olive oil'",
-      "Removed duplicate 'Ranch Seasoning' ingredient from database",
-    ],
-  },
-];
+import { CHANGELOG_ENTRIES } from "@/data/changelog";
 
 interface ChangelogDialogProps {
   open: boolean;

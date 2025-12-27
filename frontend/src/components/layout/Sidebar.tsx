@@ -16,10 +16,8 @@ import { Logo } from "@/components/layout/Logo";
 import { NavButton } from "@/components/layout/NavButton";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { FeedbackDialog } from "@/components/common/FeedbackDialog";
-import {
-  ChangelogDialog,
-  CHANGELOG_ENTRIES,
-} from "@/components/common/ChangelogDialog";
+import { ChangelogDialog } from "@/components/common/ChangelogDialog";
+import { CHANGELOG_ENTRIES } from "@/data/changelog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Tooltip,

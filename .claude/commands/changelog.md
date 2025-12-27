@@ -1,6 +1,6 @@
 # Changelog Entry Generator
 
-Generate a changelog entry from completed TODO items and add it to the changelog dialog.
+Generate a changelog entry from completed TODO items and add it to the changelog.
 
 ## Arguments (optional)
 
@@ -8,118 +8,81 @@ $ARGUMENTS
 
 ## Instructions
 
-### Step 1: Read Completed Items
+### Step 1: Get Changelog Content
 
-Read `frontend/TODO.md` and find all items in the `## ✅ Completed` section.
+**If arguments were provided:** Use those as the changelog content directly.
 
-### Step 2: Confirm Items to Include
-
-Present the completed items to the user and ask which ones should be included in this changelog entry:
+**If no arguments:** Read `frontend/TODO.md`, find items in the `## ✅ Completed` section, and ask:
 
 ```
 Found these completed items:
-1. [Item 1 title]
-2. [Item 2 title]
-3. [Item 3 title]
+1. [Item 1]
+2. [Item 2]
 
-Which items should be included in this changelog entry?
-- All of them (default)
-- Specific numbers (e.g., "1, 3")
-- Custom entry (I'll describe what to add)
+Which items to include? (all / specific numbers / custom description)
 ```
 
-If arguments were provided, use those as the changelog content instead of reading from TODO.md.
+### Step 2: Generate Entry
 
-### Step 3: Generate Entry Title
+Create a markdown entry with today's date:
 
-Ask the user for a title or suggest one:
-
-```
-Suggested title: "Latest Updates"
-
-Options:
-- Use suggested title
-- "Bug Fixes"
-- "New Features"
-- "Improvements"
-- Custom title
+```markdown
+## YYYY-MM-DD - [Title]
+- [Change 1 in user-friendly language]
+- [Change 2 in user-friendly language]
 ```
 
-### Step 4: Format the Changelog Entry
+**Guidelines:**
+- Title: "Latest Updates", "New Features", "Bug Fixes", or "Improvements"
+- Write changes from user's perspective (not developer's)
+- Good: "Drag-and-drop reordering of ingredients"
+- Bad: "Implemented dnd-kit in IngredientRow.tsx"
 
-Create a changelog entry object:
+### Step 3: Update Changelog File
 
-```tsx
-{
-  version: "YYYY-MM-DD",  // Today's date
-  date: "Month DD, YYYY", // Today's date formatted
-  title: "[Selected Title]",
-  changes: [
-    "User-friendly description of change 1",
-    "User-friendly description of change 2",
-  ],
-}
+1. Read `frontend/src/data/changelog.ts`
+2. Find the `CHANGELOG_MD` template literal
+3. **Prepend** the new entry after the opening backtick
+4. Save the file
+
+**Example - Before:**
+```typescript
+const CHANGELOG_MD = `
+## 2024-12-27 - Latest Updates
+- Existing change
+`;
 ```
 
-**Change Description Guidelines:**
-- Write from the user's perspective, not developer's
-- Start with a verb or describe the improvement
-- Keep each item to one line
-- Avoid technical jargon (no "fixed bug in X component")
-- Good: "Drag-and-drop reordering of ingredients when adding recipes"
-- Bad: "Implemented dnd-kit sortable in IngredientRow.tsx"
+**Example - After:**
+```typescript
+const CHANGELOG_MD = `
+## 2024-12-28 - New Features
+- New feature description
 
-### Step 5: Update ChangelogDialog.tsx
-
-1. Read `frontend/src/components/common/ChangelogDialog.tsx`
-2. Find the `CHANGELOG_ENTRIES` array
-3. **Prepend** the new entry at the beginning of the array (position 0)
-4. Ensure proper formatting with trailing comma
-
-### Step 6: Clean Up TODO.md (Optional)
-
-Ask the user:
-```
-Should I remove the added items from the Completed section in TODO.md?
-- Yes, clean up (removes items from Completed section)
-- No, keep them (items remain in TODO.md for reference)
+## 2024-12-27 - Latest Updates
+- Existing change
+`;
 ```
 
-### Step 7: Confirm
-
-Output confirmation:
+### Step 4: Confirm
 
 ```
 ✅ Changelog updated!
 
 Added entry for [date]:
-### [Title]
-- [Change 1]
-- [Change 2]
+## [Title]
+- [Changes...]
 
-The "What's New" indicator will now appear for users who haven't seen this update.
+The "What's New" indicator will appear for users who haven't seen this update.
 ```
 
-## Example Usage
+## File Location
 
-```
-/changelog
-```
-→ Reads from TODO.md completed section, asks for confirmation
-
-```
-/changelog Added dark mode support and improved recipe search
-```
-→ Creates entry with the provided description directly
-
-## File Locations
-
+- **Changelog file**: `frontend/src/data/changelog.ts`
 - **TODO source**: `frontend/TODO.md` (Completed section)
-- **Changelog target**: `frontend/src/components/common/ChangelogDialog.tsx`
 
 ## Notes
 
-- New entries must be **prepended** (not appended) to trigger the new update indicator
-- The `version` field must be unique — it's compared against localStorage
-- Use today's date for the version to ensure uniqueness
-- Multiple changelog updates on the same day should use the same version (they'll merge visually)
+- Entries must be **prepended** (newest first) to trigger the new update indicator
+- The date in `## YYYY-MM-DD` becomes the version - must be unique
+- Multiple entries on the same day can use the same date
