@@ -136,7 +136,7 @@ export function RecipeInfoCard({
                 >
                   <SelectValue placeholder="Select meal type" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent side="bottom">
                   {MEAL_TYPE_OPTIONS.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
@@ -160,7 +160,7 @@ export function RecipeInfoCard({
                 >
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent side="bottom">
                   {RECIPE_CATEGORY_OPTIONS.map((cat) => (
                     <SelectItem key={cat.value} value={cat.value}>
                       {cat.label}
@@ -184,7 +184,7 @@ export function RecipeInfoCard({
                 <SelectTrigger id="dietary-preference" className="mt-1.5">
                   <SelectValue placeholder="Select dietary preference" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent side="bottom">
                   {DIETARY_PREFERENCES.map((pref) => (
                     <SelectItem key={pref.value} value={pref.value}>
                       {pref.label}

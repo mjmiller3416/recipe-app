@@ -1,29 +1,12 @@
----
-name: todo
-description: Generate formatted TODO items from problem descriptions and append them to frontend/TODO.md. Use when you want to quickly log a bug, feature request, or improvement.
----
-
 # TODO Generator
 
-Quickly create formatted TODO items from problem descriptions.
+Generate a formatted TODO item from this problem description and append it to `frontend/TODO.md`.
 
-## Usage
+## Problem Description
 
-```
-/todo [describe the problem or feature request]
-```
-
-## Examples
-
-```
-/todo users can't enter .5 for ingredient quantities
-/todo the delete button triggers on spacebar which causes accidental deletions
-/todo add drag and drop reordering for ingredients
-```
+$ARGUMENTS
 
 ## Instructions
-
-When the user describes a problem or feature request:
 
 ### Step 1: Search the Codebase
 
