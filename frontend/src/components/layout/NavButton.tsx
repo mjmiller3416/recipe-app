@@ -21,13 +21,13 @@ export function NavButton({
     <SafeLink
       href={href}
       className={cn(
-        "flex items-center rounded-lg transition-colors duration-200 ease-in-out relative group px-4 py-3.5",
+        "flex items-center rounded-lg transition-colors duration-200 ease-in-out relative group px-4 py-4",
         "text-muted hover:text-foreground hover:bg-hover",
         isActive && "text-primary bg-hover font-medium rounded-lg"
       )}
     >
-      <Icon className="h-5 w-5 flex-shrink-0" />
-      <span className="text-sm ml-3 whitespace-nowrap">
+      <Icon className="h-6 w-6 flex-shrink-0" />
+      <span className="text-base ml-3 whitespace-nowrap">
         {label}
       </span>
     </SafeLink>

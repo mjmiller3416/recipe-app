@@ -63,7 +63,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-[280px] bg-sidebar flex flex-col overflow-x-hidden overflow-y-auto print:hidden">
+    <aside className="fixed left-0 top-0 h-screen w-72 bg-sidebar flex flex-col overflow-x-hidden overflow-y-auto print:hidden">
       {/* Top Section - App Branding */}
       <div className="flex items-center px-4 py-6 pb-8">
         <div className="flex items-center gap-3 flex-1 min-w-0">
