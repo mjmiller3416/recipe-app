@@ -91,6 +91,8 @@ export function ShoppingListView() {
 
     try {
       await shoppingApi.toggleItem(itemId);
+      // Notify other components (e.g., Sidebar) that shopping list changed
+      window.dispatchEvent(new Event("shopping-list-updated"));
     } catch (err) {
       // Rollback on error
       setShoppingData(previousData);
@@ -114,6 +116,8 @@ export function ShoppingListView() {
 
     try {
       await shoppingApi.clearCompleted();
+      // Notify other components (e.g., Sidebar) that shopping list changed
+      window.dispatchEvent(new Event("shopping-list-updated"));
     } catch (err) {
       // Rollback on error
       setShoppingData(previousData);

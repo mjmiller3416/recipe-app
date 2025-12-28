@@ -2,11 +2,7 @@
 
 import { Moon, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
@@ -15,56 +11,77 @@ export function ThemeToggle() {
   // Set mounted to true after hydration to avoid SSR mismatch
   useEffect(() => {
     setMounted(true);
-    
+
     // Check localStorage or system preference on mount
     const stored = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const systemPreference = window.matchMedia('(prefers-color-scheme: light)').matches 
-      ? 'light' 
+    const systemPreference = window.matchMedia('(prefers-color-scheme: light)').matches
+      ? 'light'
       : 'dark';
     const initial = stored || systemPreference;
-    
+
     setTheme(initial);
     document.documentElement.classList.toggle('light', initial === 'light');
   }, []);
 
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
+  const setThemeValue = (newTheme: 'light' | 'dark') => {
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
     document.documentElement.classList.toggle('light', newTheme === 'light');
   };
 
-  // Prevent flash during SSR
+  // Prevent flash during SSR - show skeleton
   if (!mounted) {
     return (
-      <button
-        className="p-2.5 rounded-lg bg-elevated hover:bg-hover transition-colors"
-        aria-label="Toggle theme"
-        disabled
-      >
-        <Moon className="w-5 h-5 text-muted" />
-      </button>
+      <div className="flex gap-1 p-1 bg-elevated rounded-lg">
+        <div className="flex-1 p-2 rounded-md bg-hover">
+          <Moon className="w-4 h-4 text-muted mx-auto" />
+        </div>
+        <div className="flex-1 p-2 rounded-md">
+          <Sun className="w-4 h-4 text-muted mx-auto" />
+        </div>
+      </div>
     );
   }
 
-  const tooltipText = `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`;
-
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          onClick={toggleTheme}
-          className="p-2.5 rounded-lg bg-elevated hover:bg-hover transition-colors group"
-          aria-label={tooltipText}
-        >
-          {theme === 'dark' ? (
-            <Sun className="w-5 h-5 text-foreground group-hover:text-primary transition-colors" />
-          ) : (
-            <Moon className="w-5 h-5 text-foreground group-hover:text-primary transition-colors" />
-          )}
-        </button>
-      </TooltipTrigger>
-      <TooltipContent>{tooltipText}</TooltipContent>
-    </Tooltip>
+    <div
+      className="flex gap-1 p-1 bg-elevated rounded-lg"
+      role="radiogroup"
+      aria-label="Theme selection"
+    >
+      {/* Dark mode button */}
+      <button
+        onClick={() => setThemeValue('dark')}
+        className={cn(
+          "flex-1 p-2 rounded-md flex items-center justify-center",
+          "transition-all duration-200",
+          theme === 'dark'
+            ? "bg-hover text-foreground shadow-sm"
+            : "text-muted hover:text-foreground"
+        )}
+        aria-label="Dark mode"
+        aria-checked={theme === 'dark'}
+        role="radio"
+      >
+        <Moon className="w-4 h-4" strokeWidth={1.5} />
+      </button>
+
+      {/* Light mode button */}
+      <button
+        onClick={() => setThemeValue('light')}
+        className={cn(
+          "flex-1 p-2 rounded-md flex items-center justify-center",
+          "transition-all duration-200",
+          theme === 'light'
+            ? "bg-hover text-foreground shadow-sm"
+            : "text-muted hover:text-foreground"
+        )}
+        aria-label="Light mode"
+        aria-checked={theme === 'light'}
+        role="radio"
+      >
+        <Sun className="w-4 h-4" strokeWidth={1.5} />
+      </button>
+    </div>
   );
 }

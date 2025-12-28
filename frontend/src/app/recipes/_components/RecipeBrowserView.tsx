@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
   SlidersHorizontal,
@@ -387,6 +387,10 @@ function StickyHeaderBar({
 
 export function RecipeBrowserView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Check for URL params on mount
+  const initialFavoritesOnly = searchParams.get("favoritesOnly") === "true";
 
   // Data and loading state
   const [recipes, setRecipes] = useState<RecipeCardData[]>([]);
@@ -404,7 +408,7 @@ export function RecipeBrowserView() {
     categories: [],
     mealTypes: [],
     dietaryPreferences: [],
-    favoritesOnly: false,
+    favoritesOnly: initialFavoritesOnly,
     maxCookTime: null,
   });
   const [sortBy, setSortBy] = useState<SortOption>("alphabetical");
@@ -417,7 +421,27 @@ export function RecipeBrowserView() {
     }
     return true;
   });
-  const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(new Set());
+  const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(
+    () => initialFavoritesOnly ? new Set(["favorites"]) : new Set()
+  );
+
+  // Sync filters with URL params (handles navigation to ?favoritesOnly=true)
+  useEffect(() => {
+    const urlFavoritesOnly = searchParams.get("favoritesOnly") === "true";
+    if (urlFavoritesOnly !== filters.favoritesOnly) {
+      setFilters((prev) => ({ ...prev, favoritesOnly: urlFavoritesOnly }));
+      // Sync quick filters
+      setActiveQuickFilters((prev) => {
+        const next = new Set(prev);
+        if (urlFavoritesOnly) {
+          next.add("favorites");
+        } else {
+          next.delete("favorites");
+        }
+        return next;
+      });
+    }
+  }, [searchParams, filters.favoritesOnly]);
 
   // Fetch recipes on mount
   useEffect(() => {
@@ -478,6 +502,11 @@ export function RecipeBrowserView() {
           ...f,
           favoritesOnly: !isActive,
         }));
+        // Update URL to keep in sync (remove param when toggling off)
+        if (isActive) {
+          // Toggling OFF - remove the URL param
+          router.replace("/recipes", { scroll: false });
+        }
       } else if (filter.type === "time") {
         setFilters((f) => ({
           ...f,
@@ -488,13 +517,17 @@ export function RecipeBrowserView() {
       return next;
     });
 
-    // Scroll to show content right below sticky header
+    // Scroll to show content right below sticky header (only scroll up, not down)
     const contentEl = document.querySelector("[data-page-content]");
     const stickyHeader = document.querySelector("[data-sticky-header]");
     if (contentEl) {
       const contentTop = contentEl.getBoundingClientRect().top + window.scrollY;
       const headerHeight = stickyHeader?.getBoundingClientRect().height ?? 0;
-      window.scrollTo({ top: contentTop - headerHeight, behavior: "smooth" });
+      const targetScrollPosition = contentTop - headerHeight;
+
+      if (window.scrollY > targetScrollPosition) {
+        window.scrollTo({ top: targetScrollPosition, behavior: "smooth" });
+      }
     }
   };
 
@@ -647,6 +680,7 @@ export function RecipeBrowserView() {
   };
 
   // Scroll to show content right below sticky header when filters change
+  // Only scrolls UP to bring grid into view, never scrolls DOWN
   const scrollToResults = () => {
     const contentEl = document.querySelector("[data-page-content]");
     const stickyHeader = document.querySelector("[data-sticky-header]");
@@ -654,8 +688,12 @@ export function RecipeBrowserView() {
     if (contentEl) {
       const contentTop = contentEl.getBoundingClientRect().top + window.scrollY;
       const headerHeight = stickyHeader?.getBoundingClientRect().height ?? 0;
-      // Scroll so content top aligns with bottom of sticky header
-      window.scrollTo({ top: contentTop - headerHeight, behavior: "smooth" });
+      const targetScrollPosition = contentTop - headerHeight;
+
+      // Only scroll if user is below the target (needs to scroll up)
+      if (window.scrollY > targetScrollPosition) {
+        window.scrollTo({ top: targetScrollPosition, behavior: "smooth" });
+      }
     }
   };
 
@@ -733,6 +771,10 @@ export function RecipeBrowserView() {
           next.delete("favorites");
           return next;
         });
+        // Clear URL param
+        if (searchParams.get("favoritesOnly")) {
+          router.replace("/recipes", { scroll: false });
+        }
         scrollToResults();
         break;
       case "time":
@@ -757,6 +799,10 @@ export function RecipeBrowserView() {
     });
     setSearchTerm("");
     setActiveQuickFilters(new Set());
+    // Clear URL param if present
+    if (searchParams.get("favoritesOnly")) {
+      router.replace("/recipes", { scroll: false });
+    }
   };
 
   const toggleSortDirection = () => {

@@ -200,9 +200,9 @@ function RecipeCardSmall({
 // MEDIUM CARD - Standard featured card
 // ============================================================================
 
-function RecipeCardMedium({ 
-  recipe, 
-  onClick, 
+function RecipeCardMedium({
+  recipe,
+  onClick,
   onFavoriteClick,
   onKeyDown,
   formatTime,
@@ -212,9 +212,16 @@ function RecipeCardMedium({
   return (
     <Card
       className={cn(
-        "group cursor-pointer overflow-hidden transition-all duration-300 ease-in-out",
-        "hover:shadow-2xl hover:shadow-primary/15 hover:-translate-y-2",
+        "group cursor-pointer overflow-hidden",
+        // Base shadow and border
+        "shadow-raised border border-border",
+        // Transitions for all properties
+        "transition-all duration-300 ease-physical",
+        // Hover effects: lift, deeper shadow, border highlight
+        "hover:-translate-y-2 hover:shadow-elevated hover:border-border-strong",
+        // Focus ring
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        // Reset card padding
         "pb-0 pt-0 gap-0",
         className
       )}

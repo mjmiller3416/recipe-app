@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/components/layout/Logo";
 import { NavButton } from "@/components/layout/NavButton";
+import { RecentRecipesSection } from "@/components/layout/RecentRecipeChip";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { FeedbackDialog } from "@/components/common/FeedbackDialog";
 import { ChangelogDialog } from "@/components/common/ChangelogDialog";
@@ -25,12 +26,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { appConfig } from "@/lib/config";
+import { shoppingApi } from "@/lib/api";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Meal Planner", href: "/meal-planner", icon: CalendarDays },
   { name: "Recipe Browser", href: "/recipes", icon: BookOpen },
-  { name: "Shopping List", href: "/shopping-list", icon: ShoppingCart },
+  { name: "Shopping List", href: "/shopping-list", icon: ShoppingCart, hasBadge: true },
   { name: "Add Recipe", href: "/recipes/add", icon: Plus },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
@@ -40,6 +42,17 @@ export function Sidebar() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [hasNewUpdates, setHasNewUpdates] = useState(false);
+  const [shoppingListRemaining, setShoppingListRemaining] = useState(0);
+
+  // Fetch shopping list count
+  const fetchShoppingCount = useCallback(async () => {
+    try {
+      const data = await shoppingApi.getList();
+      setShoppingListRemaining(data.total_items - data.checked_items);
+    } catch (error) {
+      console.error("[Sidebar] Failed to fetch shopping list:", error);
+    }
+  }, []);
 
   useEffect(() => {
     const lastSeen = localStorage.getItem("lastSeenChangelogVersion");
@@ -47,7 +60,16 @@ export function Sidebar() {
     if (latestVersion && lastSeen !== latestVersion) {
       setHasNewUpdates(true);
     }
-  }, []);
+
+    // Fetch shopping count on mount
+    fetchShoppingCount();
+
+    // Listen for shopping list updates from other components
+    window.addEventListener("shopping-list-updated", fetchShoppingCount);
+    return () => {
+      window.removeEventListener("shopping-list-updated", fetchShoppingCount);
+    };
+  }, [fetchShoppingCount]);
 
   const handleChangelogOpenChange = (open: boolean) => {
     if (open) {
@@ -83,13 +105,17 @@ export function Sidebar() {
             label={item.name}
             href={item.href}
             isActive={pathname === item.href}
+            badge={item.hasBadge ? shoppingListRemaining : undefined}
           />
         ))}
       </nav>
 
-      {/* Bottom Section - User Profile & Theme Toggle */}
+      {/* Recent Recipes Section */}
+      <RecentRecipesSection />
+
+      {/* Bottom Section - User Profile */}
       <div className="p-4 border-t border-border space-y-3">
-        {/* Feedback & Theme Toggle */}
+        {/* Feedback & Changelog */}
         <div className="flex items-center gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -103,7 +129,6 @@ export function Sidebar() {
             </TooltipTrigger>
             <TooltipContent>Send feedback</TooltipContent>
           </Tooltip>
-          <ThemeToggle />
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -125,7 +150,7 @@ export function Sidebar() {
           open={changelogOpen}
           onOpenChange={handleChangelogOpenChange}
         />
-        
+
         {/* User Profile */}
         <div className="flex items-center gap-3 rounded-lg p-3 bg-elevated hover:bg-hover transition-colors">
           <div className="relative flex-shrink-0">
@@ -144,6 +169,11 @@ export function Sidebar() {
             <p className="text-xs text-muted">Online</p>
           </div>
         </div>
+      </div>
+
+      {/* Theme Toggle - Bottom */}
+      <div className="p-4 pt-0">
+        <ThemeToggle />
       </div>
     </aside>
   );

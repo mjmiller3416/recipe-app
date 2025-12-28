@@ -811,3 +811,61 @@ body {
   border: 2px solid transparent;
   background-clip: padding-box;
 }
+
+/* ============================================
+   BUTTON WEIGHT UTILITIES
+   Enhanced tactile feedback for buttons
+   ============================================ */
+
+/* Weighted button - deep shadow with lift hover and inset press */
+@utility button-weighted {
+  box-shadow: var(--shadow-raised);
+  transition:
+    transform var(--duration-fast) var(--ease-physical),
+    box-shadow var(--duration-fast) var(--ease-physical);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-elevated);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-inset-sm);
+  }
+}
+
+/* Bouncy button - playful spring effect */
+@utility button-bouncy {
+  transition:
+    transform var(--duration-normal) var(--ease-bounce),
+    box-shadow var(--duration-normal) var(--ease-bounce);
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-elevated);
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+}
+
+/* ============================================
+   NAV NOTIFICATION DOT
+   Pulsing indicator for nav items
+   ============================================ */
+@keyframes nav-dot-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+}
+
+.nav-dot-pulse {
+  animation: nav-dot-pulse 2s ease-in-out infinite;
+}

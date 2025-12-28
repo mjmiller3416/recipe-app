@@ -15,6 +15,11 @@
   2. Restore the `isInvalid` styling in `QuantityInput.tsx`
   3. Consider making validation less strict or only on submit
 
+### Fix Favorites Only Toggle in Recipe Browser
+- **Location**: `src/app/recipes/_components/RecipeBrowserView.tsx`
+- **Issue**: The "Favorites Only" toggle does not filter recipes correctly — likely due to `isFavorite` being `undefined` or `null` from the API instead of `false`.
+- **Solution**: Debug the filter logic at line 606 and ensure `isFavorite` is properly coerced to a boolean in `recipeCardMapper.ts` (e.g., `isFavorite: dto.is_favorite ?? false`).
+
 ## 🟡 Medium Priority
 
 ### Allow Leading Decimals in Ingredient Quantities
@@ -36,6 +41,16 @@
 - **Location**: `src/app/meal-planner/_components/meal-display/MainDishCard.tsx`
 - **Issue**: Users cannot favorite a recipe directly from the meal planner page — they must navigate to the recipe detail page first.
 - **Solution**: Import and add the existing `FavoriteButton` component to MainDishCard, passing `recipeId` and `isFavorite` props. Consider adding to SideDishSlots as well for consistency.
+
+### Fix Unit Capitalization in Recipe Display
+- **Location**: `src/app/recipes/[id]/_components/IngredientItem.tsx`
+- **Issue**: After saving a recipe, "Tbs" displays as lowercase "tbs" — the component directly renders the stored unit value instead of its display label from `INGREDIENT_UNITS`.
+- **Solution**: Look up the unit's `label` from `INGREDIENT_UNITS` constant instead of displaying the raw `value`. Use a helper like `INGREDIENT_UNITS.find(u => u.value === unit)?.label || unit`.
+
+### Fix Active Filters to Display on Single Row
+- **Location**: `src/components/common/FilterPillGroup.tsx`
+- **Issue**: Active filters wrap to multiple rows when there are many filters selected — should stay on a single row for cleaner UI.
+- **Solution**: Replace `flex-wrap` with `flex-nowrap` and add horizontal scroll (`overflow-x-auto`) to keep all pills on one row with scrolling when needed.
 
 ## 🔵 Low Priority
 

@@ -42,6 +42,7 @@ import { RecipeHeroImage } from "@/components/recipe/RecipeImage";
 import { recipeApi, plannerApi } from "@/lib/api";
 import type { RecipeResponseDTO, MealSelectionResponseDTO } from "@/types";
 import { formatQuantity } from "@/lib/utils";
+import { useRecentRecipes } from "@/hooks";
 
 import { IngredientItem } from "./IngredientItem";
 import { DirectionStep } from "./DirectionStep";
@@ -180,6 +181,7 @@ export function FullRecipeView() {
   const params = useParams();
   const router = useRouter();
   const recipeId = Number(params.id);
+  const { addToRecent } = useRecentRecipes();
 
   // State
   const [recipe, setRecipe] = useState<RecipeResponseDTO | null>(null);
@@ -201,6 +203,13 @@ export function FullRecipeView() {
         setRecipe(foundRecipe);
         setIsFavorite(foundRecipe.is_favorite);
         setMealSelections(meals);
+
+        // Track this recipe as recently viewed
+        addToRecent({
+          id: foundRecipe.id,
+          name: foundRecipe.recipe_name,
+          category: foundRecipe.recipe_category || undefined,
+        });
       } catch (error) {
         console.error("Failed to fetch recipe:", error);
         setRecipe(null);
@@ -210,7 +219,7 @@ export function FullRecipeView() {
     }
 
     fetchData();
-  }, [recipeId]);
+  }, [recipeId, addToRecent]);
 
   // Parse directions
   const directions = useMemo(() => {
