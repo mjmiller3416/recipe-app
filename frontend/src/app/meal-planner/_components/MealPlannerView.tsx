@@ -8,7 +8,8 @@ import { WeeklyMenu, MenuListItem } from "./WeeklyMenu";
 import { plannerApi } from "@/lib/api";
 import { PlannerEntryResponseDTO, MealSelectionResponseDTO } from "@/types";
 import { MealDialog } from "./meal-dialog/MealDialog";
-import { Trash2 } from "lucide-react";
+import { Trash2, Heart } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function MealPlannerPage() {
   // State for planner entries (not meals directly)
@@ -54,6 +55,7 @@ export function MealPlannerPage() {
     name: entry.meal_name ?? "Untitled Meal",
     imageUrl: entry.main_recipe?.reference_image_path ?? null,
     isCompleted: entry.is_completed,
+    isFavorite: entry.meal_is_favorite ?? false,
   }));
 
   // Handle entry selection from WeeklyMenu
@@ -164,6 +166,30 @@ export function MealPlannerPage() {
     }
   };
 
+  // Handle toggling favorite status for the selected meal
+  const handleToggleFavorite = async () => {
+    if (!selectedMealId || selectedEntryId === null) return;
+
+    const previousEntries = entries;
+
+    // Optimistic UI update
+    setEntries((prev) =>
+      prev.map((entry) =>
+        entry.id === selectedEntryId
+          ? { ...entry, meal_is_favorite: !entry.meal_is_favorite }
+          : entry
+      )
+    );
+
+    try {
+      await plannerApi.toggleFavorite(selectedMealId);
+    } catch (err) {
+      // Rollback on error
+      setEntries(previousEntries);
+      setError(err instanceof Error ? err.message : "Failed to update favorite status");
+    }
+  };
+
   // Check if there are any completed entries
   const hasCompletedEntries = entries.some((e) => e.is_completed);
 
@@ -242,6 +268,18 @@ export function MealPlannerPage() {
                   className="flex-1"
                 >
                   Edit Meal
+                </Button>
+                <Button
+                  onClick={handleToggleFavorite}
+                  variant="outline"
+                  size="xl"
+                  className="flex-1"
+                >
+                  <Heart className={cn(
+                    "h-5 w-5 mr-2",
+                    selectedEntry?.meal_is_favorite && "fill-current text-destructive"
+                  )} />
+                  {selectedEntry?.meal_is_favorite ? "Unfavorite" : "Favorite"}
                 </Button>
                 <Button
                   onClick={handleRemoveFromMenu}

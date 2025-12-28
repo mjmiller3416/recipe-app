@@ -22,11 +22,6 @@
 - **Issue**: When adding new ingredients, the window should scroll to the newly added ingredient row to improve user experience.
 - **Solution**: Implement a scrollIntoView call after adding a new ingredient row.
 
-### 3. Add Favorite Button to Meal Planner Cards
-- **Location**: `src/app/meal-planner/_components/meal-display/MainDishCard.tsx`
-- **Issue**: Users cannot favorite a recipe directly from the meal planner page — they must navigate to the recipe detail page first.
-- **Solution**: Import and add the existing `FavoriteButton` component to MainDishCard, passing `recipeId` and `isFavorite` props. Consider adding to SideDishSlots as well for consistency.
-
 ## 🔵 Low Priority
 
 ### 4. Prevent Accidental Ingredient Deletion via Keyboard
@@ -49,12 +44,17 @@
 - **Issue**: Side dish recipe cards in the meal planner lack the subtle zoom effect on hover that main dish cards have — making the interaction feel less polished.
 - **Solution**: Add `transition-transform duration-500 group-hover:scale-105` to the `RecipeCardImage` component (line 86), matching the pattern used in `MainDishCard.tsx`.
 
-### 8. Add Print Preview Page with Element Toggles
+## ✅ Completed
+
+### Add Favorite Button to Meal Planner
+- **Location**: `src/app/meal-planner/_components/MealPlannerView.tsx`, `WeeklyMenu.tsx`
+- **Issue**: Users cannot favorite a meal directly from the meal planner page — they must navigate elsewhere first.
+- **Solution**: Added a "Favorite" action button alongside existing meal actions, with a read-only heart indicator on menu list cards showing favorite status.
+
+### Add Print Preview Page with Element Toggles
 - **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx`
 - **Issue**: Long recipes overflow the page in print preview — users have no way to customize what prints to keep content on one page.
-- **Solution**: Create a print preview modal with toggle controls (image, notes, etc.) that dynamically adjusts the print layout, allowing users to fit most recipes on a single page.
-
-## ✅ Completed
+- **Solution**: Created a print preview modal with toggle controls (recipe image, chef's notes, servings & cook time) that dynamically adjusts the print layout, allowing users to fit most recipes on a single page.
 
 ### #29 [Feedback] AI Image Style Concern
 - **Location**: Settings page, AI image generation configuration

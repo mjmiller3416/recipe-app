@@ -427,6 +427,7 @@ class PlannerService:
             completed_at=entry.completed_at.isoformat() if entry.completed_at else None,
             scheduled_date=entry.scheduled_date.isoformat() if entry.scheduled_date else None,
             meal_name=meal.meal_name if meal else None,
+            meal_is_favorite=meal.is_favorite if meal else None,
             main_recipe_id=meal.main_recipe_id if meal else None,
             side_recipe_ids=meal.side_recipe_ids if meal else [],
             main_recipe=RecipeCardDTO.from_recipe(meal.main_recipe) if meal else None,

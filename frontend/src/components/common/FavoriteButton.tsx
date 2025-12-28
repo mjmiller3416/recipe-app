@@ -8,16 +8,18 @@ interface FavoriteButtonProps {
   onToggle: (e: React.MouseEvent) => void;
   variant?: "overlay" | "inline";
   size?: "sm" | "md" | "lg";
+  readOnly?: boolean;
   className?: string;
 }
 
 /**
  * FavoriteButton - Reusable favorite toggle button with animations
- * 
+ *
  * @param isFavorite - Whether item is favorited
  * @param onToggle - Click handler (must call e.stopPropagation() internally)
  * @param variant - "overlay" for floating on images, "inline" for content areas
  * @param size - Button size: sm (small cards), md (medium cards), lg (large cards)
+ * @param readOnly - When true, displays state without interaction (indicator mode)
  * @param className - Additional classes
  */
 export function FavoriteButton({
@@ -25,6 +27,7 @@ export function FavoriteButton({
   onToggle,
   variant = "overlay",
   size = "md",
+  readOnly = false,
   className,
 }: FavoriteButtonProps) {
   // Size variants for the button
@@ -53,6 +56,35 @@ export function FavoriteButton({
     ),
   };
 
+  // Read-only mode: render as a non-interactive indicator
+  if (readOnly) {
+    return (
+      <div
+        className={cn(
+          // Base styles
+          "flex-shrink-0",
+
+          // Color - always show the favorited state
+          isFavorite ? "text-destructive" : "text-muted",
+
+          // Size
+          sizeClasses[size],
+
+          // Custom classes
+          className
+        )}
+        aria-label={isFavorite ? "Favorited" : "Not favorited"}
+      >
+        <Heart
+          className={cn(
+            iconSizes[size],
+            isFavorite && "fill-current"
+          )}
+        />
+      </div>
+    );
+  }
+
   return (
     <button
       onClick={onToggle}
@@ -70,13 +102,13 @@ export function FavoriteButton({
         isFavorite
           ? "text-destructive"
           : "text-muted hover:text-destructive",
-        
+
         // Size
         sizeClasses[size],
-        
+
         // Variant
         variantClasses[variant],
-        
+
         // Custom classes
         className
       )}

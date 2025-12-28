@@ -411,7 +411,7 @@ function RecipeCardLarge({
             {ingredients.length > 0 ? (
               <div className="space-y-2">
                 {/* Two column layout for ingredients */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-1.5">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-2">
                   {displayedIngredients.map((ingredient, idx) => (
                     <div key={idx} className="flex items-start gap-2 text-sm text-foreground">
                       <span className="text-primary mt-1">•</span>

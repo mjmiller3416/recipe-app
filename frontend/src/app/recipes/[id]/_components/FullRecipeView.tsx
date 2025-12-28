@@ -47,6 +47,7 @@ import { useRecentRecipes } from "@/hooks";
 import { IngredientItem } from "./IngredientItem";
 import { DirectionStep } from "./DirectionStep";
 import { AddToMealPlanDialog } from "./AddToMealPlanDialog";
+import { PrintPreviewDialog, type PrintOptions } from "./PrintPreviewDialog";
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -191,6 +192,12 @@ export function FullRecipeView() {
   const [mealPlanDialogOpen, setMealPlanDialogOpen] = useState(false);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  const [printDialogOpen, setPrintDialogOpen] = useState(false);
+  const [printOptions, setPrintOptions] = useState<PrintOptions>({
+    showImage: true,
+    showNotes: true,
+    showMeta: true,
+  });
 
   // Load recipe data
   useEffect(() => {
@@ -272,8 +279,12 @@ export function FullRecipeView() {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = (options: PrintOptions) => {
+    setPrintOptions(options);
+    // Use setTimeout to ensure state is updated before printing
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   // Loading state
@@ -340,18 +351,20 @@ export function FullRecipeView() {
                 {[recipe.meal_type, recipe.recipe_category, recipe.diet_pref].filter(Boolean).join(" • ")}
               </p>
             </div>
-            <div className="text-right text-sm text-gray-700">
-              <div className="flex items-center justify-end gap-1 mb-1">
-                <span>{recipe.servings || "—"} servings</span>
+            {printOptions.showMeta && (
+              <div className="text-right text-sm text-gray-700">
+                <div className="flex items-center justify-end gap-1 mb-1">
+                  <span>{recipe.servings || "—"} servings</span>
+                </div>
+                <div className="flex items-center justify-end gap-1">
+                  <span>{formatTime(recipe.total_time)}</span>
+                </div>
               </div>
-              <div className="flex items-center justify-end gap-1">
-                <span>{formatTime(recipe.total_time)}</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Recipe Image */}
-          {recipe.reference_image_path && (
+          {printOptions.showImage && recipe.reference_image_path && (
             <div className="mb-6">
               <img
                 src={recipe.reference_image_path}
@@ -404,7 +417,7 @@ export function FullRecipeView() {
           </div>
 
           {/* Chef's Notes */}
-          {recipe.notes && (
+          {printOptions.showNotes && recipe.notes && (
             <div className="mt-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
               <h3 className="text-base font-bold text-black mb-2">Chef's Notes</h3>
               <p className="text-sm text-gray-800">{recipe.notes}</p>
@@ -507,7 +520,7 @@ export function FullRecipeView() {
 
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" onClick={handlePrint}>
+                    <Button variant="outline" size="icon" onClick={() => setPrintDialogOpen(true)}>
                       <Printer className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
@@ -697,6 +710,15 @@ export function FullRecipeView() {
         mealSelections={mealSelections}
         open={mealPlanDialogOpen}
         onOpenChange={setMealPlanDialogOpen}
+      />
+
+      {/* Print Preview Dialog */}
+      <PrintPreviewDialog
+        open={printDialogOpen}
+        onOpenChange={setPrintDialogOpen}
+        onPrint={handlePrint}
+        hasImage={!!recipe.reference_image_path}
+        hasNotes={!!recipe.notes}
       />
 
       {/* Print Styles */}

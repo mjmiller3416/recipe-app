@@ -194,7 +194,7 @@ function FilterSection({
     <div className="py-2">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full py-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
+        className="flex items-center justify-between w-full py-2 text-sm font-medium text-foreground hover:text-primary transition-colors pressable"
       >
         <span className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-muted" />
@@ -317,7 +317,7 @@ function StickyHeaderBar({
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted">Sort by:</span>
           <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortOption)}>
-            <SelectTrigger className="w-[140px] h-9">
+            <SelectTrigger className="w-36 h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -894,12 +894,14 @@ export function RecipeBrowserView() {
                     <span className="font-medium text-foreground">Refine Results</span>
                   </div>
                   {hasActiveFilters && (
-                    <button
+                    <Button
+                      variant="link"
+                      size="sm"
                       onClick={handleClearAllFilters}
-                      className="text-xs text-primary hover:text-primary/80 transition-colors"
+                      className="h-auto p-0 text-xs"
                     >
                       Reset
-                    </button>
+                    </Button>
                   )}
                 </div>
 

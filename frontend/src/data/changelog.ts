@@ -3,6 +3,7 @@
 // ============================================
 const CHANGELOG_MD = `
 ## 2025-12-28 - New Features
+- Favorite meals directly from the meal planner with the new Favorite button — favorited meals show a heart indicator in the weekly menu
 - Customize which quick filters appear in the Recipe Browser from Settings → Recipe Preferences (choose up to 5)
 - Customize the AI image generation prompt in Settings → AI Features with syntax highlighting for the {recipe_name} placeholder
 - New "New" filter in Meal Planner lets you quickly find recipes added in the last 7 days
@@ -18,6 +19,7 @@ const CHANGELOG_MD = `
 - Fixed loading state issues on the Recipes page with improved Suspense handling
 
 ## 2025-12-28 - Improvements
+- Print recipes with customizable options — choose to include or exclude the image, chef's notes, and cooking time to fit more content on a single page
 - Ingredient quantities now accept leading decimals like .5 or .25 (no need to type 0.5)
 - Clicking "Add Ingredient" now automatically focuses the new ingredient name field
 - Active filter pills now stay on a single row with horizontal scrolling instead of wrapping

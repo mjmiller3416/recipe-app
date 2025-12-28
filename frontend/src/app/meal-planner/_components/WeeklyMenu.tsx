@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
+import { FavoriteButton } from "@/components/common/FavoriteButton";
 import { Plus, Check } from "lucide-react";
 
 // ============================================================================
@@ -16,6 +17,7 @@ export interface MenuListItem {
   name: string;
   imageUrl: string | null;
   isCompleted: boolean;
+  isFavorite?: boolean;
 }
 
 interface MenuListCardProps {
@@ -86,11 +88,21 @@ export function MenuListCard({
 
         {/* Meal Name */}
         <span className={cn(
-          "text-base font-semibold line-clamp-2 transition-colors",
+          "flex-1 text-base font-semibold line-clamp-2 transition-colors",
           item.isCompleted ? "text-muted-foreground" : "text-foreground group-hover:text-primary"
         )}>
           {item.name}
         </span>
+
+        {/* Favorite Indicator (read-only) */}
+        {item.isFavorite && (
+          <FavoriteButton
+            isFavorite={true}
+            onToggle={() => {}}
+            readOnly
+            size="sm"
+          />
+        )}
       </div>
     </Card>
   );
