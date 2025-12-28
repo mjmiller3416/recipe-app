@@ -56,7 +56,7 @@ export function RecipeBadge({
 
   // Variant-specific styles
   const variantClasses = {
-    overlay: "backdrop-blur-md shadow-lg",
+    overlay: "backdrop-blur-md shadow-elevated",
     inline: "",
     outline: "",
   };

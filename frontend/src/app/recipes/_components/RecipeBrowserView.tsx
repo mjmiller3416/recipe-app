@@ -895,17 +895,13 @@ export function RecipeBrowserView() {
                   <Checkbox
                     checked={filters.favoritesOnly}
                     onCheckedChange={(checked) => {
-                      setFilters((prev) => ({ ...prev, favoritesOnly: checked as boolean }));
-                      setActiveQuickFilters((prev) => {
-                        const next = new Set(prev);
-                        if (checked) {
-                          next.add("favorites");
-                        } else {
-                          next.delete("favorites");
-                        }
-                        return next;
-                      });
-                      scrollToResults();
+                      const newValue = checked as boolean;
+                      // Update URL to stay in sync with the useEffect that watches searchParams
+                      if (newValue) {
+                        router.replace("/recipes?favoritesOnly=true", { scroll: false });
+                      } else {
+                        router.replace("/recipes", { scroll: false });
+                      }
                     }}
                   />
                   <Heart

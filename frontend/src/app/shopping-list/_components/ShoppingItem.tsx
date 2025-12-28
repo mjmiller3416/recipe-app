@@ -2,6 +2,7 @@
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { formatQuantity } from "@/lib/quantityUtils";
 import type { ShoppingItemResponseDTO } from "@/types";
 
 interface ShoppingItemProps {
@@ -23,10 +24,8 @@ export function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
     onToggle(item.id);
   };
 
-  // Format quantity for display (remove trailing zeros)
-  const formattedQuantity = item.quantity % 1 === 0
-    ? item.quantity.toString()
-    : item.quantity.toFixed(2).replace(/\.?0+$/, "");
+  // Format quantity for display (using fractions like 1/2, 1/4)
+  const formattedQuantity = formatQuantity(item.quantity);
 
   // Format quantity with unit for badge display
   const quantityBadge = item.unit

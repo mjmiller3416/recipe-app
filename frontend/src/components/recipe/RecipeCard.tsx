@@ -140,8 +140,9 @@ function RecipeCardSmall({
   return (
     <Card
       className={cn(
-        "group cursor-pointer overflow-hidden transition-all duration-200 ease-in-out",
-        "hover:shadow-lg hover:shadow-primary/5 hover:bg-hover",
+        "group cursor-pointer overflow-hidden",
+        // Liftable provides subtle hover lift, shadow-raised adds depth
+        "liftable shadow-raised hover:bg-hover",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "pb-0 pt-0 gap-0",
         className
@@ -324,8 +325,9 @@ function RecipeCardLarge({
   return (
     <Card
       className={cn(
-        "group cursor-pointer overflow-hidden transition-all duration-300 ease-in-out",
-        "hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1",
+        "group cursor-pointer overflow-hidden",
+        // Interactive utility provides lift on hover + press feedback
+        "interactive shadow-raised",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "pb-0 pt-0 gap-0",
         className

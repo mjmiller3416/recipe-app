@@ -54,7 +54,7 @@ export function ThemeToggle() {
         onClick={() => setThemeValue('dark')}
         className={cn(
           "flex-1 p-2 rounded-md flex items-center justify-center",
-          "transition-all duration-200",
+          "pressable",
           theme === 'dark'
             ? "bg-hover text-foreground shadow-sm"
             : "text-muted hover:text-foreground"
@@ -71,7 +71,7 @@ export function ThemeToggle() {
         onClick={() => setThemeValue('light')}
         className={cn(
           "flex-1 p-2 rounded-md flex items-center justify-center",
-          "transition-all duration-200",
+          "pressable",
           theme === 'light'
             ? "bg-hover text-foreground shadow-sm"
             : "text-muted hover:text-foreground"

@@ -53,15 +53,16 @@ function FilterPill({ option, isActive, onToggle, variant = "default" }: FilterP
       className={cn(
         // Base styles - py-2.5 ensures minimum 44px touch target on mobile
         "px-4 py-2.5 rounded-full text-sm font-medium",
-        "transition-all duration-200",
         "border",
+        // Pressable utility for tactile click feedback
+        "pressable",
 
         // Glass variant gets backdrop blur
         variant === "glass" && "backdrop-blur-sm",
 
         // Active vs inactive states
         isActive
-          ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/25"
+          ? "bg-primary text-primary-foreground border-primary shadow-raised"
           : inactiveStyles[variant]
       )}
     >

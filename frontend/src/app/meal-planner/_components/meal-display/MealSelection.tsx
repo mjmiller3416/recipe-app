@@ -139,7 +139,9 @@ export function MealSelection({
   const sideRecipes = meal.side_recipes.map(mapToCardData);
 
   return (
-    <div className={cn("space-y-6", className)}>
+    // p-3 (12px) gives shadows room to render without being clipped by parent overflow-hidden
+    // Must accommodate shadow-elevated (~16-32px spread) used on hover by liftable utility
+    <div className={cn("space-y-6 p-3", className)}>
       {/* Main Dish */}
       {meal.main_recipe ? (
         <div className={cn("relative", isCompleted && "opacity-40")}>

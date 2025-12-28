@@ -16,15 +16,11 @@ import { Logo } from "@/components/layout/Logo";
 import { NavButton } from "@/components/layout/NavButton";
 import { RecentRecipesSection } from "@/components/layout/RecentRecipeChip";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
+import { IconButton } from "@/components/common/IconButton";
 import { FeedbackDialog } from "@/components/common/FeedbackDialog";
 import { ChangelogDialog } from "@/components/common/ChangelogDialog";
 import { CHANGELOG_ENTRIES } from "@/data/changelog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { appConfig } from "@/lib/config";
 import { shoppingApi } from "@/lib/api";
 
@@ -97,7 +93,7 @@ export function Sidebar() {
       </div>
 
       {/* Middle Section - Navigation Menu */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+      <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-hidden">
         {navigation.map((item) => (
           <NavButton
             key={item.href}
@@ -117,33 +113,17 @@ export function Sidebar() {
       <div className="p-4 border-t border-border space-y-3">
         {/* Feedback & Changelog */}
         <div className="flex items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => setFeedbackOpen(true)}
-                className="p-2.5 rounded-lg bg-elevated hover:bg-hover transition-colors group"
-                aria-label="Send feedback"
-              >
-                <MessageSquarePlus className="w-5 h-5 text-foreground group-hover:text-primary transition-colors" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Send feedback</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => handleChangelogOpenChange(true)}
-                className="relative p-2.5 rounded-lg bg-elevated hover:bg-hover transition-colors group"
-                aria-label="What's new"
-              >
-                <Newspaper className="w-5 h-5 text-foreground group-hover:text-primary transition-colors" />
-                {hasNewUpdates && (
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
-                )}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>What&apos;s New</TooltipContent>
-          </Tooltip>
+          <IconButton
+            icon={MessageSquarePlus}
+            onClick={() => setFeedbackOpen(true)}
+            tooltip="Send feedback"
+          />
+          <IconButton
+            icon={Newspaper}
+            onClick={() => handleChangelogOpenChange(true)}
+            tooltip="What's New"
+            badge={hasNewUpdates}
+          />
         </div>
         <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
         <ChangelogDialog

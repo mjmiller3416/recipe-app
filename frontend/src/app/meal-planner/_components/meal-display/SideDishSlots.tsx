@@ -38,12 +38,12 @@ function SideDishCard({ recipe, onFilledClick, onEmptyClick, className }: SideDi
     return (
       <Card
         className={cn(
-          "overflow-hidden transition-all duration-200 ease-in-out",
+          "overflow-hidden",
           "border-dashed border-2 border-muted",
           "pb-0 pt-0 gap-0 aspect-[3/1]",
           isDisabled
             ? "opacity-60 cursor-not-allowed"
-            : "group cursor-pointer hover:shadow-lg hover:shadow-primary/5 hover:bg-hover hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            : "group cursor-pointer liftable hover:bg-hover hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           className
         )}
         onClick={isDisabled ? undefined : onEmptyClick}
@@ -69,8 +69,9 @@ function SideDishCard({ recipe, onFilledClick, onEmptyClick, className }: SideDi
   return (
     <Card
       className={cn(
-        "group cursor-pointer overflow-hidden transition-all duration-200 ease-in-out",
-        "hover:shadow-lg hover:shadow-primary/5 hover:bg-hover",
+        "group cursor-pointer overflow-hidden",
+        // Liftable provides hover lift, shadow-raised adds depth
+        "liftable shadow-raised hover:bg-hover",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "pb-0 pt-0 gap-0 aspect-[3/1]",
         className

@@ -4,6 +4,11 @@ import Link from "next/link";
 import { Clock } from "lucide-react";
 import { useRecentRecipes } from "@/hooks";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 /**
  * Displays recently viewed recipes as clickable chips in the sidebar.
@@ -50,24 +55,28 @@ interface RecentRecipeChipProps {
 
 function RecentRecipeChip({ id, name, emoji }: RecentRecipeChipProps) {
   return (
-    <Link
-      href={`/recipes/${id}`}
-      className={cn(
-        // Base styles
-        "flex items-center gap-2 px-3 py-1.5 rounded-lg",
-        // Background and border
-        "bg-elevated/50 border border-border",
-        // Text
-        "text-sm text-muted",
-        // Hover effects
-        "hover:bg-hover hover:border-border-strong hover:text-foreground",
-        "hover:-translate-y-0.5 hover:shadow-raised",
-        // Transitions
-        "transition-all duration-200"
-      )}
-    >
-      <span className="flex-shrink-0">{emoji}</span>
-      <span className="truncate">{name}</span>
-    </Link>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Link
+          href={`/recipes/${id}`}
+          className={cn(
+            // Base styles
+            "flex items-center gap-2 px-3 py-1.5 rounded-lg",
+            // Background and border
+            "bg-elevated/50 border border-border",
+            // Text
+            "text-sm text-muted",
+            // Hover effects
+            "hover:bg-hover hover:border-border-strong hover:text-foreground",
+            // Interactive utility for lift + press feedback
+            "interactive-subtle"
+          )}
+        >
+          <span className="flex-shrink-0">{emoji}</span>
+          <span className="truncate">{name}</span>
+        </Link>
+      </TooltipTrigger>
+      <TooltipContent side="top">{name}</TooltipContent>
+    </Tooltip>
   );
 }

@@ -50,16 +50,15 @@ export function MenuListCard({
       role="button"
       aria-label={`${item.name}${item.isCompleted ? " (completed)" : ""} - click to view`}
       className={cn(
-        // Base styles (matching SideDishCard)
+        // Base styles
         "group cursor-pointer overflow-hidden",
-        "transition-all duration-200 ease-in-out",
         "pb-0 pt-0 gap-0",
-        // Hover styles
-        "hover:shadow-lg hover:shadow-primary/5 hover:bg-hover",
+        // Liftable provides hover lift, shadow-raised adds depth
+        "liftable shadow-raised hover:bg-hover",
         // Focus styles
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        // Selected state
-        isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+        // Selected state - elevated surface with primary border (no ring gap)
+        isSelected && "surface-elevated border-2 border-primary",
         // Completed state - subtle opacity
         item.isCompleted && "opacity-60",
         className
@@ -126,7 +125,8 @@ export function WeeklyMenu({
 
       {/* Scrollable List Area (scrollbar hidden) */}
       <ScrollArea className="flex-1 [&_[data-slot=scroll-area-scrollbar]]:hidden">
-        <div className="space-y-4 pr-1">
+        {/* p-2 accommodates shadow-elevated used on hover by liftable utility */}
+        <div className="space-y-4 p-2">
           {items.length === 0 ? (
             <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
               No meals planned yet

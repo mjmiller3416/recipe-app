@@ -90,9 +90,10 @@ export function MainDishCard({
   return (
     <Card
       className={cn(
-        "overflow-hidden bg-card border-border pt-0 pb-0 gap-0",
+        "overflow-hidden pt-0 pb-0 gap-0",
         "group relative",
-        onClick && "cursor-pointer hover:bg-muted/50 transition-colors",
+        // Liftable provides subtle hover lift when clickable
+        onClick && "cursor-pointer liftable",
         className
       )}
       onClick={onClick}

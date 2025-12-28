@@ -41,7 +41,7 @@ export function mapRecipeForCard(dto: RecipeResponseDTO): RecipeCardData {
     category: dto.recipe_category,
     mealType: dto.meal_type,
     dietaryPreference: dto.diet_pref ?? undefined,
-    isFavorite: dto.is_favorite,
+    isFavorite: dto.is_favorite ?? false,
     ingredients: dto.ingredients?.map(mapIngredientForCard) ?? [],
   };
 }

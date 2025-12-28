@@ -69,9 +69,9 @@ function DialogContent({
           // Position & sizing
           "fixed top-[50%] left-[50%] z-50 w-full max-w-[calc(100%-2rem)] sm:max-w-lg",
           "translate-x-[-50%] translate-y-[-50%]",
-          // Visual styling - elevated background for modal surfaces
-          "bg-elevated border border-border rounded-xl",
-          "shadow-xl shadow-black/20",
+          // Visual styling - floating surface for modal
+          "bg-elevated rounded-xl",
+          "surface-floating",
           // Layout
           "grid gap-4 p-6 outline-none",
           // Animations
