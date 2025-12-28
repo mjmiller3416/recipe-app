@@ -1,13 +1,19 @@
 "use client";
 
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { formatQuantity } from "@/lib/quantityUtils";
-import type { ShoppingItemResponseDTO } from "@/types";
+import type { ShoppingItemResponseDTO, IngredientBreakdownDTO } from "@/types";
 
 interface ShoppingItemProps {
   item: ShoppingItemResponseDTO;
   onToggle: (id: number) => void;
+  breakdown?: IngredientBreakdownDTO;
 }
 
 /**
@@ -19,7 +25,7 @@ interface ShoppingItemProps {
  * - Recipe source display ("from Recipe Name" or "from Multiple recipes")
  * - Quantity badge on the right
  */
-export function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
+export function ShoppingItem({ item, onToggle, breakdown }: ShoppingItemProps) {
   const handleClick = () => {
     onToggle(item.id);
   };
@@ -45,6 +51,12 @@ export function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
     }
     return "from Multiple recipes";
   };
+
+  // Check if item has multiple recipe sources (for tooltip)
+  const hasMultipleRecipes =
+    item.source === "recipe" &&
+    item.recipe_sources &&
+    item.recipe_sources.length > 1;
 
   return (
     <div
@@ -93,15 +105,46 @@ export function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
           {item.ingredient_name}
         </span>
 
-        {/* Recipe source */}
-        <span
-          className={cn(
-            "text-xs text-muted block truncate transition-all duration-200",
-            item.have && "text-foreground-disabled"
-          )}
-        >
-          {getRecipeSourceText()}
-        </span>
+        {/* Recipe source - with tooltip for multiple recipes */}
+        {hasMultipleRecipes && !item.have ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                onClick={(e) => e.stopPropagation()}
+                className={cn(
+                  "text-xs text-muted transition-all duration-200",
+                  "cursor-help underline decoration-dotted decoration-muted/50",
+                  "inline-block" // Shrink to text width only
+                )}
+              >
+                {getRecipeSourceText()}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="start" className="max-w-xs">
+              <p className="font-medium mb-1">Used in:</p>
+              <ul className="space-y-0.5">
+                {breakdown?.recipe_contributions.map((contrib) => (
+                  <li key={contrib.recipe_name} className="text-muted">
+                    • {contrib.recipe_name}: {formatQuantity(contrib.quantity)} {contrib.unit || ""}
+                  </li>
+                )) ?? item.recipe_sources.map((recipe) => (
+                  <li key={recipe} className="text-muted">
+                    • {recipe}
+                  </li>
+                ))}
+              </ul>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <span
+            className={cn(
+              "text-xs text-muted block truncate transition-all duration-200",
+              item.have && "text-foreground-disabled"
+            )}
+          >
+            {getRecipeSourceText()}
+          </span>
+        )}
       </div>
     </div>
   );

@@ -5,8 +5,8 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ShoppingCategory } from "./ShoppingCategory";
-import { shoppingApi } from "@/lib/api";
-import type { ShoppingItemResponseDTO, ShoppingListResponseDTO } from "@/types";
+import { shoppingApi, plannerApi } from "@/lib/api";
+import type { ShoppingItemResponseDTO, ShoppingListResponseDTO, IngredientBreakdownDTO } from "@/types";
 import { ShoppingCart, Trash2, Filter, X } from "lucide-react";
 import { RecipeFilterSidebar } from "./RecipeFilterSidebar";
 
@@ -46,6 +46,7 @@ export function ShoppingListView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterRecipeName, setFilterRecipeName] = useState<string | null>(null);
+  const [breakdownMap, setBreakdownMap] = useState<Map<string, IngredientBreakdownDTO>>(new Map());
 
   // Fetch and generate shopping list on mount
   const loadShoppingList = useCallback(async () => {
@@ -59,6 +60,35 @@ export function ShoppingListView() {
       // Fetch the updated list
       const data = await shoppingApi.getList();
       setShoppingData(data);
+
+      // Fetch breakdown data for multi-recipe tooltips
+      try {
+        // Get incomplete planner entries (same as what generate uses)
+        const entries = await plannerApi.getEntries();
+        const activeEntries = entries.filter(e => !e.is_completed);
+
+        // Extract unique recipe IDs (main + sides)
+        const recipeIds = new Set<number>();
+        for (const entry of activeEntries) {
+          if (entry.main_recipe_id) recipeIds.add(entry.main_recipe_id);
+          for (const sideId of entry.side_recipe_ids) {
+            recipeIds.add(sideId);
+          }
+        }
+
+        // Fetch breakdown if we have recipes
+        if (recipeIds.size > 0) {
+          const breakdown = await shoppingApi.getBreakdown([...recipeIds]);
+          // Create lookup by lowercase ingredient name
+          const map = new Map(
+            breakdown.map(b => [b.ingredient_name.toLowerCase(), b])
+          );
+          setBreakdownMap(map);
+        }
+      } catch {
+        // Breakdown fetch failed - continue without it (graceful degradation)
+        console.warn("Failed to fetch ingredient breakdown, tooltips will show basic info");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load shopping list");
     } finally {
@@ -356,6 +386,7 @@ export function ShoppingListView() {
                 category={category}
                 items={getFilteredItems(groupedItems[category])}
                 onToggleItem={handleToggleItem}
+                breakdownMap={breakdownMap}
               />
             ))}
           </div>

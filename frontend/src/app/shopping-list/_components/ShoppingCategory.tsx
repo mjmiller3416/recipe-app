@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ShoppingItem } from "./ShoppingItem";
-import type { ShoppingItemResponseDTO } from "@/types";
+import type { ShoppingItemResponseDTO, IngredientBreakdownDTO } from "@/types";
 import { cn } from "@/lib/utils";
 import { ChevronUp } from "lucide-react";
 
@@ -35,6 +35,7 @@ interface ShoppingCategoryProps {
   category: string;
   items: ShoppingItemResponseDTO[];
   onToggleItem: (id: number) => void;
+  breakdownMap?: Map<string, IngredientBreakdownDTO>;
 }
 
 /**
@@ -49,6 +50,7 @@ export function ShoppingCategory({
   category,
   items,
   onToggleItem,
+  breakdownMap,
 }: ShoppingCategoryProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -130,6 +132,7 @@ export function ShoppingCategory({
               key={item.id}
               item={item}
               onToggle={onToggleItem}
+              breakdown={breakdownMap?.get(item.ingredient_name.toLowerCase())}
             />
           ))}
         </div>
