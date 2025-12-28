@@ -27,25 +27,10 @@
 - **Issue**: When adding new ingredients, the window should scroll to the newly added ingredient row to improve user experience.
 - **Solution**: Implement a scrollIntoView call after adding a new ingredient row.
 
-### 5. Fix Squared-Off Card Shadows
-- **Location**: `src/components/ui/card.tsx`
-- **Issue**: Card shadows appear squared off because child content overflows the rounded corners — most noticeable on MealPlanner cards where images or content peek outside the border-radius.
-- **Solution**: Add `overflow-hidden` to the base Card component (line 10) to ensure all child content respects the rounded corners.
-
 ### 6. Add Favorite Button to Meal Planner Cards
 - **Location**: `src/app/meal-planner/_components/meal-display/MainDishCard.tsx`
 - **Issue**: Users cannot favorite a recipe directly from the meal planner page — they must navigate to the recipe detail page first.
 - **Solution**: Import and add the existing `FavoriteButton` component to MainDishCard, passing `recipeId` and `isFavorite` props. Consider adding to SideDishSlots as well for consistency.
-
-### 7. Fix Unit Capitalization in Recipe Display
-- **Location**: `src/app/recipes/[id]/_components/IngredientItem.tsx`
-- **Issue**: After saving a recipe, "Tbs" displays as lowercase "tbs" — the component directly renders the stored unit value instead of its display label from `INGREDIENT_UNITS`.
-- **Solution**: Look up the unit's `label` from `INGREDIENT_UNITS` constant instead of displaying the raw `value`. Use a helper like `INGREDIENT_UNITS.find(u => u.value === unit)?.label || unit`.
-
-### 8. Fix Active Filters to Display on Single Row
-- **Location**: `src/components/common/FilterPillGroup.tsx`
-- **Issue**: Active filters wrap to multiple rows when there are many filters selected — should stay on a single row for cleaner UI.
-- **Solution**: Replace `flex-wrap` with `flex-nowrap` and add horizontal scroll (`overflow-x-auto`) to keep all pills on one row with scrolling when needed.
 
 ## 🔵 Low Priority
 
@@ -69,22 +54,37 @@
 - **Issue**: Side dish recipe cards in the meal planner lack the subtle zoom effect on hover that main dish cards have — making the interaction feel less polished.
 - **Solution**: Add `transition-transform duration-500 group-hover:scale-105` to the `RecipeCardImage` component (line 86), matching the pattern used in `MainDishCard.tsx`.
 
-### 14. Reorder Shopping List Stats Layout
-- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
-- **Issue**: The stat cards at the top of the shopping list display as Total → Collected → Remaining, but Remaining → Collected → Total provides a more logical left-to-right flow.
-- **Solution**: Reorder the `StatCard` components in lines 237-252 to display Remaining first, Collected second, and Total Items third.
-
-### 15. Display Quantity Before Item Name in Shopping List
-- **Location**: `src/app/shopping-list/_components/ShoppingItem.tsx`
-- **Issue**: Shopping list items currently display as "Ingredient Name ... Quantity" — users want to see quantities first for easier scanning while shopping.
-- **Solution**: Move the quantity badge (lines 94-103) to appear between the Checkbox and the item content section, updating the flex layout accordingly.
-
 ### 16. Add Print Preview Page with Element Toggles
 - **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx`
 - **Issue**: Long recipes overflow the page in print preview — users have no way to customize what prints to keep content on one page.
 - **Solution**: Create a print preview modal with toggle controls (image, notes, etc.) that dynamically adjusts the print layout, allowing users to fit most recipes on a single page.
 
 ## ✅ Completed
+
+### Fix Active Filters to Display on Single Row
+- **Location**: `src/components/common/FilterPillGroup.tsx`
+- **Issue**: Active filters wrap to multiple rows when there are many filters selected — should stay on a single row for cleaner UI.
+- **Solution**: Replaced `flex-wrap` with `flex-nowrap` and added horizontal scroll (`overflow-x-auto`) to keep all pills on one row with scrolling when needed.
+
+### Fix Unit Capitalization in Recipe Display
+- **Location**: `src/app/recipes/[id]/_components/IngredientItem.tsx`
+- **Issue**: After saving a recipe, "Tbs" displays as lowercase "tbs" — the component directly renders the stored unit value instead of its display label from `INGREDIENT_UNITS`.
+- **Solution**: Look up the unit's `label` from `INGREDIENT_UNITS` constant instead of displaying the raw `value`. Use a helper like `INGREDIENT_UNITS.find(u => u.value === unit)?.label || unit`.
+
+### Reorder Shopping List Stats Layout
+- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
+- **Issue**: The stat cards at the top of the shopping list display as Total → Collected → Remaining, but Remaining → Collected → Total provides a more logical left-to-right flow.
+- **Solution**: Reordered the `StatCard` components to display Remaining first, Collected second, and Total Items third.
+
+### Display Quantity Before Item Name in Shopping List
+- **Location**: `src/app/shopping-list/_components/ShoppingItem.tsx`
+- **Issue**: Shopping list items currently display as "Ingredient Name ... Quantity" — users want to see quantities first for easier scanning while shopping.
+- **Solution**: Moved the quantity badge to appear between the Checkbox and the item content section for easier scanning while shopping.
+
+### Fix Squared-Off Card Shadows
+- **Location**: `src/components/ui/card.tsx`
+- **Issue**: Card shadows appear squared off because child content overflows the rounded corners — most noticeable on MealPlanner cards where images or content peek outside the border-radius.
+- **Solution**: Added `overflow-hidden` to the base Card component to ensure all child content respects the rounded corners.
 
 ### Fix Quick Filter Chips Adding Duplicate Active Filters
 - **Location**: `src/app/recipes/_components/RecipeBrowserView.tsx`

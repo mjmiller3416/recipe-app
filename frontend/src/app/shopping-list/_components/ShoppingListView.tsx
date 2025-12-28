@@ -2,13 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ShoppingCategory } from "./ShoppingCategory";
 import { shoppingApi } from "@/lib/api";
 import type { ShoppingItemResponseDTO, ShoppingListResponseDTO } from "@/types";
-import { ShoppingCart, Trash2 } from "lucide-react";
+import { ShoppingCart, Trash2, Filter, X } from "lucide-react";
+import { RecipeFilterSidebar } from "./RecipeFilterSidebar";
 
 /**
  * StatCard - Individual stat card for the summary section
@@ -45,6 +45,7 @@ export function ShoppingListView() {
   const [shoppingData, setShoppingData] = useState<ShoppingListResponseDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filterRecipeName, setFilterRecipeName] = useState<string | null>(null);
 
   // Fetch and generate shopping list on mount
   const loadShoppingList = useCallback(async () => {
@@ -138,12 +139,58 @@ export function ShoppingListView() {
     {}
   ) ?? {};
 
+  // Compute unique recipes from all items for the sidebar
+  const recipeData = shoppingData?.items.reduce<
+    Record<string, { itemCount: number; collectedCount: number }>
+  >((acc, item) => {
+    if (item.source === "recipe" && item.recipe_sources) {
+      for (const recipeName of item.recipe_sources) {
+        if (!acc[recipeName]) {
+          acc[recipeName] = { itemCount: 0, collectedCount: 0 };
+        }
+        acc[recipeName].itemCount++;
+        if (item.have) {
+          acc[recipeName].collectedCount++;
+        }
+      }
+    }
+    return acc;
+  }, {}) ?? {};
+
+  // Convert to array and sort alphabetically
+  const recipes = Object.entries(recipeData)
+    .map(([name, counts]) => ({
+      name,
+      itemCount: counts.itemCount,
+      collectedCount: counts.collectedCount,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  // Count manual items
+  const manualItems = shoppingData?.items.filter((i) => i.source === "manual") ?? [];
+  const manualItemCount = manualItems.length;
+  const manualCollectedCount = manualItems.filter((i) => i.have).length;
+
+  // Filter items based on selected recipe
+  const getFilteredItems = (items: ShoppingItemResponseDTO[]) => {
+    if (!filterRecipeName) return items;
+    if (filterRecipeName === "__manual__") {
+      return items.filter((i) => i.source === "manual");
+    }
+    return items.filter((i) => i.recipe_sources?.includes(filterRecipeName));
+  };
+
   // Sort categories alphabetically, but put "Other" at the end
   const sortedCategories = Object.keys(groupedItems).sort((a, b) => {
     if (a === "Other") return 1;
     if (b === "Other") return -1;
     return a.localeCompare(b);
   });
+
+  // Filter out categories with no matching items when filter is active
+  const visibleCategories = filterRecipeName
+    ? sortedCategories.filter((cat) => getFilteredItems(groupedItems[cat]).length > 0)
+    : sortedCategories;
 
   const hasItems = shoppingData && shoppingData.items.length > 0;
   const hasCheckedItems = shoppingData && shoppingData.checked_items > 0;
@@ -229,8 +276,19 @@ export function ShoppingListView() {
     );
   }
 
-  // Calculate remaining items
+  // Calculate remaining items and progress
   const remainingItems = shoppingData.total_items - shoppingData.checked_items;
+  const progressPercent =
+    shoppingData.total_items > 0
+      ? Math.round((shoppingData.checked_items / shoppingData.total_items) * 100)
+      : 0;
+
+  // Get display name for active filter
+  const getFilterDisplayName = () => {
+    if (!filterRecipeName) return null;
+    if (filterRecipeName === "__manual__") return "Manual items";
+    return filterRecipeName;
+  };
 
   return (
     <PageLayout
@@ -239,11 +297,11 @@ export function ShoppingListView() {
       actions={headerActions}
     >
       {/* Summary stats */}
-      <div className="flex gap-3 mb-6">
+      <div className="flex gap-3 mb-4">
         <StatCard
-          value={shoppingData.total_items}
-          label="Total Items"
-          colorClass="text-primary"
+          value={remainingItems}
+          label="Remaining"
+          colorClass="text-success"
         />
         <StatCard
           value={shoppingData.checked_items}
@@ -251,25 +309,71 @@ export function ShoppingListView() {
           colorClass="text-warning"
         />
         <StatCard
-          value={remainingItems}
-          label="Remaining"
-          colorClass="text-success"
+          value={shoppingData.total_items}
+          label="Total Items"
+          colorClass="text-primary"
         />
       </div>
 
-      {/* Categories list */}
-      <ScrollArea className="h-[calc(100vh-35vh)] max-h-[60vh]">
-        <div className="space-y-4 pr-4">
-          {sortedCategories.map((category) => (
-            <ShoppingCategory
-              key={category}
-              category={category}
-              items={groupedItems[category]}
-              onToggleItem={handleToggleItem}
-            />
-          ))}
+      {/* Overall progress bar */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-success rounded-full transition-all duration-500 ease-out"
+            style={{ width: `${progressPercent}%` }}
+          />
         </div>
-      </ScrollArea>
+        <span className="text-sm text-muted tabular-nums min-w-[40px] text-right">
+          {progressPercent}%
+        </span>
+      </div>
+
+      {/* Two-column layout: Main content + Sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_clamp(200px,25%,320px)] gap-6">
+        {/* Main content column */}
+        <div className="min-w-0">
+          {/* Active filter indicator */}
+          {filterRecipeName && (
+            <div className="flex items-center gap-2 px-3 py-2.5 mb-4 rounded-lg bg-primary/10 border border-primary/30">
+              <Filter className="h-4 w-4 text-primary flex-shrink-0" />
+              <span className="text-sm text-primary truncate">
+                Filtering by: {getFilterDisplayName()}
+              </span>
+              <button
+                onClick={() => setFilterRecipeName(null)}
+                className="ml-auto p-1 rounded-md hover:bg-primary/20 transition-colors"
+              >
+                <X className="h-4 w-4 text-primary" />
+              </button>
+            </div>
+          )}
+
+          {/* Categories list - full page scroll */}
+          <div className="space-y-4">
+            {visibleCategories.map((category) => (
+              <ShoppingCategory
+                key={category}
+                category={category}
+                items={getFilteredItems(groupedItems[category])}
+                onToggleItem={handleToggleItem}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Recipe filter sidebar (desktop only) - sticky below header */}
+        <div className="hidden lg:block">
+          <div className="sticky top-24">
+            <RecipeFilterSidebar
+              recipes={recipes}
+              manualItemCount={manualItemCount}
+              manualCollectedCount={manualCollectedCount}
+              activeFilter={filterRecipeName}
+              onFilterChange={setFilterRecipeName}
+            />
+          </div>
+        </div>
+      </div>
     </PageLayout>
   );
 }

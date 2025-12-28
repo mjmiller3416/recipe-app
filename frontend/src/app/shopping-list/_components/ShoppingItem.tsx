@@ -51,9 +51,10 @@ export function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
       onClick={handleClick}
       className={cn(
         "group flex items-center gap-3 px-3 py-3 rounded-lg cursor-pointer",
-        "transition-all duration-200 ease-out",
-        "hover:bg-hover/50",
-        item.have && "opacity-60"
+        "transition-all duration-150 ease-out",
+        item.have
+          ? "opacity-60 hover:bg-hover/30"
+          : "hover:bg-hover/50 hover:translate-x-1"
       )}
     >
       {/* Checkbox */}
@@ -66,6 +67,19 @@ export function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
           item.have && "data-[state=checked]:bg-success data-[state=checked]:border-success"
         )}
       />
+
+      {/* Quantity badge */}
+      <span
+        className={cn(
+          "text-sm font-semibold px-2.5 py-1 rounded-lg whitespace-nowrap",
+          "transition-all duration-150",
+          item.have
+            ? "bg-muted/50 text-muted"
+            : "bg-primary/20 text-primary"
+        )}
+      >
+        {quantityBadge}
+      </span>
 
       {/* Item content */}
       <div className="flex-1 min-w-0">
@@ -89,17 +103,6 @@ export function ShoppingItem({ item, onToggle }: ShoppingItemProps) {
           {getRecipeSourceText()}
         </span>
       </div>
-
-      {/* Quantity badge */}
-      <span
-        className={cn(
-          "text-sm px-3 py-1 rounded-full bg-accent text-accent-foreground whitespace-nowrap",
-          "transition-all duration-200",
-          item.have && "bg-accent/50 text-foreground-disabled"
-        )}
-      >
-        {quantityBadge}
-      </span>
     </div>
   );
 }

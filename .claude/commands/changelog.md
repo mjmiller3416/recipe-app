@@ -10,9 +10,30 @@ $ARGUMENTS
 
 ### Step 1: Get Changelog Content
 
-**If arguments were provided:** Use those as the changelog content directly.
+**Check the argument format to determine the workflow:**
 
-**If no arguments:** Read `frontend/TODO.md`, find items in the `## ✅ Completed` section, and ask:
+#### Option A: TODO Reference (e.g., `#14`)
+
+If the argument matches `#N` where N is a number:
+
+1. Read `frontend/TODO.md`
+2. Find the item with heading `### N.` (e.g., `### 14. Reorder Shopping List Stats Layout`)
+3. Extract the item's **title** (the heading text after the number)
+4. Move the item to the `## ✅ Completed` section:
+   - Remove the entire item block (heading + all content until next `###` or section)
+   - Add it to the top of the Completed section (after `## ✅ Completed`)
+   - Remove the number prefix from the heading (e.g., `### 14. Title` → `### Title`)
+5. Use the title as the changelog content
+6. Save the updated TODO.md
+
+#### Option B: Direct Description
+
+If the argument is plain text (not a `#N` reference):
+- Use the provided text directly as the changelog content
+
+#### Option C: No Arguments
+
+If no arguments provided, read `frontend/TODO.md`, find items in the `## ✅ Completed` section, and ask:
 
 ```
 Found these completed items:
@@ -66,6 +87,18 @@ const CHANGELOG_MD = `
 
 ### Step 4: Confirm
 
+**For TODO reference (`#N`):**
+```
+✅ Done!
+
+- Moved TODO #N "[Title]" to Completed section
+- Added changelog entry for [date]:
+  - [Change description]
+
+The "What's New" indicator will appear for users who haven't seen this update.
+```
+
+**For direct description or selection:**
 ```
 ✅ Changelog updated!
 
@@ -81,8 +114,26 @@ The "What's New" indicator will appear for users who haven't seen this update.
 - **Changelog file**: `frontend/src/data/changelog.ts`
 - **TODO source**: `frontend/TODO.md` (Completed section)
 
+## Usage Examples
+
+```
+/changelog #14
+```
+→ Finds TODO item 14, moves it to Completed, adds to changelog
+
+```
+/changelog Added dark mode support
+```
+→ Creates changelog entry with "Added dark mode support"
+
+```
+/changelog
+```
+→ Lists completed items and asks which to include
+
 ## Notes
 
 - Entries must be **prepended** (newest first) to trigger the new update indicator
 - The date in `## YYYY-MM-DD` becomes the version - must be unique
 - Multiple entries on the same day can use the same date
+- TODO items are identified by their `### N.` heading pattern

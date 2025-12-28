@@ -2,14 +2,24 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2025-12-28 - Bug Fixes
+- Ingredient units like "Tbs" now display with proper capitalization on recipe pages
+
+## 2025-12-28 - Improvements
+- Active filter pills now stay on a single row with horizontal scrolling instead of wrapping
+- Shopping list stats now display in a more logical order: Remaining → Collected → Total
+
 ## 2025-12-27 - Improvements
+- Shopping list now shows quantities before item names for easier scanning while shopping
 - Shopping list quantities now display as fractions (½, ¼) instead of decimals
+- Added zoom-on-hover effect to side dish recipe cards in meal planner
 - Improved sidebar navigation
 
 ## 2025-12-27 - Bug Fixes
 - Quick filter chips no longer add duplicate entries to the active filters display
 - Fixed layout shift when opening dropdowns and dialogs on scrollable pages
 - The "Favorites Only" filter in Recipe Browser now works correctly
+- Card shadows now display with properly rounded corners
 
 ## 2025-12-27 - New Features
 - Quickly access recently viewed recipes from the sidebar

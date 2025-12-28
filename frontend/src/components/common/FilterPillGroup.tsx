@@ -140,7 +140,7 @@ export function FilterPillGroup({
   return (
     <div
       className={cn(
-        "flex flex-wrap gap-2",
+        "flex flex-nowrap gap-2 overflow-x-auto",
         alignClasses[align],
         className
       )}

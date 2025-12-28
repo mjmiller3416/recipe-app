@@ -354,26 +354,26 @@ function StickyHeaderBar({
       {/* Active Filters - Always visible when filters are applied */}
       {activeFilters.length > 0 && (
         <div className="p-4 bg-elevated rounded-lg border border-border">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-foreground">Active Filters</span>
+          <div className="flex items-start gap-3">
+            <span className="text-sm font-medium text-foreground shrink-0 py-1.5">Active Filters</span>
+            <div className="flex flex-wrap gap-2 flex-1 min-w-0">
+              {activeFilters.map((filter, index) => (
+                <FilterChip
+                  key={`${filter.type}-${filter.value}-${index}`}
+                  label={filter.label}
+                  type={filter.type}
+                  onRemove={() => onRemoveFilter(filter)}
+                />
+              ))}
+            </div>
             <Button
               variant="ghost"
               size="sm"
               onClick={onClearAllFilters}
-              className="text-xs text-muted hover:text-foreground h-auto py-1 px-2"
+              className="text-xs text-muted hover:text-foreground h-auto py-1 px-2 shrink-0"
             >
               Clear All
             </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {activeFilters.map((filter, index) => (
-              <FilterChip
-                key={`${filter.type}-${filter.value}-${index}`}
-                label={filter.label}
-                type={filter.type}
-                onRemove={() => onRemoveFilter(filter)}
-              />
-            ))}
           </div>
         </div>
       )}
