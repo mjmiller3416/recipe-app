@@ -124,7 +124,105 @@ For complex animations, use Framer Motion with these defaults:
 * Use `AnimatePresence` for exit animations
 * Prefer `motion.div` with `initial`, `animate`, `exit` props
 
-## 7. Workflow for Generating Components
+## 7. Weight System & Interactive Utilities
+
+> **Rule:** Use weight utilities for tactile, physical-feeling interactions. Don't apply to static elements.
+
+The Weight System creates depth hierarchy and tactile feedback. These utilities are defined in `globals.css`.
+
+### Interactive Composites
+
+Choose the right interaction pattern for clickable elements:
+
+| Utility | Effect | Use When |
+|---------|--------|----------|
+| `pressable` | Shrinks on click (scale 0.97) | Simple tactile feedback needed |
+| `liftable` | Rises on hover + deeper shadow | Cards/panels that feel "pickable" |
+| `interactive` | Lift on hover + press on click | Primary interactive cards |
+| `bouncy` | Playful elastic hover/press | Fun, emphasis elements |
+| `interactive-subtle` | Gentler lift/press | Small buttons, list items |
+
+**Decision Tree:**
+```
+Is this element clickable?
+  └─ No → Don't use interactive utilities
+  └─ Yes → What type of element?
+      ├─ Recipe card / content card → `interactive` or `liftable`
+      ├─ Small button / list item → `interactive-subtle`
+      ├─ Fun/playful element → `bouncy`
+      └─ Just needs click feedback → `pressable`
+```
+
+**Example:**
+```tsx
+// Interactive recipe card
+<div className="bg-card rounded-xl overflow-hidden interactive">
+  <img src={recipe.image} />
+  <h3>{recipe.title}</h3>
+</div>
+
+// Subtle list item
+<li className="flex items-center gap-2 p-2 rounded-md interactive-subtle">
+  <Icon /> {item.name}
+</li>
+```
+
+### Surface Classes
+
+Surface classes combine background, border, and shadow for consistent depth hierarchy:
+
+| Utility | Components | Use Case |
+|---------|------------|----------|
+| `surface-base` | bg + border | Page-level containers |
+| `surface-raised` | elevated bg + border + raised shadow | Standard cards |
+| `surface-elevated` | elevated bg + strong border + elevated shadow | Emphasized panels |
+| `surface-floating` | popover bg + strong border + floating shadow | Dropdowns, tooltips, modals |
+
+**Hierarchy (bottom to top):**
+```
+surface-base     → Background level
+    ↓
+surface-raised   → Cards, panels
+    ↓
+surface-elevated → Emphasized content
+    ↓
+surface-floating → Popovers, modals
+```
+
+### Button Weight Utilities
+
+For enhanced button feedback beyond standard Shadcn styling:
+
+| Utility | Effect | Use When |
+|---------|--------|----------|
+| `button-weighted` | Raised shadow, lift on hover, inset on press | Primary/secondary CTAs needing extra presence |
+| `button-bouncy` | Spring effect, scale on hover/press | Playful, fun CTAs |
+
+**Example:**
+```tsx
+// Weighted primary button
+<Button className="button-weighted">Save Recipe</Button>
+
+// Bouncy fun button
+<Button className="button-bouncy">Let's Cook!</Button>
+```
+
+### Scrollbar Utilities
+
+For cleaner scroll experiences:
+
+| Utility | Effect | Use When |
+|---------|--------|----------|
+| `scrollbar-hidden` | Hide scrollbar, keep scroll | Modals, horizontal carousels |
+| `scrollbar-overlay` | Overlay scrollbar (no layout shift) | Sidebars, long lists |
+
+### Navigation Utilities
+
+| Utility | Effect | Use When |
+|---------|--------|----------|
+| `nav-dot-pulse` | Pulsing animation | Notification indicator dots |
+
+## 8. Workflow for Generating Components
 When asked to create or fix a UI component:
 
 1.  **Check Shadcn First:** Before building anything, search the Shadcn registry for an existing component.
@@ -156,15 +254,15 @@ When asked to create or fix a UI component:
     * Add `transition-all duration-200` to interactive elements.
 9.  **Self-Correction Question:** "Are the icons aligned with the text? Is the spacing uniform? Does it look good in Light Mode?"
 
-## 8. Auditing Existing Pages
+## 9. Auditing Existing Pages
 
 When reviewing or revising an existing page, follow the comprehensive checklist in [audit-checklist.md](audit-checklist.md).
 
-## 9. Anti-Patterns
+## 10. Anti-Patterns
 
 See the Anti-Patterns section in [component-usage.md](component-usage.md) for common mistakes to avoid.
 
-## 10. Theme Mode
+## 11. Theme Mode
 * **Dark mode is the DEFAULT** — defined in `:root`
 * **Light mode is opt-in** — activated via `:root.light` class on `<html>`
 * All CSS variables automatically adapt between modes — no conditional styling needed

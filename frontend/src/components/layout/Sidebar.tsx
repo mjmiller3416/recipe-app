@@ -19,7 +19,7 @@ import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { IconButton } from "@/components/common/IconButton";
 import { FeedbackDialog } from "@/components/common/FeedbackDialog";
 import { ChangelogDialog } from "@/components/common/ChangelogDialog";
-import { CHANGELOG_ENTRIES } from "@/data/changelog";
+import { CHANGELOG_TOTAL_ITEMS } from "@/data/changelog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { appConfig } from "@/lib/config";
 import { shoppingApi } from "@/lib/api";
@@ -38,6 +38,7 @@ export function Sidebar() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [hasNewUpdates, setHasNewUpdates] = useState(false);
+  const [newItemCount, setNewItemCount] = useState(0);
   const [shoppingListRemaining, setShoppingListRemaining] = useState(0);
 
   // Fetch shopping list count
@@ -51,10 +52,15 @@ export function Sidebar() {
   }, []);
 
   useEffect(() => {
-    const lastSeen = localStorage.getItem("lastSeenChangelogVersion");
-    const latestVersion = CHANGELOG_ENTRIES[0]?.version;
-    if (latestVersion && lastSeen !== latestVersion) {
+    // Check for new changelog items by comparing counts
+    const lastSeenCount = parseInt(
+      localStorage.getItem("lastSeenChangelogCount") || "0",
+      10
+    );
+    const newItems = CHANGELOG_TOTAL_ITEMS - lastSeenCount;
+    if (newItems > 0) {
       setHasNewUpdates(true);
+      setNewItemCount(newItems);
     }
 
     // Fetch shopping count on mount
@@ -69,11 +75,13 @@ export function Sidebar() {
 
   const handleChangelogOpenChange = (open: boolean) => {
     if (open) {
-      const latestVersion = CHANGELOG_ENTRIES[0]?.version;
-      if (latestVersion) {
-        localStorage.setItem("lastSeenChangelogVersion", latestVersion);
-      }
+      // Save current total count as "seen"
+      localStorage.setItem("lastSeenChangelogCount", String(CHANGELOG_TOTAL_ITEMS));
       setHasNewUpdates(false);
+      // Keep newItemCount for highlighting until dialog closes
+    } else {
+      // Reset new item count when dialog closes
+      setNewItemCount(0);
     }
     setChangelogOpen(open);
   };
@@ -129,6 +137,7 @@ export function Sidebar() {
         <ChangelogDialog
           open={changelogOpen}
           onOpenChange={handleChangelogOpenChange}
+          newItemCount={newItemCount}
         />
 
         {/* User Profile */}

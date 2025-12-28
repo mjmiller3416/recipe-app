@@ -30,6 +30,7 @@ export interface RecipePreferences {
   allergenAlerts: string[];
   defaultBrowserView: "grid" | "list";
   defaultSortOrder: "alphabetical" | "recent" | "cookTime";
+  quickFilters: string[]; // IDs of quick filters to display (max 5)
 }
 
 export interface ShoppingListSettings {
@@ -82,6 +83,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     allergenAlerts: [],
     defaultBrowserView: "grid",
     defaultSortOrder: "alphabetical",
+    quickFilters: ["breakfast", "lunch", "dinner", "sides", "new"],
   },
   shoppingList: {
     categorySortOrder: "alphabetical",

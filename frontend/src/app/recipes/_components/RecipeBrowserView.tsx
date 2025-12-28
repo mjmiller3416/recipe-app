@@ -34,7 +34,8 @@ import { RecipeCard, RecipeCardGrid } from "@/components/recipe/RecipeCard";
 import { FilterPillGroup } from "@/components/common/FilterPillGroup";
 import { recipeApi } from "@/lib/api";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
-import { RECIPE_CATEGORY_OPTIONS, MEAL_TYPE_OPTIONS, DIETARY_PREFERENCES, QUICK_FILTERS } from "@/lib/constants";
+import { RECIPE_CATEGORY_OPTIONS, MEAL_TYPE_OPTIONS, DIETARY_PREFERENCES, QUICK_FILTERS, type QuickFilter } from "@/lib/constants";
+import { useSettings } from "@/hooks/useSettings";
 import type { RecipeCardData } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -83,6 +84,7 @@ interface HeroSectionProps {
   onSearch: () => void;
   activeQuickFilters: Set<string>;
   onQuickFilterToggle: (filterId: string) => void;
+  quickFilterOptions: QuickFilter[];
 }
 
 function HeroSection({
@@ -92,6 +94,7 @@ function HeroSection({
   onSearch,
   activeQuickFilters,
   onQuickFilterToggle,
+  quickFilterOptions,
 }: HeroSectionProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -145,13 +148,15 @@ function HeroSection({
         </div>
 
         {/* Quick Filter Pills */}
-        <FilterPillGroup
-          options={QUICK_FILTERS}
-          activeIds={activeQuickFilters}
-          onToggle={onQuickFilterToggle}
-          variant="glass"
-          align="center"
-        />
+        <div className="max-w-2xl mx-auto">
+          <FilterPillGroup
+            options={quickFilterOptions}
+            activeIds={activeQuickFilters}
+            onToggle={onQuickFilterToggle}
+            variant="glass"
+            align="start"
+          />
+        </div>
       </div>
     </div>
   );
@@ -388,6 +393,13 @@ function StickyHeaderBar({
 export function RecipeBrowserView() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { settings } = useSettings();
+
+  // Filter QUICK_FILTERS based on user's selected filters from settings
+  const visibleQuickFilters = useMemo(() => {
+    const selectedIds = settings.recipePreferences.quickFilters;
+    return QUICK_FILTERS.filter((f) => selectedIds.includes(f.id));
+  }, [settings.recipePreferences.quickFilters]);
 
   // Check for URL params on mount
   const initialFavoritesOnly = searchParams.get("favoritesOnly") === "true";
@@ -850,6 +862,7 @@ export function RecipeBrowserView() {
           onSearch={() => {}}
           activeQuickFilters={activeQuickFilters}
           onQuickFilterToggle={handleQuickFilterToggle}
+          quickFilterOptions={visibleQuickFilters}
         />
       }
       stickyHeader={

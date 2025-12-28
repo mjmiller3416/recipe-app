@@ -39,6 +39,36 @@ Is it styled like a link but needs button behavior?
 - Destructive actions should have confirmation dialogs
 - Ghost buttons pair well with primary buttons (e.g., "Save" + "Cancel")
 
+### Weight Utilities for Buttons
+
+For enhanced tactile feedback, add weight utilities to buttons:
+
+| Utility | Effect | When to Use |
+|---------|--------|-------------|
+| `button-weighted` | Raised shadow, lift on hover, inset on press | Primary CTAs needing extra presence |
+| `button-bouncy` | Spring effect, scale on hover/press | Playful, fun CTAs |
+
+**Decision Tree:**
+```
+Does this button need extra visual presence?
+  └─ No → Use standard Shadcn button (sufficient for most cases)
+  └─ Yes → Is the context playful/fun?
+      ├─ Yes → Add `button-bouncy`
+      └─ No → Add `button-weighted`
+```
+
+**Examples:**
+```tsx
+// Standard button (most cases)
+<Button>Save Recipe</Button>
+
+// Weighted for emphasis
+<Button className="button-weighted">Generate Recipe</Button>
+
+// Bouncy for fun
+<Button className="button-bouncy">Let's Cook!</Button>
+```
+
 ---
 
 ## Badge Variants
@@ -183,6 +213,70 @@ Elevated/floating element?
 - Spacious panels: `p-6` or `p-8`
 
 **Rule:** Pick ONE padding value per card type and use it consistently across the app.
+
+### Surface Classes for Cards
+
+Use surface classes for consistent depth hierarchy (combines bg, border, and shadow):
+
+| Class | When to Use |
+|-------|-------------|
+| `surface-base` | Page-level containers, static sections |
+| `surface-raised` | Standard content cards, panels |
+| `surface-elevated` | Emphasized panels, selected items |
+| `surface-floating` | Dropdowns, tooltips, modals |
+
+**Example:**
+```tsx
+// Standard card using surface class
+<div className="surface-raised rounded-xl p-4">
+  Card content
+</div>
+
+// Modal using floating surface
+<Dialog>
+  <DialogContent className="surface-floating">
+    Modal content
+  </DialogContent>
+</Dialog>
+```
+
+### Interactive Utilities for Cards
+
+Add tactile feedback to clickable cards:
+
+| Utility | When to Use |
+|---------|-------------|
+| `interactive` | Primary content cards (recipe cards, list items) |
+| `liftable` | Cards that feel "pickable" but simpler feedback |
+| `interactive-subtle` | Small cards, compact list items |
+| `bouncy` | Playful/fun contexts |
+
+**Decision Tree:**
+```
+Is this card clickable?
+  └─ No → Don't add interactive utilities
+  └─ Yes → What size/importance?
+      ├─ Primary content card (recipe, product) → `interactive`
+      ├─ Medium card, needs lift effect → `liftable`
+      ├─ Small card, list item → `interactive-subtle`
+      └─ Fun/playful context → `bouncy`
+```
+
+**Example:**
+```tsx
+// Interactive recipe card
+<div className="bg-card rounded-xl overflow-hidden interactive">
+  <img src={recipe.image} className="aspect-video" />
+  <div className="p-4">
+    <h3>{recipe.title}</h3>
+  </div>
+</div>
+
+// Subtle list item card
+<div className="bg-card rounded-lg p-3 interactive-subtle">
+  <span>{item.name}</span>
+</div>
+```
 
 ---
 
@@ -344,6 +438,43 @@ function RecipeCardSkeleton() {
 - Use `rounded-*` matching the actual element's border radius
 - Group skeletons with `space-y-*` matching actual content spacing
 - Use `animate-pulse` (default) — don't change the animation
+
+---
+
+## Scrollbar Utilities
+
+Custom scrollbar utilities for cleaner scroll experiences.
+
+### Decision Tree
+
+```
+Does the scrollable area need a visible scrollbar?
+  └─ No → Use `scrollbar-hidden` (maintains scroll, hides bar)
+  └─ Yes → Is layout shift a concern?
+      ├─ Yes → Use `scrollbar-overlay` (no layout space)
+      └─ No → Use default scrollbar (styled via globals.css)
+```
+
+### Quick Reference
+
+| Utility | Effect | Use Case |
+|---------|--------|----------|
+| `scrollbar-hidden` | Hide scrollbar, keep scroll | Horizontal carousels, modals with inner scroll |
+| `scrollbar-overlay` | Overlay scrollbar (no layout shift) | Sidebars, long lists where content matters |
+
+### Examples
+
+```tsx
+// Hidden scrollbar for carousel
+<div className="flex overflow-x-auto scrollbar-hidden gap-4">
+  {items.map(item => <Card key={item.id} />)}
+</div>
+
+// Overlay scrollbar for sidebar
+<aside className="h-screen overflow-y-auto scrollbar-overlay">
+  <nav>{/* Navigation items */}</nav>
+</aside>
+```
 
 ---
 

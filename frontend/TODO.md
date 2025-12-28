@@ -1,14 +1,5 @@
 # Frontend TODO
 
-## 🔴 GitHub Issues
-
-### #29 [Feedback] AI Image Style Concern
-- **Category**: General Feedback
-- **Issue**: Generated recipe images frequently show cast iron skillets — user preference issue with AI image generation prompts.
-- **Page**: `/recipes/199`
-
----
-
 ## 🟠 High Priority
 
 ### 1. Re-enable Ingredient Form Validation
@@ -64,6 +55,11 @@
 - **Solution**: Create a print preview modal with toggle controls (image, notes, etc.) that dynamically adjusts the print layout, allowing users to fit most recipes on a single page.
 
 ## ✅ Completed
+
+### #29 [Feedback] AI Image Style Concern
+- **Location**: Settings page, AI image generation configuration
+- **Issue**: Generated recipe images frequently showed cast iron skillets — user preference issue with AI image generation prompts.
+- **Solution**: Moved the AI image generation prompt into user settings, giving users control over the style and content of generated images.
 
 ### #28 Add "New Recipes" Filter in Meal Planner
 - **Location**: Meal planner recipe selection dialog (`MealDialog.tsx`, `FilterBar.tsx`)

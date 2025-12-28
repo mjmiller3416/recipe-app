@@ -42,9 +42,18 @@ Consistent border tokens?
 ### 6. Hover/Active States
 Every interactive element should have feedback:
 - Buttons → built-in via Shadcn variants
-- Cards → `hover:shadow-lg transition-shadow`
-- List items → `hover:bg-accent`
+- Cards → `hover:shadow-lg transition-shadow` or use `interactive` utility
+- List items → `hover:bg-accent` or use `interactive-subtle` utility
 - Links → `hover:text-primary`
+
+### 7. Interactive Utilities (Weight System)
+Are clickable elements using appropriate weight utilities?
+- Clickable cards → `interactive`, `liftable`, or `interactive-subtle`
+- Emphasis buttons → `button-weighted` or `button-bouncy`
+- Scrollable areas → `scrollbar-hidden` or `scrollbar-overlay` where appropriate
+- Surface depth → `surface-raised`, `surface-elevated`, or `surface-floating`
+
+**Note:** Don't apply interactive utilities to static, non-clickable elements.
 
 ---
 
@@ -58,6 +67,8 @@ Every interactive element should have feedback:
 | Mismatched border radius | Different radius on similar elements | Cards use `rounded-xl`, buttons use `rounded-md`, badges use `rounded-full` |
 | Hardcoded colors | `text-gray-500`, `bg-purple-600` | Always use tokens: `text-muted`, `bg-primary` |
 | Arbitrary spacing | `mt-[13px]`, `gap-2.5` | Use standard scale: `mt-3`, `gap-2` or `gap-3` |
+| Missing tactile feedback | Clickable cards/buttons feel static | Add `interactive`, `interactive-subtle`, or `button-weighted` utilities |
+| Inconsistent depth | Cards at same level have different shadows | Use surface classes: `surface-raised`, `surface-elevated` |
 
 ---
 
@@ -86,10 +97,54 @@ Every interactive element should have feedback:
 
 ---
 
+## Component Tracing (Critical)
+
+When auditing a page, you MUST also audit all custom components used within that page.
+
+### Why This Matters
+A page may look correct at first glance, but inconsistencies often hide inside nested components. If a page uses `<RecipeCard />`, `<FilterPanel />`, or any custom component, those components must also pass the audit checklist.
+
+### How to Trace Components
+
+1. **Identify all custom components** used in the page file
+   - Look for imports from `@/components/` or `/_components/`
+   - Note any components that aren't from `@/components/ui` (Shadcn)
+
+2. **Open each custom component** and apply the full Quick Audit Checklist to it:
+   - Surface colors
+   - Typography hierarchy
+   - Spacing (no arbitrary values)
+   - Shadcn usage for base UI
+   - Border tokens
+   - Hover/active states
+   - Interactive utilities
+
+3. **Recurse into nested components** — If a component uses other custom components, audit those too
+
+### Example
+```
+Auditing: /recipes/page.tsx
+  └─ Uses: <RecipeCard /> → Audit this component
+      └─ Uses: <RecipeBadge /> → Audit this component too
+  └─ Uses: <FilterPanel /> → Audit this component
+  └─ Uses: <Button /> → Shadcn, skip (already compliant)
+```
+
+### Audit Scope Checklist
+Before marking a page audit complete, confirm:
+- [ ] Page file itself passes all checks
+- [ ] All custom components in the page pass all checks
+- [ ] All nested custom components pass all checks
+- [ ] No component is skipped (unless it's from `/components/ui`)
+
+---
+
 ## Audit Workflow
 
-1. **Scan the page** — Look for visual inconsistencies
-2. **Check tokens** — Verify colors, spacing, typography use correct variables
-3. **Test hover states** — Every clickable element should respond
-4. **Test both modes** — Verify dark AND light mode appearance
-5. **Check responsiveness** — Test at mobile, tablet, desktop breakpoints
+1. **Identify scope** — List the page + all custom components it uses (recursively)
+2. **Scan the page** — Look for visual inconsistencies
+3. **Check tokens** — Verify colors, spacing, typography use correct variables
+4. **Audit each component** — Apply Quick Audit Checklist to every custom component
+5. **Test hover states** — Every clickable element should respond
+6. **Test both modes** — Verify dark AND light mode appearance
+7. **Check responsiveness** — Test at mobile, tablet, desktop breakpoints

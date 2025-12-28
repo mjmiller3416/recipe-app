@@ -3,8 +3,9 @@
 // ============================================
 const CHANGELOG_MD = `
 ## 2025-12-28 - New Features
+- Customize which quick filters appear in the Recipe Browser from Settings → Recipe Preferences (choose up to 5)
 - Customize the AI image generation prompt in Settings → AI Features with syntax highlighting for the {recipe_name} placeholder
-- New "New" filter in Meal Planner lets you quickly find recipes added in the last 30 days
+- New "New" filter in Meal Planner lets you quickly find recipes added in the last 7 days
 - Filter shopping list by recipe using the new sidebar that shows which recipes contribute each ingredient
 - Hover over shopping list items to see a breakdown of quantities by recipe
 
@@ -89,3 +90,17 @@ function parseChangelog(markdown: string): ChangelogEntry[] {
 }
 
 export const CHANGELOG_ENTRIES = parseChangelog(CHANGELOG_MD);
+
+// Calculate total number of individual change items
+export const CHANGELOG_TOTAL_ITEMS = CHANGELOG_ENTRIES.reduce(
+  (sum, entry) => sum + entry.changes.length,
+  0
+);
+
+// Helper to get the cumulative item count up to (but not including) a given entry
+export function getItemCountBeforeEntry(entryIndex: number): number {
+  return CHANGELOG_ENTRIES.slice(0, entryIndex).reduce(
+    (sum, entry) => sum + entry.changes.length,
+    0
+  );
+}

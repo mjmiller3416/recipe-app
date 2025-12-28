@@ -103,6 +103,9 @@ export const QUICK_FILTERS = [
   { id: "new", label: "New", type: "new", value: 7 }, // Recipes added within last 30 days
 ] as const;
 
+// Default quick filters shown in recipe browser (max 5)
+export const DEFAULT_QUICK_FILTER_IDS = ["breakfast", "lunch", "dinner", "sides", "new"] as const;
+
 // ============================================================================
 // Type exports for TypeScript
 // ============================================================================

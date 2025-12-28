@@ -33,6 +33,7 @@ import { ProfileSection } from "./sections/ProfileSection";
 import { AppearanceSection } from "./sections/AppearanceSection";
 import { FeedbackSection } from "./sections/FeedbackSection";
 import { AIFeaturesSection } from "./sections/AIFeaturesSection";
+import { RecipePreferencesSection } from "./sections/RecipePreferencesSection";
 
 export function SettingsView() {
   const [activeCategory, setActiveCategory] =
@@ -121,10 +122,11 @@ export function SettingsView() {
 
       case "recipePreferences":
         return (
-          <PlaceholderSection
-            icon={ChefHat}
-            title="Recipe Preferences"
-            description="Set measurement units, dietary restrictions, and browsing preferences"
+          <RecipePreferencesSection
+            quickFilters={settings.recipePreferences.quickFilters}
+            onQuickFiltersChange={(filters) =>
+              updateSettings("recipePreferences", { quickFilters: filters })
+            }
           />
         );
 

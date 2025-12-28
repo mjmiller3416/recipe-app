@@ -294,6 +294,8 @@ Pre-computed tokens for recipe card elements. These reference the brand colors f
 
 Shadows adapt between dark and light mode for appropriate contrast.
 
+### Standard Shadows
+
 | Token | Tailwind | Use Case |
 |-------|----------|----------|
 | `--shadow-sm` | `shadow-sm` | Subtle elevation (inputs, small cards) |
@@ -304,12 +306,107 @@ Shadows adapt between dark and light mode for appropriate contrast.
 **Dark Mode:** Shadows are more intense (0.5 opacity) for visibility
 **Light Mode:** Shadows are subtle (0.1 opacity) for softness
 
+### Layered Depth System
+
+Multi-layer shadows that create more realistic depth. Use these for the Weight System.
+
+| Token | Utility Class | Use Case |
+|-------|---------------|----------|
+| `--shadow-raised` | `shadow-raised` | Cards at rest, subtle elevation |
+| `--shadow-elevated` | `shadow-elevated` | Hovered cards, emphasized panels |
+| `--shadow-floating` | `shadow-floating` | Popovers, modals, floating elements |
+
+**Depth Hierarchy:**
+```
+shadow-raised    → Resting cards (3 shadow layers, subtle)
+    ↓
+shadow-elevated  → Hovered/active elements (3 layers, medium)
+    ↓
+shadow-floating  → Floating UI (3 layers, prominent)
+```
+
+### Inset Shadows
+
+For pressed/active states that feel "pushed in":
+
+| Token | Utility Class | Use Case |
+|-------|---------------|----------|
+| `--shadow-inset-sm` | `shadow-inset-sm` | Subtle pressed state |
+| `--shadow-inset-md` | `shadow-inset-md` | Pronounced pressed state |
+
+### Glow Effects
+
+For focus states and emphasis:
+
+| Token | Utility Class | Use Case |
+|-------|---------------|----------|
+| `--shadow-glow-primary` | `shadow-glow-primary` | Purple glow for primary focus |
+| `--shadow-glow-secondary` | `shadow-glow-secondary` | Teal glow for secondary focus |
+
 **Usage Examples:**
 ```tsx
+// Standard shadows
 <div className="shadow-sm">Subtle card</div>
 <div className="shadow-md">Standard card</div>
-<div className="shadow-lg">Floating panel</div>
-<div className="shadow-xl">Modal dialog</div>
+
+// Layered depth system
+<div className="shadow-raised">Resting card</div>
+<div className="shadow-raised hover:shadow-elevated transition-shadow">
+  Hoverable card
+</div>
+<div className="shadow-floating">Modal dialog</div>
+
+// Inset for pressed states
+<button className="active:shadow-inset-sm">Press me</button>
+
+// Glow for focus
+<input className="focus:shadow-glow-primary" />
+```
+
+---
+
+## Easing & Timing
+
+Custom easing functions for natural, physical-feeling animations.
+
+### Easing Utilities
+
+| Token | Utility Class | Use Case |
+|-------|---------------|----------|
+| `--ease-physical` | `ease-physical` | Standard smooth deceleration (default) |
+| `--ease-bounce` | `ease-bounce` | Playful elastic overshoot |
+| `--ease-snap` | `ease-snap` | Quick, snappy transitions |
+
+**When to Use:**
+- `ease-physical` → Most transitions (hover, focus, general UI)
+- `ease-bounce` → Confirmations, celebrations, fun interactions
+- `ease-snap` → Toggles, tab switches, quick state changes
+
+### Duration Tokens
+
+| Token | Value | Use Case |
+|-------|-------|----------|
+| `--duration-instant` | 100ms | Button press, toggle |
+| `--duration-fast` | 150ms | Hover states, micro-feedback |
+| `--duration-normal` | 300ms | Page transitions, modals |
+| `--duration-slow` | 500ms | Complex animations, emphasis |
+
+**Usage Examples:**
+```tsx
+// Physical ease (default feel)
+<div className="transition-transform ease-physical duration-300">
+  Smooth element
+</div>
+
+// Bouncy for fun
+<div className="transition-all ease-bounce duration-500">
+  Playful element
+</div>
+
+// Snappy for toggles
+<div className="transition-colors ease-snap duration-150">
+  Quick toggle
+</div>
 ```
 
 ---
