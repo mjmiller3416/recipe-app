@@ -472,50 +472,50 @@ export function RecipeBrowserView() {
     const filter = QUICK_FILTERS.find((f) => f.id === filterId);
     if (!filter) return;
 
-    setActiveQuickFilters((prev) => {
-      const next = new Set(prev);
-      const isActive = next.has(filterId);
+    // Calculate state OUTSIDE updater functions to avoid nested setState issues
+    const isActive = activeQuickFilters.has(filterId);
+    const newQuickFilters = new Set(activeQuickFilters);
 
+    if (isActive) {
+      newQuickFilters.delete(filterId);
+    } else {
+      newQuickFilters.add(filterId);
+    }
+
+    // Update quick filters state (separate from filter state update)
+    setActiveQuickFilters(newQuickFilters);
+
+    // Update the actual filter state based on quick filter type
+    if (filter.type === "mealType") {
+      setFilters((f) => ({
+        ...f,
+        mealTypes: isActive
+          ? f.mealTypes.filter((m) => m !== filter.value)
+          : [...f.mealTypes, filter.value as string],
+      }));
+    } else if (filter.type === "dietary") {
+      setFilters((f) => ({
+        ...f,
+        dietaryPreferences: isActive
+          ? f.dietaryPreferences.filter((d) => d !== filter.value)
+          : [...f.dietaryPreferences, filter.value as string],
+      }));
+    } else if (filter.type === "favorite") {
+      setFilters((f) => ({
+        ...f,
+        favoritesOnly: !isActive,
+      }));
+      // Update URL to keep in sync (remove param when toggling off)
       if (isActive) {
-        next.delete(filterId);
-      } else {
-        next.add(filterId);
+        // Toggling OFF - remove the URL param
+        router.replace("/recipes", { scroll: false });
       }
-
-      // Update the actual filter state based on quick filter type
-      if (filter.type === "mealType") {
-        setFilters((f) => ({
-          ...f,
-          mealTypes: isActive
-            ? f.mealTypes.filter((m) => m !== filter.value)
-            : [...f.mealTypes, filter.value as string],
-        }));
-      } else if (filter.type === "dietary") {
-        setFilters((f) => ({
-          ...f,
-          dietaryPreferences: isActive
-            ? f.dietaryPreferences.filter((d) => d !== filter.value)
-            : [...f.dietaryPreferences, filter.value as string],
-        }));
-      } else if (filter.type === "favorite") {
-        setFilters((f) => ({
-          ...f,
-          favoritesOnly: !isActive,
-        }));
-        // Update URL to keep in sync (remove param when toggling off)
-        if (isActive) {
-          // Toggling OFF - remove the URL param
-          router.replace("/recipes", { scroll: false });
-        }
-      } else if (filter.type === "time") {
-        setFilters((f) => ({
-          ...f,
-          maxCookTime: isActive ? null : (filter.value as number),
-        }));
-      }
-
-      return next;
-    });
+    } else if (filter.type === "time") {
+      setFilters((f) => ({
+        ...f,
+        maxCookTime: isActive ? null : (filter.value as number),
+      }));
+    }
 
     // Scroll to show content right below sticky header (only scroll up, not down)
     const contentEl = document.querySelector("[data-page-content]");

@@ -15,11 +15,6 @@
   2. Restore the `isInvalid` styling in `QuantityInput.tsx`
   3. Consider making validation less strict or only on submit
 
-### 2. Fix Quick Filter Chips Adding Duplicate Active Filters
-- **Location**: `src/app/recipes/_components/RecipeBrowserView.tsx`
-- **Issue**: Clicking a quick filter pill (e.g., "Dessert") in the hero section adds the filter twice to the Active Filters display — visible as duplicate chips showing the same filter value.
-- **Solution**: Refactor `handleQuickFilterToggle` (line 471) to move the `setFilters` call outside of the `setActiveQuickFilters` callback — nested setState calls inside updater functions can cause React batching issues that lead to duplicate state entries.
-
 ## 🟡 Medium Priority
 
 ### 3. Allow Leading Decimals in Ingredient Quantities
@@ -91,10 +86,15 @@
 
 ## ✅ Completed
 
+### Fix Quick Filter Chips Adding Duplicate Active Filters
+- **Location**: `src/app/recipes/_components/RecipeBrowserView.tsx`
+- **Issue**: Clicking a quick filter pill (e.g., "Dessert") in the hero section adds the filter twice to the Active Filters display — visible as duplicate chips showing the same filter value.
+- **Solution**: Refactor `handleQuickFilterToggle` (line 471) to move the `setFilters` call outside of the `setActiveQuickFilters` callback — nested setState calls inside updater functions can cause React batching issues that lead to duplicate state entries.
+
 ### Fix Dropdown Layout Shift
 - **Location**: `src/app/globals.css`
-- **Issue**: When opening dialogs or dropdowns on scrollable pages (RecipeBrowser, AddEditRecipes), the page content shifted due to scrollbar gutter collapsing when Radix UI locked body scroll.
-- **Solution**: Changed `scrollbar-gutter: stable` to `overflow-y: scroll` on the html element, forcing the scrollbar to always be visible and preventing any shift.
+- **Issue**: When opening dialogs or dropdowns on scrollable pages (RecipeBrowser, AddEditRecipes), the page content shifted due to double scrollbar compensation — Radix UI added padding for a "removed" scrollbar that never actually disappeared.
+- **Solution**: Added `overflow-y: scroll` to html (force scrollbar always visible) and `body[data-scroll-locked]` override to prevent Radix from adding unnecessary padding compensation.
 
 ### Convert Shopping List Quantities to Fractions
 - **Location**: `src/app/shopping-list/_components/ShoppingItem.tsx`

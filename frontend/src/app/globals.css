@@ -686,6 +686,25 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Prevent Radix UI/react-remove-scroll from adding margin compensation.
+   Since we force scrollbar visible with overflow-y:scroll, the scrollbar
+   never disappears, so we don't need the compensation.
+
+   The injected <style> tag sets --removed-body-scroll-bar-size which is
+   used to calculate margin. We must override with higher specificity. */
+html body[data-scroll-locked],
+html body[data-scroll-locked="1"] {
+  padding-right: 0 !important;
+  margin-right: 0 !important;
+  margin: 0 !important;
+  --removed-body-scroll-bar-size: 0 !important;
+}
+
+/* Override the injected style tag's CSS variable at :root level */
+:root {
+  --removed-body-scroll-bar-size: 0 !important;
+}
+
 /* ============================================
    UTILITY CLASSES FOR RECIPE CARDS
    Use these if you need direct CSS access

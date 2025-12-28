@@ -4,11 +4,6 @@ import Link from "next/link";
 import { Clock } from "lucide-react";
 import { useRecentRecipes } from "@/hooks";
 import { cn } from "@/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 /**
  * Displays recently viewed recipes as clickable chips in the sidebar.
@@ -32,8 +27,8 @@ export function RecentRecipesSection() {
         </span>
       </div>
 
-      {/* Recipe chips - 2x2 grid */}
-      <div className="grid grid-cols-2 gap-2">
+      {/* Recipe chips - 4x1 grid (vertical stack) */}
+      <div className="grid grid-cols-1 gap-2">
         {recentRecipes.map((recipe) => (
           <RecentRecipeChip
             key={recipe.id}
@@ -55,28 +50,23 @@ interface RecentRecipeChipProps {
 
 function RecentRecipeChip({ id, name, emoji }: RecentRecipeChipProps) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Link
-          href={`/recipes/${id}`}
-          className={cn(
-            // Base styles
-            "flex items-center gap-2 px-3 py-1.5 rounded-lg",
-            // Background and border
-            "bg-elevated/50 border border-border",
-            // Text
-            "text-sm text-muted",
-            // Hover effects
-            "hover:bg-hover hover:border-border-strong hover:text-foreground",
-            // Interactive utility for lift + press feedback
-            "interactive-subtle"
-          )}
-        >
-          <span className="flex-shrink-0">{emoji}</span>
-          <span className="truncate">{name}</span>
-        </Link>
-      </TooltipTrigger>
-      <TooltipContent side="top">{name}</TooltipContent>
-    </Tooltip>
+    <Link
+      href={`/recipes/${id}`}
+      className={cn(
+        // Base styles
+        "flex items-center gap-2 px-3 py-1.5 rounded-lg",
+        // Background and border
+        "bg-elevated/50 border border-border",
+        // Text
+        "text-sm text-muted",
+        // Hover effects
+        "hover:bg-hover hover:border-border-strong hover:text-foreground",
+        // Interactive utility for lift + press feedback
+        "interactive-subtle"
+      )}
+    >
+      <span className="flex-shrink-0">{emoji}</span>
+      <span className="truncate">{name}</span>
+    </Link>
   );
 }
