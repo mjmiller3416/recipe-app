@@ -192,6 +192,7 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
               setDietaryPreference={form.setDietaryPreference}
               hasError={form.hasError}
               getError={form.getError}
+              autoFocusName={!isEditMode}
             />
 
             {/* Ingredients Section */}

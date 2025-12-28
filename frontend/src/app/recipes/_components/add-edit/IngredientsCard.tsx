@@ -78,9 +78,9 @@ export function IngredientsCard({
     prevIngredientsLengthRef.current = ingredients.length;
   }, [ingredients.length]);
 
-  // Detect spacebar press on the Add button
+  // Detect Enter key press on the Add button
   const handleAddKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === " " || e.key === "Spacebar") {
+    if (e.key === "Enter") {
       addedViaKeyboardRef.current = true;
     }
   };

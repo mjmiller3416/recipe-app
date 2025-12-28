@@ -33,9 +33,9 @@ export function parseQuantity(input: string): number | null {
     return null;
   }
 
-  // Try parsing as a simple decimal first
+  // Try parsing as a simple decimal first (including leading decimals like .5)
   const decimal = parseFloat(trimmed);
-  if (!isNaN(decimal) && /^-?\d+(\.\d+)?$/.test(trimmed)) {
+  if (!isNaN(decimal) && /^-?(\d+\.?\d*|\.\d+)$/.test(trimmed)) {
     return decimal;
   }
 

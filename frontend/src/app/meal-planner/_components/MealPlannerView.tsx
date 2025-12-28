@@ -29,9 +29,10 @@ export function MealPlannerPage() {
         const data = await plannerApi.getEntries();
         setEntries(data);
 
-        // Auto-select first entry if available
+        // Auto-select first uncompleted entry, or first entry if all completed
         if (data.length > 0 && selectedEntryId === null) {
-          setSelectedEntryId(data[0].id);
+          const firstUncompleted = data.find((e) => !e.is_completed);
+          setSelectedEntryId(firstUncompleted?.id ?? data[0].id);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load planner");

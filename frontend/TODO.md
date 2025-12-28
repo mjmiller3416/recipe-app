@@ -1,5 +1,19 @@
 # Frontend TODO
 
+## 🔴 GitHub Issues
+
+### #28 [Feature] Add "New Recipes" Filter in Meal Planner
+- **Location**: Meal planner recipe selection dialog
+- **Issue**: When adding a new meal to the meal planner, users want a filter for "new" recipes to quickly find recently added recipes.
+- **Page**: `/meal-planner`
+
+### #29 [Feedback] AI Image Style Concern
+- **Category**: General Feedback
+- **Issue**: Generated recipe images frequently show cast iron skillets — user preference issue with AI image generation prompts.
+- **Page**: `/recipes/199`
+
+---
+
 ## 🟠 High Priority
 
 ### 1. Re-enable Ingredient Form Validation
@@ -16,11 +30,6 @@
   3. Consider making validation less strict or only on submit
 
 ## 🟡 Medium Priority
-
-### 3. Allow Leading Decimals in Ingredient Quantities
-- **Location**: `frontend/src/lib/quantityUtils.ts`
-- **Issue**: Currently, when adding quanties for ingredients, users cannot enter .5, .25, etc. They must enter 0.5, 0.25. Update the quantity input to accept leading decimals without a zero.
-- **Solution**: Update the regex in `QuantityInput.tsx` to allow leading decimals.
 
 ### 4. Auto-Scroll to New Ingredient Row
 - **Location**: `frontend/src/components/add-recipe/IngredientRow.tsx`
@@ -60,6 +69,31 @@
 - **Solution**: Create a print preview modal with toggle controls (image, notes, etc.) that dynamically adjusts the print layout, allowing users to fit most recipes on a single page.
 
 ## ✅ Completed
+
+### Allow Leading Decimals in Ingredient Quantities
+- **Location**: `frontend/src/lib/quantityUtils.ts`
+- **Issue**: When adding quantities for ingredients, users could not enter .5, .25, etc. They had to enter 0.5, 0.25.
+- **Solution**: Updated the regex in `parseQuantity` to allow leading decimals using alternation pattern.
+
+### Shopping List Items Uncheck When Quantity Changes
+- **Location**: Shopping list state management
+- **Issue**: When adding a new recipe to the meal planner, shopping list items that have been checked off get updated quantities but remain checked — they should be unchecked to indicate the new quantity needs to be collected.
+- **Solution**: Items are now automatically unchecked when their quantity increases, so users know to collect the additional amount.
+
+### First Uncompleted Meal Should Be Selected by Default
+- **Location**: `src/app/meal-planner/_components/MealPlannerView.tsx`
+- **Issue**: When loading the meal planner, no meal is selected by default — the first uncompleted meal should be auto-selected for convenience.
+- **Solution**: Changed the auto-selection logic to find the first uncompleted entry using `data.find((e) => !e.is_completed)`, with a fallback to the first entry if all meals are completed.
+
+### Auto-Focus New Ingredient Row
+- **Location**: `src/app/recipes/add/page.tsx`, `IngredientRow.tsx`
+- **Issue**: When clicking "Add Ingredient", the cursor should automatically move to the first field (ingredient name) of the newly added empty row.
+- **Solution**: Added auto-focus to the ingredient name input when a new row is added.
+
+### Remove Duplicate "Pico De Gallo" Ingredient
+- **Location**: Database (ingredients table)
+- **Issue**: There are two "Pico De Gallo" entries — one incorrectly categorized as "baking". Remove the duplicate.
+- **Solution**: Deleted the duplicate entry with incorrect "baking" category, keeping only the correct categorization.
 
 ### Fix Active Filters to Display on Single Row
 - **Location**: `src/components/common/FilterPillGroup.tsx`

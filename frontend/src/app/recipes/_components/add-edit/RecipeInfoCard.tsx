@@ -33,6 +33,7 @@ interface RecipeInfoCardProps {
   setDietaryPreference: (value: string) => void;
   hasError: (field: string) => boolean;
   getError: (field: string) => string | undefined;
+  autoFocusName?: boolean;
 }
 
 export function RecipeInfoCard({
@@ -50,6 +51,7 @@ export function RecipeInfoCard({
   setDietaryPreference,
   hasError,
   getError,
+  autoFocusName = false,
 }: RecipeInfoCardProps) {
   return (
     <Card>
@@ -80,6 +82,7 @@ export function RecipeInfoCard({
               value={recipeName}
               onChange={(e) => setRecipeName(e.target.value)}
               className={cn("mt-2", hasError("recipeName") && "border-destructive")}
+              autoFocus={autoFocusName}
             />
             {getError("recipeName") && (
               <p className="text-sm text-destructive mt-1">{getError("recipeName")}</p>

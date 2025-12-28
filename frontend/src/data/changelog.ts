@@ -7,10 +7,16 @@ const CHANGELOG_MD = `
 - Hover over shopping list items to see a breakdown of quantities by recipe
 
 ## 2025-12-28 - Bug Fixes
+- Weekly menu in Meal Planner now scrolls properly when there are many items
+- Shopping list items now uncheck automatically when their quantity increases from adding new recipes
+- Meal planner now auto-selects the first uncompleted meal when you open the page
+- Removed duplicate "Pico De Gallo" ingredient that appeared in wrong category
 - Ingredient units like "Tbs" now display with proper capitalization on recipe pages
 - Fixed loading state issues on the Recipes page with improved Suspense handling
 
 ## 2025-12-28 - Improvements
+- Ingredient quantities now accept leading decimals like .5 or .25 (no need to type 0.5)
+- Clicking "Add Ingredient" now automatically focuses the new ingredient name field
 - Active filter pills now stay on a single row with horizontal scrolling instead of wrapping
 - Shopping list stats now display in a more logical order: Remaining → Collected → Total
 
