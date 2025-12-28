@@ -125,8 +125,7 @@ export function WeeklyMenu({
 
       {/* Scrollable List Area (scrollbar hidden) */}
       <ScrollArea className="flex-1 [&_[data-slot=scroll-area-scrollbar]]:hidden">
-        {/* p-2 accommodates shadow-elevated used on hover by liftable utility */}
-        <div className="space-y-4 p-2">
+        <div className="space-y-4 px-4">
           {items.length === 0 ? (
             <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
               No meals planned yet

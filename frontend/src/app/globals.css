@@ -676,8 +676,8 @@
    ============================================ */
 
 html {
-  /* Reserve space for scrollbar to prevent layout shift between pages */
-  scrollbar-gutter: stable;
+  /* Always show scrollbar to prevent layout shift when dialogs/dropdowns open */
+  overflow-y: scroll;
 }
 
 body {

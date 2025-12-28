@@ -7,6 +7,7 @@ const CHANGELOG_MD = `
 - Improved sidebar navigation
 
 ## 2025-12-27 - Bug Fixes
+- Fixed layout shift when opening dropdowns and dialogs on scrollable pages
 - The "Favorites Only" filter in Recipe Browser now works correctly
 
 ## 2025-12-27 - New Features

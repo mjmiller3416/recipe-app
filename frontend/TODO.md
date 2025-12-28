@@ -69,12 +69,7 @@
 - **Issue**: Reorder ingredients on the recipe page so that the "Meat" category always appears first, followed by other categories in a logical order (e.g., Vegetables, Grains, Spices).
 - **Solution**: Update the sorting logic when rendering ingredients to prioritize the "Meat" category first.
 
-### 12. Fix Dropdown Layout Shift in Recipe Form
-- **Location**: `src/app/recipes/_components/add-edit/RecipeInfoCard.tsx`
-- **Issue**: When opening the Meal Type, Category, or Dietary Preference dropdowns, the SelectContent pushes page content instead of overlaying — causing a jarring layout shift.
-- **Solution**: Add `position="popper"` to each `<SelectContent>` component to use floating UI positioning instead of the default item-aligned behavior.
-
-### 13. Add Zoom-on-Hover to Side Dish Cards
+### 12. Add Zoom-on-Hover to Side Dish Cards
 - **Location**: `src/app/meal-planner/_components/meal-display/SideDishSlots.tsx`
 - **Issue**: Side dish recipe cards in the meal planner lack the subtle zoom effect on hover that main dish cards have — making the interaction feel less polished.
 - **Solution**: Add `transition-transform duration-500 group-hover:scale-105` to the `RecipeCardImage` component (line 86), matching the pattern used in `MainDishCard.tsx`.
@@ -89,12 +84,17 @@
 - **Issue**: Shopping list items currently display as "Ingredient Name ... Quantity" — users want to see quantities first for easier scanning while shopping.
 - **Solution**: Move the quantity badge (lines 94-103) to appear between the Checkbox and the item content section, updating the flex layout accordingly.
 
-### 17. Add Print Preview Page with Element Toggles
+### 16. Add Print Preview Page with Element Toggles
 - **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx`
 - **Issue**: Long recipes overflow the page in print preview — users have no way to customize what prints to keep content on one page.
 - **Solution**: Create a print preview modal with toggle controls (image, notes, etc.) that dynamically adjusts the print layout, allowing users to fit most recipes on a single page.
 
 ## ✅ Completed
+
+### Fix Dropdown Layout Shift
+- **Location**: `src/app/globals.css`
+- **Issue**: When opening dialogs or dropdowns on scrollable pages (RecipeBrowser, AddEditRecipes), the page content shifted due to scrollbar gutter collapsing when Radix UI locked body scroll.
+- **Solution**: Changed `scrollbar-gutter: stable` to `overflow-y: scroll` on the html element, forcing the scrollbar to always be visible and preventing any shift.
 
 ### Convert Shopping List Quantities to Fractions
 - **Location**: `src/app/shopping-list/_components/ShoppingItem.tsx`

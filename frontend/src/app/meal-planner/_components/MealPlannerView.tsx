@@ -203,7 +203,7 @@ export function MealPlannerPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_clamp(200px,30%,350px)] gap-6 h-full min-h-0">
 
         {/* LEFT COLUMN: SELECTED MEAL */}
-        <div className="flex flex-col min-h-0 overflow-hidden">
+        <div className="flex flex-col min-h-0">
           <h2 className="text-xl font-semibold text-foreground mb-4 flex-shrink-0">
             Selected Meal
           </h2>
