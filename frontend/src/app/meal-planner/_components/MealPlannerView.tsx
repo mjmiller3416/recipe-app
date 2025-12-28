@@ -199,12 +199,25 @@ export function MealPlannerPage() {
       title="Meal Planner"
       description="Plan your weekly meals"
       fillViewport
+      actions={
+        hasCompletedEntries && (
+          <Button
+            onClick={handleClearCompleted}
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            Clear Completed
+          </Button>
+        )
+      }
     >
       {/* GRID CONTAINER */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_clamp(200px,30%,350px)] gap-6 h-full min-h-0">
 
         {/* LEFT COLUMN: SELECTED MEAL */}
-        <div className="flex flex-col min-h-0">
+        <div className="flex flex-col h-full min-h-0">
           <h2 className="text-xl font-semibold text-foreground mb-4 flex-shrink-0">
             Selected Meal
           </h2>
@@ -257,21 +270,7 @@ export function MealPlannerPage() {
         </div>
 
         {/* RIGHT COLUMN: WEEKLY MENU */}
-        <div className="hidden lg:flex flex-col min-h-0">
-          {/* Clear Completed button - only shown when there are completed entries */}
-          {hasCompletedEntries && (
-            <div className="flex justify-end mb-2">
-              <Button
-                onClick={handleClearCompleted}
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Clear Completed
-              </Button>
-            </div>
-          )}
+        <div className="hidden lg:flex flex-col h-full min-h-0">
           <WeeklyMenu
             items={menuItems}
             selectedId={selectedEntryId}

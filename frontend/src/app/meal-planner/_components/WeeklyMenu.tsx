@@ -118,7 +118,7 @@ export function WeeklyMenu({
         className
       )}
     >
-      {/* Header - matching MealPlannerPage "Selected Meal" style */}
+      {/* Header */}
       <h2 className="text-xl font-semibold text-foreground mb-4 flex-shrink-0">
         This Week&apos;s Menu
       </h2>
@@ -171,7 +171,7 @@ export function WeeklyMenu({
       </ScrollArea>
 
       {/* Footer - Sticky Add Meal Button */}
-      <div className="flex-shrink-0 pt-6">
+      <div className="flex-shrink-0 pt-4">
         <Button
           onClick={onAddMealClick}
           className="w-full"

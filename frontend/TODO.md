@@ -31,39 +31,39 @@
 
 ## 🟡 Medium Priority
 
-### 4. Auto-Scroll to New Ingredient Row
+### 2. Auto-Scroll to New Ingredient Row
 - **Location**: `frontend/src/components/add-recipe/IngredientRow.tsx`
 - **Issue**: When adding new ingredients, the window should scroll to the newly added ingredient row to improve user experience.
 - **Solution**: Implement a scrollIntoView call after adding a new ingredient row.
 
-### 6. Add Favorite Button to Meal Planner Cards
+### 3. Add Favorite Button to Meal Planner Cards
 - **Location**: `src/app/meal-planner/_components/meal-display/MainDishCard.tsx`
 - **Issue**: Users cannot favorite a recipe directly from the meal planner page — they must navigate to the recipe detail page first.
 - **Solution**: Import and add the existing `FavoriteButton` component to MainDishCard, passing `recipeId` and `isFavorite` props. Consider adding to SideDishSlots as well for consistency.
 
 ## 🔵 Low Priority
 
-### 9. Prevent Accidental Ingredient Deletion via Keyboard
+### 4. Prevent Accidental Ingredient Deletion via Keyboard
 - **Location**: `frontend/src/components/add-recipe/IngredientRow.tsx`
 - **Issue**: When using keyboard navigation to add ingredients, user can accidentally delete an ingredient row by pressing spacebar on the delete button — can occur while tabbing through fields to add a new ingredient.
 - **Solution**: Update the delete button to only trigger deletion on Enter or Click events.
 
-### 10. Enable Tab Key Selection in Autocomplete
+### 5. Enable Tab Key Selection in Autocomplete
 - **Location**: `frontend/src/components/add-recipe/IngredientAutoComplete.tsx`
 - **Issue**: Selections cannot be selected via the Tab key, only via mouse click or Enter key. This makes keyboard navigation slower.
 - **Solution**: Update the autocomplete selection logic to allow Tab key selection of highlighted suggestions, then move focus to the next input field.
 
-### 11. Reorder Ingredients on Recipe Page
+### 6. Reorder Ingredients on Recipe Page
 - **Location**: `src/app/recipes/[id]/page.tsx`
 - **Issue**: Reorder ingredients on the recipe page so that the "Meat" category always appears first, followed by other categories in a logical order (e.g., Vegetables, Grains, Spices).
 - **Solution**: Update the sorting logic when rendering ingredients to prioritize the "Meat" category first.
 
-### 12. Add Zoom-on-Hover to Side Dish Cards
+### 7. Add Zoom-on-Hover to Side Dish Cards
 - **Location**: `src/app/meal-planner/_components/meal-display/SideDishSlots.tsx`
 - **Issue**: Side dish recipe cards in the meal planner lack the subtle zoom effect on hover that main dish cards have — making the interaction feel less polished.
 - **Solution**: Add `transition-transform duration-500 group-hover:scale-105` to the `RecipeCardImage` component (line 86), matching the pattern used in `MainDishCard.tsx`.
 
-### 16. Add Print Preview Page with Element Toggles
+### 8. Add Print Preview Page with Element Toggles
 - **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx`
 - **Issue**: Long recipes overflow the page in print preview — users have no way to customize what prints to keep content on one page.
 - **Solution**: Create a print preview modal with toggle controls (image, notes, etc.) that dynamically adjusts the print layout, allowing users to fit most recipes on a single page.
