@@ -2,8 +2,13 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2025-12-28 - New Features
+- Filter shopping list by recipe using the new sidebar that shows which recipes contribute each ingredient
+- Hover over shopping list items to see a breakdown of quantities by recipe
+
 ## 2025-12-28 - Bug Fixes
 - Ingredient units like "Tbs" now display with proper capitalization on recipe pages
+- Fixed loading state issues on the Recipes page with improved Suspense handling
 
 ## 2025-12-28 - Improvements
 - Active filter pills now stay on a single row with horizontal scrolling instead of wrapping
