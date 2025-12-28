@@ -2,11 +2,6 @@
 
 ## 🔴 GitHub Issues
 
-### #28 [Feature] Add "New Recipes" Filter in Meal Planner
-- **Location**: Meal planner recipe selection dialog
-- **Issue**: When adding a new meal to the meal planner, users want a filter for "new" recipes to quickly find recently added recipes.
-- **Page**: `/meal-planner`
-
 ### #29 [Feedback] AI Image Style Concern
 - **Category**: General Feedback
 - **Issue**: Generated recipe images frequently show cast iron skillets — user preference issue with AI image generation prompts.
@@ -69,6 +64,11 @@
 - **Solution**: Create a print preview modal with toggle controls (image, notes, etc.) that dynamically adjusts the print layout, allowing users to fit most recipes on a single page.
 
 ## ✅ Completed
+
+### #28 Add "New Recipes" Filter in Meal Planner
+- **Location**: Meal planner recipe selection dialog (`MealDialog.tsx`, `FilterBar.tsx`)
+- **Issue**: When adding a new meal to the meal planner, users wanted a filter for "new" recipes to quickly find recently added recipes.
+- **Solution**: Added a "New" filter pill that shows recipes created within the last 30 days. Extended `RecipeCardData` type to include `createdAt`, added filter to `QUICK_FILTERS` constant, and implemented the filter logic in the meal dialog.
 
 ### Allow Leading Decimals in Ingredient Quantities
 - **Location**: `frontend/src/lib/quantityUtils.ts`

@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { imageGenerationApi } from "@/lib/api";
+import { useSettings } from "@/hooks/useSettings";
 
 type ImageState = "empty" | "uploading" | "uploaded" | "generating" | "generated" | "error";
 
@@ -39,6 +40,8 @@ export function ImageUploadCard({
   isAiGenerated = false,
   onAiGeneratedChange,
 }: ImageUploadCardProps) {
+  const { settings } = useSettings();
+
   // Determine initial state based on props
   const getInitialState = (): ImageState => {
     if (imagePreview) {
@@ -75,7 +78,10 @@ export function ImageUploadCard({
     setPendingGeneratedImage(null);
 
     try {
-      const result = await imageGenerationApi.generate(recipeName);
+      const result = await imageGenerationApi.generate(
+        recipeName,
+        settings.aiFeatures.imageGenerationPrompt
+      );
       if (result.success && result.image_data) {
         const dataUrl = `data:image/png;base64,${result.image_data}`;
         // Auto-accept the generated image (no confirmation step needed)

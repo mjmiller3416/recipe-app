@@ -32,6 +32,7 @@ import { PlaceholderSection } from "./PlaceholderSection";
 import { ProfileSection } from "./sections/ProfileSection";
 import { AppearanceSection } from "./sections/AppearanceSection";
 import { FeedbackSection } from "./sections/FeedbackSection";
+import { AIFeaturesSection } from "./sections/AIFeaturesSection";
 
 export function SettingsView() {
   const [activeCategory, setActiveCategory] =
@@ -138,6 +139,22 @@ export function SettingsView() {
 
       case "dataManagement":
         return <DataManagementSection />;
+
+      case "aiFeatures":
+        return (
+          <AIFeaturesSection
+            imageGenerationPrompt={settings.aiFeatures.imageGenerationPrompt}
+            onPromptChange={(value) =>
+              updateSettings("aiFeatures", { imageGenerationPrompt: value })
+            }
+            onResetPrompt={() =>
+              updateSettings("aiFeatures", {
+                imageGenerationPrompt:
+                  DEFAULT_SETTINGS.aiFeatures.imageGenerationPrompt,
+              })
+            }
+          />
+        );
 
       case "feedback":
         return <FeedbackSection />;

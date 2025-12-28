@@ -260,6 +260,17 @@ export function MealDialog({
           case "favorite":
             if (!recipe.isFavorite) return false;
             break;
+          case "new":
+            // Filter to recipes created within the last N days (value = days)
+            if (typeof filter.value === "number" && recipe.createdAt) {
+              const createdDate = new Date(recipe.createdAt);
+              const cutoffDate = new Date();
+              cutoffDate.setDate(cutoffDate.getDate() - filter.value);
+              if (createdDate < cutoffDate) return false;
+            } else if (!recipe.createdAt) {
+              return false; // No createdAt means we can't determine if it's "new"
+            }
+            break;
         }
       }
 

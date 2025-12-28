@@ -44,6 +44,10 @@ export interface DataManagementSettings {
   backupFrequency: "daily" | "weekly" | "monthly";
 }
 
+export interface AIFeaturesSettings {
+  imageGenerationPrompt: string;
+}
+
 export interface AppSettings {
   profile: UserProfile;
   appearance: AppearanceSettings;
@@ -51,6 +55,7 @@ export interface AppSettings {
   recipePreferences: RecipePreferences;
   shoppingList: ShoppingListSettings;
   dataManagement: DataManagementSettings;
+  aiFeatures: AIFeaturesSettings;
 }
 
 // ============================================================================
@@ -86,6 +91,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   dataManagement: {
     autoBackup: false,
     backupFrequency: "weekly",
+  },
+  aiFeatures: {
+    imageGenerationPrompt:
+      "A professional food photograph of {recipe_name} captured at a 45-degree angle. The dish is placed on a rustic wooden table with cutting board, shallow depth of field, steam rising, scattered herbs and seasonings, complementary ingredients as props in soft-focus background, cozy home kitchen atmosphere, appetizing, high detail, no people, no hands, square format",
   },
 };
 
@@ -218,7 +227,10 @@ export function useSettings(): UseSettingsReturn {
       if (updates.dataManagement) {
         newSettings.dataManagement = { ...prev.dataManagement, ...updates.dataManagement };
       }
-      
+      if (updates.aiFeatures) {
+        newSettings.aiFeatures = { ...prev.aiFeatures, ...updates.aiFeatures };
+      }
+
       return newSettings;
     });
   }, []);
@@ -303,6 +315,10 @@ function deepMergeSettings(defaults: AppSettings, source: Partial<AppSettings>):
     dataManagement: {
       ...defaults.dataManagement,
       ...(source.dataManagement || {}),
+    },
+    aiFeatures: {
+      ...defaults.aiFeatures,
+      ...(source.aiFeatures || {}),
     },
   };
 }

@@ -629,12 +629,19 @@ export const imageGenerationApi = {
   /**
    * Generate an AI image for a recipe based on its name
    * @param recipeName - The name of the recipe to generate an image for
+   * @param customPrompt - Optional custom prompt template (must include {recipe_name})
    * @returns Response with base64 encoded image data on success
    */
-  generate: (recipeName: string): Promise<ImageGenerationResponseDTO> =>
+  generate: (
+    recipeName: string,
+    customPrompt?: string
+  ): Promise<ImageGenerationResponseDTO> =>
     fetchApi<ImageGenerationResponseDTO>("/api/generate-image", {
       method: "POST",
-      body: JSON.stringify({ recipe_name: recipeName }),
+      body: JSON.stringify({
+        recipe_name: recipeName,
+        ...(customPrompt && { custom_prompt: customPrompt }),
+      }),
     }),
 };
 

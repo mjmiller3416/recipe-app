@@ -31,7 +31,9 @@ async def generate_recipe_image(
 
     try:
         service = get_image_generation_service()
-        result = service.generate_recipe_image(request.recipe_name)
+        result = service.generate_recipe_image(
+            request.recipe_name, custom_prompt=request.custom_prompt
+        )
 
         if not result["success"]:
             raise HTTPException(

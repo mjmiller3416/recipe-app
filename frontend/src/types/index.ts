@@ -31,6 +31,7 @@ export interface RecipeCardData {
   dietaryPreference?: string;
   isFavorite?: boolean;
   ingredients?: RecipeIngredient[]; // For large card display
+  createdAt?: string; // ISO date string for "new recipes" filter
 }
 
 // ============================================================================

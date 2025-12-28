@@ -3,6 +3,8 @@
 // ============================================
 const CHANGELOG_MD = `
 ## 2025-12-28 - New Features
+- Customize the AI image generation prompt in Settings → AI Features with syntax highlighting for the {recipe_name} placeholder
+- New "New" filter in Meal Planner lets you quickly find recipes added in the last 30 days
 - Filter shopping list by recipe using the new sidebar that shows which recipes contribute each ingredient
 - Hover over shopping list items to see a breakdown of quantities by recipe
 

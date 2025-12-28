@@ -8,6 +8,7 @@ class ImageGenerationRequestDTO(BaseModel):
     """Request DTO for generating an AI image."""
 
     recipe_name: str
+    custom_prompt: Optional[str] = None  # Custom prompt template (must include {recipe_name})
 
 
 class ImageGenerationResponseDTO(BaseModel):

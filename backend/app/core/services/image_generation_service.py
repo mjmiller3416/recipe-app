@@ -46,12 +46,15 @@ class ImageGenerationService:
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY environment variable is not set")
 
-    def generate_recipe_image(self, recipe_name: str) -> dict:
+    def generate_recipe_image(
+        self, recipe_name: str, custom_prompt: str = None
+    ) -> dict:
         """
         Generate an AI image for a recipe.
 
         Args:
             recipe_name: The name of the recipe to generate an image for.
+            custom_prompt: Optional custom prompt template (must include {recipe_name}).
 
         Returns:
             dict with 'success', 'image_data' (base64), and optional 'error'
@@ -66,8 +69,13 @@ class ImageGenerationService:
         try:
             client = _get_genai_client()
 
-            # Build the prompt
-            prompt = PROMPT_TEMPLATE.format(recipe_name=recipe_name.strip())
+            # Build the prompt - use custom_prompt if provided and valid, else use default
+            template = (
+                custom_prompt
+                if custom_prompt and "{recipe_name}" in custom_prompt
+                else PROMPT_TEMPLATE
+            )
+            prompt = template.format(recipe_name=recipe_name.strip())
 
             # Generate the image
             response = client.models.generate_content(

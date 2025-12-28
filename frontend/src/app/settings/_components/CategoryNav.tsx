@@ -6,6 +6,7 @@ import {
   ShoppingCart,
   Database,
   MessageSquare,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ export type SettingsCategory =
   | "recipePreferences"
   | "shoppingList"
   | "dataManagement"
+  | "aiFeatures"
   | "feedback";
 
 export interface CategoryConfig {
@@ -69,6 +71,12 @@ export const CATEGORIES: CategoryConfig[] = [
     label: "Data Management",
     icon: Database,
     description: "Export, import, and manage your data",
+  },
+  {
+    id: "aiFeatures",
+    label: "AI Features",
+    icon: Sparkles,
+    description: "Configure AI image generation settings",
   },
   {
     id: "feedback",
