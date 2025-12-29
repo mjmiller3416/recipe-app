@@ -2,6 +2,25 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2025-12-29 - New Features
+- Manually added shopping list items can now be assigned to specific categories (Produce, Dairy, Meat, etc.) instead of always appearing in "Other"
+- Click your profile avatar in the sidebar to access Settings
+
+## 2025-12-29 - Improvements
+- Shopping list categories now auto-collapse when all items are collected
+- Collapsed and expanded category states persist between page visits
+- New "Hide collected" toggle replaces "Clear collected" — filter your view without losing data
+- Sidebar now fits better on smaller screens with optimized spacing
+
+## 2025-12-29 - Improvements
+- Recipe ingredients now display in a logical order with Meat and Seafood first, followed by produce, dairy, and pantry items
+
+## 2025-12-29 - Bug Fixes
+- "Mac Salad" now correctly appears in the Deli section of the shopping list
+
+## 2025-12-29 - New Features
+- Add items manually to your shopping list with the new inline form — perfect for pantry staples and non-recipe items
+
 ## 2025-12-28 - New Features
 - Quickly add saved meals to your planner from the new "Saved Meals" tab — search by name or filter by favorites
 - Configure custom unit conversions for shopping list items in Settings → Shopping List (e.g., convert 51 Tbs of butter to 7 sticks)

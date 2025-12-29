@@ -95,7 +95,8 @@ class ShoppingItem(Base):
         cls,
         ingredient_name: str,
         quantity: float,
-        unit: Optional[str] = None
+        unit: Optional[str] = None,
+        category: Optional[str] = None
         ) -> "ShoppingItem":
         """
         Create a manual shopping item.
@@ -104,6 +105,7 @@ class ShoppingItem(Base):
             ingredient_name (str): The name of the ingredient.
             quantity (float): The quantity of the ingredient.
             unit (Optional[str]): The unit of measurement, if any.
+            category (Optional[str]): The category for the ingredient.
 
         Returns:
             ShoppingItem: A new manual shopping item instance.
@@ -112,6 +114,7 @@ class ShoppingItem(Base):
             ingredient_name=ingredient_name,
             quantity=quantity,
             unit=unit,
+            category=category,
             source="manual",
             have=False
         )

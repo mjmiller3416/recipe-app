@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ShoppingItem } from "./ShoppingItem";
 import type { ShoppingItemResponseDTO, IngredientBreakdownDTO } from "@/types";
 import { cn } from "@/lib/utils";
 import { ChevronUp } from "lucide-react";
+
+// Storage key prefix for persisting collapsed state
+const COLLAPSED_STORAGE_KEY = "shopping-category-collapsed";
 
 // ============================================================================
 // CATEGORY EMOJI MAPPING
@@ -52,7 +55,18 @@ export function ShoppingCategory({
   onToggleItem,
   breakdownMap,
 }: ShoppingCategoryProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  // Storage key for this specific category
+  const storageKey = `${COLLAPSED_STORAGE_KEY}-${category}`;
+
+  // Initialize expanded state from localStorage (default to expanded)
+  const [isExpanded, setIsExpanded] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const stored = localStorage.getItem(storageKey);
+    return stored === null ? true : stored !== "collapsed";
+  });
+
+  // Track previous complete state to detect when category becomes complete
+  const wasComplete = useRef(false);
 
   // Sort items: alphabetically, with unchecked first
   const sortedItems = [...items].sort((a, b) => {
@@ -70,6 +84,22 @@ export function ShoppingCategory({
   const progress = totalItems > 0 ? (checkedCount / totalItems) * 100 : 0;
   const isComplete = totalItems > 0 && checkedCount === totalItems;
 
+  // Auto-collapse when category becomes complete
+  useEffect(() => {
+    if (isComplete && !wasComplete.current) {
+      setIsExpanded(false);
+      localStorage.setItem(storageKey, "collapsed");
+    }
+    wasComplete.current = isComplete;
+  }, [isComplete, storageKey]);
+
+  // Persist expanded state changes to localStorage
+  const handleToggleExpanded = () => {
+    const newExpanded = !isExpanded;
+    setIsExpanded(newExpanded);
+    localStorage.setItem(storageKey, newExpanded ? "expanded" : "collapsed");
+  };
+
   // Get category emoji
   const emoji = getCategoryEmoji(category);
 
@@ -84,7 +114,7 @@ export function ShoppingCategory({
     >
       {/* Category header */}
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleToggleExpanded}
         className="w-full flex items-center gap-3 px-4 py-4 hover:bg-hover/30 transition-colors"
       >
         {/* Category emoji */}

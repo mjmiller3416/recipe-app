@@ -74,6 +74,25 @@ export const INGREDIENT_CATEGORIES = [
   { value: "other", label: "Other" },
 ] as const;
 
+// Display order for ingredient categories on recipe detail page
+// Meat first (as requested), then proteins, fresh items, and pantry staples
+export const INGREDIENT_CATEGORY_ORDER = [
+  "meat",
+  "seafood",
+  "produce",
+  "dairy",
+  "deli",
+  "bakery",
+  "frozen",
+  "pantry",
+  "condiments",
+  "oils-and-vinegars",
+  "spices",
+  "baking",
+  "beverages",
+  "other",
+] as const;
+
 // ============================================================================
 // Quick Filters for Recipe Browser Hero
 // ============================================================================

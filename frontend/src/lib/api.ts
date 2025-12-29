@@ -527,6 +527,7 @@ export interface ManualItemCreateDTO {
   ingredient_name: string;
   quantity: number;
   unit?: string | null;
+  category?: string | null;
 }
 
 export interface ShoppingItemUpdateDTO {

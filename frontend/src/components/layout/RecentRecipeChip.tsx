@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Displays recently viewed recipes as clickable chips in the sidebar.
- * Shows up to 4 most recent recipes with emoji and truncated name.
+ * Shows up to 3 most recent recipes with emoji and truncated name.
  */
 export function RecentRecipesSection() {
   const { recentRecipes, isLoaded } = useRecentRecipes();
@@ -27,7 +27,7 @@ export function RecentRecipesSection() {
         </span>
       </div>
 
-      {/* Recipe chips - 4x1 grid (vertical stack) */}
+      {/* Recipe chips - vertical stack */}
       <div className="grid grid-cols-1 gap-2">
         {recentRecipes.map((recipe) => (
           <RecentRecipeChip

@@ -19,7 +19,7 @@ export interface RecentRecipe {
 // ============================================================================
 
 const STORAGE_KEY = "meal-genie-recent-recipes";
-const MAX_RECENT_RECIPES = 4;
+const MAX_RECENT_RECIPES = 3;
 const CUSTOM_EVENT_NAME = "recent-recipes-updated";
 
 // ============================================================================

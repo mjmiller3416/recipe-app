@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import {
   LayoutDashboard,
   CalendarDays,
   BookOpen,
   ShoppingCart,
   Plus,
-  Settings,
+  ChevronRight,
   MessageSquarePlus,
   Newspaper,
 } from "lucide-react";
@@ -30,7 +31,6 @@ const navigation = [
   { name: "Recipe Browser", href: "/recipes", icon: BookOpen },
   { name: "Shopping List", href: "/shopping-list", icon: ShoppingCart, hasBadge: true },
   { name: "Add Recipe", href: "/recipes/add", icon: Plus },
-  { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -140,8 +140,11 @@ export function Sidebar() {
           newItemCount={newItemCount}
         />
 
-        {/* User Profile */}
-        <div className="flex items-center gap-3 rounded-lg p-3 bg-elevated hover:bg-hover transition-colors">
+        {/* User Profile - Links to Settings */}
+        <Link
+          href="/settings"
+          className="flex items-center gap-3 rounded-lg p-3 bg-elevated hover:bg-hover transition-colors group"
+        >
           <div className="relative flex-shrink-0">
             <Avatar className="h-10 w-10">
               <AvatarImage src={appConfig.user.avatar} />
@@ -157,7 +160,8 @@ export function Sidebar() {
             </p>
             <p className="text-xs text-muted">Online</p>
           </div>
-        </div>
+          <ChevronRight className="h-4 w-4 text-muted group-hover:text-foreground transition-colors flex-shrink-0" />
+        </Link>
       </div>
 
       {/* Theme Toggle - Bottom */}

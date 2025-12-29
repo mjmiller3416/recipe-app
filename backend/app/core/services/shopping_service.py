@@ -312,7 +312,8 @@ class ShoppingService:
             manual_item = ShoppingItem.create_manual(
                 ingredient_name=create_dto.ingredient_name,
                 quantity=create_dto.quantity,
-                unit=create_dto.unit
+                unit=create_dto.unit,
+                category=create_dto.category
             )
 
             created_item = self.shopping_repo.create_shopping_item(manual_item)

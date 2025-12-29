@@ -43,6 +43,7 @@ class ManualItemCreateDTO(BaseModel):
     ingredient_name: str = Field(..., min_length=1, max_length=255)
     quantity: float = Field(..., ge=0)
     unit: Optional[str] = Field(None, max_length=50)
+    category: Optional[str] = Field(None, max_length=100)
 
     @field_validator("ingredient_name", mode="before")
     @classmethod

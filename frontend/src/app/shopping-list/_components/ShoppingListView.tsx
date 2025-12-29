@@ -7,7 +7,17 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCategory } from "./ShoppingCategory";
 import { shoppingApi, plannerApi } from "@/lib/api";
 import type { ShoppingItemResponseDTO, ShoppingListResponseDTO, IngredientBreakdownDTO } from "@/types";
-import { ShoppingCart, Trash2, Filter, X } from "lucide-react";
+import { ShoppingCart, Eye, EyeOff, Filter, X, Plus } from "lucide-react";
+import { QuantityInput } from "@/components/forms/QuantityInput";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { INGREDIENT_UNITS, INGREDIENT_CATEGORIES } from "@/lib/constants";
 import { RecipeFilterSidebar } from "./RecipeFilterSidebar";
 
 /**
@@ -31,6 +41,91 @@ function StatCard({
 }
 
 /**
+ * AddManualItemForm - Inline form for adding manual items to the shopping list
+ */
+function AddManualItemForm({
+  itemName,
+  setItemName,
+  quantity,
+  setQuantity,
+  unit,
+  setUnit,
+  category,
+  setCategory,
+  onAdd,
+  isAdding,
+}: {
+  itemName: string;
+  setItemName: (name: string) => void;
+  quantity: number | null;
+  setQuantity: (qty: number | null) => void;
+  unit: string;
+  setUnit: (unit: string) => void;
+  category: string;
+  setCategory: (cat: string) => void;
+  onAdd: () => void;
+  isAdding: boolean;
+}) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && itemName.trim()) {
+      e.preventDefault();
+      onAdd();
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 p-3 mb-4 rounded-xl border border-border bg-elevated">
+      <QuantityInput
+        value={quantity}
+        onChange={setQuantity}
+        placeholder="Qty"
+        className="w-16 h-9"
+      />
+      <Select value={unit} onValueChange={setUnit}>
+        <SelectTrigger className="w-24 h-9">
+          <SelectValue placeholder="Unit" />
+        </SelectTrigger>
+        <SelectContent>
+          {INGREDIENT_UNITS.map((u) => (
+            <SelectItem key={u.value} value={u.value}>
+              {u.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select value={category} onValueChange={setCategory}>
+        <SelectTrigger className="w-28 h-9">
+          <SelectValue placeholder="Category" />
+        </SelectTrigger>
+        <SelectContent>
+          {INGREDIENT_CATEGORIES.map((cat) => (
+            <SelectItem key={cat.value} value={cat.value}>
+              {cat.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Input
+        value={itemName}
+        onChange={(e) => setItemName(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Add item..."
+        className="flex-1 h-9"
+        disabled={isAdding}
+      />
+      <Button
+        onClick={onAdd}
+        disabled={!itemName.trim() || isAdding}
+        size="sm"
+        className="h-9 px-3"
+      >
+        <Plus className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
+/**
  * ShoppingListView - Main shopping list page component
  *
  * Features:
@@ -47,6 +142,19 @@ export function ShoppingListView() {
   const [error, setError] = useState<string | null>(null);
   const [filterRecipeName, setFilterRecipeName] = useState<string | null>(null);
   const [breakdownMap, setBreakdownMap] = useState<Map<string, IngredientBreakdownDTO>>(new Map());
+
+  // Manual item form state
+  const [manualItemName, setManualItemName] = useState("");
+  const [manualItemQty, setManualItemQty] = useState<number | null>(null);
+  const [manualItemUnit, setManualItemUnit] = useState<string>("");
+  const [manualItemCategory, setManualItemCategory] = useState<string>("");
+  const [isAddingItem, setIsAddingItem] = useState(false);
+
+  // Hide completed items state (persisted to localStorage)
+  const [hideCompleted, setHideCompleted] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("shopping-list-hide-completed") === "true";
+  });
 
   // Fetch and generate shopping list on mount
   const loadShoppingList = useCallback(async () => {
@@ -131,33 +239,51 @@ export function ShoppingListView() {
     }
   };
 
-  // Handle clearing completed items
-  const handleClearCompleted = async () => {
-    if (!shoppingData) return;
+  // Toggle hiding completed items (persisted to localStorage)
+  const handleToggleHideCompleted = () => {
+    const newValue = !hideCompleted;
+    setHideCompleted(newValue);
+    localStorage.setItem("shopping-list-hide-completed", String(newValue));
+  };
 
-    const previousData = shoppingData;
+  // Handle adding a manual item
+  const handleAddManualItem = async () => {
+    const trimmedName = manualItemName.trim();
+    if (!trimmedName) return;
 
-    // Optimistic update - remove all checked items
-    setShoppingData({
-      ...shoppingData,
-      items: shoppingData.items.filter((i) => !i.have),
-      checked_items: 0,
-      total_items: shoppingData.total_items - shoppingData.checked_items,
-    });
-
+    setIsAddingItem(true);
     try {
-      await shoppingApi.clearCompleted();
-      // Notify other components (e.g., Sidebar) that shopping list changed
+      await shoppingApi.addItem({
+        ingredient_name: trimmedName,
+        quantity: manualItemQty || 1,
+        unit: manualItemUnit || null,
+        category: manualItemCategory || null,
+      });
+
+      // Clear form
+      setManualItemName("");
+      setManualItemQty(null);
+      setManualItemUnit("");
+      setManualItemCategory("");
+
+      // Reload list
+      await loadShoppingList();
+
+      // Notify other components
       window.dispatchEvent(new Event("shopping-list-updated"));
     } catch (err) {
-      // Rollback on error
-      setShoppingData(previousData);
-      setError(err instanceof Error ? err.message : "Failed to clear completed items");
+      setError(err instanceof Error ? err.message : "Failed to add item");
+    } finally {
+      setIsAddingItem(false);
     }
   };
 
-  // Group items by category
-  const groupedItems = shoppingData?.items.reduce<Record<string, ShoppingItemResponseDTO[]>>(
+  // Filter items based on hideCompleted setting, then group by category
+  const itemsToShow = hideCompleted
+    ? shoppingData?.items.filter((item) => !item.have) ?? []
+    : shoppingData?.items ?? [];
+
+  const groupedItems = itemsToShow.reduce<Record<string, ShoppingItemResponseDTO[]>>(
     (acc, item) => {
       const category = item.category || "Other";
       if (!acc[category]) {
@@ -167,7 +293,7 @@ export function ShoppingListView() {
       return acc;
     },
     {}
-  ) ?? {};
+  );
 
   // Compute unique recipes from all items for the sidebar
   const recipeData = shoppingData?.items.reduce<
@@ -226,15 +352,25 @@ export function ShoppingListView() {
   const hasCheckedItems = shoppingData && shoppingData.checked_items > 0;
 
   // Header actions
+  // Show toggle button when there are checked items
   const headerActions = hasCheckedItems ? (
     <Button
       variant="outline"
       size="sm"
-      onClick={handleClearCompleted}
-      className="text-muted hover:text-destructive"
+      onClick={handleToggleHideCompleted}
+      className="text-muted hover:text-foreground"
     >
-      <Trash2 className="h-4 w-4 mr-2" />
-      Clear collected
+      {hideCompleted ? (
+        <>
+          <Eye className="h-4 w-4 mr-2" />
+          Show collected
+        </>
+      ) : (
+        <>
+          <EyeOff className="h-4 w-4 mr-2" />
+          Hide collected
+        </>
+      )}
     </Button>
   ) : null;
 
@@ -291,6 +427,20 @@ export function ShoppingListView() {
         description="Items from your meal plan"
         actions={headerActions}
       >
+        {/* Add manual item form - also available when list is empty */}
+        <AddManualItemForm
+          itemName={manualItemName}
+          setItemName={setManualItemName}
+          quantity={manualItemQty}
+          setQuantity={setManualItemQty}
+          unit={manualItemUnit}
+          setUnit={setManualItemUnit}
+          category={manualItemCategory}
+          setCategory={setManualItemCategory}
+          onAdd={handleAddManualItem}
+          isAdding={isAddingItem}
+        />
+
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="p-4 bg-elevated rounded-full mb-4">
             <ShoppingCart className="h-12 w-12 text-muted" />
@@ -299,7 +449,7 @@ export function ShoppingListView() {
             Your shopping list is empty
           </h3>
           <p className="text-sm text-muted max-w-sm">
-            Add meals to your planner and they&apos;ll appear here as a shopping list.
+            Add meals to your planner or use the form above to add items manually.
           </p>
         </div>
       </PageLayout>
@@ -357,6 +507,20 @@ export function ShoppingListView() {
           {progressPercent}%
         </span>
       </div>
+
+      {/* Add manual item form */}
+      <AddManualItemForm
+        itemName={manualItemName}
+        setItemName={setManualItemName}
+        quantity={manualItemQty}
+        setQuantity={setManualItemQty}
+        unit={manualItemUnit}
+        setUnit={setManualItemUnit}
+        category={manualItemCategory}
+        setCategory={setManualItemCategory}
+        onAdd={handleAddManualItem}
+        isAdding={isAddingItem}
+      />
 
       {/* Two-column layout: Main content + Sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_clamp(200px,25%,320px)] gap-6">

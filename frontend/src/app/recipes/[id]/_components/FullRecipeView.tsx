@@ -42,6 +42,7 @@ import { RecipeHeroImage } from "@/components/recipe/RecipeImage";
 import { recipeApi, plannerApi } from "@/lib/api";
 import type { RecipeResponseDTO, MealSelectionResponseDTO } from "@/types";
 import { formatQuantity } from "@/lib/utils";
+import { INGREDIENT_CATEGORY_ORDER } from "@/lib/constants";
 import { useRecentRecipes } from "@/hooks";
 
 import { IngredientItem } from "./IngredientItem";
@@ -92,6 +93,20 @@ function groupIngredientsByCategory(
   });
 
   return grouped;
+}
+
+// Sort grouped categories by priority order (Meat first, then logical order)
+function sortCategoryEntries(
+  entries: [string, RecipeResponseDTO["ingredients"]][]
+): [string, RecipeResponseDTO["ingredients"]][] {
+  return entries.sort(([a], [b]) => {
+    const aIndex = INGREDIENT_CATEGORY_ORDER.indexOf(a.toLowerCase() as typeof INGREDIENT_CATEGORY_ORDER[number]);
+    const bIndex = INGREDIENT_CATEGORY_ORDER.indexOf(b.toLowerCase() as typeof INGREDIENT_CATEGORY_ORDER[number]);
+    // Unknown categories go to the end
+    const aOrder = aIndex === -1 ? INGREDIENT_CATEGORY_ORDER.length : aIndex;
+    const bOrder = bIndex === -1 ? INGREDIENT_CATEGORY_ORDER.length : bIndex;
+    return aOrder - bOrder;
+  });
 }
 
 // ============================================================================
@@ -382,7 +397,7 @@ export function FullRecipeView() {
                 Ingredients
               </h2>
               <div className="space-y-1 text-sm">
-                {Array.from(groupedIngredients.entries()).map(([category, ingredients]) => (
+                {sortCategoryEntries(Array.from(groupedIngredients.entries())).map(([category, ingredients]) => (
                   <div key={category}>
                     {groupedIngredients.size > 1 && (
                       <p className="font-semibold text-gray-700 mt-3 mb-1 first:mt-0 text-xs uppercase">
@@ -600,7 +615,7 @@ export function FullRecipeView() {
                   {/* Ingredients List */}
                   {recipe.ingredients.length > 0 ? (
                     <div className="space-y-1">
-                      {Array.from(groupedIngredients.entries()).map(([category, ingredients]) => (
+                      {sortCategoryEntries(Array.from(groupedIngredients.entries())).map(([category, ingredients]) => (
                         <div key={category}>
                           {groupedIngredients.size > 1 && (
                             <p className="text-xs font-semibold text-muted uppercase tracking-wider mt-4 mb-2 first:mt-0">

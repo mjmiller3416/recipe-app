@@ -48,15 +48,17 @@ Wait for the user to respond before proceeding.
    - Simple changes, minimal code impact
    - No over-engineering
    - If clarification is needed, ask the user before proceeding
-5. Verify the implementation works correctly
+5. **If the change impacts the UI**, refer to the `frontend-design` skill for design tokens, patterns, and component guidelines
+6. Verify the implementation works correctly
 
 ### Step 4: Move to Completed Section
 
 After implementation is verified:
 
 1. Remove the TODO from its current priority section in `frontend/TODO.md`
-2. Add it to the `## ✅ Completed` section (at the top of that section, just below the `## ✅ Completed` heading)
-3. Keep the same format: Title, Location, Issue, Solution
+2. **Renumber remaining TODOs** in that priority section so there are no gaps (e.g., if #3 was removed, renumber #4 → #3, #5 → #4, etc.)
+3. Add it to the `## ✅ Completed` section (at the top of that section, just below the `## ✅ Completed` heading)
+4. Keep the same format: Title, Location, Issue, Solution
 
 ### Step 5: Generate Changelog Entry
 

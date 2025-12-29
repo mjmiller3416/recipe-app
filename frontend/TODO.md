@@ -34,17 +34,27 @@
 - **Issue**: Selections cannot be selected via the Tab key, only via mouse click or Enter key. This makes keyboard navigation slower.
 - **Solution**: Update the autocomplete selection logic to allow Tab key selection of highlighted suggestions, then move focus to the next input field.
 
-### 6. Reorder Ingredients on Recipe Page
-- **Location**: `src/app/recipes/[id]/page.tsx`
-- **Issue**: Reorder ingredients on the recipe page so that the "Meat" category always appears first, followed by other categories in a logical order (e.g., Vegetables, Grains, Spices).
-- **Solution**: Update the sorting logic when rendering ingredients to prioritize the "Meat" category first.
-
-### 7. Add Zoom-on-Hover to Side Dish Cards
+### 6. Add Zoom-on-Hover to Side Dish Cards
 - **Location**: `src/app/meal-planner/_components/meal-display/SideDishSlots.tsx`
 - **Issue**: Side dish recipe cards in the meal planner lack the subtle zoom effect on hover that main dish cards have — making the interaction feel less polished.
 - **Solution**: Add `transition-transform duration-500 group-hover:scale-105` to the `RecipeCardImage` component (line 86), matching the pattern used in `MainDishCard.tsx`.
 
 ## ✅ Completed
+
+### Reorder Ingredients on Recipe Page
+- **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx`
+- **Issue**: Reorder ingredients on the recipe page so that the "Meat" category always appears first, followed by other categories in a logical order (e.g., Vegetables, Grains, Spices).
+- **Solution**: Added `INGREDIENT_CATEGORY_ORDER` constant to `constants.ts` and updated `FullRecipeView.tsx` to sort ingredient categories by priority order before rendering.
+
+### Update "Mac Salad" Category from Bakery to Deli
+- **Location**: Database (ingredients table)
+- **Issue**: The "Mac Salad" ingredient is incorrectly categorized as "bakery" — it should be in the "deli" category.
+- **Solution**: Execute SQL update: `UPDATE ingredients SET ingredient_category = 'deli' WHERE ingredient_name = 'Mac Salad' AND ingredient_category = 'bakery';`
+
+### Add Manual Item Entry to Shopping List
+- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
+- **Issue**: Users could not manually add items to the shopping list—all items had to come from meal planner recipes. This prevented adding ad-hoc items like pantry staples or non-recipe items.
+- **Solution**: Added an inline form at the top of the shopping list with qty, unit, and name fields. Form is visible in both populated and empty states. Manually added items display "added manually" text to distinguish them from recipe-generated items.
 
 ### Fix Quick Filter Pills for Favorites and New in Recipe Browser
 - **Location**: `src/app/recipes/_components/RecipeBrowserView.tsx`
