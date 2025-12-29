@@ -44,6 +44,7 @@ VOLUME_UNITS: dict[str, float] = {
     "tsp": 4.92892,
     "teaspoon": 4.92892,
     "teaspoons": 4.92892,
+    "tbs": 14.7868,  # frontend alias
     "tbsp": 14.7868,
     "tablespoon": 14.7868,
     "tablespoons": 14.7868,
@@ -182,13 +183,20 @@ def to_display_unit(base_quantity: float, dimension: str, original_unit: str | N
     Args:
         base_quantity: Quantity in base units (grams for mass, ml for volume).
         dimension: The dimension (mass, volume, count, unknown).
-        original_unit: Optional original unit for count/unknown dimensions.
+        original_unit: Optional original unit - preserves unit type when provided.
 
     Returns:
         Tuple of (display_quantity, display_unit)
     """
+    normalized_original = normalize_unit(original_unit)
+
     if dimension == DIMENSION_MASS:
-        # Prefer lbs/oz for US-style display
+        # If original unit provided, convert back to that unit type
+        if normalized_original in MASS_UNITS:
+            factor = MASS_UNITS[normalized_original]
+            display_label = _get_mass_display_label(normalized_original)
+            return round(base_quantity / factor, 2), display_label
+        # Fallback: prefer lbs/oz for US-style display
         if base_quantity >= 453.592:  # 1 lb or more
             return round(base_quantity / 453.592, 2), "lbs"
         if base_quantity >= 28.3495:  # 1 oz or more
@@ -196,13 +204,55 @@ def to_display_unit(base_quantity: float, dimension: str, original_unit: str | N
         return round(base_quantity, 2), "g"
 
     if dimension == DIMENSION_VOLUME:
+        # If original unit provided, convert back to that unit type
+        if normalized_original in VOLUME_UNITS:
+            factor = VOLUME_UNITS[normalized_original]
+            display_label = _get_volume_display_label(normalized_original)
+            return round(base_quantity / factor, 2), display_label
+        # Fallback: choose sensible unit based on quantity
         if base_quantity >= 236.588:  # 1 cup or more
-            return round(base_quantity / 236.588, 2), "cups"
-        if base_quantity >= 14.7868:  # 1 tbsp or more
-            return round(base_quantity / 14.7868, 2), "tbsp"
+            return round(base_quantity / 236.588, 2), "cup"
+        if base_quantity >= 14.7868:  # 1 Tbs or more
+            return round(base_quantity / 14.7868, 2), "Tbs"
         if base_quantity >= 4.92892:  # 1 tsp or more
             return round(base_quantity / 4.92892, 2), "tsp"
         return round(base_quantity, 2), "ml"
 
     # Count or unknown: keep original unit
-    return base_quantity, normalize_unit(original_unit) or ""
+    return base_quantity, normalized_original or ""
+
+
+def _get_volume_display_label(normalized_unit: str) -> str:
+    """Map normalized volume unit to frontend-compatible display label."""
+    if normalized_unit in ("tbs", "tbsp", "tablespoon", "tablespoons"):
+        return "Tbs"
+    if normalized_unit in ("tsp", "teaspoon", "teaspoons"):
+        return "tsp"
+    if normalized_unit in ("cup", "cups"):
+        return "cup"
+    if normalized_unit in ("fl oz", "fluid ounce", "fluid ounces"):
+        return "fl oz"
+    if normalized_unit in ("ml", "milliliter", "milliliters"):
+        return "ml"
+    if normalized_unit in ("l", "liter", "liters"):
+        return "l"
+    if normalized_unit in ("pint", "pints"):
+        return "pint"
+    if normalized_unit in ("quart", "quarts"):
+        return "quart"
+    if normalized_unit in ("gallon", "gallons"):
+        return "gallon"
+    return normalized_unit
+
+
+def _get_mass_display_label(normalized_unit: str) -> str:
+    """Map normalized mass unit to frontend-compatible display label."""
+    if normalized_unit in ("lb", "lbs", "pound", "pounds"):
+        return "lbs"
+    if normalized_unit in ("oz", "ounce", "ounces"):
+        return "oz"
+    if normalized_unit in ("g", "gram", "grams"):
+        return "g"
+    if normalized_unit in ("kg", "kilogram", "kilograms"):
+        return "kg"
+    return normalized_unit
