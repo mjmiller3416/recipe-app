@@ -400,3 +400,13 @@ export interface ImageGenerationResponseDTO {
   image_data?: string; // Base64 encoded image
   error?: string;
 }
+
+// ============================================================================
+// Cooking Tip Types
+// ============================================================================
+
+export interface CookingTipResponseDTO {
+  success: boolean;
+  tip?: string;
+  error?: string;
+}

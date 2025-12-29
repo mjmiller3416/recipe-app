@@ -17,6 +17,7 @@ import type {
   DuplicateResolutionDTO,
   ExportFilterDTO,
   ImageGenerationResponseDTO,
+  CookingTipResponseDTO,
 } from "@/types";
 
 // API base URL from environment variable or default to localhost
@@ -283,6 +284,17 @@ export const plannerApi = {
   clearCompleted: (): Promise<{ message: string }> =>
     fetchApi<{ message: string }>("/api/planner/clear-completed", {
       method: "DELETE",
+    }),
+
+  /**
+   * Reorder planner entries by providing entry IDs in desired order
+   */
+  reorderEntries: (
+    entryIds: number[]
+  ): Promise<{ success: boolean; message: string }> =>
+    fetchApi<{ success: boolean; message: string }>("/api/planner/entries/reorder", {
+      method: "PUT",
+      body: JSON.stringify({ entry_ids: entryIds }),
     }),
 };
 
@@ -644,6 +656,19 @@ export const imageGenerationApi = {
         ...(customPrompt && { custom_prompt: customPrompt }),
       }),
     }),
+};
+
+// ============================================================================
+// Cooking Tip API
+// ============================================================================
+
+export const cookingTipApi = {
+  /**
+   * Get a random cooking tip from AI
+   * @returns Response with cooking tip on success
+   */
+  getTip: (): Promise<CookingTipResponseDTO> =>
+    fetchApi<CookingTipResponseDTO>("/api/cooking-tip"),
 };
 
 // ============================================================================
