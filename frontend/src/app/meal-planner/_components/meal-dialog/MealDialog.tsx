@@ -505,7 +505,12 @@ export function MealDialog({
               value="saved"
               className="flex-1 overflow-y-auto px-6 py-4 mt-0"
             >
-              <SavedView />
+              <SavedView
+                onEntryCreated={(entry) => {
+                  onEntryCreated?.(entry);
+                  onOpenChange(false);
+                }}
+              />
             </TabsContent>
           </Tabs>
         ) : (

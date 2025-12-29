@@ -3,6 +3,9 @@
 // ============================================
 const CHANGELOG_MD = `
 ## 2025-12-28 - New Features
+- Configure custom unit conversions for shopping list items in Settings → Shopping List (e.g., convert 51 Tbs of butter to 7 sticks)
+
+## 2025-12-28 - Previous Features
 - Favorite meals directly from the meal planner with the new Favorite button — favorited meals show a heart indicator in the weekly menu
 - Customize which quick filters appear in the Recipe Browser from Settings → Recipe Preferences (choose up to 5)
 - Customize the AI image generation prompt in Settings → AI Features with syntax highlighting for the {recipe_name} placeholder
