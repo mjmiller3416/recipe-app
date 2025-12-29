@@ -3,6 +3,7 @@
 // ============================================
 const CHANGELOG_MD = `
 ## 2025-12-28 - New Features
+- Quickly add saved meals to your planner from the new "Saved Meals" tab — search by name or filter by favorites
 - Configure custom unit conversions for shopping list items in Settings → Shopping List (e.g., convert 51 Tbs of butter to 7 sticks)
 
 ## 2025-12-28 - Previous Features
