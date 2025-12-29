@@ -3,6 +3,7 @@
 // ============================================
 const CHANGELOG_MD = `
 ## 2025-12-29 - New Features
+- New Dashboard homepage with at-a-glance stats, meal queue, shopping list preview, and AI-powered Chef's Tips
 - Manually added shopping list items can now be assigned to specific categories (Produce, Dairy, Meat, etc.) instead of always appearing in "Other"
 - Click your profile avatar in the sidebar to access Settings
 
