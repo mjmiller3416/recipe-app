@@ -794,5 +794,58 @@ export const feedbackApi = {
     }),
 };
 
+// ============================================================================
+// Unit Conversion Rules API
+// ============================================================================
+
+export interface UnitConversionRuleDTO {
+  id: number;
+  ingredient_name: string;
+  from_unit: string;
+  to_unit: string;
+  factor: number;
+  round_up: boolean;
+  created_at: string;
+}
+
+export interface UnitConversionRuleCreateDTO {
+  ingredient_name: string;
+  from_unit: string;
+  to_unit: string;
+  factor: number;
+  round_up?: boolean;
+}
+
+export const unitConversionApi = {
+  /**
+   * List all unit conversion rules
+   */
+  list: (): Promise<UnitConversionRuleDTO[]> =>
+    fetchApi<UnitConversionRuleDTO[]>("/api/unit-conversions"),
+
+  /**
+   * Get a single rule by ID
+   */
+  get: (id: number): Promise<UnitConversionRuleDTO> =>
+    fetchApi<UnitConversionRuleDTO>(`/api/unit-conversions/${id}`),
+
+  /**
+   * Create a new unit conversion rule
+   */
+  create: (data: UnitConversionRuleCreateDTO): Promise<UnitConversionRuleDTO> =>
+    fetchApi<UnitConversionRuleDTO>("/api/unit-conversions", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  /**
+   * Delete a unit conversion rule
+   */
+  delete: (id: number): Promise<void> =>
+    fetchApi<void>(`/api/unit-conversions/${id}`, {
+      method: "DELETE",
+    }),
+};
+
 // Export the error class for use in components
 export { ApiError };

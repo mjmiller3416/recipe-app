@@ -32,6 +32,12 @@ from .recipe_dtos import (
     RecipeResponseDTO,
     RecipeUpdateDTO,
 )
+from .unit_conversion_dtos import (
+    UnitConversionRuleBaseDTO,
+    UnitConversionRuleCreateDTO,
+    UnitConversionRuleResponseDTO,
+    UnitConversionRuleUpdateDTO,
+)
 from .shopping_dtos import (
     BulkOperationResultDTO,
     BulkStateUpdateDTO,
@@ -99,4 +105,10 @@ __all__ = [
     "ShoppingStateDTO",
     "BulkStateUpdateDTO",
     "BulkOperationResultDTO",
+
+    # Unit Conversion DTOs
+    "UnitConversionRuleBaseDTO",
+    "UnitConversionRuleCreateDTO",
+    "UnitConversionRuleUpdateDTO",
+    "UnitConversionRuleResponseDTO",
 ]

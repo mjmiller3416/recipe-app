@@ -34,6 +34,7 @@ import { AppearanceSection } from "./sections/AppearanceSection";
 import { FeedbackSection } from "./sections/FeedbackSection";
 import { AIFeaturesSection } from "./sections/AIFeaturesSection";
 import { RecipePreferencesSection } from "./sections/RecipePreferencesSection";
+import { UnitConversionsSection } from "./sections/UnitConversionsSection";
 
 export function SettingsView() {
   const [activeCategory, setActiveCategory] =
@@ -131,13 +132,7 @@ export function SettingsView() {
         );
 
       case "shoppingList":
-        return (
-          <PlaceholderSection
-            icon={ShoppingCart}
-            title="Shopping List"
-            description="Customize category sorting, auto-clear behavior, and duplicate handling"
-          />
-        );
+        return <UnitConversionsSection />;
 
       case "dataManagement":
         return <DataManagementSection />;

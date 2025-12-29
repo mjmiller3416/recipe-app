@@ -43,6 +43,7 @@ export const INGREDIENT_UNITS = [
   { value: "cup", label: "cup" },
   { value: "oz", label: "oz" },
   { value: "lbs", label: "lbs" },
+  { value: "stick", label: "stick" },
   { value: "bag", label: "bag" },
   { value: "box", label: "box" },
   { value: "can", label: "can" },

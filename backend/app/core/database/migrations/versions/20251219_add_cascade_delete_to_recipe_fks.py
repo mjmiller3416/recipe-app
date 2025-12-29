@@ -55,6 +55,12 @@ def fk_has_cascade(conn, constraint_name: str) -> bool:
 def upgrade() -> None:
     """Add CASCADE DELETE to recipe foreign keys."""
     conn = op.get_bind()
+
+    # Skip for SQLite - it doesn't support ALTER CONSTRAINT and handles cascades differently
+    if conn.dialect.name == 'sqlite':
+        print("SQLite detected - skipping CASCADE DELETE migration (not supported)")
+        return
+
     print("Starting CASCADE DELETE migration...")
 
     # Update recipe_ingredients.recipe_id FK
@@ -125,6 +131,11 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Remove CASCADE DELETE from recipe foreign keys."""
     conn = op.get_bind()
+
+    # Skip for SQLite
+    if conn.dialect.name == 'sqlite':
+        print("SQLite detected - skipping CASCADE DELETE downgrade")
+        return
 
     # Revert recipe_ingredients.recipe_id FK
     fk_name = get_fk_constraint_name(conn, 'recipe_ingredients', 'recipe_id')

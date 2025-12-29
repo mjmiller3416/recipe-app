@@ -1,0 +1,123 @@
+"""app/core/services/unit_conversion_service.py
+
+Provides services for unit conversion rule management.
+"""
+
+# ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
+import math
+from typing import List, Optional, Tuple
+
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
+
+from ..dtos.unit_conversion_dtos import (
+    UnitConversionRuleCreateDTO,
+    UnitConversionRuleUpdateDTO,
+)
+from ..models.unit_conversion_rule import UnitConversionRule
+from ..repositories.unit_conversion_repo import UnitConversionRepo
+
+
+# ── Unit Conversion Service ────────────────────────────────────────────────────────────────────────────────
+class UnitConversionService:
+    """Provides unit conversion rule operations."""
+
+    def __init__(self, session: Session):
+        """Initialize with a database session."""
+        self.session = session
+        self.repo = UnitConversionRepo(session)
+
+    # ── CRUD Operations ─────────────────────────────────────────────────────────────────────────────────────
+    def get_all(self) -> List[UnitConversionRule]:
+        """Return all unit conversion rules."""
+        return self.repo.get_all()
+
+    def get_by_id(self, rule_id: int) -> Optional[UnitConversionRule]:
+        """Get a single rule by ID."""
+        return self.repo.get_by_id(rule_id)
+
+    def create_rule(self, dto: UnitConversionRuleCreateDTO) -> UnitConversionRule:
+        """Create a new unit conversion rule."""
+        try:
+            rule = UnitConversionRule(
+                ingredient_name=dto.ingredient_name.lower().strip(),
+                from_unit=dto.from_unit.lower().strip(),
+                to_unit=dto.to_unit.lower().strip(),
+                factor=dto.factor,
+                round_up=dto.round_up,
+            )
+            self.repo.add(rule)
+            self.session.commit()
+            return rule
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise e
+
+    def update_rule(
+        self, rule_id: int, dto: UnitConversionRuleUpdateDTO
+    ) -> Optional[UnitConversionRule]:
+        """Update an existing rule."""
+        try:
+            rule = self.repo.get_by_id(rule_id)
+            if not rule:
+                return None
+
+            if dto.ingredient_name is not None:
+                rule.ingredient_name = dto.ingredient_name.lower().strip()
+            if dto.from_unit is not None:
+                rule.from_unit = dto.from_unit.lower().strip()
+            if dto.to_unit is not None:
+                rule.to_unit = dto.to_unit.lower().strip()
+            if dto.factor is not None:
+                rule.factor = dto.factor
+            if dto.round_up is not None:
+                rule.round_up = dto.round_up
+
+            self.session.commit()
+            return rule
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise e
+
+    def delete_rule(self, rule_id: int) -> bool:
+        """Delete a rule by ID."""
+        try:
+            rule = self.repo.get_by_id(rule_id)
+            if not rule:
+                return False
+            self.repo.delete(rule)
+            self.session.commit()
+            return True
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise e
+
+    # ── Conversion Logic ────────────────────────────────────────────────────────────────────────────────────
+    def apply_conversion(
+        self, ingredient_name: str, quantity: float, unit: str
+    ) -> Tuple[float, str]:
+        """
+        Apply ingredient-specific conversion rule if one exists.
+
+        Args:
+            ingredient_name: Name of the ingredient (e.g., "butter")
+            quantity: Quantity in the current unit
+            unit: Current unit (e.g., "tbs")
+
+        Returns:
+            Tuple of (converted_quantity, converted_unit).
+            Returns original values if no matching rule exists.
+        """
+        rule = self.repo.find_matching_rule(ingredient_name, unit)
+        if not rule:
+            return quantity, unit
+
+        # Convert: quantity / factor = new quantity
+        # e.g., 51 tbs / 8 = 6.375 sticks
+        converted = quantity / rule.factor
+
+        # Apply rounding if specified
+        if rule.round_up:
+            converted = math.ceil(converted)
+
+        return converted, rule.to_unit

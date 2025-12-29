@@ -18,6 +18,7 @@ from ..models.ingredient import Ingredient
 from ..models.shopping_item import ShoppingItem
 from ..models.shopping_state import ShoppingState
 from ..utils.unit_conversion import get_dimension, to_base_unit, to_display_unit
+from ..services.unit_conversion_service import UnitConversionService
 
 
 # ── Shopping Repository ─────────────────────────────────────────────────────────────────────────────────────
@@ -104,10 +105,17 @@ class ShoppingRepo:
 
         # convert to ShoppingItem objects
         items: List[ShoppingItem] = []
+        conversion_service = UnitConversionService(self.session)
+
         for data in aggregation.values():
             # convert from base unit to display unit
             display_qty, display_unit = to_display_unit(
                 data["base_quantity"], data["dimension"], data["original_unit"]
+            )
+
+            # apply ingredient-specific conversion rules (e.g., butter tbs -> sticks)
+            display_qty, display_unit = conversion_service.apply_conversion(
+                data["name"], display_qty, display_unit
             )
 
             # create state key using dimension for persistence
