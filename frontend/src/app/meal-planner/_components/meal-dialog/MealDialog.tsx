@@ -511,8 +511,10 @@ export function MealDialog({
         ) : (
           // Edit mode: Simple header with content
           <>
-            <div className="px-6 pt-6 pb-4">
-              <h2 className="text-lg font-semibold text-foreground">Edit Meal</h2>
+            <div className="px-6 pt-6 pb-0">
+              <h2 className="text-base font-medium text-primary border-b-2 border-primary inline-block pb-2">
+                Edit Meal
+              </h2>
             </div>
             <div className="flex-1 overflow-y-auto px-6 py-4">
               {editorContent}

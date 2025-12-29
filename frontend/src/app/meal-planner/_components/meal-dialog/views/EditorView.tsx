@@ -84,8 +84,8 @@ export function EditorView({
         className="text-base"
       />
 
-      {/* Slot Row */}
-      <div className="grid grid-cols-4 gap-3">
+      {/* Slot Row - p-1 gives active borders and shadows room to render */}
+      <div className="grid grid-cols-4 gap-3 p-1">
         {/* Main Dish Slot */}
         <MealSlot
           variant="main"

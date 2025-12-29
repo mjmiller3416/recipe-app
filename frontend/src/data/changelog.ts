@@ -11,6 +11,7 @@ const CHANGELOG_MD = `
 - Hover over shopping list items to see a breakdown of quantities by recipe
 
 ## 2025-12-28 - Bug Fixes
+- Fixed meal slot cards in the create/edit meal dialog to display at consistent sizes with proper borders and shadows
 - Weekly menu in Meal Planner now scrolls properly when there are many items
 - Shopping list items now uncheck automatically when their quantity increases from adding new recipes
 - Meal planner now auto-selects the first uncompleted meal when you open the page
@@ -19,6 +20,7 @@ const CHANGELOG_MD = `
 - Fixed loading state issues on the Recipes page with improved Suspense handling
 
 ## 2025-12-28 - Improvements
+- Shopping list now intelligently combines ingredients by unit type — quantities in the same dimension (cups + tbsp, lbs + oz) are merged, while incompatible units (lbs vs cups) appear as separate items
 - Print recipes with customizable options — choose to include or exclude the image, chef's notes, and cooking time to fit more content on a single page
 - Ingredient quantities now accept leading decimals like .5 or .25 (no need to type 0.5)
 - Clicking "Add Ingredient" now automatically focuses the new ingredient name field

@@ -17,50 +17,16 @@ from ..models.recipe_ingredient import RecipeIngredient
 from ..models.ingredient import Ingredient
 from ..models.shopping_item import ShoppingItem
 from ..models.shopping_state import ShoppingState
+from ..utils.unit_conversion import get_dimension, to_base_unit, to_display_unit
 
 
 # ── Shopping Repository ─────────────────────────────────────────────────────────────────────────────────────
 class ShoppingRepo:
     """Repository for shopping list operations."""
 
-    # unit conversion mappings
-    _CONVERSIONS: Dict[str, Dict[str, float]] = {
-        "butter": {"stick": 8.0, "tbsp": 1.0},
-        "flour": {"cup": 16.0, "tbsp": 1.0},
-        "sugar": {"cup": 16.0, "tbsp": 1.0},
-    }
-
     def __init__(self, session: Session):
         """Initialize the Shopping Repository with a database session."""
         self.session = session
-
-    # ── Unit Conversion ─────────────────────────────────────────────────────────────────────────────────────
-    def _convert_quantity(self, name: str, qty: float, unit: str) -> Tuple[float, str]:
-        """
-        Convert ingredient quantity to a standard unit if applicable.
-
-        Args:
-            name (str): Ingredient name.
-            qty (float): Quantity to convert.
-            unit (str): Current unit of the ingredient.
-
-        Returns:
-            Tuple[float, str]: Converted quantity and unit.
-        """
-        key = name.lower()
-        if key in self._CONVERSIONS:
-            group = self._CONVERSIONS[key]
-            factor = group.get(unit)
-            if factor is None:
-                return qty, unit
-
-            qty_base = qty * factor
-            # Find the best unit representation
-            for u, f in sorted(group.items(), key=lambda it: -it[1]):
-                if qty_base % f == 0:
-                    return qty_base // f, u
-            return qty_base / group.get(unit, 1.0), unit
-        return qty, unit
 
     # ── Recipe Ingredient Aggregation ───────────────────────────────────────────────────────────────────────
     def get_recipe_ingredients(self, recipe_ids: List[int]) -> List[RecipeIngredient]:
@@ -102,6 +68,7 @@ class ShoppingRepo:
     def aggregate_ingredients(self, recipe_ids: List[int]) -> List[ShoppingItem]:
         """
         Aggregate ingredients from recipes into shopping items.
+        Groups by (ingredient_id, dimension) to properly handle different unit types.
 
         Args:
             recipe_ids (List[int]): List of recipe IDs to aggregate ingredients from.
@@ -111,37 +78,45 @@ class ShoppingRepo:
         """
         recipe_ingredients = self.get_recipe_ingredients(recipe_ids)
 
-        # aggregate by ingredient ID
-        aggregation: Dict[int, Dict[str, Any]] = defaultdict(lambda: {
-            "quantity": 0.0,
-            "unit": None,
+        # aggregate by (ingredient_id, dimension) to separate mass/volume/count
+        aggregation: Dict[Tuple[int, str], Dict[str, Any]] = defaultdict(lambda: {
+            "base_quantity": 0.0,
+            "dimension": None,
+            "original_unit": None,
             "category": None,
             "name": None,
         })
 
         for ri in recipe_ingredients:
             ingredient: Ingredient = ri.ingredient
-            data = aggregation[ri.ingredient_id]
+            dimension = get_dimension(ri.unit)
+            key = (ri.ingredient_id, dimension)
+
+            # convert to base unit for aggregation
+            base_qty, _ = to_base_unit(ri.quantity or 0.0, ri.unit)
+
+            data = aggregation[key]
             data["name"] = ingredient.ingredient_name
             data["category"] = ingredient.ingredient_category
-            data["unit"] = ri.unit or data["unit"]
-            data["quantity"] += ri.quantity or 0.0
+            data["dimension"] = dimension
+            data["original_unit"] = ri.unit or data["original_unit"]
+            data["base_quantity"] += base_qty
 
         # convert to ShoppingItem objects
         items: List[ShoppingItem] = []
         for data in aggregation.values():
-            # apply unit conversions
-            converted_qty, converted_unit = self._convert_quantity(
-                data["name"], data["quantity"], data["unit"] or ""
+            # convert from base unit to display unit
+            display_qty, display_unit = to_display_unit(
+                data["base_quantity"], data["dimension"], data["original_unit"]
             )
 
-            # create state key for persistence
-            state_key = ShoppingState.create_key(data["name"], converted_unit)
+            # create state key using dimension for persistence
+            state_key = ShoppingState.create_key(data["name"], data["dimension"])
 
             item = ShoppingItem(
                 ingredient_name=data["name"],
-                quantity=converted_qty,
-                unit=converted_unit,
+                quantity=display_qty,
+                unit=display_unit,
                 category=data["category"],
                 source="recipe",
                 have=False,
@@ -157,6 +132,7 @@ class ShoppingRepo:
         ) -> Dict[str, List[Tuple[str, float, str]]]:
         """
         Get detailed breakdown of ingredients used in recipes.
+        Groups by (ingredient, dimension) to properly handle different unit types.
 
         Args:
             recipe_ids (List[int]): List of recipe IDs to get breakdown for.
@@ -167,33 +143,38 @@ class ShoppingRepo:
         recipe_ingredients = self.get_recipe_ingredients(recipe_ids)
         breakdown: Dict[str, List[Tuple[str, float, str]]] = defaultdict(list)
 
-        # First, aggregate by ingredient and recipe to combine duplicate recipes
-        recipe_aggregation: Dict[str, Dict[str, Dict[str, Any]]] = defaultdict(lambda: defaultdict(lambda: {
-            "quantity": 0.0,
-            "unit": None
-        }))
+        # Aggregate by (ingredient, dimension, recipe) to combine duplicate recipes
+        # Key: (ingredient_name, dimension, recipe_name)
+        recipe_aggregation: Dict[Tuple[str, str, str], Dict[str, Any]] = defaultdict(lambda: {
+            "base_quantity": 0.0,
+            "dimension": None,
+            "original_unit": None,
+        })
 
         for ri in recipe_ingredients:
             ingredient = ri.ingredient
             recipe = ri.recipe
+            dimension = get_dimension(ri.unit)
 
-            # apply unit conversions
-            converted_qty, converted_unit = self._convert_quantity(
-                ingredient.ingredient_name, ri.quantity or 0.0, ri.unit or ""
-            )
+            # convert to base unit for aggregation
+            base_qty, _ = to_base_unit(ri.quantity or 0.0, ri.unit)
 
-            # create breakdown key using normalized format for state persistence
-            key = ShoppingState.create_key(ingredient.ingredient_name, converted_unit)
-
-            # Aggregate by recipe name within each ingredient
-            recipe_data = recipe_aggregation[key][recipe.recipe_name]
-            recipe_data["quantity"] += converted_qty
-            recipe_data["unit"] = converted_unit
+            agg_key = (ingredient.ingredient_name, dimension, recipe.recipe_name)
+            data = recipe_aggregation[agg_key]
+            data["base_quantity"] += base_qty
+            data["dimension"] = dimension
+            data["original_unit"] = ri.unit or data["original_unit"]
 
         # Convert aggregated data to the expected format
-        for ingredient_key, recipes in recipe_aggregation.items():
-            for recipe_name, recipe_data in recipes.items():
-                breakdown[ingredient_key].append((recipe_name, recipe_data["quantity"], recipe_data["unit"]))
+        for (ingredient_name, dimension, recipe_name), data in recipe_aggregation.items():
+            # convert from base unit to display unit
+            display_qty, display_unit = to_display_unit(
+                data["base_quantity"], data["dimension"], data["original_unit"]
+            )
+
+            # create breakdown key using dimension for state persistence
+            ingredient_key = ShoppingState.create_key(ingredient_name, dimension)
+            breakdown[ingredient_key].append((recipe_name, display_qty, display_unit))
 
         return breakdown
 

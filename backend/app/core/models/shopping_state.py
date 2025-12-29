@@ -36,13 +36,13 @@ class ShoppingState(Base):
         return key.strip().lower()
 
     @classmethod
-    def create_key(cls, ingredient_name: str, unit: Optional[str] = None) -> str:
+    def create_key(cls, ingredient_name: str, dimension: Optional[str] = None) -> str:
         """
-        Create a normalized key from ingredient name and unit.
+        Create a normalized key from ingredient name and dimension.
 
         Args:
             ingredient_name (str): The name of the ingredient.
-            unit (Optional[str]): The unit of measurement, if any.
+            dimension (Optional[str]): The unit dimension (mass, volume, count, unknown).
         """
-        unit_str = unit.strip().lower().rstrip(".") if unit else ""
-        return f"{ingredient_name.strip().lower()}::{unit_str}"
+        dim_str = dimension.strip().lower() if dimension else ""
+        return f"{ingredient_name.strip().lower()}::{dim_str}"

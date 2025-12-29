@@ -13,6 +13,7 @@ from sqlalchemy import Boolean, Enum, Float, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..database.base import Base
+from ..utils.unit_conversion import get_dimension
 
 
 # ── Shopping Item Model ─────────────────────────────────────────────────────────────────────────────────────
@@ -42,11 +43,11 @@ class ShoppingItem(Base):
 
     # ── Helper Methods ──────────────────────────────────────────────────────────────────────────────────────
     def key(self) -> str:
-        """Generate a unique key for this shopping item."""
+        """Generate a unique key for this shopping item using dimension."""
         if self.state_key:
             return self.state_key
-        unit_str = self.unit or ""
-        return f"{self.ingredient_name.lower().strip()}::{unit_str.lower().strip()}"
+        dimension = get_dimension(self.unit)
+        return f"{self.ingredient_name.lower().strip()}::{dimension}"
 
     def display_label(self) -> str:
         """Return a human-friendly label for UI display."""
