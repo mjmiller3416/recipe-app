@@ -15,6 +15,7 @@ const CHANGELOG_MD = `
 - Hover over shopping list items to see a breakdown of quantities by recipe
 
 ## 2025-12-28 - Bug Fixes
+- "Favorites" and "New" quick filter pills in the Recipe Browser now work correctly
 - Fixed meal slot cards in the create/edit meal dialog to display at consistent sizes with proper borders and shadows
 - Weekly menu in Meal Planner now scrolls properly when there are many items
 - Shopping list items now uncheck automatically when their quantity increases from adding new recipes

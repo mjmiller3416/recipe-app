@@ -17,7 +17,7 @@
 
 ## 🟡 Medium Priority
 
-### 2. Auto-Scroll to New Ingredient Row
+### 3. Auto-Scroll to New Ingredient Row
 - **Location**: `frontend/src/components/add-recipe/IngredientRow.tsx`
 - **Issue**: When adding new ingredients, the window should scroll to the newly added ingredient row to improve user experience.
 - **Solution**: Implement a scrollIntoView call after adding a new ingredient row.
@@ -46,6 +46,11 @@
 
 ## ✅ Completed
 
+### Fix Quick Filter Pills for Favorites and New in Recipe Browser
+- **Location**: `src/app/recipes/_components/RecipeBrowserView.tsx`
+- **Issue**: The "Favorites" and "New" quick filter pills in the recipe browser didn't work — "Favorites" got immediately reset by URL sync, and "New" had no implementation.
+- **Solution**: For "Favorites", updated `handleQuickFilterToggle` to call `router.replace("/recipes?favoritesOnly=true")` when toggling ON. For "New", added `newDays` to `FilterState`, handler in `handleQuickFilterToggle`, filter logic in `filteredRecipes` using `createdAt`, and display/removal in active filters.
+
 ### Add Favorite Button to Meal Planner
 - **Location**: `src/app/meal-planner/_components/MealPlannerView.tsx`, `WeeklyMenu.tsx`
 - **Issue**: Users cannot favorite a meal directly from the meal planner page — they must navigate elsewhere first.
@@ -64,7 +69,7 @@
 ### #28 Add "New Recipes" Filter in Meal Planner
 - **Location**: Meal planner recipe selection dialog (`MealDialog.tsx`, `FilterBar.tsx`)
 - **Issue**: When adding a new meal to the meal planner, users wanted a filter for "new" recipes to quickly find recently added recipes.
-- **Solution**: Added a "New" filter pill that shows recipes created within the last 30 days. Extended `RecipeCardData` type to include `createdAt`, added filter to `QUICK_FILTERS` constant, and implemented the filter logic in the meal dialog.
+- **Solution**: Added a "New" filter pill that shows recipes created within the last 7 days. Extended `RecipeCardData` type to include `createdAt`, added filter to `QUICK_FILTERS` constant, and implemented the filter logic in the meal dialog.
 
 ### Allow Leading Decimals in Ingredient Quantities
 - **Location**: `frontend/src/lib/quantityUtils.ts`

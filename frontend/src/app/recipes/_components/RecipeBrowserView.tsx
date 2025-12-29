@@ -52,10 +52,11 @@ interface FilterState {
   dietaryPreferences: string[];
   favoritesOnly: boolean;
   maxCookTime: number | null;
+  newDays: number | null;
 }
 
 interface ActiveFilter {
-  type: "category" | "mealType" | "dietary" | "favorite" | "time";
+  type: "category" | "mealType" | "dietary" | "favorite" | "time" | "new";
   value: string;
   label: string;
 }
@@ -422,6 +423,7 @@ export function RecipeBrowserView() {
     dietaryPreferences: [],
     favoritesOnly: initialFavoritesOnly,
     maxCookTime: null,
+    newDays: null,
   });
   const [sortBy, setSortBy] = useState<SortOption>("alphabetical");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -517,15 +519,23 @@ export function RecipeBrowserView() {
         ...f,
         favoritesOnly: !isActive,
       }));
-      // Update URL to keep in sync (remove param when toggling off)
+      // Update URL to keep in sync with useEffect that watches URL params
       if (isActive) {
         // Toggling OFF - remove the URL param
         router.replace("/recipes", { scroll: false });
+      } else {
+        // Toggling ON - add the URL param
+        router.replace("/recipes?favoritesOnly=true", { scroll: false });
       }
     } else if (filter.type === "time") {
       setFilters((f) => ({
         ...f,
         maxCookTime: isActive ? null : (filter.value as number),
+      }));
+    } else if (filter.type === "new") {
+      setFilters((f) => ({
+        ...f,
+        newDays: isActive ? null : (filter.value as number),
       }));
     }
 
@@ -572,6 +582,13 @@ export function RecipeBrowserView() {
         type: "time",
         value: String(filters.maxCookTime),
         label: `Under ${filters.maxCookTime}m`,
+      });
+    }
+    if (filters.newDays) {
+      active.push({
+        type: "new",
+        value: String(filters.newDays),
+        label: "New",
       });
     }
 
@@ -627,6 +644,17 @@ export function RecipeBrowserView() {
       result = result.filter(
         (recipe) => recipe.totalTime && recipe.totalTime <= filters.maxCookTime!
       );
+    }
+
+    // New recipes filter (created within last N days)
+    if (filters.newDays) {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - filters.newDays);
+      result = result.filter((recipe) => {
+        if (!recipe.createdAt) return false;
+        const createdDate = new Date(recipe.createdAt);
+        return createdDate >= cutoffDate;
+      });
     }
 
     // Sorting
@@ -798,6 +826,15 @@ export function RecipeBrowserView() {
         });
         scrollToResults();
         break;
+      case "new":
+        setFilters((prev) => ({ ...prev, newDays: null }));
+        setActiveQuickFilters((prev) => {
+          const next = new Set(prev);
+          next.delete("new");
+          return next;
+        });
+        scrollToResults();
+        break;
     }
   };
 
@@ -808,6 +845,7 @@ export function RecipeBrowserView() {
       dietaryPreferences: [],
       favoritesOnly: false,
       maxCookTime: null,
+      newDays: null,
     });
     setSearchTerm("");
     setActiveQuickFilters(new Set());

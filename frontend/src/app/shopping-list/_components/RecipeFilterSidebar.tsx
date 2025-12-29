@@ -48,12 +48,12 @@ export function RecipeFilterSidebar({
   }
 
   return (
-    <div className="rounded-xl bg-elevated border border-border p-4">
-        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-4">
+    <div className="rounded-xl bg-elevated border border-border p-4 flex flex-col max-h-[calc(100vh-8rem)]">
+        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-4 flex-shrink-0">
           Recipes in this list
         </h3>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 overflow-y-auto flex-1">
           {recipes.map((recipe) => {
             const isActive = activeFilter === recipe.name;
             const emoji = getRecipeEmoji(recipe.name);
