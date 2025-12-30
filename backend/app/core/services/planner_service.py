@@ -7,12 +7,14 @@ Handles only the planner state - meal CRUD is in meal_service.py.
 # -- Imports -------------------------------------------------------------------------------------
 from __future__ import annotations
 
-from typing import List, Optional
+from datetime import date, datetime, timedelta, timezone
+from typing import List, Optional, Set
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from ..dtos.planner_dtos import (
+    CookingStreakDTO,
     PlannerEntryResponseDTO,
     PlannerSummaryDTO,
     RecipeCardDTO,
@@ -253,6 +255,115 @@ class PlannerService:
                 max_capacity=MAX_PLANNER_ENTRIES,
                 error=str(e),
             )
+
+    def get_cooking_streak(self) -> CookingStreakDTO:
+        """
+        Get cooking streak information based on completed meals.
+
+        Calculates:
+        - Current consecutive day streak (breaks if a day is missed)
+        - Longest streak ever achieved
+        - Current week's activity (Monday-Sunday)
+
+        Returns:
+            CookingStreakDTO with streak and activity data
+        """
+        try:
+            # Get all completed entries
+            entries = self.repo.get_completed_entries()
+
+            # Extract unique dates when meals were cooked (convert UTC to local time)
+            cooked_dates: Set[date] = set()
+            for entry in entries:
+                if entry.completed_at:
+                    # completed_at is stored as UTC - convert to local time for correct date
+                    utc_time = entry.completed_at.replace(tzinfo=timezone.utc)
+                    local_time = utc_time.astimezone()
+                    cooked_dates.add(local_time.date())
+
+            today = date.today()
+
+            # Calculate current streak (consecutive days ending today or yesterday)
+            current_streak = self._calculate_current_streak(cooked_dates, today)
+
+            # Calculate longest streak ever
+            longest_streak = self._calculate_longest_streak(cooked_dates)
+
+            # Calculate current week activity (Monday = 0, Sunday = 6)
+            week_activity = self._get_week_activity(cooked_dates, today)
+
+            # Get last cooked date
+            last_cooked = max(cooked_dates) if cooked_dates else None
+
+            return CookingStreakDTO(
+                current_streak=current_streak,
+                longest_streak=max(longest_streak, current_streak),
+                week_activity=week_activity,
+                last_cooked_date=last_cooked.isoformat() if last_cooked else None,
+            )
+
+        except SQLAlchemyError:
+            return CookingStreakDTO(
+                current_streak=0,
+                longest_streak=0,
+                week_activity=[False] * 7,
+                last_cooked_date=None,
+            )
+
+    def _calculate_current_streak(self, cooked_dates: Set[date], today: date) -> int:
+        """Calculate consecutive days ending today or yesterday."""
+        if not cooked_dates:
+            return 0
+
+        # Start from today and count backwards
+        streak = 0
+        check_date = today
+
+        # If today isn't cooked yet, start from yesterday
+        if today not in cooked_dates:
+            check_date = today - timedelta(days=1)
+            # If yesterday also wasn't cooked, streak is 0
+            if check_date not in cooked_dates:
+                return 0
+
+        # Count consecutive days backwards
+        while check_date in cooked_dates:
+            streak += 1
+            check_date -= timedelta(days=1)
+
+        return streak
+
+    def _calculate_longest_streak(self, cooked_dates: Set[date]) -> int:
+        """Calculate the longest consecutive day streak ever."""
+        if not cooked_dates:
+            return 0
+
+        sorted_dates = sorted(cooked_dates)
+        longest = 1
+        current = 1
+
+        for i in range(1, len(sorted_dates)):
+            if sorted_dates[i] - sorted_dates[i - 1] == timedelta(days=1):
+                current += 1
+                longest = max(longest, current)
+            else:
+                current = 1
+
+        return longest
+
+    def _get_week_activity(self, cooked_dates: Set[date], today: date) -> List[bool]:
+        """Get activity for current calendar week (Monday-Sunday)."""
+        # Find Monday of current week
+        days_since_monday = today.weekday()  # Monday = 0, Sunday = 6
+        monday = today - timedelta(days=days_since_monday)
+
+        # Check each day of the week
+        week_activity = []
+        for i in range(7):
+            day = monday + timedelta(days=i)
+            week_activity.append(day in cooked_dates)
+
+        return week_activity
 
     # -- Update Operations -----------------------------------------------------------------------
     def reorder_entries(self, entry_ids: List[int]) -> bool:

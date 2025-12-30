@@ -2,7 +2,14 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2025-12-29 - Bug Fixes
+- Shopping list badge in sidebar now updates in real-time when adding, removing, or completing meals in the planner
+- Dashboard widgets (Meal Queue, Shopping List, Cooking Streak) now refresh instantly when planner changes — no page reload needed
+- Cooking streak widget now marks the correct day when completing meals (fixed timezone issue)
+- Shopping list properly clears recipe items when all meals are removed from the planner
+
 ## 2025-12-29 - New Features
+- Track your cooking streak on the Dashboard — see consecutive days cooked and this week's activity at a glance
 - New Dashboard homepage with at-a-glance stats, meal queue, shopping list preview, and AI-powered Chef's Tips
 - Manually added shopping list items can now be assigned to specific categories (Produce, Dairy, Meat, etc.) instead of always appearing in "Other"
 - Click your profile avatar in the sidebar to access Settings

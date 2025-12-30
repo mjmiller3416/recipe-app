@@ -410,3 +410,14 @@ export interface CookingTipResponseDTO {
   tip?: string;
   error?: string;
 }
+
+// ============================================================================
+// Cooking Streak Types
+// ============================================================================
+
+export interface CookingStreakDTO {
+  current_streak: number;
+  longest_streak: number;
+  week_activity: boolean[]; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
+  last_cooked_date: string | null;
+}

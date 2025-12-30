@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { MealPlannerPage } from "@/app/meal-planner/_components";
 
 /**
@@ -9,5 +10,9 @@ import { MealPlannerPage } from "@/app/meal-planner/_components";
  * The sidebar meal list scrolls independently within the fixed viewport.
  */
 export default function Page() {
-  return <MealPlannerPage />;
+  return (
+    <Suspense>
+      <MealPlannerPage />
+    </Suspense>
+  );
 }

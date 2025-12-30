@@ -101,6 +101,22 @@ class PlannerOperationResultDTO(BaseModel):
     error: Optional[str] = None
 
 
+# -- Cooking Streak DTO --------------------------------------------------------------------------
+class CookingStreakDTO(BaseModel):
+    """DTO for cooking streak information."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    current_streak: int = Field(..., ge=0, description="Current consecutive day streak")
+    longest_streak: int = Field(..., ge=0, description="Longest streak ever achieved")
+    week_activity: List[bool] = Field(
+        ..., description="Activity for current week [Mon, Tue, Wed, Thu, Fri, Sat, Sun]"
+    )
+    last_cooked_date: Optional[str] = Field(
+        None, description="ISO format date of last cooked meal"
+    )
+
+
 # Re-export RecipeCardDTO for convenience
 __all__ = [
     "PlannerEntryCreateDTO",
@@ -110,5 +126,6 @@ __all__ = [
     "PlannerReorderDTO",
     "PlannerBulkAddDTO",
     "PlannerOperationResultDTO",
+    "CookingStreakDTO",
     "RecipeCardDTO",
 ]

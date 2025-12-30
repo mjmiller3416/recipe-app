@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { plannerApi } from "@/lib/api";
 import { MealQueueItem } from "./MealQueueItem";
 import type { PlannerEntryResponseDTO } from "@/types";
+import { cn } from "@/lib/utils";
 import {
   DndContext,
   closestCenter,
@@ -24,14 +25,11 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 
-const MAX_ACTIVE_ITEMS = 4;
-const MAX_COMPLETED_ITEMS = 2;
-
 export function MealQueueWidget() {
   const [activeEntries, setActiveEntries] = useState<PlannerEntryResponseDTO[]>([]);
-  const [completedEntries, setCompletedEntries] = useState<PlannerEntryResponseDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [completingId, setCompletingId] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -41,36 +39,38 @@ export function MealQueueWidget() {
     })
   );
 
-  // Fetch entries on mount
-  useEffect(() => {
-    async function fetchEntries() {
-      try {
-        const data = await plannerApi.getEntries();
+  // Fetch active entries from planner
+  const fetchActiveEntries = useCallback(async () => {
+    try {
+      const data = await plannerApi.getEntries();
 
-        // Sort by position and split into active/completed
-        const sorted = [...data].sort((a, b) => a.position - b.position);
-        const active = sorted
-          .filter((e) => !e.is_completed)
-          .slice(0, MAX_ACTIVE_ITEMS);
-        const completed = sorted
-          .filter((e) => e.is_completed)
-          .slice(0, MAX_COMPLETED_ITEMS);
+      // Sort by position and get all active (uncompleted) entries
+      const sorted = [...data].sort((a, b) => a.position - b.position);
+      const active = sorted.filter((e) => !e.is_completed);
 
-        setActiveEntries(active);
-        setCompletedEntries(completed);
-      } catch (error) {
-        console.error("Failed to fetch meal queue:", error);
-      } finally {
-        setIsLoading(false);
-      }
+      setActiveEntries(active);
+    } catch (error) {
+      console.error("Failed to fetch meal queue:", error);
     }
+  }, []);
 
-    fetchEntries();
+  // Fetch on mount and listen for planner updates
+  useEffect(() => {
+    fetchActiveEntries().finally(() => setIsLoading(false));
+
+    window.addEventListener("planner-updated", fetchActiveEntries);
+    return () => window.removeEventListener("planner-updated", fetchActiveEntries);
+  }, [fetchActiveEntries]);
+
+  // Handle drag start
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
   }, []);
 
   // Handle drag end for reordering (only active entries)
   const handleDragEnd = useCallback(
     async (event: DragEndEvent) => {
+      setIsDragging(false);
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
@@ -95,38 +95,35 @@ export function MealQueueWidget() {
     [activeEntries]
   );
 
+  // Handle drag cancel
+  const handleDragCancel = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
   // Handle marking a meal as cooked
   const handleComplete = useCallback(
     async (entryId: number) => {
       setCompletingId(entryId);
 
-      // Wait for animation
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
       try {
-        const updatedEntry = await plannerApi.toggleCompletion(entryId);
+        await plannerApi.toggleCompletion(entryId);
 
-        // Move from active to completed
+        // Notify other components (Sidebar, CookingStreakWidget, etc.)
+        window.dispatchEvent(new Event("planner-updated"));
+
+        // Wait for fade animation, then remove from list
+        await new Promise((resolve) => setTimeout(resolve, 300));
         setActiveEntries((prev) => prev.filter((e) => e.id !== entryId));
-        setCompletedEntries((prev) => {
-          // Add to start of completed list, limit to MAX_COMPLETED_ITEMS
-          const entry = activeEntries.find((e) => e.id === entryId);
-          if (entry) {
-            const updated = { ...entry, is_completed: true, completed_at: updatedEntry.completed_at };
-            return [updated, ...prev].slice(0, MAX_COMPLETED_ITEMS);
-          }
-          return prev;
-        });
       } catch (error) {
         console.error("Failed to complete meal:", error);
       } finally {
         setCompletingId(null);
       }
     },
-    [activeEntries]
+    []
   );
 
-  const hasEntries = activeEntries.length > 0 || completedEntries.length > 0;
+  const hasEntries = activeEntries.length > 0;
 
   return (
     <div className="h-full flex flex-col bg-card rounded-xl border border-border shadow-raised p-5 overflow-hidden">
@@ -167,70 +164,40 @@ export function MealQueueWidget() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 min-h-0 overflow-auto space-y-2">
-          {/* Active meals with drag-and-drop */}
-          {activeEntries.length > 0 && (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
+        <div className={cn(
+          "flex-1 min-h-0 max-h-[50vh] overflow-auto space-y-2",
+          isDragging && "scrollbar-hidden"
+        )}>
+          {/* Meals with drag-and-drop */}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
+          >
+            <SortableContext
+              items={activeEntries.map((e) => e.id)}
+              strategy={verticalListSortingStrategy}
             >
-              <SortableContext
-                items={activeEntries.map((e) => e.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-2">
-                  {activeEntries.map((entry, index) => (
-                    <MealQueueItem
-                      key={entry.id}
-                      entry={entry}
-                      isFirst={index === 0}
-                      isCompleting={completingId === entry.id}
-                      isDraggable={true}
-                      onComplete={handleComplete}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          )}
-
-          {/* Completed section */}
-          {completedEntries.length > 0 && (
-            <>
-              {/* Divider */}
-              <div className="flex items-center gap-3 py-2">
-                <div className="flex-1 h-px bg-border" />
-                <span className="text-xs font-medium text-muted uppercase tracking-wider">
-                  Completed
-                </span>
-                <div className="flex-1 h-px bg-border" />
-              </div>
-
-              {/* Completed items (not draggable) */}
               <div className="space-y-2">
-                {completedEntries.map((entry) => (
+                {activeEntries.map((entry) => (
                   <MealQueueItem
                     key={entry.id}
                     entry={entry}
-                    isFirst={false}
-                    isCompleting={false}
-                    isDraggable={false}
+                    isCompleting={completingId === entry.id}
                     onComplete={handleComplete}
                   />
                 ))}
               </div>
-            </>
-          )}
+            </SortableContext>
+          </DndContext>
         </div>
       )}
 
       {/* Add Meal Footer */}
-      <Link href="/meal-planner" className="block mt-4">
-        <Button
-          variant="outline"
-          className="w-full border-dashed border-border hover:border-primary/50 hover:bg-hover text-muted hover:text-foreground"
-        >
+      <Link href="/meal-planner?create=true" className="block mt-4">
+        <Button className="w-full interactive-subtle">
           <Plus className="h-4 w-4 mr-2" />
           Add Meal
         </Button>

@@ -17,29 +17,39 @@
 
 ## 🟡 Medium Priority
 
-### 3. Auto-Scroll to New Ingredient Row
+### 2. Auto-Scroll to New Ingredient Row
 - **Location**: `frontend/src/components/add-recipe/IngredientRow.tsx`
 - **Issue**: When adding new ingredients, the window should scroll to the newly added ingredient row to improve user experience.
 - **Solution**: Implement a scrollIntoView call after adding a new ingredient row.
 
 ## 🔵 Low Priority
 
-### 4. Prevent Accidental Ingredient Deletion via Keyboard
+### 3. Prevent Accidental Ingredient Deletion via Keyboard
 - **Location**: `frontend/src/components/add-recipe/IngredientRow.tsx`
 - **Issue**: When using keyboard navigation to add ingredients, user can accidentally delete an ingredient row by pressing spacebar on the delete button — can occur while tabbing through fields to add a new ingredient.
 - **Solution**: Update the delete button to only trigger deletion on Enter or Click events.
 
-### 5. Enable Tab Key Selection in Autocomplete
+### 4. Enable Tab Key Selection in Autocomplete
 - **Location**: `frontend/src/components/add-recipe/IngredientAutoComplete.tsx`
 - **Issue**: Selections cannot be selected via the Tab key, only via mouse click or Enter key. This makes keyboard navigation slower.
 - **Solution**: Update the autocomplete selection logic to allow Tab key selection of highlighted suggestions, then move focus to the next input field.
 
-### 6. Add Zoom-on-Hover to Side Dish Cards
+### 5. Add Zoom-on-Hover to Side Dish Cards
 - **Location**: `src/app/meal-planner/_components/meal-display/SideDishSlots.tsx`
 - **Issue**: Side dish recipe cards in the meal planner lack the subtle zoom effect on hover that main dish cards have — making the interaction feel less polished.
 - **Solution**: Add `transition-transform duration-500 group-hover:scale-105` to the `RecipeCardImage` component (line 86), matching the pattern used in `MainDishCard.tsx`.
 
 ## ✅ Completed
+
+### Fix Sidebar Shopping Badge Real-Time Updates
+- **Location**: `src/components/layout/Sidebar.tsx`
+- **Issue**: The shopping list badge counter doesn't update in real-time — changes to the meal planner aren't reflected until visiting the shopping list page and interacting with items.
+- **Solution**: Dispatch a `planner-changed` event from meal planner components when adding/removing meals, and have Sidebar listen for it to trigger a shopping list count refresh.
+
+### Fix Shopping List Lazy Generation
+- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
+- **Issue**: Shopping list data is only generated from the meal planner when visiting the shopping list page — planner changes don't update the underlying shopping list data until the user navigates there.
+- **Solution**: Either regenerate shopping list whenever planner changes (proactive approach), or update the backend to calculate shopping counts on-demand without requiring page visit (reactive approach).
 
 ### Reorder Ingredients on Recipe Page
 - **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx`
@@ -71,12 +81,12 @@
 - **Issue**: Long recipes overflow the page in print preview — users have no way to customize what prints to keep content on one page.
 - **Solution**: Created a print preview modal with toggle controls (recipe image, chef's notes, servings & cook time) that dynamically adjusts the print layout, allowing users to fit most recipes on a single page.
 
-### #29 [Feedback] AI Image Style Concern
+### AI Image Style Concern
 - **Location**: Settings page, AI image generation configuration
 - **Issue**: Generated recipe images frequently showed cast iron skillets — user preference issue with AI image generation prompts.
 - **Solution**: Moved the AI image generation prompt into user settings, giving users control over the style and content of generated images.
 
-### #28 Add "New Recipes" Filter in Meal Planner
+### Add "New Recipes" Filter in Meal Planner
 - **Location**: Meal planner recipe selection dialog (`MealDialog.tsx`, `FilterBar.tsx`)
 - **Issue**: When adding a new meal to the meal planner, users wanted a filter for "new" recipes to quickly find recently added recipes.
 - **Solution**: Added a "New" filter pill that shows recipes created within the last 7 days. Extended `RecipeCardData` type to include `createdAt`, added filter to `QUICK_FILTERS` constant, and implemented the filter logic in the meal dialog.

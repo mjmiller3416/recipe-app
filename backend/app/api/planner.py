@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database.db import get_session
 from app.core.dtos.planner_dtos import (
+    CookingStreakDTO,
     PlannerBulkAddDTO,
     PlannerEntryResponseDTO,
     PlannerOperationResultDTO,
@@ -66,6 +67,18 @@ def get_meal_ids(session: Session = Depends(get_session)):
     """Get all meal IDs currently in the planner."""
     service = PlannerService(session)
     return service.get_meal_ids()
+
+
+@router.get("/streak", response_model=CookingStreakDTO)
+def get_cooking_streak(session: Session = Depends(get_session)):
+    """
+    Get cooking streak information.
+
+    Returns the current consecutive day streak, longest streak ever,
+    and activity for the current calendar week (Monday-Sunday).
+    """
+    service = PlannerService(session)
+    return service.get_cooking_streak()
 
 
 # -- Add Operations ------------------------------------------------------------------------------

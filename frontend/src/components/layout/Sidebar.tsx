@@ -51,6 +51,16 @@ export function Sidebar() {
     }
   }, []);
 
+  // Handle planner updates: regenerate shopping list then refresh count
+  const handlePlannerUpdated = useCallback(async () => {
+    try {
+      await shoppingApi.generateFromPlanner();
+      await fetchShoppingCount();
+    } catch (error) {
+      console.error("[Sidebar] Failed to regenerate shopping list:", error);
+    }
+  }, [fetchShoppingCount]);
+
   useEffect(() => {
     // Check for new changelog items by comparing counts
     const lastSeenCount = parseInt(
@@ -68,10 +78,13 @@ export function Sidebar() {
 
     // Listen for shopping list updates from other components
     window.addEventListener("shopping-list-updated", fetchShoppingCount);
+    // Listen for planner updates to regenerate shopping list
+    window.addEventListener("planner-updated", handlePlannerUpdated);
     return () => {
       window.removeEventListener("shopping-list-updated", fetchShoppingCount);
+      window.removeEventListener("planner-updated", handlePlannerUpdated);
     };
-  }, [fetchShoppingCount]);
+  }, [fetchShoppingCount, handlePlannerUpdated]);
 
   const handleChangelogOpenChange = (open: boolean) => {
     if (open) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { ShoppingCart, ArrowRight, CheckCircle2, Circle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,21 +18,23 @@ export function ShoppingListWidget() {
   const [shoppingData, setShoppingData] = useState<ShoppingListResponseDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch shopping list on mount
-  useEffect(() => {
-    async function fetchShoppingList() {
-      try {
-        const data = await shoppingApi.getList();
-        setShoppingData(data);
-      } catch (error) {
-        console.error("Failed to fetch shopping list:", error);
-      } finally {
-        setIsLoading(false);
-      }
+  // Fetch shopping list data
+  const fetchShoppingList = useCallback(async () => {
+    try {
+      const data = await shoppingApi.getList();
+      setShoppingData(data);
+    } catch (error) {
+      console.error("Failed to fetch shopping list:", error);
     }
-
-    fetchShoppingList();
   }, []);
+
+  // Fetch on mount and listen for planner updates
+  useEffect(() => {
+    fetchShoppingList().finally(() => setIsLoading(false));
+
+    window.addEventListener("planner-updated", fetchShoppingList);
+    return () => window.removeEventListener("planner-updated", fetchShoppingList);
+  }, [fetchShoppingList]);
 
   // Group items by category and calculate progress
   const categoryProgress = useMemo((): CategoryProgress[] => {

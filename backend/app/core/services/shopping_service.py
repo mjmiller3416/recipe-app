@@ -64,14 +64,18 @@ class ShoppingService:
             recipe_ids = meal_ids_or_dto
 
         try:
-            # Empty selection yields empty result
+            # Empty selection: clear recipe items and return
             if not recipe_ids:
+                self.shopping_repo.clear_shopping_items(source="recipe")
+                self.session.commit()
+                # Count remaining items (manual items only)
+                total_items = len(self.shopping_repo.get_all_shopping_items())
                 return ShoppingListGenerationResultDTO(
                     success=True,
                     items_created=0,
                     items_updated=0,
-                    total_items=0,
-                    message="No recipes provided"
+                    total_items=total_items,
+                    message="Cleared recipe items (no active meals)"
                 )
 
             # Generate shopping list items

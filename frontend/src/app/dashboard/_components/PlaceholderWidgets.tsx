@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, Send, Flame, Clock } from "lucide-react";
+import { Sparkles, Send, Clock } from "lucide-react";
 
 /**
  * Placeholder widget for Ask Meal Genie AI chatbot
@@ -26,40 +26,6 @@ export function AskMealGeniePlaceholder() {
         </button>
       </div>
       <p className="text-xs text-muted mt-2">Coming soon!</p>
-    </div>
-  );
-}
-
-/**
- * Placeholder widget for Cooking Streak
- */
-export function CookingStreakPlaceholder() {
-  const days = ["M", "T", "W", "T", "F", "S", "S"];
-  const completed = [true, true, true, true, true, false, false];
-
-  return (
-    <div className="bg-gradient-to-br from-primary/30 to-chart-4/20 rounded-xl p-4 border border-border shadow-raised">
-      <div className="flex items-center gap-2 mb-1">
-        <Flame className="h-5 w-5 text-chart-3" />
-        <span className="text-lg font-bold text-foreground">5 Day Streak!</span>
-      </div>
-      <p className="text-xs text-muted mb-3">Keep cooking to extend it</p>
-      <div className="flex justify-between">
-        {days.map((day, i) => (
-          <div key={i} className="flex flex-col items-center gap-1">
-            <div
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs ${
-                completed[i]
-                  ? "bg-secondary text-secondary-foreground"
-                  : "bg-muted/20 text-muted"
-              }`}
-            >
-              {completed[i] ? "✓" : ""}
-            </div>
-            <span className="text-xs text-muted">{day}</span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

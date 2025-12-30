@@ -7,9 +7,9 @@ import { DashboardStatCard } from "./DashboardStatCard";
 import { MealQueueWidget } from "./MealQueueWidget";
 import { ShoppingListWidget } from "./ShoppingListWidget";
 import { ChefTipWidget } from "./ChefTipWidget";
+import { CookingStreakWidget } from "./CookingStreakWidget";
 import {
   AskMealGeniePlaceholder,
-  CookingStreakPlaceholder,
   RecentlyAddedPlaceholder,
 } from "./PlaceholderWidgets";
 import { recipeApi, plannerApi, shoppingApi } from "@/lib/api";
@@ -95,15 +95,17 @@ export function DashboardView() {
       </div>
 
       {/* Widgets Section - fills remaining space */}
-      <div className="mt-6 flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="mt-6 flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-[1fr] gap-6">
         <MealQueueWidget />
-        <div className="flex flex-col gap-4">
-          <ShoppingListWidget />
+        <div className="flex flex-col gap-4 min-h-0 overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <ShoppingListWidget />
+          </div>
           <ChefTipWidget />
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 min-h-0 overflow-hidden">
           <AskMealGeniePlaceholder />
-          <CookingStreakPlaceholder />
+          <CookingStreakWidget />
           <RecentlyAddedPlaceholder />
         </div>
       </div>

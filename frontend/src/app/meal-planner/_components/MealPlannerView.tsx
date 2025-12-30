@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import { MealSelection } from "./meal-display/MealSelection";
@@ -12,6 +13,9 @@ import { Trash2, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function MealPlannerPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   // State for planner entries (not meals directly)
   const [entries, setEntries] = useState<PlannerEntryResponseDTO[]>([]);
   const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null);
@@ -20,6 +24,15 @@ export function MealPlannerPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [mealRefreshKey, setMealRefreshKey] = useState(0);
+
+  // Check for create=true URL parameter to auto-open dialog
+  useEffect(() => {
+    if (searchParams.get("create") === "true") {
+      setShowCreateDialog(true);
+      // Clear the URL parameter without triggering a reload
+      router.replace("/meal-planner", { scroll: false });
+    }
+  }, [searchParams, router]);
 
   // Fetch planner entries on mount
   useEffect(() => {
@@ -72,6 +85,7 @@ export function MealPlannerPage() {
   const handleEntryCreated = (entry: PlannerEntryResponseDTO) => {
     setEntries((prev) => [...prev, entry]);
     setSelectedEntryId(entry.id);
+    window.dispatchEvent(new Event("planner-updated"));
   };
 
   // Handle marking a meal as complete/incomplete (toggle)
@@ -101,6 +115,7 @@ export function MealPlannerPage() {
             : entry
         )
       );
+      window.dispatchEvent(new Event("planner-updated"));
     } catch (err) {
       // Rollback on error
       setEntries(previousEntries);
@@ -137,6 +152,7 @@ export function MealPlannerPage() {
     );
     // Trigger MealSelection to re-fetch by changing its key
     setMealRefreshKey((prev) => prev + 1);
+    window.dispatchEvent(new Event("planner-updated"));
   };
 
   const handleRemoveFromMenu = async () => {
@@ -158,6 +174,7 @@ export function MealPlannerPage() {
 
     try {
       await plannerApi.removeEntry(entryToRemove);
+      window.dispatchEvent(new Event("planner-updated"));
     } catch (err) {
       // Rollback on error
       setEntries(previousEntries);
@@ -213,6 +230,7 @@ export function MealPlannerPage() {
 
     try {
       await plannerApi.clearCompleted();
+      window.dispatchEvent(new Event("planner-updated"));
     } catch (err) {
       // Rollback on error
       setEntries(previousEntries);

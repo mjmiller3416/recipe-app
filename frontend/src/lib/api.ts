@@ -18,6 +18,7 @@ import type {
   ExportFilterDTO,
   ImageGenerationResponseDTO,
   CookingTipResponseDTO,
+  CookingStreakDTO,
 } from "@/types";
 
 // API base URL from environment variable or default to localhost
@@ -296,6 +297,12 @@ export const plannerApi = {
       method: "PUT",
       body: JSON.stringify({ entry_ids: entryIds }),
     }),
+
+  /**
+   * Get cooking streak information
+   */
+  getStreak: (): Promise<CookingStreakDTO> =>
+    fetchApi<CookingStreakDTO>("/api/planner/streak"),
 };
 
 // ============================================================================
