@@ -2,6 +2,9 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2025-12-30 - Improvements
+- Shopping list page now loads faster with optimized database queries and parallel data fetching
+
 ## 2025-12-29 - Bug Fixes
 - Meal Queue on the dashboard now displays meals correctly
 - Shopping list categories now auto-expand when new items are added to a completed category

@@ -162,17 +162,18 @@ export function ShoppingListView() {
       setIsLoading(true);
       setError(null);
 
-      // Generate from active planner entries
+      // Generate from active planner entries first (must complete before reads)
       await shoppingApi.generateFromPlanner();
 
-      // Fetch the updated list
-      const data = await shoppingApi.getList();
+      // Fetch list and planner entries in parallel (both are read operations)
+      const [data, entries] = await Promise.all([
+        shoppingApi.getList(),
+        plannerApi.getEntries()
+      ]);
       setShoppingData(data);
 
       // Fetch breakdown data for multi-recipe tooltips
       try {
-        // Get incomplete planner entries (same as what generate uses)
-        const entries = await plannerApi.getEntries();
         const activeEntries = entries.filter(e => !e.is_completed);
 
         // Extract unique recipe IDs (main + sides)

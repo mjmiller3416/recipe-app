@@ -24,15 +24,16 @@ class ShoppingItem(Base):
     ingredient_name: Mapped[str] = mapped_column(String(255), nullable=False)
     quantity: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     unit: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, index=True)
 
     # source and status
     source: Mapped[str] = mapped_column(
         Enum("recipe", "manual", name="shopping_source"),
         nullable=False,
-        default="manual"
+        default="manual",
+        index=True
     )
-    have: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    have: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
 
     # for recipe-generated items, store a key for state persistence
     state_key: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)

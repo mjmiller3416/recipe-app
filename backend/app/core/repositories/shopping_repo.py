@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Tuple
 
-from sqlalchemy import and_, delete, select
+from sqlalchemy import and_, case, delete, func, select
 from sqlalchemy.orm import Session, joinedload
 
 from ..models.recipe_ingredient import RecipeIngredient
@@ -458,29 +458,36 @@ class ShoppingRepo:
     # ── Utility Methods ─────────────────────────────────────────────────────────────────────────────────────
     def get_shopping_list_summary(self) -> Dict[str, Any]:
         """
-        Get summary statistics for the shopping list.
+        Get summary statistics for the shopping list using SQL COUNT.
 
         Returns:
             Dict[str, Any]: Summary with counts and categories.
         """
-        all_items = self.get_all_shopping_items()
+        # Single query with conditional counts - no loading of all items
+        stmt = select(
+            func.count(ShoppingItem.id).label('total'),
+            func.count(case((ShoppingItem.have == True, 1))).label('checked'),
+            func.count(case((ShoppingItem.source == 'recipe', 1))).label('recipe'),
+            func.count(case((ShoppingItem.source == 'manual', 1))).label('manual')
+        )
+        result = self.session.execute(stmt).one()
 
-        total_items = len(all_items)
-        checked_items = sum(1 for item in all_items if item.have)
-        recipe_items = sum(1 for item in all_items if item.source == "recipe")
-        manual_items = sum(1 for item in all_items if item.source == "manual")
+        # Get distinct categories separately (simple indexed query)
+        cat_stmt = select(ShoppingItem.category).distinct().where(
+            ShoppingItem.category.isnot(None)
+        )
+        categories = sorted([row[0] for row in self.session.execute(cat_stmt)])
 
-        categories = list(set(item.category for item in all_items if item.category))
-        categories.sort()
+        total = result.total or 0
+        checked = result.checked or 0
 
         return {
-            "total_items": total_items,
-            "checked_items": checked_items,
-            "recipe_items": recipe_items,
-            "manual_items": manual_items,
+            "total_items": total,
+            "checked_items": checked,
+            "recipe_items": result.recipe or 0,
+            "manual_items": result.manual or 0,
             "categories": categories,
-            "completion_percentage": (
-                checked_items / total_items * 100) if total_items > 0 else 0
+            "completion_percentage": (checked / total * 100) if total > 0 else 0
         }
 
     def bulk_update_have_status(self, updates: List[Tuple[int, bool]]) -> int:
