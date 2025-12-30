@@ -58,9 +58,18 @@ export function ShoppingCategory({
   // Storage key for this specific category
   const storageKey = `${COLLAPSED_STORAGE_KEY}-${category}`;
 
-  // Initialize expanded state from localStorage (default to expanded)
+  // Calculate if category is complete (needed for initial state)
+  const isInitiallyComplete =
+    items.length > 0 && items.every((item) => item.have);
+
+  // Initialize expanded state from localStorage, but always expand incomplete categories
   const [isExpanded, setIsExpanded] = useState(() => {
     if (typeof window === "undefined") return true;
+
+    // If category has unchecked items, always expand (items may have been added)
+    if (!isInitiallyComplete) return true;
+
+    // Only respect collapsed localStorage for complete categories
     const stored = localStorage.getItem(storageKey);
     return stored === null ? true : stored !== "collapsed";
   });
@@ -84,11 +93,16 @@ export function ShoppingCategory({
   const progress = totalItems > 0 ? (checkedCount / totalItems) * 100 : 0;
   const isComplete = totalItems > 0 && checkedCount === totalItems;
 
-  // Auto-collapse when category becomes complete
+  // Auto-collapse when category becomes complete, auto-expand when items are added
   useEffect(() => {
     if (isComplete && !wasComplete.current) {
+      // Category just became complete - collapse it
       setIsExpanded(false);
       localStorage.setItem(storageKey, "collapsed");
+    } else if (!isComplete && wasComplete.current) {
+      // Category was complete but now has unchecked items - expand it
+      setIsExpanded(true);
+      localStorage.setItem(storageKey, "expanded");
     }
     wasComplete.current = isComplete;
   }, [isComplete, storageKey]);

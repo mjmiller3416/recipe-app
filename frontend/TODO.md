@@ -2,6 +2,21 @@
 
 ## 🟠 High Priority
 
+### #39 [Bug Report] Shopping List Categories Don't Expand
+- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
+- **Issue**: When adding a new recipe to the meal planner, the shopping list does not expand the categories that now have unchecked items.
+- **Solution**: Auto-expand categories that receive new unchecked items when the shopping list updates.
+
+### #37 [Bug Report] Category Should Auto-Expand When Adding Manual Item
+- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
+- **Issue**: When a manual add is added to a completed (collapsed) category, that category should automatically expand to show the new item.
+- **Solution**: Detect when a manual item is added to a collapsed category and expand it automatically.
+
+### #36 [Bug Report] Streak Counter Displaying Incorrect Data
+- **Location**: `src/app/dashboard/_components/` (streak component)
+- **Issue**: Streak counter isn't marking the right days or showing the correct number of days in the streak circles on the dashboard.
+- **Solution**: Investigate streak calculation logic and fix day marking/count display.
+
 ### 1. Re-enable Ingredient Form Validation
 - **Location**: `src/app/recipes/add/page.tsx` (lines 174-176)
 - **Components affected**: `QuantityInput.tsx`, `IngredientRow.tsx`
@@ -16,6 +31,16 @@
   3. Consider making validation less strict or only on submit
 
 ## 🟡 Medium Priority
+
+### #38 [Feature Request] Delete All Completed Manual Adds
+- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
+- **Issue**: Users want a button at the top to delete all "completed manual adds" — a way to mass delete any manual adds that have been checked off.
+- **Solution**: Add a button that filters for manual items that are checked and deletes them in bulk.
+
+### #35 [Feature Request] Drag-and-Drop Meal Reordering
+- **Location**: `src/app/meal-planner/_components/MealPlannerView.tsx`
+- **Issue**: Users want to reorder meals in the meal planner via drag and drop.
+- **Solution**: Implement drag-and-drop reordering using `@dnd-kit` (already in project) for meal entries.
 
 ### 2. Auto-Scroll to New Ingredient Row
 - **Location**: `frontend/src/components/add-recipe/IngredientRow.tsx`

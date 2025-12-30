@@ -67,6 +67,7 @@ export function RecentlyAddedPlaceholder() {
           </div>
         ))}
       </div>
+      <p className="text-xs text-muted mt-2">Coming soon!</p>
     </div>
   );
 }
