@@ -301,9 +301,12 @@ export const plannerApi = {
 
   /**
    * Get cooking streak information
+   * Sends user's timezone to ensure correct date calculations
    */
-  getStreak: (): Promise<CookingStreakDTO> =>
-    fetchApi<CookingStreakDTO>("/api/planner/streak"),
+  getStreak: (): Promise<CookingStreakDTO> => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return fetchApi<CookingStreakDTO>(`/api/planner/streak?tz=${encodeURIComponent(tz)}`);
+  },
 };
 
 // ============================================================================

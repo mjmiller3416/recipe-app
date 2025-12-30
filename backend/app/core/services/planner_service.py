@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
 from typing import List, Optional, Set
+from zoneinfo import ZoneInfo
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -256,7 +257,7 @@ class PlannerService:
                 error=str(e),
             )
 
-    def get_cooking_streak(self) -> CookingStreakDTO:
+    def get_cooking_streak(self, user_timezone: Optional[str] = None) -> CookingStreakDTO:
         """
         Get cooking streak information based on completed meals.
 
@@ -265,6 +266,10 @@ class PlannerService:
         - Longest streak ever achieved
         - Current week's activity (Monday-Sunday)
 
+        Args:
+            user_timezone: IANA timezone string (e.g., 'America/New_York').
+                          If not provided, uses server's local timezone.
+
         Returns:
             CookingStreakDTO with streak and activity data
         """
@@ -272,16 +277,23 @@ class PlannerService:
             # Get all completed entries
             entries = self.repo.get_completed_entries()
 
-            # Extract unique dates when meals were cooked (convert UTC to local time)
+            # Determine the timezone to use for date calculations
+            try:
+                tz = ZoneInfo(user_timezone) if user_timezone else None
+            except (KeyError, ValueError):
+                tz = None  # Fall back to server timezone if invalid
+
+            # Extract unique dates when meals were cooked (convert UTC to user's timezone)
             cooked_dates: Set[date] = set()
             for entry in entries:
                 if entry.completed_at:
-                    # completed_at is stored as UTC - convert to local time for correct date
+                    # completed_at is stored as UTC - convert to user's timezone for correct date
                     utc_time = entry.completed_at.replace(tzinfo=timezone.utc)
-                    local_time = utc_time.astimezone()
+                    local_time = utc_time.astimezone(tz)
                     cooked_dates.add(local_time.date())
 
-            today = date.today()
+            # Get "today" in user's timezone
+            today = datetime.now(tz).date() if tz else date.today()
 
             # Calculate current streak (consecutive days ending today or yesterday)
             current_streak = self._calculate_current_streak(cooked_dates, today)

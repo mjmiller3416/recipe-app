@@ -70,15 +70,20 @@ def get_meal_ids(session: Session = Depends(get_session)):
 
 
 @router.get("/streak", response_model=CookingStreakDTO)
-def get_cooking_streak(session: Session = Depends(get_session)):
+def get_cooking_streak(
+    tz: Optional[str] = Query(None, description="User's IANA timezone (e.g., 'America/New_York')"),
+    session: Session = Depends(get_session),
+):
     """
     Get cooking streak information.
 
     Returns the current consecutive day streak, longest streak ever,
     and activity for the current calendar week (Monday-Sunday).
+
+    The tz parameter ensures dates are calculated in the user's timezone.
     """
     service = PlannerService(session)
-    return service.get_cooking_streak()
+    return service.get_cooking_streak(user_timezone=tz)
 
 
 # -- Add Operations ------------------------------------------------------------------------------

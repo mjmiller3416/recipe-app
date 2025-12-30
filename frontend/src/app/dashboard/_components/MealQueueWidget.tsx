@@ -41,6 +41,13 @@ export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProp
   const [completingId, setCompletingId] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Sync activeEntries when initialEntries prop changes (e.g., after parent fetch completes)
+  useEffect(() => {
+    if (initialEntries && initialEntries.length > 0) {
+      setActiveEntries(getActiveEntries(initialEntries));
+    }
+  }, [initialEntries]);
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor),
