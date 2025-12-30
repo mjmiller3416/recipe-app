@@ -19,6 +19,7 @@ import type {
   ImageGenerationResponseDTO,
   CookingTipResponseDTO,
   CookingStreakDTO,
+  DashboardStatsDTO,
 } from "@/types";
 
 // API base URL from environment variable or default to localhost
@@ -676,6 +677,19 @@ export const cookingTipApi = {
    */
   getTip: (): Promise<CookingTipResponseDTO> =>
     fetchApi<CookingTipResponseDTO>("/api/cooking-tip"),
+};
+
+// ============================================================================
+// Dashboard API
+// ============================================================================
+
+export const dashboardApi = {
+  /**
+   * Get lightweight dashboard statistics (counts only)
+   * @returns Dashboard stats with recipe, meal, and shopping counts
+   */
+  getStats: (): Promise<DashboardStatsDTO> =>
+    fetchApi<DashboardStatsDTO>("/api/dashboard/stats"),
 };
 
 // ============================================================================

@@ -420,4 +420,16 @@ export interface CookingStreakDTO {
   longest_streak: number;
   week_activity: boolean[]; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
   last_cooked_date: string | null;
+  today_index: number; // 0=Monday, 6=Sunday - from server to ensure timezone consistency
+}
+
+// ============================================================================
+// Dashboard Types
+// ============================================================================
+
+export interface DashboardStatsDTO {
+  total_recipes: number;
+  favorites: number;
+  meals_planned: number;
+  shopping_items: number;
 }

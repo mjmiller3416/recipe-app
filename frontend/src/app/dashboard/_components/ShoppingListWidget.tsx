@@ -14,9 +14,13 @@ interface CategoryProgress {
   checked: number;
 }
 
-export function ShoppingListWidget() {
-  const [shoppingData, setShoppingData] = useState<ShoppingListResponseDTO | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+interface ShoppingListWidgetProps {
+  shoppingData?: ShoppingListResponseDTO | null;
+}
+
+export function ShoppingListWidget({ shoppingData: initialData }: ShoppingListWidgetProps) {
+  const [shoppingData, setShoppingData] = useState<ShoppingListResponseDTO | null>(initialData ?? null);
+  const [isLoading, setIsLoading] = useState(!initialData);
 
   // Fetch shopping list data
   const fetchShoppingList = useCallback(async () => {
@@ -28,13 +32,16 @@ export function ShoppingListWidget() {
     }
   }, []);
 
-  // Fetch on mount and listen for planner updates
+  // Fetch on mount (only if no initial data) and listen for planner updates
   useEffect(() => {
-    fetchShoppingList().finally(() => setIsLoading(false));
+    if (!initialData) {
+      fetchShoppingList().finally(() => setIsLoading(false));
+    }
 
+    // Always listen for updates to refetch when shopping list changes
     window.addEventListener("planner-updated", fetchShoppingList);
     return () => window.removeEventListener("planner-updated", fetchShoppingList);
-  }, [fetchShoppingList]);
+  }, [fetchShoppingList, initialData]);
 
   // Group items by category and calculate progress
   const categoryProgress = useMemo((): CategoryProgress[] => {

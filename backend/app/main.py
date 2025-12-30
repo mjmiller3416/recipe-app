@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-from app.api import cooking_tips, data_management, feedback, image_generation, meals, planner, recipes, shopping, ingredients, upload, unit_conversions
+from app.api import cooking_tips, dashboard, data_management, feedback, image_generation, meals, planner, recipes, shopping, ingredients, upload, unit_conversions
 
 # Create FastAPI app
 app = FastAPI(
@@ -42,6 +42,7 @@ app.include_router(feedback.router, prefix="/api/feedback", tags=["feedback"])
 app.include_router(image_generation.router, prefix="/api/generate-image", tags=["image-generation"])
 app.include_router(unit_conversions.router, prefix="/api/unit-conversions", tags=["unit-conversions"])
 app.include_router(cooking_tips.router, prefix="/api/cooking-tip", tags=["cooking-tips"])
+app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
 
 
 @app.get("/")

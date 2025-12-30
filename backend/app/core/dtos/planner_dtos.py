@@ -115,6 +115,9 @@ class CookingStreakDTO(BaseModel):
     last_cooked_date: Optional[str] = Field(
         None, description="ISO format date of last cooked meal"
     )
+    today_index: int = Field(
+        ..., ge=0, le=6, description="Today's day index (0=Monday, 6=Sunday)"
+    )
 
 
 # Re-export RecipeCardDTO for convenience

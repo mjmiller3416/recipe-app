@@ -30,8 +30,8 @@ export function CookingStreakWidget() {
     return () => window.removeEventListener("planner-updated", fetchStreak);
   }, [fetchStreak]);
 
-  // Get today's day index (0 = Monday, 6 = Sunday)
-  const todayIndex = (new Date().getDay() + 6) % 7; // Convert Sunday=0 to Monday=0
+  // Use server's today_index to ensure timezone consistency
+  const todayIndex = streakData?.today_index ?? (new Date().getDay() + 6) % 7;
 
   const currentStreak = streakData?.current_streak ?? 0;
   const weekActivity = streakData?.week_activity ?? [false, false, false, false, false, false, false];

@@ -5,8 +5,6 @@ import { Lightbulb, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cookingTipApi } from "@/lib/api";
 
-const REFRESH_INTERVAL = 60000; // 60 seconds
-
 export function ChefTipWidget() {
   const [tip, setTip] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,18 +28,9 @@ export function ChefTipWidget() {
     }
   }, []);
 
-  // Initial fetch
+  // Initial fetch only - users can manually refresh if they want a new tip
   useEffect(() => {
     fetchTip();
-  }, [fetchTip]);
-
-  // Auto-refresh every 60 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchTip(true);
-    }, REFRESH_INTERVAL);
-
-    return () => clearInterval(interval);
   }, [fetchTip]);
 
   const handleManualRefresh = () => {

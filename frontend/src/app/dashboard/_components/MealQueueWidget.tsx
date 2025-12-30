@@ -25,9 +25,19 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 
-export function MealQueueWidget() {
-  const [activeEntries, setActiveEntries] = useState<PlannerEntryResponseDTO[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface MealQueueWidgetProps {
+  entries?: PlannerEntryResponseDTO[];
+}
+
+export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProps) {
+  // Filter to active (uncompleted) entries and sort by position
+  const getActiveEntries = (entries: PlannerEntryResponseDTO[]) =>
+    [...entries].sort((a, b) => a.position - b.position).filter((e) => !e.is_completed);
+
+  const [activeEntries, setActiveEntries] = useState<PlannerEntryResponseDTO[]>(
+    initialEntries ? getActiveEntries(initialEntries) : []
+  );
+  const [isLoading, setIsLoading] = useState(!initialEntries);
   const [completingId, setCompletingId] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -54,13 +64,16 @@ export function MealQueueWidget() {
     }
   }, []);
 
-  // Fetch on mount and listen for planner updates
+  // Fetch on mount (only if no initial entries) and listen for planner updates
   useEffect(() => {
-    fetchActiveEntries().finally(() => setIsLoading(false));
+    if (!initialEntries) {
+      fetchActiveEntries().finally(() => setIsLoading(false));
+    }
 
+    // Always listen for updates to refetch when planner changes
     window.addEventListener("planner-updated", fetchActiveEntries);
     return () => window.removeEventListener("planner-updated", fetchActiveEntries);
-  }, [fetchActiveEntries]);
+  }, [fetchActiveEntries, initialEntries]);
 
   // Handle drag start
   const handleDragStart = useCallback(() => {
@@ -126,7 +139,7 @@ export function MealQueueWidget() {
   const hasEntries = activeEntries.length > 0;
 
   return (
-    <div className="h-full flex flex-col bg-card rounded-xl border border-border shadow-raised p-5 overflow-hidden">
+    <div className="h-full flex flex-col bg-card rounded-xl border border-border shadow-raised pt-5 px-5 pb-4 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">

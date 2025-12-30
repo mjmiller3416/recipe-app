@@ -300,6 +300,7 @@ class PlannerService:
                 longest_streak=max(longest_streak, current_streak),
                 week_activity=week_activity,
                 last_cooked_date=last_cooked.isoformat() if last_cooked else None,
+                today_index=today.weekday(),  # 0=Monday, 6=Sunday
             )
 
         except SQLAlchemyError:
@@ -308,6 +309,7 @@ class PlannerService:
                 longest_streak=0,
                 week_activity=[False] * 7,
                 last_cooked_date=None,
+                today_index=date.today().weekday(),
             )
 
     def _calculate_current_streak(self, cooked_dates: Set[date], today: date) -> int:

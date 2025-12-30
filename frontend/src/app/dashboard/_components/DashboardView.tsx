@@ -12,7 +12,8 @@ import {
   AskMealGeniePlaceholder,
   RecentlyAddedPlaceholder,
 } from "./PlaceholderWidgets";
-import { recipeApi, plannerApi, shoppingApi } from "@/lib/api";
+import { dashboardApi, plannerApi, shoppingApi } from "@/lib/api";
+import type { PlannerEntryResponseDTO, ShoppingListResponseDTO } from "@/types";
 
 interface DashboardStats {
   totalRecipes: number;
@@ -30,29 +31,38 @@ export function DashboardView() {
   });
   const [isLoading, setIsLoading] = useState(true);
 
+  // Data to pass to child widgets (avoids duplicate API calls)
+  const [plannerEntries, setPlannerEntries] = useState<PlannerEntryResponseDTO[]>([]);
+  const [shoppingData, setShoppingData] = useState<ShoppingListResponseDTO | null>(null);
+
   useEffect(() => {
-    async function fetchStats() {
+    async function fetchDashboardData() {
       try {
-        const [recipes, entries, shoppingData] = await Promise.all([
-          recipeApi.list(),
+        // Fetch stats from lightweight endpoint + data for widgets
+        const [statsData, entries, shopping] = await Promise.all([
+          dashboardApi.getStats(),
           plannerApi.getEntries(),
           shoppingApi.getList(),
         ]);
 
         setStats({
-          totalRecipes: recipes.length,
-          favorites: recipes.filter((r) => r.is_favorite).length,
-          mealsPlanned: entries.length,
-          shoppingItems: shoppingData.total_items,
+          totalRecipes: statsData.total_recipes,
+          favorites: statsData.favorites,
+          mealsPlanned: statsData.meals_planned,
+          shoppingItems: statsData.shopping_items,
         });
+
+        // Store data for child widgets
+        setPlannerEntries(entries);
+        setShoppingData(shopping);
       } catch (error) {
-        console.error("Failed to fetch dashboard stats:", error);
+        console.error("Failed to fetch dashboard data:", error);
       } finally {
         setIsLoading(false);
       }
     }
 
-    fetchStats();
+    fetchDashboardData();
   }, []);
 
   return (
@@ -96,10 +106,10 @@ export function DashboardView() {
 
       {/* Widgets Section - fills remaining space */}
       <div className="mt-6 flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-[1fr] gap-6">
-        <MealQueueWidget />
+        <MealQueueWidget entries={plannerEntries} />
         <div className="flex flex-col gap-4 min-h-0 overflow-hidden">
           <div className="flex-1 min-h-0 overflow-hidden">
-            <ShoppingListWidget />
+            <ShoppingListWidget shoppingData={shoppingData} />
           </div>
           <ChefTipWidget />
         </div>
