@@ -3,6 +3,7 @@
 // ============================================
 const CHANGELOG_MD = `
 ## 2025-12-29 - Bug Fixes
+- Shopping list categories now auto-expand when new items are added to a completed category
 - Shopping list badge in sidebar now updates in real-time when adding, removing, or completing meals in the planner
 - Dashboard widgets (Meal Queue, Shopping List, Cooking Streak) now refresh instantly when planner changes — no page reload needed
 - Cooking streak widget now marks the correct day when completing meals (fixed timezone issue)
