@@ -35,6 +35,7 @@ export const DIETARY_PREFERENCES = [
   { value: "keto", label: "Keto" },
   { value: "paleo", label: "Paleo" },
   { value: "low-carb", label: "Low-Carb" },
+  { value: "diabetic", label: "Diabetic" },
 ] as const;
 
 export const INGREDIENT_UNITS = [
