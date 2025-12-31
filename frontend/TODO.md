@@ -2,21 +2,6 @@
 
 ## 🟠 High Priority
 
-### #39 [Bug Report] Shopping List Categories Don't Expand
-- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
-- **Issue**: When adding a new recipe to the meal planner, the shopping list does not expand the categories that now have unchecked items.
-- **Solution**: Auto-expand categories that receive new unchecked items when the shopping list updates.
-
-### #37 [Bug Report] Category Should Auto-Expand When Adding Manual Item
-- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
-- **Issue**: When a manual add is added to a completed (collapsed) category, that category should automatically expand to show the new item.
-- **Solution**: Detect when a manual item is added to a collapsed category and expand it automatically.
-
-### #36 [Bug Report] Streak Counter Displaying Incorrect Data
-- **Location**: `src/app/dashboard/_components/` (streak component)
-- **Issue**: Streak counter isn't marking the right days or showing the correct number of days in the streak circles on the dashboard.
-- **Solution**: Investigate streak calculation logic and fix day marking/count display.
-
 ### 1. Re-enable Ingredient Form Validation
 - **Location**: `src/app/recipes/add/page.tsx` (lines 174-176)
 - **Components affected**: `QuantityInput.tsx`, `IngredientRow.tsx`
@@ -65,6 +50,26 @@
 - **Solution**: Add `transition-transform duration-500 group-hover:scale-105` to the `RecipeCardImage` component (line 86), matching the pattern used in `MainDishCard.tsx`.
 
 ## ✅ Completed
+
+### #40 [Feature Request] Exclude Meal from Shopping List
+- **Location**: `src/app/meal-planner/_components/` (meal actions)
+- **Issue**: Users want the option to exclude an entire meal on the meal planner from the shopping list, removing all its ingredients at once.
+- **Solution**: Added an "Exclude from Shopping List" action to meal entries that prevents all ingredients from that meal from appearing in the shopping list.
+
+### #39 [Bug Report] Shopping List Categories Don't Expand
+- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
+- **Issue**: When adding a new recipe to the meal planner, the shopping list does not expand the categories that now have unchecked items.
+- **Solution**: Auto-expand categories that receive new unchecked items when the shopping list updates.
+
+### #37 [Bug Report] Category Should Auto-Expand When Adding Manual Item
+- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
+- **Issue**: When a manual add is added to a completed (collapsed) category, that category should automatically expand to show the new item.
+- **Solution**: Detect when a manual item is added to a collapsed category and expand it automatically.
+
+### #36 [Bug Report] Streak Counter Displaying Incorrect Data
+- **Location**: `src/app/dashboard/_components/` (streak component)
+- **Issue**: Streak counter isn't marking the right days or showing the correct number of days in the streak circles on the dashboard.
+- **Solution**: Investigated streak calculation logic and fixed day marking/count display.
 
 ### Fix Sidebar Shopping Badge Real-Time Updates
 - **Location**: `src/components/layout/Sidebar.tsx`
