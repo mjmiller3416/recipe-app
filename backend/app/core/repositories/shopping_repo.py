@@ -382,6 +382,24 @@ class ShoppingRepo:
         result = self.session.execute(stmt)
         return result.scalar_one_or_none()
 
+    def get_shopping_states_batch(self, keys: List[str]) -> Dict[str, ShoppingState]:
+        """
+        Get multiple shopping states by keys in a single query.
+
+        Args:
+            keys (List[str]): List of state keys.
+
+        Returns:
+            Dict[str, ShoppingState]: Mapping from normalized key to ShoppingState.
+        """
+        if not keys:
+            return {}
+        normalized_keys = [ShoppingState.normalize_key(k) for k in keys]
+        stmt = select(ShoppingState).where(ShoppingState.key.in_(normalized_keys))
+        result = self.session.execute(stmt)
+        states = result.scalars().all()
+        return {state.key: state for state in states}
+
     def save_shopping_state(
             self,
             key: str,

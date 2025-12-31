@@ -109,10 +109,15 @@ class ShoppingService:
             # aggregate ingredients from recipes
             recipe_items = self.shopping_repo.aggregate_ingredients(recipe_ids)
 
+            # Batch load all saved states in a single query (fixes N+1 problem)
+            state_keys = [item.state_key for item in recipe_items if item.state_key]
+            saved_states = self.shopping_repo.get_shopping_states_batch(state_keys)
+
             # Apply saved states to items (only if quantity hasn't increased)
             for item in recipe_items:
                 if item.state_key:
-                    saved_state = self.shopping_repo.get_shopping_state(item.state_key)
+                    normalized_key = item.state_key.lower().strip()
+                    saved_state = saved_states.get(normalized_key)
                     if saved_state:
                         # If quantity increased, uncheck - user needs to collect more
                         if item.quantity > saved_state.quantity:
