@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
 import { FavoriteButton } from "@/components/common/FavoriteButton";
-import { Plus, Check } from "lucide-react";
+import { Plus, Check, ShoppingCart } from "lucide-react";
 
 // ============================================================================
 // Types
@@ -18,12 +18,14 @@ export interface MenuListItem {
   imageUrl: string | null;
   isCompleted: boolean;
   isFavorite?: boolean;
+  excludeFromShopping?: boolean;
 }
 
 interface MenuListCardProps {
   item: MenuListItem;
   isSelected?: boolean;
   onClick?: () => void;
+  onToggleExcludeFromShopping?: () => void;
   className?: string;
 }
 
@@ -32,6 +34,7 @@ interface WeeklyMenuProps {
   selectedId?: number | null;
   onItemClick?: (item: MenuListItem) => void;
   onAddMealClick?: () => void;
+  onToggleExcludeFromShopping?: (item: MenuListItem) => void;
   className?: string;
 }
 
@@ -43,6 +46,7 @@ export function MenuListCard({
   item,
   isSelected = false,
   onClick,
+  onToggleExcludeFromShopping,
   className,
 }: MenuListCardProps) {
   return (
@@ -94,6 +98,27 @@ export function MenuListCard({
           {item.name}
         </span>
 
+        {/* Shopping Cart Toggle */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExcludeFromShopping?.();
+          }}
+          className={cn(
+            "relative p-1.5 rounded-md interactive-subtle",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+            item.excludeFromShopping ? "text-destructive" : "text-success"
+          )}
+          aria-label={item.excludeFromShopping ? "Include in shopping list" : "Exclude from shopping list"}
+        >
+          <ShoppingCart className="h-4 w-4" strokeWidth={1.5} />
+          {item.excludeFromShopping && (
+            <span className="absolute inset-0 flex items-center justify-center">
+              <span className="w-5 h-0.5 bg-current rotate-[-45deg]" />
+            </span>
+          )}
+        </button>
+
         {/* Favorite Indicator (read-only) */}
         {item.isFavorite && (
           <FavoriteButton
@@ -117,6 +142,7 @@ export function WeeklyMenu({
   selectedId,
   onItemClick,
   onAddMealClick,
+  onToggleExcludeFromShopping,
   className,
 }: WeeklyMenuProps) {
   // Split items into incomplete and completed
@@ -151,6 +177,7 @@ export function WeeklyMenu({
                   item={item}
                   isSelected={selectedId === item.id}
                   onClick={() => onItemClick?.(item)}
+                  onToggleExcludeFromShopping={() => onToggleExcludeFromShopping?.(item)}
                 />
               ))}
 
@@ -173,6 +200,7 @@ export function WeeklyMenu({
                       item={item}
                       isSelected={selectedId === item.id}
                       onClick={() => onItemClick?.(item)}
+                      onToggleExcludeFromShopping={() => onToggleExcludeFromShopping?.(item)}
                     />
                   ))}
                 </>

@@ -420,6 +420,28 @@ class PlannerService:
             self.session.rollback()
             return None
 
+    def toggle_exclude_from_shopping(self, entry_id: int) -> Optional[PlannerEntryResponseDTO]:
+        """
+        Toggle the exclude_from_shopping status of a planner entry.
+
+        Args:
+            entry_id: ID of the entry
+
+        Returns:
+            Updated entry as DTO or None if not found
+        """
+        try:
+            entry = self.repo.toggle_exclude_from_shopping(entry_id)
+            if not entry:
+                return None
+
+            self.session.commit()
+            entry = self.repo.get_by_id(entry.id)
+            return self._entry_to_response_dto(entry)
+        except SQLAlchemyError:
+            self.session.rollback()
+            return None
+
     def mark_completed(self, entry_id: int) -> Optional[PlannerEntryResponseDTO]:
         """
         Mark a planner entry as completed.
@@ -551,6 +573,7 @@ class PlannerService:
             is_completed=entry.is_completed,
             completed_at=entry.completed_at.isoformat() if entry.completed_at else None,
             scheduled_date=entry.scheduled_date.isoformat() if entry.scheduled_date else None,
+            exclude_from_shopping=entry.exclude_from_shopping,
             meal_name=meal.meal_name if meal else None,
             meal_is_favorite=meal.is_favorite if meal else None,
             main_recipe_id=meal.main_recipe_id if meal else None,

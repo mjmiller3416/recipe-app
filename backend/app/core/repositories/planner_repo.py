@@ -158,6 +158,25 @@ class PlannerRepo:
         result = self.session.execute(stmt)
         return result.scalars().unique().all()
 
+    def get_shopping_entries(self) -> List[PlannerEntry]:
+        """
+        Get incomplete planner entries that are NOT excluded from shopping.
+
+        Returns:
+            List of entries to include in shopping list generation
+        """
+        stmt = (
+            select(PlannerEntry)
+            .where(PlannerEntry.is_completed == False)
+            .where(PlannerEntry.exclude_from_shopping == False)
+            .options(
+                joinedload(PlannerEntry.meal).joinedload(Meal.main_recipe)
+            )
+            .order_by(PlannerEntry.position)
+        )
+        result = self.session.execute(stmt)
+        return result.scalars().unique().all()
+
     # -- Update Operations -----------------------------------------------------------------------
     def update(self, entry: PlannerEntry) -> PlannerEntry:
         """
@@ -264,6 +283,24 @@ class PlannerRepo:
             return None
 
         entry.toggle_completion()
+        self.session.flush()
+        return entry
+
+    def toggle_exclude_from_shopping(self, entry_id: int) -> Optional[PlannerEntry]:
+        """
+        Toggle the exclude_from_shopping status of a planner entry.
+
+        Args:
+            entry_id: ID of the entry
+
+        Returns:
+            Updated entry or None if not found
+        """
+        entry = self.get_by_id(entry_id)
+        if not entry:
+            return None
+
+        entry.toggle_exclude_from_shopping()
         self.session.flush()
         return entry
 

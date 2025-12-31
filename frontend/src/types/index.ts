@@ -127,6 +127,7 @@ export interface PlannerEntryResponseDTO {
   is_completed: boolean;
   completed_at: string | null;
   scheduled_date: string | null;
+  exclude_from_shopping?: boolean;
   // Hydrated meal data
   meal_name: string | null;
   meal_is_favorite?: boolean;

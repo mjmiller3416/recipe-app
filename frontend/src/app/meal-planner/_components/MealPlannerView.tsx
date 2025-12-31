@@ -69,6 +69,7 @@ export function MealPlannerPage() {
     imageUrl: entry.main_recipe?.reference_image_path ?? null,
     isCompleted: entry.is_completed,
     isFavorite: entry.meal_is_favorite ?? false,
+    excludeFromShopping: entry.exclude_from_shopping ?? false,
   }));
 
   // Handle entry selection from WeeklyMenu
@@ -207,6 +208,29 @@ export function MealPlannerPage() {
     }
   };
 
+  // Handle toggling exclude from shopping for a meal
+  const handleToggleExcludeFromShopping = async (item: MenuListItem) => {
+    const previousEntries = entries;
+
+    // Optimistic UI update
+    setEntries((prev) =>
+      prev.map((entry) =>
+        entry.id === item.id
+          ? { ...entry, exclude_from_shopping: !entry.exclude_from_shopping }
+          : entry
+      )
+    );
+
+    try {
+      await plannerApi.toggleExcludeFromShopping(item.id);
+      window.dispatchEvent(new Event("planner-updated"));
+    } catch (err) {
+      // Rollback on error
+      setEntries(previousEntries);
+      setError(err instanceof Error ? err.message : "Failed to update shopping exclusion");
+    }
+  };
+
   // Check if there are any completed entries
   const hasCompletedEntries = entries.some((e) => e.is_completed);
 
@@ -332,6 +356,7 @@ export function MealPlannerPage() {
             selectedId={selectedEntryId}
             onItemClick={handleEntrySelect}
             onAddMealClick={handleAddMealClick}
+            onToggleExcludeFromShopping={handleToggleExcludeFromShopping}
             className="h-full"
           />
         </div>

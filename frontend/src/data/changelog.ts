@@ -2,6 +2,9 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2025-12-30 - New Features
+- Exclude individual meals from your shopping list — click the cart icon on any meal card in the planner sidebar (green = included, red = excluded)
+
 ## 2025-12-30 - Improvements
 - Shopping list page now loads faster with optimized database queries and parallel data fetching
 

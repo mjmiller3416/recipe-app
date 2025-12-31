@@ -281,6 +281,14 @@ export const plannerApi = {
     }),
 
   /**
+   * Toggle exclude_from_shopping status of a planner entry
+   */
+  toggleExcludeFromShopping: (entryId: number): Promise<PlannerEntryResponseDTO> =>
+    fetchApi<PlannerEntryResponseDTO>(`/api/planner/entries/${entryId}/toggle-shopping`, {
+      method: "POST",
+    }),
+
+  /**
    * Clear all completed planner entries
    */
   clearCompleted: (): Promise<{ message: string }> =>

@@ -56,6 +56,9 @@ class PlannerEntry(Base):
     # Future calendar feature - nullable for now
     scheduled_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
+    # Exclude from shopping list generation
+    exclude_from_shopping: Mapped[bool] = mapped_column(Boolean, default=False)
+
     # -- Relationships ---------------------------------------------------------------------------
     meal: Mapped["Meal"] = relationship(
         "Meal",
@@ -93,3 +96,13 @@ class PlannerEntry(Base):
         else:
             self.mark_completed()
         return self.is_completed
+
+    def toggle_exclude_from_shopping(self) -> bool:
+        """
+        Toggle the exclude_from_shopping status.
+
+        Returns:
+            The new exclude_from_shopping value
+        """
+        self.exclude_from_shopping = not self.exclude_from_shopping
+        return self.exclude_from_shopping

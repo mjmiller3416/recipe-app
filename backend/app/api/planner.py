@@ -180,6 +180,16 @@ def mark_incomplete(entry_id: int, session: Session = Depends(get_session)):
     return entry
 
 
+@router.post("/entries/{entry_id}/toggle-shopping", response_model=PlannerEntryResponseDTO)
+def toggle_exclude_from_shopping(entry_id: int, session: Session = Depends(get_session)):
+    """Toggle whether a planner entry is excluded from shopping list generation."""
+    service = PlannerService(session)
+    entry = service.toggle_exclude_from_shopping(entry_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Planner entry not found")
+    return entry
+
+
 # -- Remove Operations ---------------------------------------------------------------------------
 @router.delete("/entries/{entry_id}")
 def remove_entry(entry_id: int, session: Session = Depends(get_session)):

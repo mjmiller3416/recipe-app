@@ -186,14 +186,14 @@ class ShoppingService:
 
     def generate_from_active_planner(self) -> ShoppingListGenerationResultDTO:
         """
-        Generate shopping list from active (non-completed) planner entries.
+        Generate shopping list from active (non-completed, non-excluded) planner entries.
 
         Returns:
             ShoppingListGenerationResultDTO: Generation result with statistics.
         """
         try:
-            # Get incomplete planner entries
-            entries = self.planner_repo.get_incomplete_entries()
+            # Get planner entries that should be included in shopping list
+            entries = self.planner_repo.get_shopping_entries()
 
             # Extract recipe IDs from all meals in incomplete entries
             recipe_ids: List[int] = []
@@ -279,8 +279,8 @@ class ShoppingService:
         Uses the active planner entries to get recipe IDs, then fetches breakdown.
         """
         try:
-            # Get recipe IDs from incomplete planner entries (same as generate_from_active_planner)
-            entries = self.planner_repo.get_incomplete_entries()
+            # Get recipe IDs from shopping entries (same as generate_from_active_planner)
+            entries = self.planner_repo.get_shopping_entries()
             recipe_ids: List[int] = []
             for entry in entries:
                 if entry.meal:
