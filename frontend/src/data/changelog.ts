@@ -3,6 +3,7 @@
 // ============================================
 const CHANGELOG_MD = `
 ## 2026-01-01 - Bug Fixes
+- Fixed issue where shopping list did not update correctly after removing all meals from the planner
 - Fixed various bugs related to the Shopping List and Meal Planner pages
 
 ## 2026-01-01 - Improvements
@@ -10,6 +11,7 @@ const CHANGELOG_MD = `
 - "Add Meal" button in Meal Planner now opens the "Saved Meals" tab by default for faster access
 
 ## 2026-01-01 - New Features
+- Add flags to shopping list items to mark them as important or "don't forget" - flagged items appear at the top of their category and have a visual indicator
 - AI-powered Meal Genie chatbot on the Dashboard - get cooking tips, recipe ideas, and meal suggestions instantly. 
 - New chat features coming soon!!!
 

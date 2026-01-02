@@ -34,6 +34,7 @@ class ShoppingItem(Base):
         index=True
     )
     have: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
+    flagged: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # for recipe-generated items, store a key for state persistence
     state_key: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)

@@ -1,5 +1,6 @@
 "use client";
 
+import { Flag } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Tooltip,
@@ -13,6 +14,7 @@ import type { ShoppingItemResponseDTO, IngredientBreakdownDTO } from "@/types";
 interface ShoppingItemProps {
   item: ShoppingItemResponseDTO;
   onToggle: (id: number) => void;
+  onToggleFlagged: (id: number) => void;
   breakdown?: IngredientBreakdownDTO;
 }
 
@@ -25,9 +27,14 @@ interface ShoppingItemProps {
  * - Recipe source display ("from Recipe Name" or "from Multiple recipes")
  * - Quantity badge on the right
  */
-export function ShoppingItem({ item, onToggle, breakdown }: ShoppingItemProps) {
+export function ShoppingItem({ item, onToggle, onToggleFlagged, breakdown }: ShoppingItemProps) {
   const handleClick = () => {
     onToggle(item.id);
+  };
+
+  const handleFlagClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onToggleFlagged(item.id);
   };
 
   // Format quantity for display (using fractions like 1/2, 1/4)
@@ -146,6 +153,25 @@ export function ShoppingItem({ item, onToggle, breakdown }: ShoppingItemProps) {
           </span>
         )}
       </div>
+
+      {/* Flag icon - anchored to right */}
+      <button
+        onClick={handleFlagClick}
+        className={cn(
+          "p-1.5 rounded-md transition-all duration-150 shrink-0",
+          "hover:bg-hover/50",
+          item.flagged
+            ? "text-warning"
+            : "text-muted/40 hover:text-muted"
+        )}
+      >
+        <Flag
+          className={cn(
+            "h-4 w-4 transition-all duration-150",
+            item.flagged && "fill-warning"
+          )}
+        />
+      </button>
     </div>
   );
 }

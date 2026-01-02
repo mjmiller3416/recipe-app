@@ -38,6 +38,7 @@ interface ShoppingCategoryProps {
   category: string;
   items: ShoppingItemResponseDTO[];
   onToggleItem: (id: number) => void;
+  onToggleFlagged: (id: number) => void;
   breakdownMap?: Map<string, IngredientBreakdownDTO>;
 }
 
@@ -53,6 +54,7 @@ export function ShoppingCategory({
   category,
   items,
   onToggleItem,
+  onToggleFlagged,
   breakdownMap,
 }: ShoppingCategoryProps) {
   // Storage key for this specific category
@@ -77,9 +79,13 @@ export function ShoppingCategory({
   // Track previous complete state to detect when category becomes complete
   const wasComplete = useRef(false);
 
-  // Sort items: alphabetically, with unchecked first
+  // Sort items: flagged first, then unchecked, then alphabetically
   const sortedItems = [...items].sort((a, b) => {
-    // First sort by checked status (unchecked first)
+    // First sort by flagged status (flagged first)
+    if (a.flagged !== b.flagged) {
+      return a.flagged ? -1 : 1;
+    }
+    // Then sort by checked status (unchecked first)
     if (a.have !== b.have) {
       return a.have ? 1 : -1;
     }
@@ -176,6 +182,7 @@ export function ShoppingCategory({
               key={item.id}
               item={item}
               onToggle={onToggleItem}
+              onToggleFlagged={onToggleFlagged}
               breakdown={breakdownMap?.get(item.ingredient_name.toLowerCase())}
             />
           ))}

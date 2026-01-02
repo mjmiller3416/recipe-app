@@ -161,6 +161,7 @@ export interface ShoppingItemResponseDTO extends ShoppingItemBaseDTO {
   id: number;
   source: ShoppingSource;
   have: boolean;
+  flagged: boolean;
   state_key: string | null;
   recipe_sources: string[];  // List of recipe names this ingredient comes from
 }
@@ -279,6 +280,7 @@ export interface ShoppingItemUpdateDTO {
   unit?: string | null;
   category?: string | null;
   have?: boolean;
+  flagged?: boolean;
 }
 
 export interface ShoppingListFilterDTO {

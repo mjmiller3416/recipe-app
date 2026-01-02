@@ -64,9 +64,11 @@ class ShoppingService:
             recipe_ids = meal_ids_or_dto
 
         try:
-            # Empty selection: clear recipe items and return
+            # Empty selection: clear recipe items and all states, then return
             if not recipe_ids:
                 self.shopping_repo.clear_shopping_items(source="recipe")
+                # Delete all orphaned states since there are no recipe items
+                self.shopping_repo.delete_orphaned_states([])
                 self.session.commit()
                 # Count remaining items (manual items only)
                 total_items = len(self.shopping_repo.get_all_shopping_items())
@@ -120,10 +122,19 @@ class ShoppingService:
                     saved_state = saved_states.get(normalized_key)
                     if saved_state:
                         # If quantity increased, uncheck - user needs to collect more
-                        if item.quantity > saved_state.quantity:
+                        # Use 0.01 tolerance to account for floating point rounding in unit conversion
+                        if item.quantity > saved_state.quantity + 0.01:
                             item.have = False
                         else:
                             item.have = saved_state.checked
+
+            # Update saved state quantities to match current quantities
+            # This ensures future regenerations compare against accurate values
+            for item in recipe_items:
+                if item.state_key and item.have:
+                    self.shopping_repo.save_shopping_state(
+                        item.state_key, item.quantity, item.unit or "", item.have
+                    )
 
             # save new items
             items_created = 0
@@ -480,6 +491,30 @@ class ShoppingService:
             self.session.rollback()
             return False
 
+    def toggle_item_flagged(self, item_id: int) -> Optional[bool]:
+        """
+        Toggle the 'flagged' status of a shopping item.
+
+        Args:
+            item_id (int): ID of the item to toggle.
+
+        Returns:
+            Optional[bool]: New flagged status or None if item not found.
+        """
+        try:
+            item = self.shopping_repo.get_shopping_item_by_id(item_id)
+            if not item:
+                return None
+
+            item.flagged = not item.flagged
+            self.shopping_repo.update_item(item)
+            self.session.commit()
+            return item.flagged
+
+        except SQLAlchemyError:
+            self.session.rollback()
+            return None
+
     def clear_completed_items(self) -> int:
         """
         Clear all completed (have=True) shopping items and return count deleted.
@@ -593,6 +628,7 @@ class ShoppingService:
             category=item.category,
             source=item.source,
             have=item.have,
+            flagged=item.flagged,
             state_key=item.state_key,
             recipe_sources=recipe_sources or []
         )

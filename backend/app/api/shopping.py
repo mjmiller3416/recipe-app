@@ -96,6 +96,16 @@ def toggle_item_status(item_id: int, session: Session = Depends(get_session)):
     return {"success": result}
 
 
+@router.patch("/items/{item_id}/toggle-flag", response_model=dict)
+def toggle_item_flagged(item_id: int, session: Session = Depends(get_session)):
+    """Toggle the 'flagged' status of a shopping item."""
+    service = ShoppingService(session)
+    result = service.toggle_item_flagged(item_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Shopping item not found")
+    return {"success": True, "flagged": result}
+
+
 @router.delete("/items/{item_id}")
 def delete_shopping_item(item_id: int, session: Session = Depends(get_session)):
     """Delete a shopping item."""

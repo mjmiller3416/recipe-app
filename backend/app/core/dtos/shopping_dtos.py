@@ -63,6 +63,7 @@ class ShoppingItemUpdateDTO(BaseModel):
     unit: Optional[str] = Field(None, max_length=50)
     category: Optional[str] = Field(None, max_length=100)
     have: Optional[bool] = None
+    flagged: Optional[bool] = None
 
     @field_validator("ingredient_name", mode="before")
     @classmethod
@@ -78,6 +79,7 @@ class ShoppingItemResponseDTO(ShoppingItemBaseDTO):
     id: int
     source: Literal["recipe", "manual"]
     have: bool = False
+    flagged: bool = False
     state_key: Optional[str] = None
     recipe_sources: List[str] = []  # List of recipe names this ingredient comes from
 

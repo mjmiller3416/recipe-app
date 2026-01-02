@@ -368,6 +368,14 @@ export const shoppingApi = {
     }),
 
   /**
+   * Toggle item flagged status
+   */
+  toggleFlagged: (id: number): Promise<{ success: boolean; flagged: boolean }> =>
+    fetchApi<{ success: boolean; flagged: boolean }>(`/api/shopping/items/${id}/toggle-flag`, {
+      method: "PATCH",
+    }),
+
+  /**
    * Delete a shopping item
    */
   deleteItem: (id: number): Promise<void> =>

@@ -7,7 +7,17 @@ import { Button } from "@/components/ui/button";
 import { ShoppingCategory } from "./ShoppingCategory";
 import { shoppingApi, plannerApi } from "@/lib/api";
 import type { ShoppingItemResponseDTO, ShoppingListResponseDTO, IngredientBreakdownDTO } from "@/types";
-import { ShoppingCart, Eye, EyeOff, Filter, X, Plus } from "lucide-react";
+import { ShoppingCart, Eye, EyeOff, Filter, X, Plus, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { QuantityInput } from "@/components/forms/QuantityInput";
 import {
   Select,
@@ -156,6 +166,9 @@ export function ShoppingListView() {
     return localStorage.getItem("shopping-list-hide-completed") === "true";
   });
 
+  // Clear manual items dialog state
+  const [showClearManualDialog, setShowClearManualDialog] = useState(false);
+
   // Fetch and generate shopping list on mount
   const loadShoppingList = useCallback(async () => {
     try {
@@ -240,6 +253,28 @@ export function ShoppingListView() {
     }
   };
 
+  // Handle toggling an item's flagged state
+  const handleToggleFlagged = async (itemId: number) => {
+    if (!shoppingData) return;
+
+    // Optimistic update
+    const previousData = shoppingData;
+    setShoppingData({
+      ...shoppingData,
+      items: shoppingData.items.map((i) =>
+        i.id === itemId ? { ...i, flagged: !i.flagged } : i
+      ),
+    });
+
+    try {
+      await shoppingApi.toggleFlagged(itemId);
+    } catch (err) {
+      // Rollback on error
+      setShoppingData(previousData);
+      setError(err instanceof Error ? err.message : "Failed to update flag");
+    }
+  };
+
   // Toggle hiding completed items (persisted to localStorage)
   const handleToggleHideCompleted = () => {
     const newValue = !hideCompleted;
@@ -276,6 +311,33 @@ export function ShoppingListView() {
       setError(err instanceof Error ? err.message : "Failed to add item");
     } finally {
       setIsAddingItem(false);
+    }
+  };
+
+  // Handle clearing all manual items
+  const handleClearManualItems = () => {
+    // Compute unchecked manual items directly from data
+    const manualItems = shoppingData?.items.filter((i) => i.source === "manual") ?? [];
+    const uncheckedManualItems = manualItems.filter((i) => !i.have);
+
+    if (uncheckedManualItems.length > 0) {
+      // Show confirmation dialog if there are unchecked manual items
+      setShowClearManualDialog(true);
+    } else {
+      // No unchecked items, proceed directly
+      confirmClearManualItems();
+    }
+  };
+
+  // Confirm and execute clearing manual items
+  const confirmClearManualItems = async () => {
+    setShowClearManualDialog(false);
+    try {
+      await shoppingApi.clearManual();
+      await loadShoppingList();
+      window.dispatchEvent(new Event("shopping-list-updated"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to clear manual items");
     }
   };
 
@@ -353,27 +415,43 @@ export function ShoppingListView() {
   const hasCheckedItems = shoppingData && shoppingData.checked_items > 0;
 
   // Header actions
-  // Show toggle button when there are checked items
-  const headerActions = hasCheckedItems ? (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={handleToggleHideCompleted}
-      className="text-muted hover:text-foreground"
-    >
-      {hideCompleted ? (
-        <>
-          <Eye className="h-4 w-4 mr-2" />
-          Show collected
-        </>
-      ) : (
-        <>
-          <EyeOff className="h-4 w-4 mr-2" />
-          Hide collected
-        </>
+  const headerActions = (
+    <>
+      {/* Clear manual items button - show only when there are manual items */}
+      {manualItemCount > 0 && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleClearManualItems}
+          className="text-muted hover:text-foreground"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Clear manual
+        </Button>
       )}
-    </Button>
-  ) : null;
+      {/* Show toggle button when there are checked items */}
+      {hasCheckedItems && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleToggleHideCompleted}
+          className="text-muted hover:text-foreground"
+        >
+          {hideCompleted ? (
+            <>
+              <Eye className="h-4 w-4 mr-2" />
+              Show collected
+            </>
+          ) : (
+            <>
+              <EyeOff className="h-4 w-4 mr-2" />
+              Hide collected
+            </>
+          )}
+        </Button>
+      )}
+    </>
+  );
 
   // Loading skeleton
   if (isLoading) {
@@ -551,6 +629,7 @@ export function ShoppingListView() {
                 category={category}
                 items={getFilteredItems(groupedItems[category])}
                 onToggleItem={handleToggleItem}
+                onToggleFlagged={handleToggleFlagged}
                 breakdownMap={breakdownMap}
               />
             ))}
@@ -570,6 +649,24 @@ export function ShoppingListView() {
           </div>
         </div>
       </div>
+
+      {/* Clear Manual Items Confirmation Dialog */}
+      <AlertDialog open={showClearManualDialog} onOpenChange={setShowClearManualDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear Manual Items?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have {manualItemCount - manualCollectedCount} unchecked manual item{manualItemCount - manualCollectedCount !== 1 ? 's' : ''} that will be deleted. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmClearManualItems}>
+              Clear Items
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageLayout>
   );
 }
