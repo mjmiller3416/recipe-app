@@ -187,11 +187,12 @@ export function ShoppingListView() {
 
       // Fetch breakdown data for multi-recipe tooltips
       try {
-        const activeEntries = entries.filter(e => !e.is_completed);
+        // Filter to only entries included in shopping (not completed, not excluded)
+        const shoppingEntries = entries.filter(e => !e.is_completed && !e.exclude_from_shopping);
 
         // Extract ALL recipe IDs including duplicates (for accurate usage counting)
         const recipeIds: number[] = [];
-        for (const entry of activeEntries) {
+        for (const entry of shoppingEntries) {
           if (entry.main_recipe_id) recipeIds.push(entry.main_recipe_id);
           for (const sideId of entry.side_recipe_ids) {
             recipeIds.push(sideId);
