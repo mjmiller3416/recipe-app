@@ -156,11 +156,12 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
         title={pageTitle}
         description={pageDescription}
         onBackClick={isEditMode ? () => handleNavigation(`/recipes/${recipeId}`) : undefined}
+        contentClassName="pb-40 md:pb-0"
         actions={
           <Button
             variant="default"
             size="sm"
-            className="gap-2"
+            className="gap-2 hidden md:flex"
             onClick={form.handleSubmit}
             disabled={form.isSubmitting}
           >
@@ -173,8 +174,8 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
           </Button>
         }
       >
-        <div className="flex gap-6">
-          {/* Left Column - Form Cards (scrolls with page) */}
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Form Cards - Top on mobile, left column on desktop */}
           <div className="flex-1 min-w-0 space-y-6">
             {/* Recipe Info Section */}
             <RecipeInfoCard
@@ -217,9 +218,9 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
             />
           </div>
 
-          {/* Right Column - Image Upload (sticky - stays visible while scrolling) */}
-          <div className="w-80 flex-shrink-0">
-            <div className="sticky top-24">
+          {/* Image Upload - Bottom on mobile, right sidebar on desktop */}
+          <div className="md:w-80 md:flex-shrink-0">
+            <div className="md:sticky md:top-24">
               <ImageUploadCard
                 imagePreview={form.imagePreview}
                 onImageUpload={form.handleImageUpload}
@@ -232,6 +233,23 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
           </div>
         </div>
       </PageLayout>
+
+      {/* Mobile Fixed Save Button - positioned above bottom nav */}
+      <div className="md:hidden fixed bottom-16 left-0 right-0 z-40 bg-sidebar border-t border-border p-4">
+        <Button
+          variant="default"
+          className="w-full gap-2"
+          onClick={form.handleSubmit}
+          disabled={form.isSubmitting}
+        >
+          {form.isSubmitting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4" />
+          )}
+          {form.isSubmitting ? "Saving..." : saveButtonText}
+        </Button>
+      </div>
 
       {/* Unsaved Changes Confirmation Dialog */}
       <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>

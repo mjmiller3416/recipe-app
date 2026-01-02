@@ -478,8 +478,8 @@ interface RecipeCardGridProps {
 export function RecipeCardGrid({ children, className, size = "medium" }: RecipeCardGridProps) {
   const gridClasses = {
     small: "grid grid-cols-1 gap-3",
-    medium: "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6",
-    large: "grid grid-cols-1 gap-6",
+    medium: "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-6",
+    large: "grid grid-cols-1 gap-3 md:gap-6",
   };
 
   return (

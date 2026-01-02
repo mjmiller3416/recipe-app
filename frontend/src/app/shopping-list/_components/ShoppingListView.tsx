@@ -176,18 +176,18 @@ export function ShoppingListView() {
       try {
         const activeEntries = entries.filter(e => !e.is_completed);
 
-        // Extract unique recipe IDs (main + sides)
-        const recipeIds = new Set<number>();
+        // Extract ALL recipe IDs including duplicates (for accurate usage counting)
+        const recipeIds: number[] = [];
         for (const entry of activeEntries) {
-          if (entry.main_recipe_id) recipeIds.add(entry.main_recipe_id);
+          if (entry.main_recipe_id) recipeIds.push(entry.main_recipe_id);
           for (const sideId of entry.side_recipe_ids) {
-            recipeIds.add(sideId);
+            recipeIds.push(sideId);
           }
         }
 
         // Fetch breakdown if we have recipes
-        if (recipeIds.size > 0) {
-          const breakdown = await shoppingApi.getBreakdown([...recipeIds]);
+        if (recipeIds.length > 0) {
+          const breakdown = await shoppingApi.getBreakdown(recipeIds);
           // Create lookup by lowercase ingredient name
           const map = new Map(
             breakdown.map(b => [b.ingredient_name.toLowerCase(), b])

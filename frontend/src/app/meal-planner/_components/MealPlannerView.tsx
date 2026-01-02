@@ -9,7 +9,13 @@ import { WeeklyMenu, MenuListItem } from "./WeeklyMenu";
 import { plannerApi } from "@/lib/api";
 import { PlannerEntryResponseDTO, MealSelectionResponseDTO } from "@/types";
 import { MealDialog } from "./meal-dialog/MealDialog";
-import { Trash2, Heart } from "lucide-react";
+import { Trash2, Heart, Menu } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 export function MealPlannerPage() {
@@ -23,7 +29,9 @@ export function MealPlannerPage() {
   const [error, setError] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [createDialogDefaultTab, setCreateDialogDefaultTab] = useState<"saved" | "create">("saved");
   const [mealRefreshKey, setMealRefreshKey] = useState(0);
+  const [isMenuSheetOpen, setIsMenuSheetOpen] = useState(false);
 
   // Check for create=true URL parameter to auto-open dialog
   useEffect(() => {
@@ -77,8 +85,15 @@ export function MealPlannerPage() {
     setSelectedEntryId(item.id);
   };
 
-  // Handle Add Meal button click - opens the create meal dialog
+  // Handle Add Meal button click - opens the dialog with Saved Meals tab
   const handleAddMealClick = () => {
+    setCreateDialogDefaultTab("saved");
+    setShowCreateDialog(true);
+  };
+
+  // Handle Create Meal button click - opens the dialog with Create Meal tab
+  const handleCreateMealClick = () => {
+    setCreateDialogDefaultTab("create");
     setShowCreateDialog(true);
   };
 
@@ -268,38 +283,49 @@ export function MealPlannerPage() {
       description="Plan your weekly meals"
       fillViewport
       actions={
-        hasCompletedEntries && (
+        <>
+          {hasCompletedEntries && (
+            <Button
+              onClick={handleClearCompleted}
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear Completed
+            </Button>
+          )}
+          {/* Mobile menu button */}
           <Button
-            onClick={handleClearCompleted}
             variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-destructive"
+            size="icon"
+            className="lg:hidden"
+            onClick={() => setIsMenuSheetOpen(true)}
+            aria-label="Open menu"
           >
-            <Trash2 className="h-4 w-4 mr-1" />
-            Clear Completed
+            <Menu className="h-5 w-5" />
           </Button>
-        )
+        </>
       }
     >
       {/* GRID CONTAINER */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_clamp(200px,30%,350px)] gap-6 h-full min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_clamp(200px,30%,350px)] gap-6 lg:h-full lg:min-h-0">
 
         {/* LEFT COLUMN: SELECTED MEAL */}
-        <div className="flex flex-col h-full min-h-0">
+        <div className="flex flex-col lg:h-full lg:min-h-0 lg:overflow-y-auto">
           <h2 className="text-xl font-semibold text-foreground mb-4 flex-shrink-0">
             Selected Meal
           </h2>
 
           {selectedMealId !== null ? (
             <>
-              <MealSelection key={`meal-${selectedMealId}-${mealRefreshKey}`} mealId={selectedMealId} isCompleted={selectedEntry?.is_completed} onEmptySideSlotClick={handleEmptySideSlotClick} className="flex-1" />
+              <MealSelection key={`meal-${selectedMealId}-${mealRefreshKey}`} mealId={selectedMealId} isCompleted={selectedEntry?.is_completed} onEmptySideSlotClick={handleEmptySideSlotClick} className="lg:flex-1" />
 
-              {/* Footer - Action Buttons */}
-              <div className="flex-shrink-0 pt-4 flex gap-4">
+              {/* Footer - Action Buttons (2x2 grid on mobile, single row on desktop) */}
+              <div className="flex-shrink-0 pt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <Button
                   onClick={handleMarkComplete}
                   size="xl"
-                  className="flex-1"
                 >
                   {selectedEntry?.is_completed ? "Mark Incomplete" : "Mark Complete"}
                 </Button>
@@ -307,7 +333,6 @@ export function MealPlannerPage() {
                   onClick={handleEditMeal}
                   variant="outline"
                   size="xl"
-                  className="flex-1"
                 >
                   Edit Meal
                 </Button>
@@ -315,7 +340,6 @@ export function MealPlannerPage() {
                   onClick={handleToggleFavorite}
                   variant="outline"
                   size="xl"
-                  className="flex-1"
                 >
                   <Heart className={cn(
                     "h-5 w-5 mr-2",
@@ -327,7 +351,7 @@ export function MealPlannerPage() {
                   onClick={handleRemoveFromMenu}
                   variant="outline"
                   size="xl"
-                  className="flex-1 border-destructive text-destructive hover:bg-destructive/10"
+                  className="border-destructive text-destructive hover:bg-destructive/10"
                 >
                   Remove from Menu
                 </Button>
@@ -356,6 +380,7 @@ export function MealPlannerPage() {
             selectedId={selectedEntryId}
             onItemClick={handleEntrySelect}
             onAddMealClick={handleAddMealClick}
+            onCreateMealClick={handleCreateMealClick}
             onToggleExcludeFromShopping={handleToggleExcludeFromShopping}
             className="h-full"
           />
@@ -373,9 +398,39 @@ export function MealPlannerPage() {
         }}
         mode={showEditDialog ? "edit" : "create"}
         mealId={selectedMealId}
+        defaultTab={createDialogDefaultTab}
         onEntryCreated={handleEntryCreated}
         onMealUpdated={handleMealUpdated}
       />
+
+      {/* Mobile Menu Sheet */}
+      <Sheet open={isMenuSheetOpen} onOpenChange={setIsMenuSheetOpen}>
+        <SheetContent side="right" className="w-[85vw] sm:w-[350px] p-0">
+          <SheetHeader className="p-4 pb-0">
+            <SheetTitle>This Week&apos;s Menu</SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 h-[calc(100%-4rem)] p-4">
+            <WeeklyMenu
+              items={menuItems}
+              selectedId={selectedEntryId}
+              onItemClick={(item) => {
+                handleEntrySelect(item);
+                setIsMenuSheetOpen(false);
+              }}
+              onAddMealClick={() => {
+                handleAddMealClick();
+                setIsMenuSheetOpen(false);
+              }}
+              onCreateMealClick={() => {
+                handleCreateMealClick();
+                setIsMenuSheetOpen(false);
+              }}
+              onToggleExcludeFromShopping={handleToggleExcludeFromShopping}
+              className="h-full"
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </PageLayout>
   );
 }

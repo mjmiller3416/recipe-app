@@ -137,7 +137,7 @@ class ShoppingRepo:
     def get_ingredient_breakdown(
             self,
             recipe_ids: List[int]
-        ) -> Dict[str, List[Tuple[str, float, str]]]:
+        ) -> Dict[str, List[Tuple[str, float, str, int]]]:
         """
         Get detailed breakdown of ingredients used in recipes.
         Groups by (ingredient, dimension) to properly handle different unit types.
@@ -146,10 +146,11 @@ class ShoppingRepo:
             recipe_ids (List[int]): List of recipe IDs to get breakdown for.
 
         Returns:
-            Dict[str, List[Tuple[str, float, str]]]: Breakdown by ingredient key.
+            Dict[str, List[Tuple[str, float, str, int]]]: Breakdown by ingredient key.
+                Each tuple is (recipe_name, quantity, unit, usage_count).
         """
         recipe_ingredients = self.get_recipe_ingredients(recipe_ids)
-        breakdown: Dict[str, List[Tuple[str, float, str]]] = defaultdict(list)
+        breakdown: Dict[str, List[Tuple[str, float, str, int]]] = defaultdict(list)
 
         # Aggregate by (ingredient, dimension, recipe) to combine duplicate recipes
         # Key: (ingredient_name, dimension, recipe_name)
@@ -157,6 +158,7 @@ class ShoppingRepo:
             "base_quantity": 0.0,
             "dimension": None,
             "original_unit": None,
+            "usage_count": 0,
         })
 
         for ri in recipe_ingredients:
@@ -172,6 +174,7 @@ class ShoppingRepo:
             data["base_quantity"] += base_qty
             data["dimension"] = dimension
             data["original_unit"] = ri.unit or data["original_unit"]
+            data["usage_count"] += 1
 
         # Convert aggregated data to the expected format
         for (ingredient_name, dimension, recipe_name), data in recipe_aggregation.items():
@@ -182,7 +185,7 @@ class ShoppingRepo:
 
             # create breakdown key using dimension for state persistence
             ingredient_key = ShoppingState.create_key(ingredient_name, dimension)
-            breakdown[ingredient_key].append((recipe_name, display_qty, display_unit))
+            breakdown[ingredient_key].append((recipe_name, display_qty, display_unit, data["usage_count"]))
 
         return breakdown
 
@@ -470,6 +473,29 @@ class ShoppingRepo:
             int: Number of states deleted.
         """
         stmt = delete(ShoppingState)
+        result = self.session.execute(stmt)
+        return result.rowcount
+
+    def delete_orphaned_states(self, valid_state_keys: List[str]) -> int:
+        """
+        Delete shopping states that are no longer in the active shopping list.
+
+        Args:
+            valid_state_keys (List[str]): List of state keys currently in use.
+
+        Returns:
+            int: Number of orphaned states deleted.
+        """
+        normalized_keys = [ShoppingState.normalize_key(k) for k in valid_state_keys if k]
+
+        if not normalized_keys:
+            # If no valid keys, delete ALL states (shopping list is empty)
+            stmt = delete(ShoppingState)
+        else:
+            stmt = delete(ShoppingState).where(
+                ~ShoppingState.key.in_(normalized_keys)
+            )
+
         result = self.session.execute(stmt)
         return result.rowcount
 

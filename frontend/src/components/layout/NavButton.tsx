@@ -10,6 +10,7 @@ interface NavButtonProps {
   href: string;
   isActive?: boolean;
   badge?: number;
+  onClick?: () => void;
 }
 
 export function NavButton({
@@ -18,13 +19,15 @@ export function NavButton({
   href,
   isActive = false,
   badge,
+  onClick,
 }: NavButtonProps) {
   return (
     <SafeLink
       href={href}
+      onClick={onClick}
       className={cn(
         // Base layout
-        "flex items-center gap-3 px-3 py-2.5 rounded-xl relative group",
+        "flex items-center gap-3 px-3 py-3 rounded-xl relative group",
         // Transitions for smooth interactions
         "transition-all duration-200 ease-physical",
         // Text colors
@@ -52,7 +55,7 @@ export function NavButton({
       {/* Icon container with hover background */}
       <div
         className={cn(
-          "relative p-1.5 rounded-lg",
+          "relative p-2 rounded-lg",
           "transition-colors duration-200",
           isActive
             ? "bg-primary/30"
@@ -73,7 +76,7 @@ export function NavButton({
       {badge !== undefined && badge > 0 && (
         <div
           className={cn(
-            "ml-auto min-w-5 h-5 px-1.5",
+            "ml-auto min-w-5 h-5 px-2",
             "flex items-center justify-center",
             "rounded-full text-xs font-semibold",
             "bg-error/20 border border-error/30 text-error"

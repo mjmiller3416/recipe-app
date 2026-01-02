@@ -125,7 +125,7 @@ export function ShoppingItem({ item, onToggle, breakdown }: ShoppingItemProps) {
               <ul className="space-y-0.5">
                 {breakdown?.recipe_contributions.map((contrib) => (
                   <li key={contrib.recipe_name} className="text-muted">
-                    • {contrib.recipe_name}: {formatQuantity(contrib.quantity)} {contrib.unit || ""}
+                    • {contrib.recipe_name}{contrib.usage_count > 1 ? ` (x${contrib.usage_count})` : ""}: {formatQuantity(contrib.quantity)} {contrib.unit || ""}
                   </li>
                 )) ?? item.recipe_sources.map((recipe) => (
                   <li key={recipe} className="text-muted">

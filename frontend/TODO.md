@@ -2,6 +2,21 @@
 
 ## 🟠 High Priority
 
+### #45 [Bug Report] Shopping List Items Stay Checked Between Weeks
+- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
+- **Issue**: Shopping list is continuing to check off items that were checked off from the week before.
+- **Solution**: Investigate shopping state persistence logic and ensure items are reset when a new week begins or when the meal plan changes.
+
+### #44 [Bug Report] Recipe Not Adding to Meal Planner from Recipe Page
+- **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx` (add to meal action)
+- **Issue**: When adding a recipe to the meal plan from the recipe itself, it does not actually add anything to the meal planner. The confirmation appears but the recipe isn't there.
+- **Solution**: Investigate the add-to-meal-plan flow from the recipe page and fix the disconnect between UI confirmation and actual data persistence.
+
+### #43 [Bug Report] No Option to Create New Meal When Adding from Recipe
+- **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx` (add to meal dialog)
+- **Issue**: When adding a recipe to the meal planner from the recipe itself, there is no option to create a new meal — only existing meals are shown.
+- **Solution**: Add a "Create New Meal" option to the meal selection dialog when adding from the recipe page.
+
 ### 1. Re-enable Ingredient Form Validation
 - **Location**: `src/app/recipes/add/page.tsx` (lines 174-176)
 - **Components affected**: `QuantityInput.tsx`, `IngredientRow.tsx`
@@ -16,6 +31,11 @@
   3. Consider making validation less strict or only on submit
 
 ## 🟡 Medium Priority
+
+### #42 [Feature Request] Add All Recipe Filters to Meal Planner Dialog
+- **Location**: `src/app/meal-planner/_components/MealDialog.tsx`, `FilterBar.tsx`
+- **Issue**: From the meal planner when adding a new meal, users need all the filters such as beef, chicken, pork, seafood, etc. — the same filters available in the recipe browser.
+- **Solution**: Extend the meal planner's recipe selection dialog to include full filter capabilities matching the recipe browser.
 
 ### #38 [Feature Request] Delete All Completed Manual Adds
 - **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`

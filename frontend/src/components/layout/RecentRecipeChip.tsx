@@ -5,11 +5,15 @@ import { Clock } from "lucide-react";
 import { useRecentRecipes } from "@/hooks";
 import { cn } from "@/lib/utils";
 
+interface RecentRecipesSectionProps {
+  onNavigate?: () => void;
+}
+
 /**
  * Displays recently viewed recipes as clickable chips in the sidebar.
  * Shows up to 3 most recent recipes with emoji and truncated name.
  */
-export function RecentRecipesSection() {
+export function RecentRecipesSection({ onNavigate }: RecentRecipesSectionProps) {
   const { recentRecipes, isLoaded } = useRecentRecipes();
 
   // Don't render if not loaded or no recent recipes
@@ -35,6 +39,7 @@ export function RecentRecipesSection() {
             id={recipe.id}
             name={recipe.name}
             emoji={recipe.emoji}
+            onClick={onNavigate}
           />
         ))}
       </div>
@@ -46,15 +51,17 @@ interface RecentRecipeChipProps {
   id: number;
   name: string;
   emoji: string;
+  onClick?: () => void;
 }
 
-function RecentRecipeChip({ id, name, emoji }: RecentRecipeChipProps) {
+function RecentRecipeChip({ id, name, emoji, onClick }: RecentRecipeChipProps) {
   return (
     <Link
       href={`/recipes/${id}`}
+      onClick={onClick}
       className={cn(
         // Base styles
-        "flex items-center gap-2 px-3 py-1.5 rounded-lg",
+        "flex items-center gap-2 px-3 py-2 rounded-lg",
         // Background and border
         "bg-elevated/50 border border-border",
         // Text

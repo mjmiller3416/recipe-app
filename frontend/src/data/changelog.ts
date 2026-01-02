@@ -2,6 +2,20 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-01-01 - Bug Fixes
+- Fixed various bugs related to the Shopping List and Meal Planner pages
+
+## 2026-01-01 - Improvements
+- Added "Create Meal" button to Meal Planner sidebar - quick access to meal creation
+- "Add Meal" button in Meal Planner now opens the "Saved Meals" tab by default for faster access
+
+## 2026-01-01 - New Features
+- AI-powered Meal Genie chatbot on the Dashboard - get cooking tips, recipe ideas, and meal suggestions instantly. 
+- New chat features coming soon!!!
+
+## 2025-12-31 - Improvements
+- Improved responsiveness of the sidebar on mobile devices
+
 ## 2025-12-30 - New Features
 - Exclude individual meals from your shopping list — click the cart icon on any meal card in the planner sidebar (green = included, red = excluded)
 

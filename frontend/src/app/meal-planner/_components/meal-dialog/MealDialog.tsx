@@ -35,6 +35,8 @@ interface MealDialogProps {
   mode: "create" | "edit";
   /** Meal ID to edit (required when mode="edit") */
   mealId?: number | null;
+  /** Default tab to show when dialog opens in create mode */
+  defaultTab?: "saved" | "create";
   /** Called when a new meal is created and added to planner (create mode) */
   onEntryCreated?: (entry: PlannerEntryResponseDTO) => void;
   /** Called when an existing meal is updated (edit mode) */
@@ -104,11 +106,12 @@ export function MealDialog({
   onOpenChange,
   mode,
   mealId,
+  defaultTab = "saved",
   onEntryCreated,
   onMealUpdated,
 }: MealDialogProps) {
   // Tab state (only used in create mode)
-  const [activeTab, setActiveTab] = useState<"create" | "saved">("create");
+  const [activeTab, setActiveTab] = useState<"create" | "saved">(defaultTab);
 
   // Slot state
   const [mainRecipe, setMainRecipe] = useState<RecipeCardData | null>(null);
@@ -142,6 +145,9 @@ export function MealDialog({
   // Handle dialog open/close
   useEffect(() => {
     if (open) {
+      // Set tab based on defaultTab prop when opening
+      setActiveTab(defaultTab);
+
       // Fetch recipes for both modes
       fetchRecipes();
 
@@ -153,7 +159,7 @@ export function MealDialog({
       // Reset state when dialog closes
       resetState();
     }
-  }, [open, mode, mealId]);
+  }, [open, mode, mealId, defaultTab]);
 
   // --------------------------------------------------------------------------
   // Data Fetching
@@ -214,7 +220,7 @@ export function MealDialog({
   // --------------------------------------------------------------------------
 
   const resetState = () => {
-    setActiveTab("create");
+    setActiveTab(defaultTab);
     setMainRecipe(null);
     setSideRecipes([null, null, null]);
     setActiveSlotIndex(0);
@@ -471,16 +477,6 @@ export function MealDialog({
             <div className="px-6 pt-6 pb-0">
               <TabsList className="bg-transparent border-none p-0 gap-6 h-auto w-auto">
                 <TabsTrigger
-                  value="create"
-                  className="bg-transparent px-0 py-2 text-base font-medium
-                             data-[state=active]:bg-transparent data-[state=active]:shadow-none
-                             data-[state=active]:text-primary
-                             border-b-2 border-transparent data-[state=active]:border-primary
-                             rounded-none hover:text-foreground"
-                >
-                  Create Meal
-                </TabsTrigger>
-                <TabsTrigger
                   value="saved"
                   className="bg-transparent px-0 py-2 text-base font-medium
                              data-[state=active]:bg-transparent data-[state=active]:shadow-none
@@ -490,17 +486,20 @@ export function MealDialog({
                 >
                   Saved Meals
                 </TabsTrigger>
+                <TabsTrigger
+                  value="create"
+                  className="bg-transparent px-0 py-2 text-base font-medium
+                             data-[state=active]:bg-transparent data-[state=active]:shadow-none
+                             data-[state=active]:text-primary
+                             border-b-2 border-transparent data-[state=active]:border-primary
+                             rounded-none hover:text-foreground"
+                >
+                  Create Meal
+                </TabsTrigger>
               </TabsList>
             </div>
 
             {/* Tab Content */}
-            <TabsContent
-              value="create"
-              className="flex-1 overflow-y-auto px-6 py-4 mt-0"
-            >
-              {editorContent}
-            </TabsContent>
-
             <TabsContent
               value="saved"
               className="flex-1 overflow-y-auto px-6 py-4 mt-0"
@@ -511,6 +510,13 @@ export function MealDialog({
                   onOpenChange(false);
                 }}
               />
+            </TabsContent>
+
+            <TabsContent
+              value="create"
+              className="flex-1 overflow-y-auto px-6 py-4 mt-0"
+            >
+              {editorContent}
             </TabsContent>
           </Tabs>
         ) : (

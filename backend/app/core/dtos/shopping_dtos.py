@@ -152,6 +152,7 @@ class IngredientBreakdownItemDTO(BaseModel):
     recipe_name: str
     quantity: float
     unit: Optional[str]
+    usage_count: int = 1  # How many times this recipe appears in the meal plan
 
 class IngredientBreakdownDTO(BaseModel):
     """DTO for ingredient breakdown by recipe."""

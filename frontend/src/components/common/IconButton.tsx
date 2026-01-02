@@ -29,7 +29,7 @@ export function IconButton({
         <button
           onClick={onClick}
           className={cn(
-            "relative p-2.5 rounded-lg bg-elevated group",
+            "relative p-2 rounded-lg bg-elevated group",
             "interactive-subtle"
           )}
           aria-label={ariaLabel ?? tooltip}

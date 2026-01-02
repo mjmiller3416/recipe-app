@@ -8,10 +8,7 @@ import { MealQueueWidget } from "./MealQueueWidget";
 import { ShoppingListWidget } from "./ShoppingListWidget";
 import { ChefTipWidget } from "./ChefTipWidget";
 import { CookingStreakWidget } from "./CookingStreakWidget";
-import {
-  AskMealGeniePlaceholder,
-  RecentlyAddedPlaceholder,
-} from "./PlaceholderWidgets";
+import { AskMealGenieWidget } from "./ask-meal-genie";
 import { dashboardApi, plannerApi, shoppingApi } from "@/lib/api";
 import type { PlannerEntryResponseDTO, ShoppingListResponseDTO } from "@/types";
 
@@ -106,18 +103,19 @@ export function DashboardView() {
 
       {/* Widgets Section - fills remaining space */}
       <div className="mt-6 flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-[1fr] gap-6">
-        <MealQueueWidget entries={plannerEntries} />
-        <div className="flex flex-col gap-4 min-h-0 overflow-hidden">
-          <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="widget-column">
+          <CookingStreakWidget />
+          <div className="flex-1 min-h-0">
+            <MealQueueWidget entries={plannerEntries} />
+          </div>
+        </div>
+        <div className="widget-column">
+          <div className="flex-1 min-h-0">
             <ShoppingListWidget shoppingData={shoppingData} />
           </div>
           <ChefTipWidget />
         </div>
-        <div className="flex flex-col gap-4 min-h-0 overflow-hidden">
-          <AskMealGeniePlaceholder />
-          <CookingStreakWidget />
-          <RecentlyAddedPlaceholder />
-        </div>
+        <AskMealGenieWidget />
       </div>
     </PageLayout>
   );

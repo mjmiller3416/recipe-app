@@ -130,6 +130,11 @@ class ShoppingService:
             for item in recipe_items:
                 self.shopping_repo.create_shopping_item(item)
                 items_created += 1
+
+            # Clean up orphaned states that no longer have corresponding items
+            valid_state_keys = [item.state_key for item in recipe_items if item.state_key]
+            self.shopping_repo.delete_orphaned_states(valid_state_keys)
+
             # commit transaction after creating all items
             self.session.commit()
 
@@ -295,8 +300,8 @@ class ShoppingService:
             # Build mapping from state_key -> list of recipe names
             recipe_sources_map: Dict[str, List[str]] = {}
             for state_key, contributions in breakdown.items():
-                # contributions is List[Tuple[recipe_name, quantity, unit]]
-                recipe_names = list(set(name for name, _, _ in contributions))
+                # contributions is List[Tuple[recipe_name, quantity, unit, usage_count]]
+                recipe_names = list(set(name for name, _, _, _ in contributions))
                 recipe_sources_map[state_key] = recipe_names
 
             return recipe_sources_map
@@ -552,17 +557,17 @@ class ShoppingService:
                 # capitalize ingredient name for proper formatting
                 ingredient_name = parts[0].capitalize() if parts else ""
                 unit = parts[1] if len(parts) > 1 else ""
-                total_qty = sum(qty for _, qty, _ in contributions)
+                total_qty = sum(qty for _, qty, _, _ in contributions)
                 class _Item:
                     pass
                 item = _Item()
                 item.ingredient_name = ingredient_name
                 item.total_quantity = total_qty
                 item.unit = unit
-                # build recipe_breakdown list
+                # build recipe_breakdown list with usage_count
                 item.recipe_breakdown = [
-                    type('Rpt', (), {'recipe_name': rn, 'quantity': q, 'unit': u})
-                    for rn, q, u in contributions
+                    type('Rpt', (), {'recipe_name': rn, 'quantity': q, 'unit': u, 'usage_count': cnt})
+                    for rn, q, u, cnt in contributions
                 ]
                 resp.items.append(item)
             return resp

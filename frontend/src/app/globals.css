@@ -32,6 +32,12 @@
   --primary-active: #6d28d9;    /* Pressed/active state */
   --primary-foreground: #ffffff; /* Text on primary background */
   
+  /* Primary surface colors (for tinted backgrounds) */
+  --primary-surface: #2d2438;   /* Subtle purple-tinted background */
+  --primary-surface-hover: #3d3148; /* Hover state for surface */
+  --primary-muted: #4c3d5e;     /* Medium purple for borders, subtle accents */
+  --primary-on-surface: #c4b5fd; /* Text color on primary surface bg */
+  
   /* ============================================
      SECONDARY COLORS (Teal)
      ============================================ */
@@ -39,6 +45,12 @@
   --secondary-hover: #0d9488;   /* Hover state */
   --secondary-active: #0f766e;  /* Pressed/active state */
   --secondary-foreground: #ffffff; /* Text on secondary background */
+  
+  /* Secondary surface colors (for tinted backgrounds) */
+  --secondary-surface: #1a2e2b; /* Subtle teal-tinted background */
+  --secondary-surface-hover: #243d39; /* Hover state for surface */
+  --secondary-muted: #2d4a45;   /* Medium teal for borders */
+  --secondary-on-surface: #5eead4; /* Text color on secondary surface bg */
   
   /* ============================================
      NEUTRAL COLORS
@@ -194,10 +206,16 @@
      ============================================ */
   --primary: #8b5cf6;           /* Main brand color - same purple works well */
   --primary-dark: #7c3aed;      /* Darker variant */
-  --primary-light: #c4b5fd;     /* Lighter variant for light mode */
+  --primary-light: #a78bfa;     /* Decorative use only - NOT for text backgrounds */
   --primary-hover: #7c3aed;     /* Hover state */
   --primary-active: #6d28d9;    /* Pressed/active state */
   --primary-foreground: #ffffff; /* White text on purple background */
+  
+  /* Primary surface colors (for tinted backgrounds with proper contrast) */
+  --primary-surface: #f3f0ff;   /* Very light purple - selected states, highlights */
+  --primary-surface-hover: #ede9fe; /* Slightly darker on hover */
+  --primary-muted: #ddd6fe;     /* Medium - borders, subtle accents, badges */
+  --primary-on-surface: #5b21b6; /* Dark purple text ON primary-surface (~7:1 contrast) */
   
   /* ============================================
      SECONDARY COLORS (Teal)
@@ -206,6 +224,12 @@
   --secondary-hover: #0d9488;   /* Hover state */
   --secondary-active: #0f766e;  /* Pressed/active state */
   --secondary-foreground: #ffffff; /* White text on teal */
+  
+  /* Secondary surface colors (for tinted backgrounds with proper contrast) */
+  --secondary-surface: #f0fdfa; /* Very light teal background */
+  --secondary-surface-hover: #ccfbf1; /* Hover state */
+  --secondary-muted: #99f6e4;   /* Medium teal for borders */
+  --secondary-on-surface: #0f766e; /* Dark teal text ON secondary-surface */
   
   /* ============================================
      NEUTRAL COLORS
@@ -519,10 +543,35 @@
 
 /* ============================================
    WEIGHT SYSTEM - SHADOW UTILITIES
+   ============================================
+
+   IMPORTANT - Shadow & Overflow Pattern:
+   box-shadow renders OUTSIDE the element's border-box.
+   If a PARENT has overflow-hidden, it will clip child shadows!
+
+   WRONG (shadow gets squared off):
+     <div class="overflow-hidden">
+       <div class="shadow-raised rounded-xl">...</div>
+     </div>
+
+   RIGHT (shadow renders correctly):
+     <div class="widget-column">
+       <div class="shadow-raised rounded-xl">...</div>
+     </div>
+
+   Use widget-column for layout containers that hold shadowed cards.
    ============================================ */
 
 @utility shadow-raised {
   box-shadow: var(--shadow-raised);
+}
+
+/* Shadow-safe container for widget layouts - NEVER add overflow-hidden */
+@utility widget-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 1rem;
 }
 
 @utility shadow-elevated {

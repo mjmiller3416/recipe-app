@@ -323,6 +323,7 @@ export interface IngredientBreakdownDTO {
     recipe_name: string;
     quantity: number;
     unit: string | null;
+    usage_count: number;
   }[];
 }
 
@@ -422,6 +423,26 @@ export interface CookingStreakDTO {
   week_activity: boolean[]; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
   last_cooked_date: string | null;
   today_index: number; // 0=Monday, 6=Sunday - from server to ensure timezone consistency
+}
+
+// ============================================================================
+// Meal Genie Types
+// ============================================================================
+
+export interface MealGenieMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface MealGenieRequestDTO {
+  message: string;
+  conversation_history?: MealGenieMessage[];
+}
+
+export interface MealGenieResponseDTO {
+  success: boolean;
+  response?: string;
+  error?: string;
 }
 
 // ============================================================================

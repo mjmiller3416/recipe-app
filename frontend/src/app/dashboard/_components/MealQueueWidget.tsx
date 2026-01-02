@@ -146,7 +146,7 @@ export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProp
   const hasEntries = activeEntries.length > 0;
 
   return (
-    <div className="h-full flex flex-col bg-card rounded-xl border border-border shadow-raised pt-5 px-5 pb-4 overflow-hidden">
+    <div className="h-full flex flex-col bg-card rounded-xl border border-border shadow-raised pt-5 px-5 pb-3 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -185,7 +185,7 @@ export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProp
         </div>
       ) : (
         <div className={cn(
-          "flex-1 min-h-0 max-h-[50vh] overflow-auto space-y-2",
+          "flex-1 min-h-0 overflow-auto space-y-2",
           isDragging && "scrollbar-hidden"
         )}>
           {/* Meals with drag-and-drop */}

@@ -20,10 +20,12 @@ import type {
   CookingTipResponseDTO,
   CookingStreakDTO,
   DashboardStatsDTO,
+  MealGenieMessage,
+  MealGenieResponseDTO,
 } from "@/types";
 
 // API base URL from environment variable or default to localhost
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://192.168.1.213:8000";
 
 // ============================================================================
 // Core fetch wrapper with error handling
@@ -611,6 +613,7 @@ export interface IngredientBreakdownDTO {
     recipe_name: string;
     quantity: number;
     unit: string | null;
+    usage_count: number;
   }[];
 }
 
@@ -688,6 +691,30 @@ export const cookingTipApi = {
    */
   getTip: (): Promise<CookingTipResponseDTO> =>
     fetchApi<CookingTipResponseDTO>("/api/cooking-tip"),
+};
+
+// ============================================================================
+// Meal Genie API
+// ============================================================================
+
+export const mealGenieApi = {
+  /**
+   * Send a message to Meal Genie and get an AI response
+   * @param message The user's message
+   * @param conversationHistory Optional previous messages for context
+   * @returns Response with AI-generated answer
+   */
+  ask: (
+    message: string,
+    conversationHistory?: MealGenieMessage[]
+  ): Promise<MealGenieResponseDTO> =>
+    fetchApi<MealGenieResponseDTO>("/api/meal-genie/ask", {
+      method: "POST",
+      body: JSON.stringify({
+        message,
+        conversation_history: conversationHistory,
+      }),
+    }),
 };
 
 // ============================================================================

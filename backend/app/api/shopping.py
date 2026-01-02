@@ -187,6 +187,7 @@ def get_ingredient_breakdown(
                     "recipe_name": rb.recipe_name,
                     "quantity": rb.quantity,
                     "unit": rb.unit,
+                    "usage_count": rb.usage_count,
                 }
                 for rb in item.recipe_breakdown
             ]

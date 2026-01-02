@@ -145,7 +145,7 @@ export function PageLayout({
         {/* Main content area */}
         <div
           data-page-content
-          className={cn("max-w-7xl mx-auto w-full px-6 py-6", contentClassName)}
+          className={cn("max-w-7xl mx-auto w-full px-4 md:px-6 py-6", contentClassName)}
         >
           {children}
         </div>
@@ -159,11 +159,12 @@ export function PageLayout({
   // ============================================
 
   // fillViewport mode: fixed height, no page scroll, content fills available space
+  // On mobile (< lg), use normal scrolling since there's no sidebar that needs independent scroll
   if (fillViewport) {
     return (
-      <div className={cn("h-dvh flex flex-col overflow-hidden bg-background", className)}>
+      <div className={cn("min-h-screen lg:h-dvh flex flex-col lg:overflow-hidden bg-background", className)}>
         {headerElement}
-        <div className={cn("flex-1 min-h-0 max-w-7xl mx-auto w-full px-6 py-6", contentClassName)}>
+        <div className={cn("flex-1 lg:min-h-0 max-w-7xl mx-auto w-full px-4 md:px-6 py-6", contentClassName)}>
           {children}
         </div>
       </div>
@@ -174,7 +175,7 @@ export function PageLayout({
   return (
     <div className={cn("min-h-screen bg-background", className)}>
       {headerElement}
-      <div className={cn("max-w-7xl mx-auto px-6 py-6", contentClassName)}>
+      <div className={cn("max-w-7xl mx-auto px-4 md:px-6 py-6", contentClassName)}>
         {children}
       </div>
     </div>

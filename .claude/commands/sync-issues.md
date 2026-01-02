@@ -48,6 +48,7 @@ For each missing issue, create a TODO entry:
 - No labels or unclear → 🟡 Medium Priority (default)
 
 Append each new issue to the appropriate priority section in TODO.md.
+Resolve numbering and formatting as needed.
 
 ### Step 5: Report Results
 

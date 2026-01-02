@@ -101,8 +101,77 @@ export function IngredientRow({
         isDragging ? "opacity-50 shadow-lg" : ""
       }`}
     >
-      <div className="flex items-center gap-3">
-        {/* Drag Handle - Vertically Centered */}
+      {/* Mobile Layout: Grid with drag/delete on top row */}
+      <div className="md:hidden">
+        <div className="flex items-center justify-between mb-2">
+          <button
+            type="button"
+            className="p-1 text-muted hover:text-foreground transition-colors cursor-grab active:cursor-grabbing touch-none"
+            aria-label="Drag to reorder"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(ingredient.id)}
+            className="p-1 text-muted hover:text-destructive transition-colors"
+            aria-label="Delete ingredient"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          <QuantityInput
+            value={ingredient.quantity}
+            onChange={(value) => onUpdate(ingredient.id, "quantity", value)}
+            placeholder="Qty"
+          />
+          <Select
+            value={ingredient.unit}
+            onValueChange={(value) => onUpdate(ingredient.id, "unit", value)}
+          >
+            <SelectTrigger id={`unit-mobile-${ingredient.id}`} className="h-9">
+              <SelectValue placeholder="Unit" />
+            </SelectTrigger>
+            <SelectContent>
+              {INGREDIENT_UNITS.map((unit) => (
+                <SelectItem key={unit.value} value={unit.value}>
+                  {unit.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <IngredientAutocomplete
+          ingredients={availableIngredients}
+          value={ingredient.name}
+          onValueChange={(value) => onUpdate(ingredient.id, "name", value)}
+          onIngredientSelect={handleIngredientSelect}
+          onNewIngredient={handleNewIngredient}
+          placeholder="Ingredient name"
+          className="h-9 mb-2"
+        />
+        <Select
+          value={ingredient.category}
+          onValueChange={(value) => onUpdate(ingredient.id, "category", value)}
+        >
+          <SelectTrigger id={`category-mobile-${ingredient.id}`} className="h-9">
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent>
+            {INGREDIENT_CATEGORIES.map((cat) => (
+              <SelectItem key={cat.value} value={cat.value}>
+                {cat.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Desktop Layout: Horizontal row */}
+      <div className="hidden md:flex items-center gap-3">
         <button
           type="button"
           className="p-1 text-muted hover:text-foreground transition-colors cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
@@ -113,9 +182,7 @@ export function IngredientRow({
           <GripVertical className="h-5 w-5" />
         </button>
 
-        {/* Form Fields Container */}
         <div className="flex-1 flex items-center gap-2">
-          {/* Quantity */}
           <div className="flex-shrink-0 w-24">
             <QuantityInput
               value={ingredient.quantity}
@@ -124,7 +191,6 @@ export function IngredientRow({
             />
           </div>
 
-          {/* Unit */}
           <div className="flex-shrink-0 w-28">
             <Select
               value={ingredient.unit}
@@ -143,7 +209,6 @@ export function IngredientRow({
             </Select>
           </div>
 
-          {/* Ingredient Name with Autocomplete */}
           <div className="flex-1 min-w-0">
             <IngredientAutocomplete
               ingredients={availableIngredients}
@@ -156,7 +221,6 @@ export function IngredientRow({
             />
           </div>
 
-          {/* Category */}
           <div className="flex-shrink-0 w-32">
             <Select
               value={ingredient.category}
@@ -176,7 +240,6 @@ export function IngredientRow({
           </div>
         </div>
 
-        {/* Delete Button - Vertically Centered */}
         <button
           type="button"
           onClick={() => onDelete(ingredient.id)}

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
 import { FavoriteButton } from "@/components/common/FavoriteButton";
-import { Plus, Check, ShoppingCart } from "lucide-react";
+import { Plus, Check, ShoppingCart, ChefHat } from "lucide-react";
 
 // ============================================================================
 // Types
@@ -34,6 +34,7 @@ interface WeeklyMenuProps {
   selectedId?: number | null;
   onItemClick?: (item: MenuListItem) => void;
   onAddMealClick?: () => void;
+  onCreateMealClick?: () => void;
   onToggleExcludeFromShopping?: (item: MenuListItem) => void;
   className?: string;
 }
@@ -142,6 +143,7 @@ export function WeeklyMenu({
   selectedId,
   onItemClick,
   onAddMealClick,
+  onCreateMealClick,
   onToggleExcludeFromShopping,
   className,
 }: WeeklyMenuProps) {
@@ -210,15 +212,24 @@ export function WeeklyMenu({
         </div>
       </ScrollArea>
 
-      {/* Footer - Sticky Add Meal Button */}
-      <div className="flex-shrink-0 pt-4">
+      {/* Footer - Sticky Buttons */}
+      <div className="flex-shrink-0 pt-4 flex gap-2">
         <Button
           onClick={onAddMealClick}
-          className="w-full"
+          className="flex-1"
           size="xl"
         >
           <Plus className="h-5 w-5 mr-2" />
           Add Meal
+        </Button>
+        <Button
+          onClick={onCreateMealClick}
+          variant="outline"
+          className="flex-1"
+          size="xl"
+        >
+          <ChefHat className="h-5 w-5 mr-2" />
+          Create Meal
         </Button>
       </div>
     </div>

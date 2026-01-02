@@ -126,7 +126,7 @@ export function RecipeInfoCard({
           </div>
 
           {/* Classification Row */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div data-field="mealType">
               <Label htmlFor="meal-type" className="flex items-center gap-2">
                 <Tag className="h-4 w-4 text-muted" />

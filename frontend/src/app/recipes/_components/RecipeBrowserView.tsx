@@ -23,6 +23,12 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -234,6 +240,100 @@ function FilterSection({
 }
 
 // ============================================================================
+// Filter Sidebar Content (shared between desktop sidebar and mobile sheet)
+// ============================================================================
+
+interface FilterSidebarContentProps {
+  filters: FilterState;
+  hasActiveFilters: boolean;
+  onClearAllFilters: () => void;
+  onFavoritesChange: (checked: boolean) => void;
+  categoryOptions: FilterOption[];
+  mealTypeOptions: FilterOption[];
+  dietaryOptions: FilterOption[];
+  onCategoryChange: (value: string, checked: boolean) => void;
+  onMealTypeChange: (value: string, checked: boolean) => void;
+  onDietaryChange: (value: string, checked: boolean) => void;
+}
+
+function FilterSidebarContent({
+  filters,
+  hasActiveFilters,
+  onClearAllFilters,
+  onFavoritesChange,
+  categoryOptions,
+  mealTypeOptions,
+  dietaryOptions,
+  onCategoryChange,
+  onMealTypeChange,
+  onDietaryChange,
+}: FilterSidebarContentProps) {
+  return (
+    <>
+      {/* Sidebar Header */}
+      <div className="flex items-center justify-between mb-4 pb-4 border-b border-border">
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal className="h-4 w-4 text-primary" />
+          <span className="font-medium text-foreground">Refine Results</span>
+        </div>
+        {hasActiveFilters && (
+          <Button
+            variant="link"
+            size="sm"
+            onClick={onClearAllFilters}
+            className="h-auto p-0 text-xs"
+          >
+            Reset
+          </Button>
+        )}
+      </div>
+
+      {/* Favorites Toggle */}
+      <label className="flex items-center gap-3 py-3 px-2 mb-2 rounded-md cursor-pointer hover:bg-hover transition-colors">
+        <Checkbox
+          checked={filters.favoritesOnly}
+          onCheckedChange={(checked) => onFavoritesChange(checked as boolean)}
+        />
+        <Heart
+          className={cn(
+            "h-4 w-4 transition-colors",
+            filters.favoritesOnly ? "text-destructive fill-current" : "text-muted"
+          )}
+        />
+        <span className="text-sm text-foreground">Favorites Only</span>
+      </label>
+
+      {/* Filter Sections */}
+      <div className="space-y-2 divide-y divide-border">
+        <FilterSection
+          title="Category"
+          icon={ChefHat}
+          options={categoryOptions}
+          selected={filters.categories}
+          onChange={onCategoryChange}
+        />
+        <FilterSection
+          title="Meal Type"
+          icon={Clock}
+          options={mealTypeOptions}
+          selected={filters.mealTypes}
+          onChange={onMealTypeChange}
+        />
+        {dietaryOptions.length > 0 && (
+          <FilterSection
+            title="Dietary Preference"
+            icon={BookOpen}
+            options={dietaryOptions}
+            selected={filters.dietaryPreferences}
+            onChange={onDietaryChange}
+          />
+        )}
+      </div>
+    </>
+  );
+}
+
+// ============================================================================
 // Active Filter Chip Component
 // ============================================================================
 
@@ -284,6 +384,7 @@ interface StickyHeaderBarProps {
   onSortDirectionToggle: () => void;
   showFilters: boolean;
   onToggleFilters: () => void;
+  onOpenMobileFilters: () => void;
   activeFilters: ActiveFilter[];
   onRemoveFilter: (filter: ActiveFilter) => void;
   onClearAllFilters: () => void;
@@ -298,27 +399,28 @@ function StickyHeaderBar({
   onSortDirectionToggle,
   showFilters,
   onToggleFilters,
+  onOpenMobileFilters,
   activeFilters,
   onRemoveFilter,
   onClearAllFilters,
 }: StickyHeaderBarProps) {
   return (
-    <div className="max-w-7xl mx-auto px-6 py-4">
+    <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
       {/* Section Header with Sort */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0 mb-4">
         <div className="flex items-center gap-3">
           <Sparkles className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-semibold text-foreground">Your Recipes</h2>
-          <span className="text-sm text-muted">
+          <h2 className="text-lg md:text-xl font-semibold text-foreground">Your Recipes</h2>
+          <span className="text-sm text-muted hidden sm:inline">
             {resultCount === totalCount
               ? `${totalCount} recipes`
-              : `${resultCount} of ${totalCount} recipes`}
+              : `${resultCount} of ${totalCount}`}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted">Sort by:</span>
+          <span className="text-sm text-muted hidden md:inline">Sort by:</span>
           <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortOption)}>
-            <SelectTrigger className="w-36 h-9">
+            <SelectTrigger className="w-32 md:w-36 h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -345,14 +447,30 @@ function StickyHeaderBar({
               <ArrowDown className="h-4 w-4" />
             )}
           </Button>
+          {/* Desktop filter toggle */}
           <Button
             variant="outline"
             size="sm"
             onClick={onToggleFilters}
-            className="gap-2 ml-2"
+            className="gap-2 ml-2 hidden md:flex"
           >
             <SlidersHorizontal className="h-4 w-4" />
             {showFilters ? "Hide Filters" : "Show Filters"}
+          </Button>
+          {/* Mobile filter sheet trigger */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenMobileFilters}
+            className="gap-2 ml-2 md:hidden"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            Filters
+            {activeFilters.length > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">
+                {activeFilters.length}
+              </span>
+            )}
           </Button>
         </div>
       </div>
@@ -438,6 +556,7 @@ export function RecipeBrowserView() {
   const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(
     () => initialFavoritesOnly ? new Set(["favorites"]) : new Set()
   );
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Sync filters with URL params (handles navigation to ?favoritesOnly=true)
   useEffect(() => {
@@ -855,6 +974,15 @@ export function RecipeBrowserView() {
     }
   };
 
+  const handleFavoritesFilterChange = (checked: boolean) => {
+    // Update URL to stay in sync with the useEffect that watches searchParams
+    if (checked) {
+      router.replace("/recipes?favoritesOnly=true", { scroll: false });
+    } else {
+      router.replace("/recipes", { scroll: false });
+    }
+  };
+
   const toggleSortDirection = () => {
     setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
   };
@@ -913,85 +1041,31 @@ export function RecipeBrowserView() {
           onSortDirectionToggle={toggleSortDirection}
           showFilters={showFilters}
           onToggleFilters={() => setShowFilters(!showFilters)}
+          onOpenMobileFilters={() => setMobileFiltersOpen(true)}
           activeFilters={activeFilters}
           onRemoveFilter={handleRemoveFilter}
           onClearAllFilters={handleClearAllFilters}
         />
       }
     >
-      <div className="flex gap-6">
-        {/* Filter Sidebar */}
+      <div className="flex gap-3 md:gap-6">
+        {/* Filter Sidebar - Desktop only */}
         {showFilters && (
-          <aside className="w-64 flex-shrink-0">
+          <aside className="hidden md:block w-64 flex-shrink-0">
             <Card>
               <CardContent className="pt-6">
-                {/* Sidebar Header */}
-                <div className="flex items-center justify-between mb-4 pb-4 border-b border-border">
-                  <div className="flex items-center gap-2">
-                    <SlidersHorizontal className="h-4 w-4 text-primary" />
-                    <span className="font-medium text-foreground">Refine Results</span>
-                  </div>
-                  {hasActiveFilters && (
-                    <Button
-                      variant="link"
-                      size="sm"
-                      onClick={handleClearAllFilters}
-                      className="h-auto p-0 text-xs"
-                    >
-                      Reset
-                    </Button>
-                  )}
-                </div>
-
-                {/* Favorites Toggle */}
-                <label className="flex items-center gap-3 py-3 px-2 mb-2 rounded-md cursor-pointer hover:bg-hover transition-colors">
-                  <Checkbox
-                    checked={filters.favoritesOnly}
-                    onCheckedChange={(checked) => {
-                      const newValue = checked as boolean;
-                      // Update URL to stay in sync with the useEffect that watches searchParams
-                      if (newValue) {
-                        router.replace("/recipes?favoritesOnly=true", { scroll: false });
-                      } else {
-                        router.replace("/recipes", { scroll: false });
-                      }
-                    }}
-                  />
-                  <Heart
-                    className={cn(
-                      "h-4 w-4 transition-colors",
-                      filters.favoritesOnly ? "text-destructive fill-current" : "text-muted"
-                    )}
-                  />
-                  <span className="text-sm text-foreground">Favorites Only</span>
-                </label>
-
-                {/* Filter Sections */}
-                <div className="space-y-2 divide-y divide-border">
-                  <FilterSection
-                    title="Category"
-                    icon={ChefHat}
-                    options={categoryOptions}
-                    selected={filters.categories}
-                    onChange={handleCategoryChange}
-                  />
-                  <FilterSection
-                    title="Meal Type"
-                    icon={Clock}
-                    options={mealTypeOptions}
-                    selected={filters.mealTypes}
-                    onChange={handleMealTypeChange}
-                  />
-                  {dietaryOptions.length > 0 && (
-                    <FilterSection
-                      title="Dietary Preference"
-                      icon={BookOpen}
-                      options={dietaryOptions}
-                      selected={filters.dietaryPreferences}
-                      onChange={handleDietaryChange}
-                    />
-                  )}
-                </div>
+                <FilterSidebarContent
+                  filters={filters}
+                  hasActiveFilters={hasActiveFilters}
+                  onClearAllFilters={handleClearAllFilters}
+                  onFavoritesChange={handleFavoritesFilterChange}
+                  categoryOptions={categoryOptions}
+                  mealTypeOptions={mealTypeOptions}
+                  dietaryOptions={dietaryOptions}
+                  onCategoryChange={handleCategoryChange}
+                  onMealTypeChange={handleMealTypeChange}
+                  onDietaryChange={handleDietaryChange}
+                />
               </CardContent>
             </Card>
           </aside>
@@ -1032,6 +1106,32 @@ export function RecipeBrowserView() {
           )}
         </main>
       </div>
+
+      {/* Mobile Filter Sheet */}
+      <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+        <SheetContent side="left" className="w-[300px] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4 text-primary" />
+              Refine Results
+            </SheetTitle>
+          </SheetHeader>
+          <div className="py-4">
+            <FilterSidebarContent
+              filters={filters}
+              hasActiveFilters={hasActiveFilters}
+              onClearAllFilters={handleClearAllFilters}
+              onFavoritesChange={handleFavoritesFilterChange}
+              categoryOptions={categoryOptions}
+              mealTypeOptions={mealTypeOptions}
+              dietaryOptions={dietaryOptions}
+              onCategoryChange={handleCategoryChange}
+              onMealTypeChange={handleMealTypeChange}
+              onDietaryChange={handleDietaryChange}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </PageLayout>
   );
 }

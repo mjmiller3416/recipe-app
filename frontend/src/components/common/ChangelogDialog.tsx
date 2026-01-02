@@ -93,7 +93,7 @@ export function ChangelogDialog({
                     key={idx}
                     className="flex items-start gap-2 text-sm text-foreground"
                   >
-                    <span className="text-primary mt-0.5">•</span>
+                    <span className="text-primary mt-1">•</span>
                     <span>{item.change}</span>
                   </li>
                 ))}
@@ -149,7 +149,7 @@ export function ChangelogDialog({
                               {entry.title}
                             </h4>
                           </div>
-                          <ul className="space-y-1.5 pl-6">
+                          <ul className="space-y-2 pl-6">
                             {entry.changes.map((change, changeIdx) => {
                               const globalItemIndex = itemsBefore + changeIdx;
                               const isNew = globalItemIndex < newItemCount;

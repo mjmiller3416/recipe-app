@@ -12,7 +12,8 @@ export function PageHeader({ children, className }: PageHeaderProps) {
       "sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm",
       className
     )}>
-      <div className="max-w-7xl mx-auto px-6 py-4">
+      {/* pl-16 on mobile creates space for the hamburger menu button */}
+      <div className="max-w-7xl mx-auto pl-16 pr-4 md:px-6 py-4">
         {children}
       </div>
     </div>
