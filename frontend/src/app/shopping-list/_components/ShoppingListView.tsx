@@ -74,7 +74,7 @@ function AddManualItemForm({
   };
 
   return (
-    <div className="flex items-center gap-2 p-3 mb-4 rounded-xl border border-border bg-elevated">
+    <div className="flex flex-wrap items-center gap-2 p-3 mb-4 rounded-xl border border-border bg-elevated">
       <QuantityInput
         value={quantity}
         onChange={setQuantity}
@@ -110,7 +110,7 @@ function AddManualItemForm({
         onChange={(e) => setItemName(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="Add item..."
-        className="flex-1 h-9"
+        className="flex-1 min-w-[150px] h-9"
         disabled={isAdding}
       />
       <Button
