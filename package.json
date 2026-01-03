@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "dnd-kit": "^0.0.2",
+    "framer-motion": "^12.23.26"
+  }
+}
