@@ -68,7 +68,7 @@ export function AddToMealPlanDialog({ recipe, mealSelections, open, onOpenChange
                   )}
                 >
                   <p className="font-medium text-foreground">{meal.meal_name}</p>
-                  <p className="text-sm text-muted mt-0.5">
+                  <p className="text-sm text-muted-foreground mt-0.5">
                     {meal.main_recipe ? `Main: ${meal.main_recipe.recipe_name}` : "No main dish"}
                   </p>
                 </button>

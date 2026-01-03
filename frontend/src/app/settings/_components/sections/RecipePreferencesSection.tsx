@@ -54,7 +54,7 @@ export function RecipePreferencesSection({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="flex items-center gap-2">
-                <Filter className="h-3.5 w-3.5 text-muted" />
+                <Filter className="h-3.5 w-3.5 text-muted-foreground" />
                 Quick Filters
               </Label>
               <Badge variant="secondary" className="text-xs">
@@ -62,7 +62,7 @@ export function RecipePreferencesSection({
               </Badge>
             </div>
 
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted-foreground">
               Choose up to {MAX_FILTERS} filters to display in the recipe browser
             </p>
 
@@ -81,7 +81,7 @@ export function RecipePreferencesSection({
                       "px-4 py-2 rounded-full border-2 text-sm font-medium transition-all duration-150",
                       isSelected
                         ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-card text-muted hover:border-muted hover:bg-hover",
+                        : "border-border bg-card text-muted-foreground hover:border-muted hover:bg-hover",
                       isDisabled && "opacity-40 cursor-not-allowed"
                     )}
                   >

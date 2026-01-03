@@ -20,10 +20,10 @@ export function PlaceholderSection({
           <div className="p-4 bg-secondary/10 rounded-full inline-flex mb-4">
             <Icon className="h-8 w-8 text-secondary" />
           </div>
-          <p className="text-muted text-sm">
+          <p className="text-muted-foreground text-sm">
             Settings for this section coming soon.
           </p>
-          <p className="text-xs text-muted/70 mt-2">
+          <p className="text-xs text-muted-foreground/70 mt-2">
             This feature is currently under development.
           </p>
         </div>

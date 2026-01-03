@@ -90,7 +90,7 @@ export function UnitConversionsSection() {
         <div className="space-y-6">
           {/* Explanation */}
           <div className="bg-elevated rounded-xl p-4 border border-border">
-            <p className="text-sm text-muted">
+            <p className="text-sm text-muted-foreground">
               Unit conversion rules let you display shopping list quantities in
               more practical units. For example, convert tablespoons of butter
               to sticks for easier shopping.
@@ -168,7 +168,7 @@ export function UnitConversionsSection() {
                     value={factor}
                     onChange={(e) => setFactor(e.target.value)}
                   />
-                  <p className="text-xs text-muted">
+                  <p className="text-xs text-muted-foreground">
                     Example: 8 Tbs = 1 stick of butter
                   </p>
                 </div>
@@ -176,7 +176,7 @@ export function UnitConversionsSection() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="roundUp">Round up for shopping</Label>
-                    <p className="text-xs text-muted">
+                    <p className="text-xs text-muted-foreground">
                       Always round up to ensure you have enough
                     </p>
                   </div>
@@ -215,16 +215,16 @@ export function UnitConversionsSection() {
           {/* Rules List */}
           <div className="space-y-3">
             <Label className="flex items-center gap-2">
-              <Scale className="h-3.5 w-3.5 text-muted" />
+              <Scale className="h-3.5 w-3.5 text-muted-foreground" />
               Active Rules
             </Label>
 
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted" />
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : rules.length === 0 ? (
-              <div className="text-center py-8 text-muted">
+              <div className="text-center py-8 text-muted-foreground">
                 <Scale className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No conversion rules yet</p>
                 <p className="text-xs mt-1">
@@ -242,7 +242,7 @@ export function UnitConversionsSection() {
                       <p className="font-medium text-sm capitalize">
                         {rule.ingredient_name}
                       </p>
-                      <p className="text-xs text-muted">
+                      <p className="text-xs text-muted-foreground">
                         {rule.factor} {rule.from_unit} = 1 {rule.to_unit}
                         {rule.round_up && " (rounds up)"}
                       </p>
@@ -250,7 +250,7 @@ export function UnitConversionsSection() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-muted hover:text-destructive"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
                       onClick={() => handleDelete(rule.id)}
                     >
                       <Trash2 className="h-4 w-4" />

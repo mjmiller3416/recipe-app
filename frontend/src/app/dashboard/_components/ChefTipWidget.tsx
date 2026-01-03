@@ -50,7 +50,7 @@ export function ChefTipWidget() {
         <button
           onClick={handleManualRefresh}
           disabled={isRefreshing}
-          className="p-2 -m-2 text-muted hover:text-foreground transition-colors duration-150 disabled:opacity-50"
+          className="p-2 -m-2 text-muted-foreground hover:text-foreground transition-colors duration-150 disabled:opacity-50"
           aria-label="Refresh tip"
         >
           <RefreshCw
@@ -66,7 +66,7 @@ export function ChefTipWidget() {
           <Skeleton className="h-4 w-3/4" />
         </div>
       ) : (
-        <p className="text-sm text-muted leading-relaxed">{tip}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed">{tip}</p>
       )}
     </div>
   );

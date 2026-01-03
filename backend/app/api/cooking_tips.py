@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter, HTTPException
 
-from app.core.dtos.cooking_tip_dtos import CookingTipResponseDTO
-from app.core.services.cooking_tip_service import get_cooking_tip_service
+from app.dtos.cooking_tip_dtos import CookingTipResponseDTO
+from app.services.cooking_tip_service import get_cooking_tip_service
 
 router = APIRouter()
 

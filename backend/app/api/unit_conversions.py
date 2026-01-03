@@ -8,13 +8,13 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.core.database.db import get_session
-from app.core.dtos.unit_conversion_dtos import (
+from app.database.db import get_session
+from app.dtos.unit_conversion_dtos import (
     UnitConversionRuleCreateDTO,
     UnitConversionRuleResponseDTO,
     UnitConversionRuleUpdateDTO,
 )
-from app.core.services.unit_conversion_service import UnitConversionService
+from app.services.unit_conversion_service import UnitConversionService
 
 router = APIRouter()
 

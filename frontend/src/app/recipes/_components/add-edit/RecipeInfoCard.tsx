@@ -64,7 +64,7 @@ export function RecipeInfoCard({
             <h2 className="text-lg font-semibold text-foreground">
               Recipe Information
             </h2>
-            <p className="text-sm text-muted mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Basic details about your recipe including name, timing, and classification
             </p>
           </div>
@@ -73,7 +73,7 @@ export function RecipeInfoCard({
           {/* Recipe Name */}
           <div data-field="recipeName">
             <Label htmlFor="recipe-name" className="flex items-center gap-2">
-              <ChefHat className="h-4 w-4 text-muted" />
+              <ChefHat className="h-4 w-4 text-muted-foreground" />
               Recipe Name
             </Label>
             <Input
@@ -93,7 +93,7 @@ export function RecipeInfoCard({
           <div className="grid grid-cols-2 gap-4">
             <div data-field="totalTime">
               <Label htmlFor="total-time" className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted" />
+                <Clock className="h-4 w-4 text-muted-foreground" />
                 Total Time (mins)
               </Label>
               <Input
@@ -109,7 +109,7 @@ export function RecipeInfoCard({
             </div>
             <div data-field="servings">
               <Label htmlFor="servings" className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted" />
+                <Users className="h-4 w-4 text-muted-foreground" />
                 Servings
               </Label>
               <Input
@@ -129,7 +129,7 @@ export function RecipeInfoCard({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div data-field="mealType">
               <Label htmlFor="meal-type" className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-muted" />
+                <Tag className="h-4 w-4 text-muted-foreground" />
                 Meal Type
               </Label>
               <Select value={mealType} onValueChange={setMealType}>
@@ -153,7 +153,7 @@ export function RecipeInfoCard({
             </div>
             <div data-field="category">
               <Label htmlFor="category" className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-muted" />
+                <Tag className="h-4 w-4 text-muted-foreground" />
                 Category
               </Label>
               <Select value={category} onValueChange={setCategory}>
@@ -177,7 +177,7 @@ export function RecipeInfoCard({
             </div>
             <div>
               <Label htmlFor="dietary-preference" className="flex items-center gap-2">
-                <Leaf className="h-4 w-4 text-muted" />
+                <Leaf className="h-4 w-4 text-muted-foreground" />
                 Dietary Preference
               </Label>
               <Select

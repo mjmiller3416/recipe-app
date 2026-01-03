@@ -38,7 +38,7 @@ function SelectTrigger({
       data-size={size}
       className={cn(
         "flex w-full items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm whitespace-nowrap shadow-sm transition-colors outline-none",
-        "data-[placeholder]:text-muted",
+        "data-[placeholder]:text-muted-foreground",
         "focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "data-[size=default]:h-9 data-[size=sm]:h-8",
@@ -103,7 +103,7 @@ function SelectLabel({
   return (
     <SelectPrimitive.Label
       data-slot="select-label"
-      className={cn("text-muted-foreground px-2 py-1.5 text-xs", className)}
+      className={cn("text-muted-foreground-foreground px-2 py-1.5 text-xs", className)}
       {...props}
     />
   )

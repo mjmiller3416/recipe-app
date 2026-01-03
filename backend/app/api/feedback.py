@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter
 
-from app.core.dtos.feedback import FeedbackCreateDTO, FeedbackResponseDTO
-from app.core.services.feedback_service import FeedbackService
+from app.dtos.feedback import FeedbackCreateDTO, FeedbackResponseDTO
+from app.services.feedback_service import FeedbackService
 
 router = APIRouter()
 

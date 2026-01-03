@@ -64,7 +64,7 @@ function DuplicateResolutionRow({
       <div className="flex items-center justify-between">
         <div>
           <p className="font-medium text-foreground">{duplicate.recipe_name}</p>
-          <p className="text-xs text-muted">
+          <p className="text-xs text-muted-foreground">
             Category: {duplicate.recipe_category} (Row {duplicate.row_number})
           </p>
         </div>
@@ -326,10 +326,10 @@ export function DataManagementSection() {
             {/* Import Section */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <Upload className="h-4 w-4 text-muted" />
+                <Upload className="h-4 w-4 text-muted-foreground" />
                 <Label className="text-base font-medium">Import Recipes</Label>
               </div>
-              <p className="text-sm text-muted">
+              <p className="text-sm text-muted-foreground">
                 Upload an Excel file (.xlsx) to import recipes into your collection.
               </p>
               <div className="flex items-center gap-3">
@@ -354,7 +354,7 @@ export function DataManagementSection() {
                 </Button>
               </div>
               {importFile && (
-                <p className="text-sm text-muted">
+                <p className="text-sm text-muted-foreground">
                   Selected: {importFile.name}
                 </p>
               )}
@@ -365,10 +365,10 @@ export function DataManagementSection() {
             {/* Export Section */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <Download className="h-4 w-4 text-muted" />
+                <Download className="h-4 w-4 text-muted-foreground" />
                 <Label className="text-base font-medium">Export Recipes</Label>
               </div>
-              <p className="text-sm text-muted">
+              <p className="text-sm text-muted-foreground">
                 Download your recipes as an Excel file for backup or sharing.
               </p>
               <div className="flex flex-wrap items-center gap-4">
@@ -422,10 +422,10 @@ export function DataManagementSection() {
             {/* Template Section */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <FileSpreadsheet className="h-4 w-4 text-muted" />
+                <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
                 <Label className="text-base font-medium">Import Template</Label>
               </div>
-              <p className="text-sm text-muted">
+              <p className="text-sm text-muted-foreground">
                 Download a template file to see the expected format for importing recipes.
                 The template includes example data and all required columns.
               </p>
@@ -454,7 +454,7 @@ export function DataManagementSection() {
                   Delete All Data
                 </Label>
               </div>
-              <p className="text-sm text-muted">
+              <p className="text-sm text-muted-foreground">
                 Permanently delete all recipes, ingredients, meal plans, and shopping lists.
                 This action cannot be undone.
               </p>
@@ -489,19 +489,19 @@ export function DataManagementSection() {
                   <p className="text-2xl font-bold text-foreground">
                     {importPreview.total_recipes}
                   </p>
-                  <p className="text-xs text-muted">Total Recipes</p>
+                  <p className="text-xs text-muted-foreground">Total Recipes</p>
                 </div>
                 <div className="p-3 bg-elevated rounded-lg text-center">
                   <p className="text-2xl font-bold text-success">
                     {importPreview.new_recipes}
                   </p>
-                  <p className="text-xs text-muted">New Recipes</p>
+                  <p className="text-xs text-muted-foreground">New Recipes</p>
                 </div>
                 <div className="p-3 bg-elevated rounded-lg text-center">
                   <p className="text-2xl font-bold text-warning">
                     {importPreview.duplicate_recipes.length}
                   </p>
-                  <p className="text-xs text-muted">Duplicates</p>
+                  <p className="text-xs text-muted-foreground">Duplicates</p>
                 </div>
               </div>
 
@@ -512,7 +512,7 @@ export function DataManagementSection() {
                     <AlertCircle className="h-4 w-4 text-destructive" />
                     <p className="font-medium text-destructive">Validation Errors</p>
                   </div>
-                  <ul className="text-sm text-muted space-y-1">
+                  <ul className="text-sm text-muted-foreground space-y-1">
                     {importPreview.validation_errors.map((err, i) => (
                       <li key={i}>
                         Row {err.row_number}: {err.message}
@@ -531,7 +531,7 @@ export function DataManagementSection() {
                       Handle Duplicate Recipes
                     </p>
                   </div>
-                  <p className="text-sm text-muted">
+                  <p className="text-sm text-muted-foreground">
                     These recipes already exist. Choose how to handle each one:
                   </p>
                   <div className="space-y-2 max-h-60 overflow-y-auto">
@@ -594,19 +594,19 @@ export function DataManagementSection() {
                   <p className="text-2xl font-bold text-success">
                     {importResult.created_count}
                   </p>
-                  <p className="text-xs text-muted">Created</p>
+                  <p className="text-xs text-muted-foreground">Created</p>
                 </div>
                 <div className="p-3 bg-elevated rounded-lg text-center">
                   <p className="text-2xl font-bold text-info">
                     {importResult.updated_count}
                   </p>
-                  <p className="text-xs text-muted">Updated</p>
+                  <p className="text-xs text-muted-foreground">Updated</p>
                 </div>
                 <div className="p-3 bg-elevated rounded-lg text-center">
-                  <p className="text-2xl font-bold text-muted">
+                  <p className="text-2xl font-bold text-muted-foreground">
                     {importResult.skipped_count}
                   </p>
-                  <p className="text-xs text-muted">Skipped</p>
+                  <p className="text-xs text-muted-foreground">Skipped</p>
                 </div>
               </div>
 
@@ -616,7 +616,7 @@ export function DataManagementSection() {
                     <AlertCircle className="h-4 w-4 text-destructive" />
                     <p className="font-medium text-destructive">Errors</p>
                   </div>
-                  <ul className="text-sm text-muted space-y-1">
+                  <ul className="text-sm text-muted-foreground space-y-1">
                     {importResult.errors.map((err, i) => (
                       <li key={i}>{err}</li>
                     ))}
@@ -645,7 +645,7 @@ export function DataManagementSection() {
             </DialogDescription>
           </DialogHeader>
 
-          <ul className="text-sm text-muted space-y-1 list-disc list-inside ml-2">
+          <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside ml-2">
             <li>All recipes and their ingredients</li>
             <li>All recipe images (from Cloudinary)</li>
             <li>All meal plans and planner entries</li>

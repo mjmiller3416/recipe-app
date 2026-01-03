@@ -7,9 +7,9 @@ Handles both recipe-generated and manually added shopping items.
 # ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
 from __future__ import annotations
 
-from typing import Optional
+from typing import List, Optional
 
-from sqlalchemy import Boolean, Enum, Float, String
+from sqlalchemy import Boolean, Enum, Float, JSON, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..database.base import Base
@@ -38,6 +38,9 @@ class ShoppingItem(Base):
 
     # for recipe-generated items, store a key for state persistence
     state_key: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+
+    # store recipe names that contribute to this item (computed during generation)
+    recipe_sources: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True, default=list)
 
     # ── String Representation ───────────────────────────────────────────────────────────────────────────────
     def __repr__(self) -> str:
@@ -69,7 +72,8 @@ class ShoppingItem(Base):
         ingredient_name: str,
         quantity: float,
         unit: Optional[str] = None,
-        category: Optional[str] = None
+        category: Optional[str] = None,
+        recipe_sources: Optional[List[str]] = None
         ) -> "ShoppingItem":
         """
         Create a shopping item from recipe data.
@@ -79,6 +83,7 @@ class ShoppingItem(Base):
             quantity (float): The quantity of the ingredient.
             unit (Optional[str]): The unit of measurement, if any.
             category (Optional[str]): The category of the ingredient.
+            recipe_sources (Optional[List[str]]): Names of recipes that use this ingredient.
 
         Returns:
             ShoppingItem: A new shopping item instance.
@@ -89,7 +94,8 @@ class ShoppingItem(Base):
             unit=unit,
             category=category,
             source="recipe",
-            have=False
+            have=False,
+            recipe_sources=recipe_sources or []
         )
 
     @classmethod

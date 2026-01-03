@@ -132,7 +132,7 @@ export function ShoppingListWidget({ shoppingData: initialData }: ShoppingListWi
           </div>
         </div>
       ) : !hasItems ? (
-        <div className="flex-1 flex items-center justify-center text-center text-muted">
+        <div className="flex-1 flex items-center justify-center text-center text-muted-foreground">
           <div>
             <p>No items on your list</p>
             <p className="text-sm mt-1">Add ingredients from recipes to get started!</p>
@@ -143,7 +143,7 @@ export function ShoppingListWidget({ shoppingData: initialData }: ShoppingListWi
           {/* Progress Summary */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted">
+              <span className="text-sm text-muted-foreground">
                 {checkedItems} of {totalItems} items
               </span>
               <span className="text-sm font-medium text-amber">{progressPercent}%</span>
@@ -170,13 +170,13 @@ export function ShoppingListWidget({ shoppingData: initialData }: ShoppingListWi
                     {category.name}
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted">
+                    <span className="text-sm text-muted-foreground">
                       {category.checked}/{category.total}
                     </span>
                     {isComplete ? (
                       <CheckCircle2 className="h-5 w-5 text-secondary" />
                     ) : (
-                      <Circle className="h-5 w-5 text-muted" />
+                      <Circle className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
                 </div>

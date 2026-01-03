@@ -7,8 +7,8 @@ from pathlib import Path
 # Add backend to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.core.database.db import SessionLocal
-from app.core.models import Recipe
+from app.database.db import SessionLocal
+from app.models import Recipe
 
 def main():
     session = SessionLocal()

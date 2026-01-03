@@ -170,7 +170,7 @@ function RecipeCardSmall({
             {recipe.name}
           </h3>
 
-          <div className="flex items-center gap-3 mt-1 text-xs text-muted">
+          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Users className="h-3 w-3" />
               <span>{recipe.servings}</span>
@@ -277,7 +277,7 @@ function RecipeCardMedium({
         </h3>
 
         {/* Metadata Row */}
-        <div className="flex items-center gap-6 text-base text-muted">
+        <div className="flex items-center gap-6 text-base text-muted-foreground">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-primary/10 rounded-lg">
               <Users className="h-5 w-5 text-primary flex-shrink-0" />
@@ -402,7 +402,7 @@ function RecipeCardLarge({
             <h4 className="text-lg font-semibold text-foreground flex items-center gap-2">
               Ingredients
               {ingredients.length > 0 && (
-                <span className="text-sm font-normal text-muted">
+                <span className="text-sm font-normal text-muted-foreground">
                   ({ingredients.length})
                 </span>
               )}
@@ -417,7 +417,7 @@ function RecipeCardLarge({
                       <span className="text-primary mt-1">•</span>
                       <span className="flex-1">
                         <span className="font-medium">{ingredient.quantity} {ingredient.unit || ''}</span>
-                        <span className="text-muted ml-1">{ingredient.name}</span>
+                        <span className="text-muted-foreground ml-1">{ingredient.name}</span>
                       </span>
                     </div>
                   ))}
@@ -425,13 +425,13 @@ function RecipeCardLarge({
                 
                 {/* Overflow indicator */}
                 {remainingCount > 0 && (
-                  <div className="text-sm text-muted italic pt-2 border-t border-border">
+                  <div className="text-sm text-muted-foreground italic pt-2 border-t border-border">
                     ... and {remainingCount} more ingredient{remainingCount !== 1 ? 's' : ''}
                   </div>
                 )}
               </div>
             ) : (
-              <p className="text-sm text-muted italic">No ingredients listed</p>
+              <p className="text-sm text-muted-foreground italic">No ingredients listed</p>
             )}
           </div>
 
@@ -442,7 +442,7 @@ function RecipeCardLarge({
                 <Clock className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted">Total Time</p>
+                <p className="text-xs text-muted-foreground">Total Time</p>
                 <p className="text-lg font-semibold text-foreground">{formatTime(recipe.totalTime)}</p>
               </div>
             </div>
@@ -454,7 +454,7 @@ function RecipeCardLarge({
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted">Servings</p>
+                <p className="text-xs text-muted-foreground">Servings</p>
                 <p className="text-lg font-semibold text-foreground">{recipe.servings}</p>
               </div>
             </div>

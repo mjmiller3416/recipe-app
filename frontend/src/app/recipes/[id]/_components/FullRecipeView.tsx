@@ -169,12 +169,12 @@ function RecipeNotFound() {
     <div className="min-h-screen bg-background flex items-center justify-center px-6">
       <div className="text-center max-w-md">
         <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-elevated flex items-center justify-center">
-          <ChefHat className="h-12 w-12 text-muted" />
+          <ChefHat className="h-12 w-12 text-muted-foreground" />
         </div>
         <h1 className="text-3xl font-bold text-foreground mb-3">
           Recipe Not Found
         </h1>
-        <p className="text-muted mb-8">
+        <p className="text-muted-foreground mb-8">
           Sorry, we couldn't find the recipe you're looking for. It may have been
           deleted or the link might be incorrect.
         </p>
@@ -476,13 +476,13 @@ export function FullRecipeView() {
               </RecipeBadgeGroup>
 
               {/* Quick Stats */}
-              <div className="flex flex-wrap items-center gap-6 text-muted">
+              <div className="flex flex-wrap items-center gap-6 text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <div className="p-2 bg-primary/10 rounded-lg">
                     <Clock className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted">Total Time</p>
+                    <p className="text-xs text-muted-foreground">Total Time</p>
                     <p className="font-semibold text-foreground">
                       {formatTime(recipe.total_time)}
                     </p>
@@ -494,7 +494,7 @@ export function FullRecipeView() {
                     <Users className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted">Servings</p>
+                    <p className="text-xs text-muted-foreground">Servings</p>
                     <p className="font-semibold text-foreground">
                       {recipe.servings || "—"}
                     </p>
@@ -506,7 +506,7 @@ export function FullRecipeView() {
                     <UtensilsCrossed className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted">Ingredients</p>
+                    <p className="text-xs text-muted-foreground">Ingredients</p>
                     <p className="font-semibold text-foreground">
                       {recipe.ingredients.length} items
                     </p>
@@ -553,7 +553,7 @@ export function FullRecipeView() {
 
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="icon" className="text-muted hover:text-error hover:border-error">
+                    <Button variant="outline" size="icon" className="text-muted-foreground hover:text-error hover:border-error">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </AlertDialogTrigger>
@@ -596,7 +596,7 @@ export function FullRecipeView() {
                       </h2>
                     </div>
                     {ingredientProgress > 0 && (
-                      <span className="text-sm text-muted print:hidden">
+                      <span className="text-sm text-muted-foreground print:hidden">
                         {ingredientProgress}%
                       </span>
                     )}
@@ -618,7 +618,7 @@ export function FullRecipeView() {
                       {sortCategoryEntries(Array.from(groupedIngredients.entries())).map(([category, ingredients]) => (
                         <div key={category}>
                           {groupedIngredients.size > 1 && (
-                            <p className="text-xs font-semibold text-muted uppercase tracking-wider mt-4 mb-2 first:mt-0">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-4 mb-2 first:mt-0">
                               {category}
                             </p>
                           )}
@@ -634,7 +634,7 @@ export function FullRecipeView() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted text-center py-8">
+                    <p className="text-muted-foreground text-center py-8">
                       No ingredients listed
                     </p>
                   )}
@@ -657,7 +657,7 @@ export function FullRecipeView() {
                       </h2>
                     </div>
                     {stepProgress > 0 && (
-                      <span className="text-sm text-muted print:hidden">
+                      <span className="text-sm text-muted-foreground print:hidden">
                         {stepProgress}%
                       </span>
                     )}
@@ -687,7 +687,7 @@ export function FullRecipeView() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted text-center py-8">
+                    <p className="text-muted-foreground text-center py-8">
                       No directions available
                     </p>
                   )}

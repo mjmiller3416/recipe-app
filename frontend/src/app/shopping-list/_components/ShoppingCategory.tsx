@@ -152,7 +152,7 @@ export function ShoppingCategory({
               </span>
             )}
           </div>
-          <p className="text-xs text-muted">
+          <p className="text-xs text-muted-foreground">
             {checkedCount} of {totalItems} items
           </p>
         </div>
@@ -168,7 +168,7 @@ export function ShoppingCategory({
         {/* Chevron */}
         <ChevronUp
           className={cn(
-            "h-5 w-5 text-muted transition-transform duration-200",
+            "h-5 w-5 text-muted-foreground transition-transform duration-200",
             !isExpanded && "rotate-180"
           )}
         />

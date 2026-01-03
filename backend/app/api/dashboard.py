@@ -4,11 +4,11 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.core.database.db import get_session
-from app.core.dtos.dashboard_dtos import DashboardStatsDTO
-from app.core.models.recipe import Recipe
-from app.core.models.planner_entry import PlannerEntry
-from app.core.models.shopping_item import ShoppingItem
+from app.database.db import get_session
+from app.dtos.dashboard_dtos import DashboardStatsDTO
+from app.models.recipe import Recipe
+from app.models.planner_entry import PlannerEntry
+from app.models.shopping_item import ShoppingItem
 
 router = APIRouter()
 

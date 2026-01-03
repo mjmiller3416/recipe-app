@@ -34,10 +34,10 @@ export function ThemeToggle() {
     return (
       <div className="flex gap-1 p-1 bg-elevated rounded-lg">
         <div className="flex-1 p-2 rounded-md bg-hover">
-          <Moon className="w-4 h-4 text-muted mx-auto" />
+          <Moon className="w-4 h-4 text-muted-foreground mx-auto" />
         </div>
         <div className="flex-1 p-2 rounded-md">
-          <Sun className="w-4 h-4 text-muted mx-auto" />
+          <Sun className="w-4 h-4 text-muted-foreground mx-auto" />
         </div>
       </div>
     );
@@ -57,7 +57,7 @@ export function ThemeToggle() {
           "pressable",
           theme === 'dark'
             ? "bg-hover text-foreground shadow-sm"
-            : "text-muted hover:text-foreground"
+            : "text-muted-foreground hover:text-foreground"
         )}
         aria-label="Dark mode"
         aria-checked={theme === 'dark'}
@@ -74,7 +74,7 @@ export function ThemeToggle() {
           "pressable",
           theme === 'light'
             ? "bg-hover text-foreground shadow-sm"
-            : "text-muted hover:text-foreground"
+            : "text-muted-foreground hover:text-foreground"
         )}
         aria-label="Light mode"
         aria-checked={theme === 'light'}

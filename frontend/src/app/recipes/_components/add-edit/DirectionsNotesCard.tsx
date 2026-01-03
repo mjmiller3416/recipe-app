@@ -34,7 +34,7 @@ export function DirectionsNotesCard({
             <h2 className="text-lg font-semibold text-foreground">
               Directions & Notes
             </h2>
-            <p className="text-sm text-muted mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Step-by-step cooking instructions and additional tips
             </p>
           </div>

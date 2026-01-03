@@ -70,12 +70,13 @@ class ShoppingRepo:
         """
         Aggregate ingredients from recipes into shopping items.
         Groups by (ingredient_id, dimension) to properly handle different unit types.
+        Tracks which recipes contribute to each ingredient.
 
         Args:
             recipe_ids (List[int]): List of recipe IDs to aggregate ingredients from.
 
         Returns:
-            List[ShoppingItem]: List of aggregated ShoppingItem objects.
+            List[ShoppingItem]: List of aggregated ShoppingItem objects with recipe_sources populated.
         """
         recipe_ingredients = self.get_recipe_ingredients(recipe_ids)
 
@@ -86,6 +87,7 @@ class ShoppingRepo:
             "original_unit": None,
             "category": None,
             "name": None,
+            "recipe_names": set(),  # track contributing recipes
         })
 
         for ri in recipe_ingredients:
@@ -102,6 +104,7 @@ class ShoppingRepo:
             data["dimension"] = dimension
             data["original_unit"] = ri.unit or data["original_unit"]
             data["base_quantity"] += base_qty
+            data["recipe_names"].add(ri.recipe.recipe_name)  # track recipe source
 
         # convert to ShoppingItem objects
         items: List[ShoppingItem] = []
@@ -128,7 +131,8 @@ class ShoppingRepo:
                 category=data["category"],
                 source="recipe",
                 have=False,
-                state_key=state_key
+                state_key=state_key,
+                recipe_sources=sorted(list(data["recipe_names"]))  # store as sorted list
             )
             items.append(item)
 

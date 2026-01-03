@@ -115,7 +115,7 @@ export function CategoryNav({
               "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200",
               isActive
                 ? "bg-primary text-primary-foreground shadow-md"
-                : "text-muted hover:text-foreground hover:bg-hover"
+                : "text-muted-foreground hover:text-foreground hover:bg-hover"
             )}
           >
             <Icon
@@ -136,7 +136,7 @@ export function CategoryNav({
               <p
                 className={cn(
                   "text-xs truncate mt-0.5",
-                  isActive ? "text-primary-foreground/70" : "text-muted"
+                  isActive ? "text-primary-foreground/70" : "text-muted-foreground"
                 )}
               >
                 {category.description}

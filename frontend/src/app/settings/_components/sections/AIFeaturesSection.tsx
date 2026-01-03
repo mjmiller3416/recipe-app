@@ -70,7 +70,7 @@ export function AIFeaturesSection({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label htmlFor="image-prompt" className="flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5 text-muted" />
+                <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
                 Image Generation Prompt
               </Label>
               <Button
@@ -78,7 +78,7 @@ export function AIFeaturesSection({
                 size="sm"
                 onClick={onResetPrompt}
                 disabled={isDefault}
-                className="gap-2 text-muted hover:text-foreground h-8"
+                className="gap-2 text-muted-foreground hover:text-foreground h-8"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 Reset to Default
@@ -120,7 +120,7 @@ export function AIFeaturesSection({
                   "px-3 py-2 text-sm leading-[1.625]",
                   "bg-transparent text-transparent caret-foreground",
                   "border-none outline-none",
-                  "placeholder:text-muted-foreground",
+                  "placeholder:text-muted-foreground-foreground",
                   "font-sans tracking-normal rounded-md"
                 )}
               />
@@ -140,7 +140,7 @@ export function AIFeaturesSection({
               </div>
             )}
 
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted-foreground">
               Customize the prompt used when generating AI images for recipes.
               Use{" "}
               <code className="bg-elevated px-1 py-0.5 rounded">
@@ -154,8 +154,8 @@ export function AIFeaturesSection({
 
           {/* Placeholder for future AI features */}
           <div className="bg-elevated rounded-xl p-6 text-center border border-dashed border-border">
-            <p className="text-sm text-muted">More AI features coming soon</p>
-            <p className="text-xs text-muted/70 mt-1">
+            <p className="text-sm text-muted-foreground">More AI features coming soon</p>
+            <p className="text-xs text-muted-foreground/70 mt-1">
               Recipe suggestions, meal planning AI, and more
             </p>
           </div>

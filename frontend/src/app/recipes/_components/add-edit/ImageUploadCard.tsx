@@ -143,7 +143,7 @@ export function ImageUploadCard({
             <h2 className="text-lg font-semibold text-foreground">
               Recipe Image
             </h2>
-            <p className="text-sm text-muted mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Upload or generate an appetizing photo
             </p>
           </div>
@@ -153,7 +153,7 @@ export function ImageUploadCard({
         <div className="aspect-square rounded-lg overflow-hidden bg-elevated border-2 border-dashed border-border mb-4 relative">
           {/* Empty State */}
           {imageState === "empty" && (
-            <div className="flex flex-col items-center justify-center h-full text-muted">
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
               <div className="p-4 bg-primary/10 rounded-full mb-4">
                 <ImageIcon className="h-12 w-12 text-primary" />
               </div>
@@ -164,20 +164,20 @@ export function ImageUploadCard({
 
           {/* Generating State */}
           {imageState === "generating" && (
-            <div className="flex flex-col items-center justify-center h-full text-muted">
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
               <div className="p-4 bg-primary/10 rounded-full mb-4">
                 <Sparkles className="h-12 w-12 text-primary animate-pulse" />
               </div>
               <p className="text-sm font-medium text-primary">
                 Generating image...
               </p>
-              <p className="text-xs mt-1 text-muted">This may take a moment</p>
+              <p className="text-xs mt-1 text-muted-foreground">This may take a moment</p>
             </div>
           )}
 
           {/* Error State */}
           {imageState === "error" && (
-            <div className="flex flex-col items-center justify-center h-full text-muted p-4">
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4">
               <div className="p-4 bg-destructive/10 rounded-full mb-4">
                 <AlertCircle className="h-12 w-12 text-destructive" />
               </div>
@@ -341,7 +341,7 @@ export function ImageUploadCard({
         />
 
         {/* Helper text */}
-        <p className="text-xs text-muted text-center mt-3">
+        <p className="text-xs text-muted-foreground text-center mt-3">
           AI generation uses recipe details to create an image
         </p>
       </CardContent>

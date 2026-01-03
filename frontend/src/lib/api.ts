@@ -326,9 +326,12 @@ export const plannerApi = {
 export const shoppingApi = {
   /**
    * Get shopping list with optional filters
+   * @param filters - Optional filter parameters
+   * @param autoGenerate - If true, regenerates from planner before returning
    */
-  getList: (filters?: ShoppingListFilterDTO): Promise<ShoppingListResponseDTO> => {
-    const query = filters ? buildQueryString(filters as Record<string, unknown>) : "";
+  getList: (filters?: ShoppingListFilterDTO, autoGenerate = false): Promise<ShoppingListResponseDTO> => {
+    const params = { ...(filters || {}), auto_generate: autoGenerate };
+    const query = buildQueryString(params as Record<string, unknown>);
     return fetchApi<ShoppingListResponseDTO>(`/api/shopping${query}`);
   },
 

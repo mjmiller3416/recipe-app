@@ -25,8 +25,8 @@ export function RecentRecipesSection({ onNavigate }: RecentRecipesSectionProps) 
     <div className="px-3 py-4 border-t border-border">
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
-        <Clock className="w-4 h-4 text-muted" strokeWidth={1.5} />
-        <span className="text-xs font-semibold text-muted uppercase tracking-wide">
+        <Clock className="w-4 h-4 text-muted-foreground" strokeWidth={1.5} />
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
           Recent
         </span>
       </div>
@@ -65,7 +65,7 @@ function RecentRecipeChip({ id, name, emoji, onClick }: RecentRecipeChipProps) {
         // Background and border
         "bg-elevated/50 border border-border",
         // Text
-        "text-sm text-muted",
+        "text-sm text-muted-foreground",
         // Hover effects
         "hover:bg-hover hover:border-border-strong hover:text-foreground",
         // Interactive utility for lift + press feedback

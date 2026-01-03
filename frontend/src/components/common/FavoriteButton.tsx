@@ -65,7 +65,7 @@ export function FavoriteButton({
           "flex-shrink-0",
 
           // Color - always show the favorited state
-          isFavorite ? "text-destructive" : "text-muted",
+          isFavorite ? "text-destructive" : "text-muted-foreground",
 
           // Size
           sizeClasses[size],
@@ -101,7 +101,7 @@ export function FavoriteButton({
         // Color states
         isFavorite
           ? "text-destructive"
-          : "text-muted hover:text-destructive",
+          : "text-muted-foreground hover:text-destructive",
 
         // Size
         sizeClasses[size],

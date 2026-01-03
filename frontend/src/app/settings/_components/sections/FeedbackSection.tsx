@@ -44,7 +44,7 @@ export function FeedbackSection() {
               htmlFor="feedback-category"
               className="flex items-center gap-2"
             >
-              <MessageSquare className="h-3.5 w-3.5 text-muted" />
+              <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
               Feedback Type
             </Label>
             <Select value={category} onValueChange={setCategory}>
@@ -59,7 +59,7 @@ export function FeedbackSection() {
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted-foreground">
               Choose the type of feedback you&apos;re providing
             </p>
           </div>
@@ -70,7 +70,7 @@ export function FeedbackSection() {
               htmlFor="feedback-message"
               className="flex items-center gap-2"
             >
-              <Mail className="h-3.5 w-3.5 text-muted" />
+              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
               Your Message
             </Label>
             <Textarea
@@ -80,7 +80,7 @@ export function FeedbackSection() {
               onChange={(e) => setMessage(e.target.value)}
               className="min-h-[150px] max-w-2xl"
             />
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted-foreground">
               Be as detailed as possible to help us understand your feedback
             </p>
           </div>
@@ -110,7 +110,7 @@ export function FeedbackSection() {
               category &&
               message.length > 0 &&
               remainingChars > 0 && (
-                <p className="text-sm text-muted">
+                <p className="text-sm text-muted-foreground">
                   {remainingChars} more character
                   {remainingChars !== 1 ? "s" : ""} needed
                 </p>
@@ -119,7 +119,7 @@ export function FeedbackSection() {
 
           {/* Info Box */}
           <div className="bg-elevated rounded-xl p-4 border border-border">
-            <p className="text-sm text-muted">
+            <p className="text-sm text-muted-foreground">
               Your feedback is submitted as a GitHub issue and helps us
               prioritize improvements. Thank you for helping make Meal Genie
               better!

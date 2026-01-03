@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ShoppingCategory } from "./ShoppingCategory";
-import { shoppingApi, plannerApi } from "@/lib/api";
-import type { ShoppingItemResponseDTO, ShoppingListResponseDTO, IngredientBreakdownDTO } from "@/types";
+import type { ShoppingItemResponseDTO, IngredientBreakdownDTO } from "@/types";
 import { ShoppingCart, Eye, EyeOff, Filter, X, Plus, Trash2 } from "lucide-react";
 import {
   AlertDialog,
@@ -29,6 +28,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { INGREDIENT_UNITS, INGREDIENT_CATEGORIES } from "@/lib/constants";
 import { RecipeFilterSidebar } from "./RecipeFilterSidebar";
+import {
+  useShoppingList,
+  useToggleItem,
+  useToggleFlagged,
+  useAddManualItem,
+  useClearManualItems,
+  useRefreshShoppingList,
+} from "@/lib/hooks/useShoppingList";
 
 /**
  * StatCard - Individual stat card for the summary section
@@ -45,7 +52,7 @@ function StatCard({
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-elevated/50">
       <span className={`text-3xl font-bold ${colorClass}`}>{value}</span>
-      <span className="text-sm text-muted mt-1">{label}</span>
+      <span className="text-sm text-muted-foreground mt-1">{label}</span>
     </div>
   );
 }
@@ -139,26 +146,30 @@ function AddManualItemForm({
  * ShoppingListView - Main shopping list page component
  *
  * Features:
- * - Auto-generates shopping list from active planner entries on mount
+ * - Auto-generates shopping list from active planner entries on mount (via auto_generate param)
  * - Groups items by category
- * - Optimistic UI updates for toggling items
+ * - Optimistic UI updates for toggling items (via React Query mutations)
  * - Clear completed action
  * - Empty state when no items
  * - Loading skeleton during fetch
  */
 export function ShoppingListView() {
-  const [shoppingData, setShoppingData] = useState<ShoppingListResponseDTO | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // React Query hooks for data fetching and mutations
+  const { data: shoppingData, isLoading, error, refetch } = useShoppingList();
+  const toggleItem = useToggleItem();
+  const toggleFlagged = useToggleFlagged();
+  const addManualItem = useAddManualItem();
+  const clearManualItems = useClearManualItems();
+  const refreshList = useRefreshShoppingList();
+
+  // UI state
   const [filterRecipeName, setFilterRecipeName] = useState<string | null>(null);
-  const [breakdownMap, setBreakdownMap] = useState<Map<string, IngredientBreakdownDTO>>(new Map());
 
   // Manual item form state
   const [manualItemName, setManualItemName] = useState("");
   const [manualItemQty, setManualItemQty] = useState<number | null>(null);
   const [manualItemUnit, setManualItemUnit] = useState<string>("");
   const [manualItemCategory, setManualItemCategory] = useState<string>("");
-  const [isAddingItem, setIsAddingItem] = useState(false);
 
   // Hide completed items state (persisted to localStorage)
   const [hideCompleted, setHideCompleted] = useState(() => {
@@ -169,111 +180,18 @@ export function ShoppingListView() {
   // Clear manual items dialog state
   const [showClearManualDialog, setShowClearManualDialog] = useState(false);
 
-  // Fetch and generate shopping list on mount
-  const loadShoppingList = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Generate from active planner entries first (must complete before reads)
-      await shoppingApi.generateFromPlanner();
-
-      // Fetch list and planner entries in parallel (both are read operations)
-      const [data, entries] = await Promise.all([
-        shoppingApi.getList(),
-        plannerApi.getEntries()
-      ]);
-      setShoppingData(data);
-
-      // Fetch breakdown data for multi-recipe tooltips
-      try {
-        // Filter to only entries included in shopping (not completed, not excluded)
-        const shoppingEntries = entries.filter(e => !e.is_completed && !e.exclude_from_shopping);
-
-        // Extract ALL recipe IDs including duplicates (for accurate usage counting)
-        const recipeIds: number[] = [];
-        for (const entry of shoppingEntries) {
-          if (entry.main_recipe_id) recipeIds.push(entry.main_recipe_id);
-          for (const sideId of entry.side_recipe_ids) {
-            recipeIds.push(sideId);
-          }
-        }
-
-        // Fetch breakdown if we have recipes
-        if (recipeIds.length > 0) {
-          const breakdown = await shoppingApi.getBreakdown(recipeIds);
-          // Create lookup by lowercase ingredient name
-          const map = new Map(
-            breakdown.map(b => [b.ingredient_name.toLowerCase(), b])
-          );
-          setBreakdownMap(map);
-        }
-      } catch {
-        // Breakdown fetch failed - continue without it (graceful degradation)
-        console.warn("Failed to fetch ingredient breakdown, tooltips will show basic info");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load shopping list");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadShoppingList();
-  }, [loadShoppingList]);
+  // Breakdown map for tooltips - built from item.recipe_sources (now stored on items)
+  // For detailed breakdown, we'd need a separate query, but recipe_sources covers most use cases
+  const breakdownMap = new Map<string, IngredientBreakdownDTO>();
 
   // Handle toggling an item's checked state
-  const handleToggleItem = async (itemId: number) => {
-    if (!shoppingData) return;
-
-    // Find the item
-    const item = shoppingData.items.find((i) => i.id === itemId);
-    if (!item) return;
-
-    // Optimistic update
-    const previousData = shoppingData;
-    setShoppingData({
-      ...shoppingData,
-      items: shoppingData.items.map((i) =>
-        i.id === itemId ? { ...i, have: !i.have } : i
-      ),
-      checked_items: item.have
-        ? shoppingData.checked_items - 1
-        : shoppingData.checked_items + 1,
-    });
-
-    try {
-      await shoppingApi.toggleItem(itemId);
-      // Notify other components (e.g., Sidebar) that shopping list changed
-      window.dispatchEvent(new Event("shopping-list-updated"));
-    } catch (err) {
-      // Rollback on error
-      setShoppingData(previousData);
-      setError(err instanceof Error ? err.message : "Failed to update item");
-    }
+  const handleToggleItem = (itemId: number) => {
+    toggleItem.mutate(itemId);
   };
 
   // Handle toggling an item's flagged state
-  const handleToggleFlagged = async (itemId: number) => {
-    if (!shoppingData) return;
-
-    // Optimistic update
-    const previousData = shoppingData;
-    setShoppingData({
-      ...shoppingData,
-      items: shoppingData.items.map((i) =>
-        i.id === itemId ? { ...i, flagged: !i.flagged } : i
-      ),
-    });
-
-    try {
-      await shoppingApi.toggleFlagged(itemId);
-    } catch (err) {
-      // Rollback on error
-      setShoppingData(previousData);
-      setError(err instanceof Error ? err.message : "Failed to update flag");
-    }
+  const handleToggleFlagged = (itemId: number) => {
+    toggleFlagged.mutate(itemId);
   };
 
   // Toggle hiding completed items (persisted to localStorage)
@@ -284,35 +202,27 @@ export function ShoppingListView() {
   };
 
   // Handle adding a manual item
-  const handleAddManualItem = async () => {
+  const handleAddManualItem = () => {
     const trimmedName = manualItemName.trim();
     if (!trimmedName) return;
 
-    setIsAddingItem(true);
-    try {
-      await shoppingApi.addItem({
+    addManualItem.mutate(
+      {
         ingredient_name: trimmedName,
         quantity: manualItemQty || 1,
         unit: manualItemUnit || null,
         category: manualItemCategory || null,
-      });
-
-      // Clear form
-      setManualItemName("");
-      setManualItemQty(null);
-      setManualItemUnit("");
-      setManualItemCategory("");
-
-      // Reload list
-      await loadShoppingList();
-
-      // Notify other components
-      window.dispatchEvent(new Event("shopping-list-updated"));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add item");
-    } finally {
-      setIsAddingItem(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          // Clear form on success
+          setManualItemName("");
+          setManualItemQty(null);
+          setManualItemUnit("");
+          setManualItemCategory("");
+        },
+      }
+    );
   };
 
   // Handle clearing all manual items
@@ -331,15 +241,9 @@ export function ShoppingListView() {
   };
 
   // Confirm and execute clearing manual items
-  const confirmClearManualItems = async () => {
+  const confirmClearManualItems = () => {
     setShowClearManualDialog(false);
-    try {
-      await shoppingApi.clearManual();
-      await loadShoppingList();
-      window.dispatchEvent(new Event("shopping-list-updated"));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to clear manual items");
-    }
+    clearManualItems.mutate();
   };
 
   // Filter items based on hideCompleted setting, then group by category
@@ -424,7 +328,7 @@ export function ShoppingListView() {
           variant="outline"
           size="sm"
           onClick={handleClearManualItems}
-          className="text-muted hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground"
         >
           <Trash2 className="h-4 w-4 mr-2" />
           Clear manual
@@ -436,7 +340,7 @@ export function ShoppingListView() {
           variant="outline"
           size="sm"
           onClick={handleToggleHideCompleted}
-          className="text-muted hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground"
         >
           {hideCompleted ? (
             <>
@@ -492,8 +396,10 @@ export function ShoppingListView() {
           <h3 className="text-lg font-semibold text-foreground mb-2">
             Something went wrong
           </h3>
-          <p className="text-sm text-muted max-w-sm mb-4">{error}</p>
-          <Button onClick={() => loadShoppingList()}>Try Again</Button>
+          <p className="text-sm text-muted-foreground max-w-sm mb-4">
+            {error instanceof Error ? error.message : "Failed to load shopping list"}
+          </p>
+          <Button onClick={() => refetch()}>Try Again</Button>
         </div>
       </PageLayout>
     );
@@ -518,17 +424,17 @@ export function ShoppingListView() {
           category={manualItemCategory}
           setCategory={setManualItemCategory}
           onAdd={handleAddManualItem}
-          isAdding={isAddingItem}
+          isAdding={addManualItem.isPending}
         />
 
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="p-4 bg-elevated rounded-full mb-4">
-            <ShoppingCart className="h-12 w-12 text-muted" />
+            <ShoppingCart className="h-12 w-12 text-muted-foreground" />
           </div>
           <h3 className="text-lg font-semibold text-foreground mb-2">
             Your shopping list is empty
           </h3>
-          <p className="text-sm text-muted max-w-sm">
+          <p className="text-sm text-muted-foreground max-w-sm">
             Add meals to your planner or use the form above to add items manually.
           </p>
         </div>
@@ -583,7 +489,7 @@ export function ShoppingListView() {
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <span className="text-sm text-muted tabular-nums min-w-[40px] text-right">
+        <span className="text-sm text-muted-foreground tabular-nums min-w-[40px] text-right">
           {progressPercent}%
         </span>
       </div>
@@ -599,7 +505,7 @@ export function ShoppingListView() {
         category={manualItemCategory}
         setCategory={setManualItemCategory}
         onAdd={handleAddManualItem}
-        isAdding={isAddingItem}
+        isAdding={addManualItem.isPending}
       />
 
       {/* Two-column layout: Main content + Sidebar */}

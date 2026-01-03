@@ -213,7 +213,7 @@ export function RecipeRouletteWidget() {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <ChefHat className="h-12 w-12 text-muted" />
+                  <ChefHat className="h-12 w-12 text-muted-foreground" />
                 </div>
               )}
               {/* Hover overlay */}
@@ -244,7 +244,7 @@ export function RecipeRouletteWidget() {
 
             {/* Metadata */}
             <motion.div
-              className="flex items-center gap-3 text-xs text-muted mb-3"
+              className="flex items-center gap-3 text-xs text-muted-foreground mb-3"
               variants={metadataVariants}
               custom={1}
               initial="initial"
@@ -303,9 +303,9 @@ function RouletteWidgetSkeleton() {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-6 text-center">
-      <ChefHat className="h-10 w-10 text-muted mb-2" />
-      <p className="text-sm text-muted">No recipes yet</p>
-      <p className="text-xs text-muted mt-1">
+      <ChefHat className="h-10 w-10 text-muted-foreground mb-2" />
+      <p className="text-sm text-muted-foreground">No recipes yet</p>
+      <p className="text-xs text-muted-foreground mt-1">
         Add some recipes to spin the wheel!
       </p>
     </div>

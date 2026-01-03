@@ -8,8 +8,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.core.database.db import get_session
-from app.core.dtos.shopping_dtos import (
+from app.database.db import get_session
+from app.dtos.shopping_dtos import (
     BulkOperationResultDTO,
     BulkStateUpdateDTO,
     ManualItemCreateDTO,
@@ -20,7 +20,7 @@ from app.core.dtos.shopping_dtos import (
     ShoppingListGenerationResultDTO,
     ShoppingListResponseDTO,
 )
-from app.core.services.shopping_service import ShoppingService
+from app.services.shopping_service import ShoppingService
 
 router = APIRouter()
 
@@ -33,9 +33,20 @@ def get_shopping_list(
     search_term: Optional[str] = Query(None),
     limit: Optional[int] = Query(None, ge=1, le=100),
     offset: Optional[int] = Query(None, ge=0),
+    auto_generate: bool = Query(False, description="Generate from planner before returning list"),
     session: Session = Depends(get_session),
 ):
-    """Get the shopping list with optional filters."""
+    """Get the shopping list with optional filters.
+
+    Set auto_generate=true to regenerate from active planner entries before returning.
+    This combines the generate + get operations into a single request.
+    """
+    service = ShoppingService(session)
+
+    # Optionally regenerate from planner before fetching
+    if auto_generate:
+        service.generate_from_active_planner()
+
     filters = ShoppingListFilterDTO(
         source=source,
         category=category,
@@ -45,7 +56,6 @@ def get_shopping_list(
         offset=offset,
     )
 
-    service = ShoppingService(session)
     return service.get_shopping_list(filters)
 
 

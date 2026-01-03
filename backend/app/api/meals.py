@@ -9,14 +9,14 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.core.database.db import get_session
-from app.core.dtos.meal_dtos import (
+from app.database.db import get_session
+from app.dtos.meal_dtos import (
     MealCreateDTO,
     MealFilterDTO,
     MealResponseDTO,
     MealUpdateDTO,
 )
-from app.core.services.meal_service import (
+from app.services.meal_service import (
     InvalidRecipeError,
     MealSaveError,
     MealService,

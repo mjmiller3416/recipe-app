@@ -228,7 +228,7 @@ export function IngredientAutocomplete({
           role="listbox"
         >
           {items.length === 0 && (
-            <div className="py-3 text-center text-sm text-muted">
+            <div className="py-3 text-center text-sm text-muted-foreground">
               No ingredients found.
             </div>
           )}
@@ -251,7 +251,7 @@ export function IngredientAutocomplete({
                 <>
                   <div className="flex flex-col gap-1">
                     <span className="font-medium">{item.data.name}</span>
-                    <span className="text-xs text-muted">
+                    <span className="text-xs text-muted-foreground">
                       {item.data.category}
                     </span>
                   </div>

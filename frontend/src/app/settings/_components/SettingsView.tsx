@@ -167,7 +167,7 @@ export function SettingsView() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted">Loading settings...</p>
+          <p className="text-muted-foreground">Loading settings...</p>
         </div>
       </div>
     );
@@ -183,14 +183,14 @@ export function SettingsView() {
             {hasUnsavedChanges && (
               <div className="flex items-center gap-2 mr-2 text-sm">
                 <div className="h-2 w-2 rounded-full bg-secondary animate-pulse" />
-                <span className="text-muted">Unsaved changes</span>
+                <span className="text-muted-foreground">Unsaved changes</span>
               </div>
             )}
             <Button
               variant="ghost"
               size="sm"
               onClick={handleResetSection}
-              className="gap-2 text-muted hover:text-foreground"
+              className="gap-2 text-muted-foreground hover:text-foreground"
             >
               <RotateCcw className="h-4 w-4" />
               Reset Section
@@ -224,8 +224,8 @@ export function SettingsView() {
 
               {/* Version Info */}
               <div className="mt-4 px-4 py-3 text-center">
-                <p className="text-xs text-muted">Meal Genie v1.0.0</p>
-                <p className="text-xs text-muted/70 mt-1">Made with ❤️</p>
+                <p className="text-xs text-muted-foreground">Meal Genie v1.0.0</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Made with ❤️</p>
               </div>
             </div>
           </div>

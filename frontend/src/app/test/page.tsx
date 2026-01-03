@@ -2,7 +2,7 @@ export default function TestPage() {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <h1 className="text-3xl font-bold text-foreground mb-2">Test Page</h1>
-      <p className="text-muted mb-8">
+      <p className="text-muted-foreground mb-8">
         Use this page to test new features and components
       </p>
 
@@ -12,7 +12,7 @@ export default function TestPage() {
           Test Area 1
         </h2>
         <div className="space-y-4">
-          <p className="text-muted">Add your test components here...</p>
+          <p className="text-muted-foreground">Add your test components here...</p>
         </div>
       </section>
 
@@ -22,7 +22,7 @@ export default function TestPage() {
           Test Area 2
         </h2>
         <div className="space-y-4">
-          <p className="text-muted">Add more test components here...</p>
+          <p className="text-muted-foreground">Add more test components here...</p>
         </div>
       </section>
 
@@ -32,7 +32,7 @@ export default function TestPage() {
           Test Area 3
         </h2>
         <div className="space-y-4">
-          <p className="text-muted">Additional test area...</p>
+          <p className="text-muted-foreground">Additional test area...</p>
         </div>
       </section>
     </div>

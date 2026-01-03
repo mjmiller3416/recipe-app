@@ -31,7 +31,7 @@ export function NavButton({
         // Transitions for smooth interactions
         "transition-all duration-200 ease-physical",
         // Text colors
-        "text-muted hover:text-foreground",
+        "text-muted-foreground hover:text-foreground",
         // Hover background
         "hover:bg-hover/70",
         // Hover micro-interaction: slide right

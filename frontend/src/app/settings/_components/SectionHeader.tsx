@@ -30,7 +30,7 @@ export function SectionHeader({
       </div>
       <div className="flex-1">
         <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-        <p className="text-sm text-muted mt-0.5">{description}</p>
+        <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
       </div>
     </div>
   );

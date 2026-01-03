@@ -2,11 +2,11 @@
 
 from fastapi import APIRouter, HTTPException
 
-from app.core.dtos.meal_genie_dtos import (
+from app.dtos.meal_genie_dtos import (
     MealGenieRequestDTO,
     MealGenieResponseDTO,
 )
-from app.core.services.meal_genie_service import get_meal_genie_service
+from app.services.meal_genie_service import get_meal_genie_service
 
 router = APIRouter()
 

@@ -52,7 +52,7 @@ class MealService:
         If no session is provided, a new session is created.
         """
         if session is None:
-            from app.core.database.db import create_session
+            from app.database.db import create_session
             session = create_session()
         self.session = session
         self.repo = MealRepo(self.session)

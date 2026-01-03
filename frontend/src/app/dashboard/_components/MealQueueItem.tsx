@@ -44,7 +44,7 @@ export function MealQueueItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group flex items-center gap-3 p-3 rounded-lg bg-hover/50 transition-opacity duration-300",
+        "group flex items-center gap-3 p-3 rounded-lg bg-elevated hover:bg-hover transition-all duration-300",
         isDragging && "opacity-50 shadow-lg z-10",
         isCompleting && "opacity-0"
       )}
@@ -52,7 +52,7 @@ export function MealQueueItem({
       {/* Drag Handle */}
       <button
         type="button"
-        className="p-1 text-muted hover:text-foreground transition-colors duration-150 cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
+        className="p-1 text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
         aria-label="Drag to reorder"
         {...attributes}
         {...listeners}
@@ -69,7 +69,7 @@ export function MealQueueItem({
             className="w-full h-full object-cover"
           />
         ) : (
-          <ChefHat className="h-6 w-6 text-muted" />
+          <ChefHat className="h-6 w-6 text-muted-foreground" />
         )}
       </div>
 
@@ -79,7 +79,7 @@ export function MealQueueItem({
           {entry.meal_name || "Unnamed Meal"}
         </p>
         {sideCount > 0 && (
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted-foreground">
             + {sideCount} side{sideCount > 1 ? "s" : ""}
           </p>
         )}
@@ -94,7 +94,7 @@ export function MealQueueItem({
           "flex-shrink-0 p-1.5 rounded-full transition-colors interactive-subtle",
           isCompleting
             ? "text-success"
-            : "text-muted hover:text-success"
+            : "text-muted-foreground hover:text-success"
         )}
         aria-label="Mark as cooked"
       >

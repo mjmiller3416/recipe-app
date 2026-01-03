@@ -93,7 +93,7 @@ export function ShoppingItem({ item, onToggle, onToggleFlagged, breakdown }: Sho
           "text-sm font-semibold px-2.5 py-1 rounded-lg whitespace-nowrap",
           "transition-all duration-150",
           item.have
-            ? "bg-muted/50 text-muted"
+            ? "bg-muted/50 text-muted-foreground"
             : "bg-primary/20 text-primary"
         )}
       >
@@ -106,7 +106,7 @@ export function ShoppingItem({ item, onToggle, onToggleFlagged, breakdown }: Sho
         <span
           className={cn(
             "text-foreground font-medium block truncate transition-all duration-200",
-            item.have && "line-through text-muted decoration-muted/50"
+            item.have && "line-through text-muted-foreground decoration-muted/50"
           )}
         >
           {item.ingredient_name}
@@ -119,7 +119,7 @@ export function ShoppingItem({ item, onToggle, onToggleFlagged, breakdown }: Sho
               <span
                 onClick={(e) => e.stopPropagation()}
                 className={cn(
-                  "text-xs text-muted transition-all duration-200",
+                  "text-xs text-muted-foreground transition-all duration-200",
                   "cursor-help underline decoration-dotted decoration-muted/50",
                   "inline-block" // Shrink to text width only
                 )}
@@ -131,11 +131,11 @@ export function ShoppingItem({ item, onToggle, onToggleFlagged, breakdown }: Sho
               <p className="font-medium mb-1">Used in:</p>
               <ul className="space-y-0.5">
                 {breakdown?.recipe_contributions.map((contrib) => (
-                  <li key={contrib.recipe_name} className="text-muted">
+                  <li key={contrib.recipe_name} className="text-muted-foreground">
                     • {contrib.recipe_name}{contrib.usage_count > 1 ? ` (x${contrib.usage_count})` : ""}: {formatQuantity(contrib.quantity)} {contrib.unit || ""}
                   </li>
                 )) ?? item.recipe_sources.map((recipe) => (
-                  <li key={recipe} className="text-muted">
+                  <li key={recipe} className="text-muted-foreground">
                     • {recipe}
                   </li>
                 ))}
@@ -145,7 +145,7 @@ export function ShoppingItem({ item, onToggle, onToggleFlagged, breakdown }: Sho
         ) : (
           <span
             className={cn(
-              "text-xs text-muted block truncate transition-all duration-200",
+              "text-xs text-muted-foreground block truncate transition-all duration-200",
               item.have && "text-foreground-disabled"
             )}
           >
@@ -162,7 +162,7 @@ export function ShoppingItem({ item, onToggle, onToggleFlagged, breakdown }: Sho
           "hover:bg-hover/50",
           item.flagged
             ? "text-warning"
-            : "text-muted/40 hover:text-muted"
+            : "text-muted-foreground/40 hover:text-muted-foreground"
         )}
       >
         <Flag

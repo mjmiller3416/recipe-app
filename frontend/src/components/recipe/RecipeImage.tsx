@@ -77,7 +77,7 @@ function ImagePlaceholder({
       <ChefHat
         className={cn(
           ICON_SIZES[iconSize],
-          "text-muted opacity-40",
+          "text-muted-foreground opacity-40",
           animate && "animate-pulse"
         )}
       />

@@ -82,7 +82,7 @@ export function CookingStreakWidget() {
                 : "No Streak Yet"}
             </span>
           </div>
-          <p className="text-xs text-muted mb-3">{getStreakMessage()}</p>
+          <p className="text-xs text-muted-foreground mb-3">{getStreakMessage()}</p>
 
           {/* Week Activity Grid */}
           <div className="flex justify-between">
@@ -96,14 +96,14 @@ export function CookingStreakWidget() {
                     className={`w-7 h-7 rounded-full flex items-center justify-center text-xs transition-colors duration-150 ${
                       isActive
                         ? "bg-secondary text-secondary-foreground"
-                        : "bg-muted/20 text-muted"
+                        : "bg-muted/20 text-muted-foreground"
                     } ${isToday ? "ring-2 ring-primary ring-offset-1 ring-offset-transparent" : ""}`}
                   >
                     {isActive && <Check className="h-3.5 w-3.5" strokeWidth={2.5} />}
                   </div>
                   <span
                     className={`text-xs ${
-                      isToday ? "text-foreground font-medium" : "text-muted"
+                      isToday ? "text-foreground font-medium" : "text-muted-foreground"
                     }`}
                   >
                     {day}

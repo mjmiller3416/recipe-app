@@ -51,7 +51,7 @@ export function AppearanceSection({
           {/* Theme Selection */}
           <div className="space-y-3">
             <Label className="flex items-center gap-2">
-              <Palette className="h-3.5 w-3.5 text-muted" />
+              <Palette className="h-3.5 w-3.5 text-muted-foreground" />
               Theme
             </Label>
             <div className="grid grid-cols-3 gap-3 max-w-lg">
@@ -79,14 +79,14 @@ export function AppearanceSection({
                       <Icon
                         className={cn(
                           "h-5 w-5",
-                          isSelected ? "text-secondary" : "text-muted"
+                          isSelected ? "text-secondary" : "text-muted-foreground"
                         )}
                       />
                     </div>
                     <span
                       className={cn(
                         "text-sm font-medium",
-                        isSelected ? "text-foreground" : "text-muted"
+                        isSelected ? "text-foreground" : "text-muted-foreground"
                       )}
                     >
                       {option.label}
@@ -100,7 +100,7 @@ export function AppearanceSection({
                 );
               })}
             </div>
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted-foreground">
               Choose your preferred color scheme
             </p>
           </div>
@@ -109,10 +109,10 @@ export function AppearanceSection({
 
           {/* Future: Accent Color, Font Size, etc. */}
           <div className="bg-elevated rounded-xl p-6 text-center border border-dashed border-border">
-            <p className="text-sm text-muted">
+            <p className="text-sm text-muted-foreground">
               More appearance options coming soon
             </p>
-            <p className="text-xs text-muted/70 mt-1">
+            <p className="text-xs text-muted-foreground/70 mt-1">
               Accent colors, font sizes, and more
             </p>
           </div>

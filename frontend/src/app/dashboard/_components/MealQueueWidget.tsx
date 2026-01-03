@@ -12,18 +12,14 @@ import { cn } from "@/lib/utils";
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
   DragEndEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
+import { useSortableDnd } from "@/hooks";
 
 interface MealQueueWidgetProps {
   entries?: PlannerEntryResponseDTO[];
@@ -48,13 +44,8 @@ export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProp
     }
   }, [initialEntries]);
 
-  // Drag and drop sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  // Drag and drop setup
+  const { sensors, modifiers } = useSortableDnd();
 
   // Fetch active entries from planner
   const fetchActiveEntries = useCallback(async () => {
@@ -177,7 +168,7 @@ export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProp
           ))}
         </div>
       ) : !hasEntries ? (
-        <div className="flex-1 flex items-center justify-center text-center text-muted">
+        <div className="flex-1 flex items-center justify-center text-center text-muted-foreground">
           <div>
             <p>No meals in queue</p>
             <p className="text-sm mt-1">Add some meals to get started!</p>
@@ -185,12 +176,13 @@ export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProp
         </div>
       ) : (
         <div className={cn(
-          "flex-1 min-h-0 overflow-auto space-y-2",
+          "flex-1 min-h-0 overflow-auto p-2 -m-2",
           isDragging && "scrollbar-hidden"
         )}>
           {/* Meals with drag-and-drop */}
           <DndContext
             sensors={sensors}
+            modifiers={modifiers}
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}

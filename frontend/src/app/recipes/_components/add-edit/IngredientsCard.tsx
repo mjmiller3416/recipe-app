@@ -9,17 +9,13 @@ import { Ingredient as AutocompleteIngredient } from "./IngredientAutocomplete";
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
   DragEndEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { useSortableDnd } from "@/hooks";
 
 interface IngredientsCardProps {
   ingredients: Ingredient[];
@@ -44,13 +40,8 @@ export function IngredientsCard({
   const addedViaKeyboardRef = useRef(false);
   const prevIngredientsLengthRef = useRef(ingredients.length);
 
-  // Drag and drop sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  // Drag and drop setup
+  const { sensors, modifiers } = useSortableDnd();
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -96,7 +87,7 @@ export function IngredientsCard({
             <h2 className="text-lg font-semibold text-foreground">
               Ingredients
             </h2>
-            <p className="text-sm text-muted mt-0.5">
+            <p className="text-sm text-muted-foreground mt-0.5">
               List all ingredients needed for this recipe
             </p>
           </div>
@@ -111,6 +102,7 @@ export function IngredientsCard({
 
         <DndContext
           sensors={sensors}
+          modifiers={modifiers}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >

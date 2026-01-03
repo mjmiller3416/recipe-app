@@ -8,3 +8,4 @@ export { useSettings, type AppSettings, type UserProfile, DEFAULT_SETTINGS } fro
 export { useRecentRecipes, type RecentRecipe } from "./useRecentRecipes";
 export { useUnitConversionRules } from "./useUnitConversionRules";
 export { useChatHistory } from "./useChatHistory";
+export { useSortableDnd } from "./useSortableDnd";

@@ -130,14 +130,14 @@ function HeroSection({
         <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3 tracking-tight">
           Find your next meal
         </h1>
-        <p className="text-muted text-lg mb-8">
+        <p className="text-muted-foreground text-lg mb-8">
           Browse through your collection of {recipeCount} saved recipes
         </p>
 
         {/* Search Bar */}
         <div className="flex gap-3 max-w-2xl mx-auto mb-8">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               placeholder="Search saved recipes, ingredients, tags..."
               value={searchTerm}
@@ -204,7 +204,7 @@ function FilterSection({
         className="flex items-center justify-between w-full py-2 text-sm font-medium text-foreground hover:text-primary transition-colors pressable"
       >
         <span className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-muted" />
+          <Icon className="h-4 w-4 text-muted-foreground" />
           {title}
           {selected.length > 0 && (
             <span className="ml-1 px-2 py-1 bg-primary/20 text-primary text-xs rounded-full">
@@ -214,7 +214,7 @@ function FilterSection({
         </span>
         <ChevronDown
           className={cn(
-            "h-4 w-4 text-muted transition-transform duration-200",
+            "h-4 w-4 text-muted-foreground transition-transform duration-200",
             isOpen && "rotate-180"
           )}
         />
@@ -297,7 +297,7 @@ function FilterSidebarContent({
         <Heart
           className={cn(
             "h-4 w-4 transition-colors",
-            filters.favoritesOnly ? "text-destructive fill-current" : "text-muted"
+            filters.favoritesOnly ? "text-destructive fill-current" : "text-muted-foreground"
           )}
         />
         <span className="text-sm text-foreground">Favorites Only</span>
@@ -411,14 +411,14 @@ function StickyHeaderBar({
         <div className="flex items-center gap-3">
           <Sparkles className="h-5 w-5 text-primary" />
           <h2 className="text-lg md:text-xl font-semibold text-foreground">Your Recipes</h2>
-          <span className="text-sm text-muted hidden sm:inline">
+          <span className="text-sm text-muted-foreground hidden sm:inline">
             {resultCount === totalCount
               ? `${totalCount} recipes`
               : `${resultCount} of ${totalCount}`}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted hidden md:inline">Sort by:</span>
+          <span className="text-sm text-muted-foreground hidden md:inline">Sort by:</span>
           <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortOption)}>
             <SelectTrigger className="w-32 md:w-36 h-9">
               <SelectValue />
@@ -494,7 +494,7 @@ function StickyHeaderBar({
               variant="ghost"
               size="sm"
               onClick={onClearAllFilters}
-              className="text-xs text-muted hover:text-foreground h-auto py-1 px-2 shrink-0"
+              className="text-xs text-muted-foreground hover:text-foreground h-auto py-1 px-2 shrink-0"
             >
               Clear All
             </Button>
@@ -995,7 +995,7 @@ export function RecipeBrowserView() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted">Loading recipes...</p>
+          <p className="text-muted-foreground">Loading recipes...</p>
         </div>
       </div>
     );
@@ -1010,7 +1010,7 @@ export function RecipeBrowserView() {
             <X className="h-8 w-8 text-destructive" />
           </div>
           <h2 className="text-lg font-semibold text-foreground">Failed to Load Recipes</h2>
-          <p className="text-muted">{error}</p>
+          <p className="text-muted-foreground">{error}</p>
           <Button onClick={() => window.location.reload()}>Try Again</Button>
         </div>
       </div>
@@ -1089,10 +1089,10 @@ export function RecipeBrowserView() {
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="p-4 bg-elevated rounded-full mb-4">
-                <ChefHat className="h-12 w-12 text-muted" />
+                <ChefHat className="h-12 w-12 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">No Recipes Found</h3>
-              <p className="text-sm text-muted max-w-sm mb-4">
+              <p className="text-sm text-muted-foreground max-w-sm mb-4">
                 {hasActiveFilters
                   ? "Try adjusting your filters or search term to find more recipes."
                   : "Your recipe collection is empty. Start by adding some recipes!"}

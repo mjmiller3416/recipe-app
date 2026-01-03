@@ -29,8 +29,8 @@ function getTitleIcon(title: string) {
 function getTitleColor(title: string) {
   if (title.toLowerCase().includes("feature")) return "text-primary";
   if (title.toLowerCase().includes("fix")) return "text-secondary";
-  if (title.toLowerCase().includes("improvement")) return "text-muted-foreground";
-  return "text-muted";
+  if (title.toLowerCase().includes("improvement")) return "text-muted-foreground-foreground";
+  return "text-muted-foreground";
 }
 
 export function ChangelogDialog({
@@ -123,7 +123,7 @@ export function ChangelogDialog({
                         dateIdx > 0 && "mt-4 pt-3 border-t border-border/50"
                       )}
                     >
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground-foreground">
                         {date}
                       </span>
                     </div>
@@ -161,13 +161,13 @@ export function ChangelogDialog({
                                     "text-sm flex items-start gap-2",
                                     isNew
                                       ? "text-foreground"
-                                      : "text-muted-foreground"
+                                      : "text-muted-foreground-foreground"
                                   )}
                                 >
                                   <span
                                     className={cn(
                                       "mt-1.5 flex-shrink-0",
-                                      isNew ? "text-primary" : "text-muted/50"
+                                      isNew ? "text-primary" : "text-muted-foreground/50"
                                     )}
                                   >
                                     •

@@ -54,7 +54,7 @@ function SideDishCard({ recipe, onFilledClick, onEmptyClick, className }: SideDi
       >
         <div className="flex items-center justify-center p-6 h-full">
           <div className={cn(
-            "flex flex-col items-center gap-2 text-muted transition-colors",
+            "flex flex-col items-center gap-2 text-muted-foreground transition-colors",
             !isDisabled && "group-hover:text-primary"
           )}>
             <Plus className="h-6 w-6" />

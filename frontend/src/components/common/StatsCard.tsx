@@ -136,7 +136,7 @@ export function MultiStatsCard({
                   </span>
                 )}
               </p>
-              <p className="text-xs text-muted">{stat.label}</p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
             </div>
           ))}
         </div>

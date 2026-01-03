@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 import httpx
 
-from app.core.dtos.feedback import FeedbackCreateDTO, FeedbackResponseDTO
+from app.dtos.feedback import FeedbackCreateDTO, FeedbackResponseDTO
 
 
 # Map feedback categories to GitHub issue labels

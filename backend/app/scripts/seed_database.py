@@ -30,8 +30,8 @@ def get_db_and_models():
     Lazy import of database and models to avoid circular import issues.
     Returns a tuple of (SessionLocal, model_classes_dict).
     """
-    from app.core.database.db import SessionLocal
-    from app.core.models import (
+    from app.database.db import SessionLocal
+    from app.models import (
         Ingredient,
         Meal,
         PlannerEntry,

@@ -73,7 +73,7 @@ export function ProfileSection({
             </div>
             <div className="flex-1">
               <h3 className="font-medium text-foreground">Profile Picture</h3>
-              <p className="text-sm text-muted mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Click on the avatar to upload a new image
               </p>
               <Button
@@ -93,7 +93,7 @@ export function ProfileSection({
           {/* Display Name */}
           <div className="space-y-2">
             <Label htmlFor="display-name" className="flex items-center gap-2">
-              <User className="h-3.5 w-3.5 text-muted" />
+              <User className="h-3.5 w-3.5 text-muted-foreground" />
               Display Name
             </Label>
             <Input
@@ -103,7 +103,7 @@ export function ProfileSection({
               onChange={(e) => onDisplayNameChange(e.target.value)}
               className="max-w-md"
             />
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted-foreground">
               This name will be displayed throughout the app
             </p>
           </div>
@@ -111,7 +111,7 @@ export function ProfileSection({
           {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email" className="flex items-center gap-2">
-              <Mail className="h-3.5 w-3.5 text-muted" />
+              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
               Email Address
             </Label>
             <Input
@@ -122,7 +122,7 @@ export function ProfileSection({
               onChange={(e) => onEmailChange(e.target.value)}
               className="max-w-md"
             />
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted-foreground">
               Used for account recovery and notifications
             </p>
           </div>
@@ -132,7 +132,7 @@ export function ProfileSection({
           {/* Password Section (Placeholder) */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
-              <Lock className="h-3.5 w-3.5 text-muted" />
+              <Lock className="h-3.5 w-3.5 text-muted-foreground" />
               Password
             </Label>
             <div className="flex items-center gap-4">
@@ -147,7 +147,7 @@ export function ProfileSection({
                 Change Password
               </Button>
             </div>
-            <p className="text-xs text-muted">
+            <p className="text-xs text-muted-foreground">
               Password management will be available once authentication is
               connected
             </p>

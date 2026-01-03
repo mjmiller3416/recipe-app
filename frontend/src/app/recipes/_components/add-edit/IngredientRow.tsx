@@ -106,7 +106,7 @@ export function IngredientRow({
         <div className="flex items-center justify-between mb-2">
           <button
             type="button"
-            className="p-1 text-muted hover:text-foreground transition-colors cursor-grab active:cursor-grabbing touch-none"
+            className="p-1 text-muted-foreground hover:text-foreground transition-colors cursor-grab active:cursor-grabbing touch-none"
             aria-label="Drag to reorder"
             {...attributes}
             {...listeners}
@@ -116,7 +116,7 @@ export function IngredientRow({
           <button
             type="button"
             onClick={() => onDelete(ingredient.id)}
-            className="p-1 text-muted hover:text-destructive transition-colors"
+            className="p-1 text-muted-foreground hover:text-destructive transition-colors"
             aria-label="Delete ingredient"
           >
             <X className="h-5 w-5" />
@@ -174,7 +174,7 @@ export function IngredientRow({
       <div className="hidden md:flex items-center gap-3">
         <button
           type="button"
-          className="p-1 text-muted hover:text-foreground transition-colors cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
+          className="p-1 text-muted-foreground hover:text-foreground transition-colors cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
           aria-label="Drag to reorder"
           {...attributes}
           {...listeners}
@@ -243,7 +243,7 @@ export function IngredientRow({
         <button
           type="button"
           onClick={() => onDelete(ingredient.id)}
-          className="p-1 text-muted hover:text-destructive transition-colors flex-shrink-0"
+          className="p-1 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
           aria-label="Delete ingredient"
         >
           <X className="h-5 w-5" />

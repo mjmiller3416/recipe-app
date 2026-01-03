@@ -4,7 +4,7 @@ import os
 from typing import Optional, List
 from dotenv import load_dotenv
 
-from app.core.dtos.meal_genie_dtos import MealGenieMessageDTO
+from app.dtos.meal_genie_dtos import MealGenieMessageDTO
 
 # Load environment variables
 load_dotenv()

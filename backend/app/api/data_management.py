@@ -11,14 +11,14 @@ from sqlalchemy.orm import Session
 from io import BytesIO
 import json
 
-from app.core.database.db import get_session
-from app.core.dtos.data_management_dtos import (
+from app.database.db import get_session
+from app.dtos.data_management_dtos import (
     DuplicateResolutionDTO,
     ExportFilterDTO,
     ImportPreviewDTO,
     ImportResultDTO,
 )
-from app.core.services.data_management_service import DataManagementService
+from app.services.data_management_service import DataManagementService
 
 router = APIRouter()
 

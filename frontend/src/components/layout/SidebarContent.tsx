@@ -192,9 +192,9 @@ export function SidebarContent({ onNavigate, onOpenMealGenie }: SidebarContentPr
             <p className="text-sm font-medium text-foreground truncate">
               {appConfig.user.name}
             </p>
-            <p className="text-xs text-muted">Online</p>
+            <p className="text-xs text-muted-foreground">Online</p>
           </div>
-          <ChevronRight className="h-4 w-4 text-muted group-hover:text-foreground transition-colors flex-shrink-0" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
         </Link>
       </div>
 

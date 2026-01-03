@@ -82,7 +82,7 @@ export function MobileBottomNav({ onOpenMealGenie }: MobileBottomNavProps) {
                 // Transitions
                 "transition-colors duration-200",
                 // Text color
-                isActive ? "text-primary" : "text-muted",
+                isActive ? "text-primary" : "text-muted-foreground",
                 // Touch feedback
                 "active:scale-95"
               )}
@@ -133,7 +133,7 @@ export function MobileBottomNav({ onOpenMealGenie }: MobileBottomNavProps) {
             // Transitions
             "transition-colors duration-200",
             // Text color
-            "text-muted hover:text-primary",
+            "text-muted-foreground hover:text-primary",
             // Touch feedback
             "active:scale-95"
           )}

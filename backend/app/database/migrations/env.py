@@ -1,4 +1,4 @@
-""" app/core/database/migrations/env.py
+""" app/database/migrations/env.py
 Alembic migration environment setup for the recipe_app project.
 
 This script configures the Alembic migration context, loads environment variables,
@@ -27,11 +27,15 @@ from alembic import context
 from dotenv import load_dotenv
 from sqlalchemy import engine_from_config, pool
 
-# load .env file (project root assumed)
-load_dotenv(dotenv_path=Path(__file__).resolve().parents[4] / ".env")
+# Path: app/database/migrations/env.py
+# parents[0]=migrations, parents[1]=database, parents[2]=app, parents[3]=backend
+backend_root = Path(__file__).resolve().parents[3]
 
-# add project root to sys.path
-sys.path.append(str(Path(__file__).resolve().parents[4]))
+# load .env file from backend root
+load_dotenv(dotenv_path=backend_root / ".env")
+
+# add backend root to sys.path so 'app' module can be found
+sys.path.insert(0, str(backend_root))
 
 # ── Alembic Config ──────────────────────────────────────────────────────────────────────
 config = context.config
@@ -43,14 +47,16 @@ if database_url:
     config.set_main_option("sqlalchemy.url", database_url)
 
 # ── Import metadata ─────────────────────────────────────────────────────────────────────
-from app.core.database.base import Base
-from app.core.models.ingredient import Ingredient
+from app.database.base import Base
+from app.models.ingredient import Ingredient
 # import all models to register them with metadata
-from app.core.models.meal import Meal
-from app.core.models.planner_entry import PlannerEntry
-from app.core.models.recipe import Recipe
-from app.core.models.recipe_history import RecipeHistory
-from app.core.models.recipe_ingredient import RecipeIngredient
+from app.models.meal import Meal
+from app.models.planner_entry import PlannerEntry
+from app.models.recipe import Recipe
+from app.models.recipe_history import RecipeHistory
+from app.models.recipe_ingredient import RecipeIngredient
+from app.models.shopping_item import ShoppingItem
+from app.models.shopping_state import ShoppingState
 
 target_metadata = Base.metadata
 

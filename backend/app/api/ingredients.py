@@ -8,14 +8,14 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.core.database.db import get_session
-from app.core.dtos.ingredient_dtos import (
+from app.database.db import get_session
+from app.dtos.ingredient_dtos import (
     IngredientCreateDTO,
     IngredientResponseDTO,
     IngredientSearchDTO,
     IngredientUpdateDTO,
 )
-from app.core.services.ingredient_service import IngredientService
+from app.services.ingredient_service import IngredientService
 
 router = APIRouter()
 

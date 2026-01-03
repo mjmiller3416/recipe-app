@@ -49,7 +49,7 @@ export function RecipeFilterSidebar({
 
   return (
     <div className="rounded-xl bg-elevated border border-border p-4 flex flex-col max-h-[calc(100vh-8rem)]">
-        <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-4 flex-shrink-0">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex-shrink-0">
           Recipes in this list
         </h3>
 
@@ -83,7 +83,7 @@ export function RecipeFilterSidebar({
                   >
                     {recipe.name}
                   </div>
-                  <div className="text-xs text-muted">
+                  <div className="text-xs text-muted-foreground">
                     {recipe.collectedCount}/{recipe.itemCount} items
                   </div>
                 </div>
@@ -122,7 +122,7 @@ export function RecipeFilterSidebar({
                   >
                     Manual items
                   </div>
-                  <div className="text-xs text-muted">
+                  <div className="text-xs text-muted-foreground">
                     {manualCollectedCount}/{manualItemCount} items
                   </div>
                 </div>

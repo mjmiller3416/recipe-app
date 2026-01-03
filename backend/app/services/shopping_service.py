@@ -36,7 +36,7 @@ class ShoppingService:
         """Initialize the ShoppingService with a database session and repositories.
         If no session is provided, a new session is created."""
         if session is None:
-            from app.core.database.db import create_session
+            from app.database.db import create_session
             session = create_session()
         self.session = session
         self.shopping_repo = ShoppingRepo(self.session)
@@ -258,12 +258,9 @@ class ShoppingService:
             else:
                 items = self.shopping_repo.get_all_shopping_items()
 
-            # Build recipe sources mapping from breakdown data
-            recipe_sources_map = self._build_recipe_sources_map()
-
-            # convert to response DTOs with recipe sources
+            # convert to response DTOs - recipe_sources is now stored on the item itself
             item_dtos = [
-                self._item_to_response_dto(item, recipe_sources_map.get(item.state_key, []))
+                self._item_to_response_dto(item, item.recipe_sources or [])
                 for item in items
             ]
 
@@ -521,7 +518,7 @@ class ShoppingService:
         """
         from sqlalchemy import delete
 
-        from app.core.models.shopping_item import ShoppingItem
+        from app.models.shopping_item import ShoppingItem
         try:
             stmt = delete(ShoppingItem).where(ShoppingItem.have.is_(True))
             result = self.session.execute(stmt)
