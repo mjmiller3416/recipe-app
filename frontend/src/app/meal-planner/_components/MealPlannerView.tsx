@@ -321,18 +321,24 @@ export function MealPlannerPage() {
             <>
               <MealSelection key={`meal-${selectedMealId}-${mealRefreshKey}`} mealId={selectedMealId} isCompleted={selectedEntry?.is_completed} onEmptySideSlotClick={handleEmptySideSlotClick} className="lg:flex-1" />
 
-              {/* Footer - Action Buttons (2x2 grid on mobile, single row on desktop) */}
-              <div className="flex-shrink-0 pt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Footer - Action Buttons (2x2 grid on mobile, row with divider on desktop) */}
+              <div className="flex-shrink-0 pt-4 grid grid-cols-2 gap-3 lg:flex lg:flex-row lg:items-center lg:gap-3">
                 <Button
                   onClick={handleMarkComplete}
                   size="xl"
+                  className="lg:flex-shrink-0"
                 >
                   {selectedEntry?.is_completed ? "Mark Incomplete" : "Mark Complete"}
                 </Button>
+
+                {/* Vertical divider - desktop only */}
+                <div className="hidden lg:block w-px h-8 bg-border mx-1" />
+
                 <Button
                   onClick={handleEditMeal}
                   variant="outline"
                   size="xl"
+                  className="lg:px-4"
                 >
                   Edit Meal
                 </Button>
@@ -340,6 +346,7 @@ export function MealPlannerPage() {
                   onClick={handleToggleFavorite}
                   variant="outline"
                   size="xl"
+                  className="lg:px-4"
                 >
                   <Heart className={cn(
                     "h-5 w-5 mr-2",
@@ -351,7 +358,7 @@ export function MealPlannerPage() {
                   onClick={handleRemoveFromMenu}
                   variant="outline"
                   size="xl"
-                  className="border-destructive text-destructive hover:bg-destructive/10"
+                  className="border-destructive text-destructive hover:bg-destructive/10 lg:px-4"
                 >
                   Remove from Menu
                 </Button>

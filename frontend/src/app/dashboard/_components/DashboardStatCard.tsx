@@ -26,7 +26,7 @@ export function DashboardStatCard({
 }: DashboardStatCardProps) {
   if (isLoading) {
     return (
-      <div className="bg-elevated rounded-xl p-5 flex items-center gap-4 border border-border shadow-raised">
+      <div className="bg-card rounded-xl p-5 flex items-center gap-4 border border-border shadow-raised">
         <Skeleton className="h-12 w-12 rounded-lg" />
         <div className="space-y-2">
           <Skeleton className="h-8 w-16" />
@@ -37,7 +37,7 @@ export function DashboardStatCard({
   }
 
   return (
-    <div className="bg-elevated rounded-xl p-5 flex items-center gap-4 border border-border shadow-raised">
+    <div className="bg-card rounded-xl p-5 flex items-center gap-4 border border-border shadow-raised">
       <div className={cn("p-3 rounded-lg", colorStyles[colorClass])}>
         <Icon className="h-6 w-6" />
       </div>

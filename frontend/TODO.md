@@ -1,3 +1,8 @@
+Fix recipe page add to meal planner
+Add multi-selection filters in meal planner
+Implemented delete saved meal functionality 
+
+
 # Frontend TODO
 
 ## 🟠 High Priority

@@ -48,7 +48,7 @@ export function RecipeFilterSidebar({
   }
 
   return (
-    <div className="rounded-xl bg-elevated border border-border p-4 flex flex-col max-h-[calc(100vh-8rem)]">
+    <div className="rounded-xl bg-card border border-border p-4 flex flex-col max-h-[calc(100vh-8rem)]">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex-shrink-0">
           Recipes in this list
         </h3>

@@ -148,7 +148,7 @@ export function RecipeRouletteWidget() {
   };
 
   return (
-    <div className="bg-elevated rounded-xl p-4 border border-border shadow-raised">
+    <div className="bg-card rounded-xl p-4 border border-border shadow-raised">
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">

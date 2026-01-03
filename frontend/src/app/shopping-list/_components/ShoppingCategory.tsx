@@ -129,7 +129,7 @@ export function ShoppingCategory({
         "rounded-xl overflow-hidden transition-all duration-200",
         isComplete
           ? "bg-success/5 border border-success/40"
-          : "bg-elevated border border-transparent"
+          : "bg-card border border-transparent"
       )}
     >
       {/* Category header */}

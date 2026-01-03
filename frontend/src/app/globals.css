@@ -75,7 +75,7 @@
   --accent-foreground: #f5f5f5; /* Text on accent background */
   --popover: #2f2f2f;           /* Popover/dropdown backgrounds */
   --popover-foreground: #f5f5f5; /* Text in popovers */
-  --card: #2f2f2f;              /* Card backgrounds */
+  --card: #252525;              /* Card backgrounds (matches sidebar) */
   --card-foreground: #f5f5f5;   /* Text on cards */
   --muted: #262626;             /* Muted background surfaces */
   --muted-foreground: #a3a3a3;  /* Text on muted backgrounds */
@@ -83,6 +83,7 @@
   --border-subtle: #2d2d2d;     /* Lighter than main border */
   --border-strong: #525252;     /* Stronger than main border */
   --input: #2f2f2f;             /* Input backgrounds */
+  --button-outline-bg: #27272a; /* Outline button background - visible but subtle */
   --ring: #8b5cf6;              /* Focus ring color */
   --radius: 0.5rem;             /* Default border radius for components */
 
@@ -256,7 +257,7 @@
   --accent-foreground: #374151; /* Dark gray text on light accent */
   --popover: #ffffff;           /* Popover/dropdown backgrounds */
   --popover-foreground: #1a1a1a; /* Text in popovers */
-  --card: #ffffff;              /* Card backgrounds */
+  --card: #e8e8e8;              /* Card backgrounds (matches sidebar) */
   --card-foreground: #1a1a1a;   /* Text on cards */
   --muted: #f4f4f5;             /* Muted background surfaces */
   --muted-foreground: #6b7280;  /* Text on muted backgrounds */
@@ -264,6 +265,7 @@
   --border-subtle: #e5e5e5;     /* Lighter than main border */
   --border-strong: #a3a3a3;     /* Stronger than main border */
   --input: #ffffff;             /* Input backgrounds - pure white */
+  --button-outline-bg: #f4f4f5; /* Outline button background - subtle gray */
   --ring: #8b5cf6;              /* Focus ring color - same purple */
   --radius: 0.5rem;             /* Default border radius for components */
 
@@ -487,6 +489,7 @@
   --color-border-subtle: var(--border-subtle);
   --color-border-strong: var(--border-strong);
   --color-input: var(--input);
+  --color-button-outline-bg: var(--button-outline-bg);
   --color-ring: var(--ring);
   --radius: var(--radius);
 

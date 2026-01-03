@@ -50,7 +50,7 @@ function StatCard({
   colorClass: string;
 }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-elevated/50">
+    <div className="flex-1 flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-card">
       <span className={`text-3xl font-bold ${colorClass}`}>{value}</span>
       <span className="text-sm text-muted-foreground mt-1">{label}</span>
     </div>
@@ -91,7 +91,7 @@ function AddManualItemForm({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 p-3 mb-4 rounded-xl border border-border bg-elevated">
+    <div className="flex flex-wrap items-center gap-2 p-3 mb-4 rounded-xl border border-border bg-card">
       <QuantityInput
         value={quantity}
         onChange={setQuantity}
