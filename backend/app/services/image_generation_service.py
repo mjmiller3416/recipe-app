@@ -18,7 +18,8 @@ def _get_genai_client():
     if _genai_client is None:
         from google import genai
 
-        _genai_client = genai.Client()
+        api_key = os.getenv("GEMINI_IMAGE_API_KEY")
+        _genai_client = genai.Client(api_key=api_key)
     return _genai_client
 
 
