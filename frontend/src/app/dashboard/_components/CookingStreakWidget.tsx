@@ -93,7 +93,7 @@ export function CookingStreakWidget() {
               return (
                 <div key={i} className="flex flex-col items-center gap-1">
                   <div
-                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs transition-colors ${
+                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs transition-colors duration-150 ${
                       isActive
                         ? "bg-secondary text-secondary-foreground"
                         : "bg-muted/20 text-muted"

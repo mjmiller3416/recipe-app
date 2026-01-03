@@ -2,6 +2,15 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-01-02 - Improvements
+- Enhanced Meal Genie Assistant: 
+-     chat history persistence across sessions
+-     improved response times
+-     diplay chat in popup window
+
+# 2026-01-02 - New Features
+- Recipe Roulette: Randomly suggests recipes based existing recipes in your meal planner or favorites
+
 ## 2026-01-01 - Bug Fixes
 - Fixed issue where shopping list did not update correctly after removing all meals from the planner
 - Fixed various bugs related to the Shopping List and Meal Planner pages

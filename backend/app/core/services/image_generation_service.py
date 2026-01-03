@@ -42,9 +42,9 @@ class ImageGenerationService:
 
     def __init__(self):
         """Initialize the image generation service."""
-        self.api_key = os.getenv("GEMINI_API_KEY")
+        self.api_key = os.getenv("GEMINI_IMAGE_API_KEY")
         if not self.api_key:
-            raise ValueError("GEMINI_API_KEY environment variable is not set")
+            raise ValueError("GEMINI_IMAGE_API_KEY environment variable is not set")
 
     def generate_recipe_image(
         self, recipe_name: str, custom_prompt: str = None

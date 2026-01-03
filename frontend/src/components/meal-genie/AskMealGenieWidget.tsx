@@ -2,9 +2,8 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Sparkles, Send, ChefHat, Lightbulb, Calendar } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { mealGenieApi } from "@/lib/api";
-import type { MealGenieMessage } from "@/types";
+import { useChatHistory } from "@/hooks";
 
 const SUGGESTIONS = [
   { icon: ChefHat, text: "What can I make with chicken?" },
@@ -14,7 +13,7 @@ const SUGGESTIONS = [
 
 export function AskMealGenieWidget() {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<MealGenieMessage[]>([]);
+  const { messages, addMessage, clearHistory } = useChatHistory();
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -28,30 +27,23 @@ export function AskMealGenieWidget() {
     if (!textToSend || isLoading) return;
 
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: textToSend }]);
+    addMessage({ role: "user", content: textToSend });
     setIsLoading(true);
 
     try {
       const response = await mealGenieApi.ask(textToSend, messages);
       if (response.success && response.response) {
-        const assistantMessage = response.response;
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: assistantMessage },
-        ]);
+        addMessage({ role: "assistant", content: response.response });
       } else {
         throw new Error(response.error || "Failed to get response");
       }
     } catch (error) {
       console.error("Failed to get response:", error);
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "Sorry, something went wrong. Please try again." },
-      ]);
+      addMessage({ role: "assistant", content: "Sorry, something went wrong. Please try again." });
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, messages]);
+  }, [input, isLoading, messages, addMessage]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -75,10 +67,20 @@ export function AskMealGenieWidget() {
       
       {/* Content container */}
       <div className="relative flex flex-col flex-1 min-h-0">
-        {/* Header - clean, matches other cards */}
-        <div className="flex items-center gap-2 p-4">
-          <Sparkles className="h-4 w-4 text-secondary" />
-          <span className="text-sm font-medium text-foreground">Ask Meal Genie</span>
+        {/* Header - matches other dashboard widgets */}
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-3">
+            <Sparkles className="h-5 w-5 text-secondary" />
+            <h2 className="text-lg font-semibold text-foreground">Ask Meal Genie</h2>
+          </div>
+          {hasMessages && (
+            <button
+              onClick={clearHistory}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Clear
+            </button>
+          )}
         </div>
 
         {/* Messages / Empty State Area - flex-1 fills available height */}
@@ -105,9 +107,12 @@ export function AskMealGenieWidget() {
               ))}
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-hover rounded-2xl rounded-bl-md px-3 py-2 space-y-1.5">
-                    <Skeleton className="h-3 w-32" />
-                    <Skeleton className="h-3 w-24" />
+                  <div className="bg-hover rounded-2xl rounded-bl-md px-4 py-3">
+                    <div className="flex items-center gap-1">
+                      <span className="h-2 w-2 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                      <span className="h-2 w-2 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                      <span className="h-2 w-2 bg-muted-foreground/60 rounded-full animate-bounce" />
+                    </div>
                   </div>
                 </div>
               )}

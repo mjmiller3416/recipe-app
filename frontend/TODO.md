@@ -2,11 +2,6 @@
 
 ## 🟠 High Priority
 
-### #45 [Bug Report] Shopping List Items Stay Checked Between Weeks
-- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
-- **Issue**: Shopping list is continuing to check off items that were checked off from the week before.
-- **Solution**: Investigate shopping state persistence logic and ensure items are reset when a new week begins or when the meal plan changes.
-
 ### #44 [Bug Report] Recipe Not Adding to Meal Planner from Recipe Page
 - **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx` (add to meal action)
 - **Issue**: When adding a recipe to the meal plan from the recipe itself, it does not actually add anything to the meal planner. The confirmation appears but the recipe isn't there.
@@ -70,6 +65,11 @@
 - **Solution**: Add `transition-transform duration-500 group-hover:scale-105` to the `RecipeCardImage` component (line 86), matching the pattern used in `MainDishCard.tsx`.
 
 ## ✅ Completed
+
+### #45 [Bug Report] Shopping List Items Stay Checked Between Weeks
+- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
+- **Issue**: Shopping list is continuing to check off items that were checked off from the week before.
+- **Solution**: Investigate shopping state persistence logic and ensure items are reset when a new week begins or when the meal plan changes.
 
 ### #40 [Feature Request] Exclude Meal from Shopping List
 - **Location**: `src/app/meal-planner/_components/` (meal actions)

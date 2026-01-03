@@ -12,6 +12,7 @@ import {
   ChevronRight,
   MessageSquarePlus,
   Newspaper,
+  Sparkles,
 } from "lucide-react";
 import { Logo } from "@/components/layout/Logo";
 import { NavButton } from "@/components/layout/NavButton";
@@ -36,13 +37,15 @@ const navigation = [
 interface SidebarContentProps {
   /** Callback when a navigation action occurs (used by mobile to close sheet) */
   onNavigate?: () => void;
+  /** Callback to open Meal Genie chat popup */
+  onOpenMealGenie?: () => void;
 }
 
 /**
  * Shared sidebar content used by both desktop Sidebar and mobile MobileSidebar.
  * Contains navigation, recent recipes, user profile, and theme toggle.
  */
-export function SidebarContent({ onNavigate }: SidebarContentProps) {
+export function SidebarContent({ onNavigate, onOpenMealGenie }: SidebarContentProps) {
   const pathname = usePathname();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
@@ -142,8 +145,15 @@ export function SidebarContent({ onNavigate }: SidebarContentProps) {
 
       {/* Bottom Section - User Profile */}
       <div className="p-4 border-t border-border space-y-3">
-        {/* Feedback & Changelog */}
+        {/* Meal Genie, Feedback & Changelog */}
         <div className="flex items-center gap-2">
+          {onOpenMealGenie && (
+            <IconButton
+              icon={Sparkles}
+              onClick={onOpenMealGenie}
+              tooltip="Ask Meal Genie"
+            />
+          )}
           <IconButton
             icon={MessageSquarePlus}
             onClick={() => setFeedbackOpen(true)}

@@ -95,16 +95,14 @@ export function MealSlot({
           >
             <UtensilsCrossed
               className={cn(
-                "transition-colors",
-                isMain ? "h-8 w-8" : "h-6 w-6",
+                "h-8 w-8 transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground"
               )}
             />
           </div>
           <span
             className={cn(
-              "font-medium transition-colors",
-              isMain ? "text-sm" : "text-xs",
+              "text-sm font-medium transition-colors",
               isActive ? "text-primary" : "text-muted-foreground"
             )}
           >
@@ -155,37 +153,22 @@ export function MealSlot({
       )}
 
       {/* Centered vertical layout */}
-      <div
-        className={cn(
-          "flex flex-col items-center justify-center h-full text-center",
-          isMain ? "gap-2 p-4" : "gap-1.5 p-3"
-        )}
-      >
+      <div className="flex flex-col items-center justify-center h-full text-center gap-2 p-4">
         {/* Circular Recipe Image */}
         <CircularImage
           src={recipe.imageUrl}
           alt={recipe.name}
-          size={isMain ? "xl" : "lg"}
+          size="xl"
           zoom={1.3}
         />
 
         {/* Recipe Info */}
         <div className="flex flex-col items-center min-w-0 w-full">
-          <h4
-            className={cn(
-              "font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors",
-              isMain ? "text-sm" : "text-xs"
-            )}
-          >
+          <h4 className="text-sm font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
             {recipe.name}
           </h4>
           {recipe.totalTime > 0 && (
-            <span
-              className={cn(
-                "text-muted-foreground mt-0.5",
-                isMain ? "text-xs" : "text-[10px]"
-              )}
-            >
+            <span className="text-xs text-muted-foreground mt-0.5">
               {formatTime(recipe.totalTime)}
             </span>
           )}

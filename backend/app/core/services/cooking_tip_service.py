@@ -18,7 +18,7 @@ def _get_genai_client():
         from google import genai
 
         # Use dedicated key if set, otherwise fall back to shared key
-        api_key = os.getenv("GEMINI_COOKING_TIP_API_KEY") or os.getenv("GEMINI_API_KEY")
+        api_key = os.getenv("GEMINI_COOKING_TIP_API_KEY") or os.getenv("GEMINI_TIP_API_KEY")
         _genai_client = genai.Client(api_key=api_key)
     return _genai_client
 
@@ -42,10 +42,10 @@ class CookingTipService:
     def __init__(self):
         """Initialize the cooking tip service."""
         # Use dedicated key if set, otherwise fall back to shared key
-        self.api_key = os.getenv("GEMINI_COOKING_TIP_API_KEY") or os.getenv("GEMINI_API_KEY")
+        self.api_key = os.getenv("GEMINI_TIP_API_KEY")
         if not self.api_key:
             raise ValueError(
-                "GEMINI_COOKING_TIP_API_KEY or GEMINI_API_KEY environment variable is not set"
+                "GEMINI_TIP_API_KEY environment variable is not set"
             )
 
     def generate_tip(self) -> dict:

@@ -1,16 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { MealGeniePopup } from "@/components/meal-genie";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
+  const [isMealGenieOpen, setIsMealGenieOpen] = useState(false);
+
   return (
     <div className="flex min-h-screen print:block">
-      <Sidebar />
-      <MobileBottomNav />
+      <Sidebar onOpenMealGenie={() => setIsMealGenieOpen(true)} />
+      <MobileBottomNav onOpenMealGenie={() => setIsMealGenieOpen(true)} />
       <main className="flex-1 md:ml-72 print:ml-0 pb-20 md:pb-0">
         {children}
       </main>
+      <MealGeniePopup open={isMealGenieOpen} onOpenChange={setIsMealGenieOpen} />
     </div>
   );
 }

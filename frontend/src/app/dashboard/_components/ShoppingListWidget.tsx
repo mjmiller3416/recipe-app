@@ -100,7 +100,7 @@ export function ShoppingListWidget({ shoppingData: initialData }: ShoppingListWi
         </div>
         <Link
           href="/shopping-list"
-          className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors"
+          className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors duration-150"
         >
           Open
           <ArrowRight className="h-4 w-4" />

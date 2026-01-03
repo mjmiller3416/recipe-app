@@ -52,7 +52,7 @@ export function MealQueueItem({
       {/* Drag Handle */}
       <button
         type="button"
-        className="p-1 text-muted hover:text-foreground transition-colors cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
+        className="p-1 text-muted hover:text-foreground transition-colors duration-150 cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
         aria-label="Drag to reorder"
         {...attributes}
         {...listeners}

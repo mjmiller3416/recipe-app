@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { usePathname } from "next/navigation";
-import { CalendarDays, BookOpen, Plus, ShoppingCart, LucideIcon } from "lucide-react";
+import { CalendarDays, BookOpen, Plus, ShoppingCart, Sparkles, LucideIcon } from "lucide-react";
 import { SafeLink } from "@/components/common/SafeLink";
 import { cn } from "@/lib/utils";
 import { shoppingApi } from "@/lib/api";
@@ -21,7 +21,11 @@ const navigation: NavItem[] = [
   { name: "Shopping", href: "/shopping-list", icon: ShoppingCart, hasBadge: true },
 ];
 
-export function MobileBottomNav() {
+interface MobileBottomNavProps {
+  onOpenMealGenie?: () => void;
+}
+
+export function MobileBottomNav({ onOpenMealGenie }: MobileBottomNavProps) {
   const pathname = usePathname();
   const [shoppingCount, setShoppingCount] = useState(0);
 
@@ -74,7 +78,7 @@ export function MobileBottomNav() {
                 // Layout
                 "flex flex-col items-center justify-center",
                 // Touch-friendly size
-                "min-w-[64px] h-14 px-2",
+                "min-w-[56px] h-14 px-1",
                 // Transitions
                 "transition-colors duration-200",
                 // Text color
@@ -117,6 +121,26 @@ export function MobileBottomNav() {
             </SafeLink>
           );
         })}
+
+        {/* Meal Genie Button */}
+        <button
+          onClick={onOpenMealGenie}
+          className={cn(
+            // Layout
+            "flex flex-col items-center justify-center",
+            // Touch-friendly size
+            "min-w-[56px] h-14 px-1",
+            // Transitions
+            "transition-colors duration-200",
+            // Text color
+            "text-muted hover:text-primary",
+            // Touch feedback
+            "active:scale-95"
+          )}
+        >
+          <Sparkles className="h-6 w-6" strokeWidth={1.5} />
+          <span className="text-[10px] mt-1 font-medium">Genie</span>
+        </button>
       </div>
     </nav>
   );
