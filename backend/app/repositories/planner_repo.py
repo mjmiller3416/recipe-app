@@ -390,6 +390,30 @@ class PlannerRepo:
         )
         return self.session.execute(stmt).scalar() or 0
 
+    def get_completion_stats_for_meal(self, meal_id: int) -> dict:
+        """
+        Get completion statistics for a specific meal.
+
+        Args:
+            meal_id: ID of the meal
+
+        Returns:
+            dict with 'times_cooked' (int) and 'last_cooked' (datetime or None)
+        """
+        stmt = (
+            select(
+                func.count(PlannerEntry.id).label('times_cooked'),
+                func.max(PlannerEntry.completed_at).label('last_cooked')
+            )
+            .where(PlannerEntry.meal_id == meal_id)
+            .where(PlannerEntry.is_completed == True)
+        )
+        result = self.session.execute(stmt).first()
+        return {
+            'times_cooked': result.times_cooked or 0,
+            'last_cooked': result.last_cooked
+        }
+
     def is_at_capacity(self) -> bool:
         """
         Check if the planner is at maximum capacity.

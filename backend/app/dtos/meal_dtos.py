@@ -89,6 +89,12 @@ class MealResponseDTO(MealBaseDTO):
     main_recipe: Optional[RecipeCardDTO] = None
     side_recipes: List[RecipeCardDTO] = Field(default_factory=list)
 
+    # Computed stats (calculated on the fly, not stored)
+    total_cook_time: Optional[int] = None  # Sum of all recipe times in minutes
+    avg_servings: Optional[int] = None     # Average servings rounded to nearest int
+    times_cooked: Optional[int] = None     # Count of completed planner entries
+    last_cooked: Optional[str] = None      # ISO datetime of most recent completion
+
 
 # -- Filter DTO ----------------------------------------------------------------------------------
 class MealFilterDTO(BaseModel):

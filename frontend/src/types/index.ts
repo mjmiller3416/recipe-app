@@ -114,6 +114,11 @@ export interface MealSelectionResponseDTO extends MealSelectionBaseDTO {
   created_at: string | null;
   main_recipe: RecipeCardDTO | null;
   side_recipes: RecipeCardDTO[];
+  // Computed stats (calculated on the fly by backend)
+  total_cook_time: number | null;
+  avg_servings: number | null;
+  times_cooked: number | null;
+  last_cooked: string | null;
 }
 
 /**

@@ -50,6 +50,10 @@
   --secondary-surface-hover: #243d39; /* Hover state for surface */
   --secondary-muted: #2d4a45;   /* Medium teal for borders */
   --secondary-on-surface: #5eead4; /* Text color on secondary surface bg */
+
+  /* Transparent secondary surfaces (for info boxes, stats cards) */
+  --secondary-surface-alpha: rgba(20, 184, 166, 0.08); /* 8% teal background */
+  --secondary-border-alpha: rgba(20, 184, 166, 0.2);   /* 20% teal border */
   
   /* ============================================
      NEUTRAL COLORS
@@ -232,6 +236,10 @@
   --secondary-surface-hover: #ccfbf1; /* Hover state */
   --secondary-muted: #99f6e4;   /* Medium teal for borders */
   --secondary-on-surface: #0f766e; /* Dark teal text ON secondary-surface */
+
+  /* Transparent secondary surfaces (for info boxes, stats cards) */
+  --secondary-surface-alpha: rgba(20, 184, 166, 0.08); /* 8% teal background */
+  --secondary-border-alpha: rgba(20, 184, 166, 0.2);   /* 20% teal border */
   
   /* ============================================
      NEUTRAL COLORS
@@ -462,6 +470,8 @@
   --color-secondary-hover: var(--secondary-hover);
   --color-secondary-active: var(--secondary-active);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-surface-alpha: var(--secondary-surface-alpha);
+  --color-secondary-border-alpha: var(--secondary-border-alpha);
   
   /* Neutral */
   --color-neutral: var(--neutral);

@@ -22,6 +22,7 @@ from ..dtos.meal_dtos import (
 from ..models.meal import Meal
 from ..models.recipe import Recipe
 from ..repositories.meal_repo import MealRepo
+from ..repositories.planner_repo import PlannerRepo
 
 
 # -- Exceptions ----------------------------------------------------------------------------------
@@ -56,6 +57,7 @@ class MealService:
             session = create_session()
         self.session = session
         self.repo = MealRepo(self.session)
+        self.planner_repo = PlannerRepo(self.session)
 
     # -- Create Operations -----------------------------------------------------------------------
     def create_meal(self, create_dto: MealCreateDTO) -> MealResponseDTO:
@@ -527,7 +529,7 @@ class MealService:
             meal: Meal model
 
         Returns:
-            MealResponseDTO with hydrated main_recipe and side_recipes
+            MealResponseDTO with hydrated main_recipe, side_recipes, and computed stats
         """
         # Hydrate side recipes by fetching from database
         side_recipes: List[RecipeCardDTO] = []
@@ -548,6 +550,32 @@ class MealService:
                         RecipeCardDTO.from_recipe(recipe_lookup[recipe_id])
                     )
 
+        # Compute stats from recipe data
+        total_cook_time = 0
+        servings_list = []
+
+        # Add main recipe stats
+        if meal.main_recipe:
+            if meal.main_recipe.total_time:
+                total_cook_time += meal.main_recipe.total_time
+            if meal.main_recipe.servings:
+                servings_list.append(meal.main_recipe.servings)
+
+        # Add side recipe stats
+        for side_dto in side_recipes:
+            if side_dto.total_time:
+                total_cook_time += side_dto.total_time
+            if side_dto.servings:
+                servings_list.append(side_dto.servings)
+
+        # Calculate average servings (rounded)
+        avg_servings = round(sum(servings_list) / len(servings_list)) if servings_list else None
+
+        # Get completion stats from planner
+        completion_stats = self.planner_repo.get_completion_stats_for_meal(meal.id)
+        times_cooked = completion_stats['times_cooked']
+        last_cooked = completion_stats['last_cooked']
+
         return MealResponseDTO(
             id=meal.id,
             meal_name=meal.meal_name,
@@ -558,4 +586,9 @@ class MealService:
             created_at=meal.created_at.isoformat() if meal.created_at else None,
             main_recipe=RecipeCardDTO.from_recipe(meal.main_recipe),
             side_recipes=side_recipes,
+            # Computed stats
+            total_cook_time=total_cook_time if total_cook_time > 0 else None,
+            avg_servings=avg_servings,
+            times_cooked=times_cooked if times_cooked > 0 else None,
+            last_cooked=last_cooked.isoformat() if last_cooked else None,
         )

@@ -3,11 +3,22 @@
 import { useState, useEffect, useMemo } from "react";
 import { Search, Heart, Bookmark } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CircularImage } from "@/components/common/CircularImage";
 import { plannerApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import {
+  MultiSelect,
+  MultiSelectTrigger,
+  MultiSelectValue,
+  MultiSelectContent,
+  MultiSelectItem,
+  MultiSelectGroup,
+  MultiSelectSeparator,
+} from "@/components/ui/multi-select";
+import { MEAL_TYPE_OPTIONS, RECIPE_CATEGORY_OPTIONS, DIETARY_PREFERENCES } from "@/lib/constants";
 import type { MealSelectionResponseDTO, PlannerEntryResponseDTO } from "@/types";
 
 // ============================================================================
@@ -25,13 +36,15 @@ interface SavedViewProps {
 
 function MealCardSkeleton() {
   return (
-    <div className="flex items-center gap-3 p-3 border rounded-lg">
-      <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
-      <div className="flex-1 space-y-2">
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-3 w-1/4" />
+    <Card className="p-0">
+      <div className="flex items-center gap-3 p-3">
+        <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-3 w-1/4" />
+        </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -100,8 +113,7 @@ function MealCard({ meal, isAdding, onClick }: MealCardProps) {
   return (
     <Card
       className={cn(
-        "cursor-pointer overflow-hidden transition-all",
-        "hover:bg-accent/50 active:scale-[0.99]",
+        "cursor-pointer overflow-hidden interactive-subtle",
         "p-0 gap-0",
         isAdding && "opacity-50 pointer-events-none"
       )}
@@ -125,7 +137,7 @@ function MealCard({ meal, isAdding, onClick }: MealCardProps) {
           )}
         </div>
         {meal.is_favorite && (
-          <Heart className="h-4 w-4 text-rose-500 fill-rose-500 flex-shrink-0" />
+          <Heart className="h-4 w-4 text-destructive fill-destructive flex-shrink-0" />
         )}
       </div>
     </Card>
@@ -150,6 +162,7 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [addingMealId, setAddingMealId] = useState<number | null>(null);
 
   // --------------------------------------------------------------------------
@@ -177,6 +190,17 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
   // --------------------------------------------------------------------------
 
   const filteredMeals = useMemo(() => {
+    // Extract filter values by prefix
+    const mealTypeFilters = selectedFilters
+      .filter((f) => f.startsWith("mealType:"))
+      .map((f) => f.replace("mealType:", ""));
+    const categoryFilters = selectedFilters
+      .filter((f) => f.startsWith("category:"))
+      .map((f) => f.replace("category:", ""));
+    const dietaryFilters = selectedFilters
+      .filter((f) => f.startsWith("dietary:"))
+      .map((f) => f.replace("dietary:", ""));
+
     return meals.filter((meal) => {
       // Search filter
       if (
@@ -189,9 +213,30 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
       if (showFavoritesOnly && !meal.is_favorite) {
         return false;
       }
+      // Meal type filter (OR within group)
+      if (
+        mealTypeFilters.length > 0 &&
+        !mealTypeFilters.includes(meal.main_recipe?.meal_type ?? "")
+      ) {
+        return false;
+      }
+      // Category filter (OR within group)
+      if (
+        categoryFilters.length > 0 &&
+        !categoryFilters.includes(meal.main_recipe?.recipe_category ?? "")
+      ) {
+        return false;
+      }
+      // Dietary filter (OR within group)
+      if (
+        dietaryFilters.length > 0 &&
+        !dietaryFilters.includes(meal.main_recipe?.diet_pref ?? "")
+      ) {
+        return false;
+      }
       return true;
     });
-  }, [meals, searchTerm, showFavoritesOnly]);
+  }, [meals, searchTerm, showFavoritesOnly, selectedFilters]);
 
   // --------------------------------------------------------------------------
   // Handlers
@@ -245,41 +290,82 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
         </div>
 
         {/* Favorites Toggle */}
-        <button
+        <Button
+          variant={showFavoritesOnly ? "default" : "outline"}
+          size="sm"
           onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-colors",
-            "border",
-            showFavoritesOnly
-              ? "bg-primary text-primary-foreground border-primary"
-              : "bg-background text-muted-foreground border-input hover:bg-accent hover:text-foreground"
-          )}
+          className="rounded-full"
         >
           <Heart
-            className={cn(
-              "h-4 w-4",
-              showFavoritesOnly && "fill-primary-foreground"
-            )}
+            className={cn("h-4 w-4", showFavoritesOnly && "fill-current")}
           />
           Favorites
-        </button>
+        </Button>
       </div>
 
-      {/* Meal List */}
-      {filteredMeals.length === 0 ? (
-        <EmptyNoResults />
-      ) : (
-        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-          {filteredMeals.map((meal) => (
-            <MealCard
-              key={meal.id}
-              meal={meal}
-              isAdding={addingMealId === meal.id}
-              onClick={() => handleMealClick(meal)}
-            />
-          ))}
-        </div>
-      )}
+      {/* Filter Dropdown */}
+      <MultiSelect values={selectedFilters} onValuesChange={setSelectedFilters}>
+        <MultiSelectTrigger className="w-full">
+          <MultiSelectValue placeholder="Filter meals..." overflowBehavior="cutoff" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={{ placeholder: "Search filters..." }}>
+          <MultiSelectGroup heading="Meal Type" columns={2}>
+            {MEAL_TYPE_OPTIONS.map((option) => (
+              <MultiSelectItem
+                key={option.value}
+                value={`mealType:${option.value}`}
+                badgeLabel={option.label}
+              >
+                {option.label}
+              </MultiSelectItem>
+            ))}
+          </MultiSelectGroup>
+          <MultiSelectSeparator />
+          <MultiSelectGroup heading="Category" columns={2}>
+            {RECIPE_CATEGORY_OPTIONS.map((option) => (
+              <MultiSelectItem
+                key={option.value}
+                value={`category:${option.value}`}
+                badgeLabel={option.label}
+              >
+                {option.label}
+              </MultiSelectItem>
+            ))}
+          </MultiSelectGroup>
+          <MultiSelectSeparator />
+          <MultiSelectGroup heading="Dietary" columns={2}>
+            {DIETARY_PREFERENCES.filter((d) => d.value !== "none").map((option) => (
+              <MultiSelectItem
+                key={option.value}
+                value={`dietary:${option.value}`}
+                badgeLabel={option.label}
+              >
+                {option.label}
+              </MultiSelectItem>
+            ))}
+          </MultiSelectGroup>
+        </MultiSelectContent>
+      </MultiSelect>
+
+      {/* Meal List - Fixed height container for consistent dialog size */}
+      <div className="min-h-[40vh] max-h-[40vh] overflow-y-auto">
+        {filteredMeals.length === 0 ? (
+          <div className="h-full flex items-center justify-center">
+            <EmptyNoResults />
+          </div>
+        ) : (
+          <div className="space-y-2 pr-1">
+            {filteredMeals.map((meal) => (
+              <MealCard
+                key={meal.id}
+                meal={meal}
+                isAdding={addingMealId === meal.id}
+                onClick={() => handleMealClick(meal)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
