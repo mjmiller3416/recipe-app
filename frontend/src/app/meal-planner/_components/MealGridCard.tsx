@@ -3,8 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
-import { FavoriteButton } from "@/components/common/FavoriteButton";
-import { ShoppingCart, Users, Clock } from "lucide-react";
+import { ShoppingCart, Users, Clock, Heart } from "lucide-react";
 
 // ============================================================================
 // TYPES
@@ -118,12 +117,9 @@ export function MealGridCard({
           {/* Favorite Indicator */}
           {item.isFavorite && (
             <div className="w-6 h-6 rounded-full bg-black/60 flex items-center justify-center">
-              <FavoriteButton
-                isFavorite={true}
-                onToggle={() => {}}
-                readOnly
-                size="sm"
-                className="h-3.5 w-3.5"
+              <Heart
+                className="h-3.5 w-3.5 text-destructive fill-current"
+                strokeWidth={1.5}
               />
             </div>
           )}
