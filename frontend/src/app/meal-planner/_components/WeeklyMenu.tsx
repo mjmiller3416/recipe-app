@@ -58,10 +58,10 @@ export function MenuListCard({
       aria-label={`${item.name}${item.isCompleted ? " (completed)" : ""} - click to view`}
       className={cn(
         // Base styles
-        "group cursor-pointer overflow-hidden",
+        "group cursor-pointer",
         "pb-0 pt-0 gap-0",
-        // Liftable provides hover lift, shadow-raised adds depth
-        "liftable shadow-raised hover:bg-hover",
+        // Liftable provides hover lift (Card already has shadow-raised via surface-raised)
+        "liftable hover:bg-hover",
         // Focus styles
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         // Selected state - elevated surface with primary border (no ring gap)

@@ -40,7 +40,7 @@ import { RecipeBadge, RecipeBadgeGroup } from "@/components/recipe/RecipeBadge";
 import { FavoriteButton } from "@/components/common/FavoriteButton";
 import { RecipeHeroImage } from "@/components/recipe/RecipeImage";
 import { recipeApi, plannerApi } from "@/lib/api";
-import type { RecipeResponseDTO, MealSelectionResponseDTO } from "@/types";
+import type { RecipeResponseDTO, PlannerEntryResponseDTO } from "@/types";
 import { formatQuantity } from "@/lib/utils";
 import { INGREDIENT_CATEGORY_ORDER } from "@/lib/constants";
 import { useRecentRecipes } from "@/hooks";
@@ -201,7 +201,7 @@ export function FullRecipeView() {
 
   // State
   const [recipe, setRecipe] = useState<RecipeResponseDTO | null>(null);
-  const [mealSelections, setMealSelections] = useState<MealSelectionResponseDTO[]>([]);
+  const [plannerEntries, setPlannerEntries] = useState<PlannerEntryResponseDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [mealPlanDialogOpen, setMealPlanDialogOpen] = useState(false);
@@ -218,13 +218,13 @@ export function FullRecipeView() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [foundRecipe, meals] = await Promise.all([
+        const [foundRecipe, entries] = await Promise.all([
           recipeApi.get(recipeId),
-          plannerApi.getMeals(),
+          plannerApi.getEntries(),
         ]);
         setRecipe(foundRecipe);
         setIsFavorite(foundRecipe.is_favorite);
-        setMealSelections(meals);
+        setPlannerEntries(entries);
 
         // Track this recipe as recently viewed
         addToRecent({
@@ -300,6 +300,12 @@ export function FullRecipeView() {
     setTimeout(() => {
       window.print();
     }, 100);
+  };
+
+  const handleMealAdded = async () => {
+    // Refresh planner entries after adding recipe to meal
+    const entries = await plannerApi.getEntries();
+    setPlannerEntries(entries);
   };
 
   // Loading state
@@ -722,9 +728,10 @@ export function FullRecipeView() {
       {/* Add to Meal Plan Dialog */}
       <AddToMealPlanDialog
         recipe={recipe}
-        mealSelections={mealSelections}
+        plannerEntries={plannerEntries}
         open={mealPlanDialogOpen}
         onOpenChange={setMealPlanDialogOpen}
+        onSuccess={handleMealAdded}
       />
 
       {/* Print Preview Dialog */}

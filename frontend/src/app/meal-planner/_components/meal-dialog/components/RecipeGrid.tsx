@@ -84,8 +84,7 @@ export function RecipeGrid({
   return (
     <div
       className={cn(
-        // px-4 gives liftable hover shadows room to render without clipping
-        "grid grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto px-4",
+        "grid grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto px-1",
         // Custom scrollbar styling
         "scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent",
         className

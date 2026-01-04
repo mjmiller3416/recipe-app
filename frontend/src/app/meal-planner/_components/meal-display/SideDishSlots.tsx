@@ -69,9 +69,9 @@ function SideDishCard({ recipe, onFilledClick, onEmptyClick, className }: SideDi
   return (
     <Card
       className={cn(
-        "group cursor-pointer overflow-hidden",
-        // Liftable provides hover lift, shadow-raised adds depth
-        "liftable shadow-raised hover:bg-hover",
+        "group cursor-pointer",
+        // Liftable provides hover lift (Card already has shadow-raised via surface-raised)
+        "liftable hover:bg-hover",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         "pb-0 pt-0 gap-0 aspect-[3/1]",
         className

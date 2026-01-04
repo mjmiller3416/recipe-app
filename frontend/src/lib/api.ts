@@ -235,6 +235,14 @@ export const plannerApi = {
     }),
 
   /**
+   * Add a recipe as a side dish to a meal
+   */
+  addSideToMeal: (mealId: number, recipeId: number): Promise<MealSelectionResponseDTO> =>
+    fetchApi<MealSelectionResponseDTO>(`/api/meals/${mealId}/sides/${recipeId}`, {
+      method: "POST",
+    }),
+
+  /**
    * Clear planner entries
    */
   clearPlan: (): Promise<void> =>

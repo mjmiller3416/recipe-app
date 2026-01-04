@@ -90,7 +90,7 @@ export function MainDishCard({
   return (
     <Card
       className={cn(
-        "overflow-hidden pt-0 pb-0 gap-0",
+        "pt-0 pb-0 gap-0",
         "group relative",
         // Liftable provides subtle hover lift when clickable
         onClick && "cursor-pointer liftable",
@@ -102,7 +102,7 @@ export function MainDishCard({
          Changed to aspect-[2.4/1]. This makes the image shorter and wider,
          closer to the "cinematic" banner look in the mock.
       */}
-      <div className="relative aspect-[2.4/1] w-full max-h-[30vh] overflow-hidden bg-muted">
+      <div className="relative aspect-[2.4/1] w-full max-h-[30vh] overflow-hidden rounded-t-2xl bg-muted">
         <RecipeCardImage
           src={imageUrl}
           alt={name}

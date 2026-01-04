@@ -63,7 +63,7 @@
   --success: #10b981;           /* Success states */
   --warning: #f59e0b;           /* Warning states */
   --error: #ef4444;             /* Error states, favorites */
-  --destructive: #ef4444;       /* Destructive actions */
+  --destructive: #b94a4a;       /* Destructive actions - muted coral */
   --destructive-foreground: #fafafa; /* Text on destructive background */
   --info: #3b82f6;              /* Informational states */
   --info-foreground: #ffffff;   /* Text on info background */
@@ -245,7 +245,7 @@
   --success: #10b981;           /* Success states */
   --warning: #f59e0b;           /* Warning states */
   --error: #ef4444;             /* Error states, favorites */
-  --destructive: #ef4444;       /* Destructive actions */
+  --destructive: #b94a4a;       /* Destructive actions - muted coral */
   --destructive-foreground: #fafafa; /* Text on destructive background */
   --info: #3b82f6;              /* Informational states */
   --info-foreground: #ffffff;   /* Text on info background */
@@ -641,10 +641,10 @@
 
 /* Liftable - rises on hover with deeper shadow */
 @utility liftable {
-  transition: 
+  transition:
     transform var(--duration-normal) var(--ease-physical),
     box-shadow var(--duration-normal) var(--ease-physical);
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-elevated);
