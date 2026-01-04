@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ShoppingCategory } from "./ShoppingCategory";
+import { plannerApi } from "@/lib/api";
 import type { ShoppingItemResponseDTO, IngredientBreakdownDTO } from "@/types";
 import { ShoppingCart, Eye, EyeOff, Filter, X, Plus, Trash2 } from "lucide-react";
 import {
@@ -162,6 +164,17 @@ export function ShoppingListView() {
   const clearManualItems = useClearManualItems();
   const refreshList = useRefreshShoppingList();
 
+  // Fetch planner entries and meals for recipe ordering
+  const { data: plannerEntries } = useQuery({
+    queryKey: ["planner", "entries"],
+    queryFn: () => plannerApi.getEntries(),
+  });
+
+  const { data: allMeals } = useQuery({
+    queryKey: ["meals"],
+    queryFn: () => plannerApi.getMeals(),
+  });
+
   // UI state
   const [filterRecipeName, setFilterRecipeName] = useState<string | null>(null);
 
@@ -281,14 +294,59 @@ export function ShoppingListView() {
     return acc;
   }, {}) ?? {};
 
-  // Convert to array and sort alphabetically
+  // Build recipe order map from planner meals (main recipe first, then sides)
+  const recipeOrderMap = useMemo(() => {
+    const orderMap = new Map<string, number>();
+    if (!plannerEntries || !allMeals) return orderMap;
+
+    // Sort entries by position (meal planner order)
+    const sortedEntries = [...plannerEntries]
+      .filter((e) => !e.exclude_from_shopping && !e.is_completed)
+      .sort((a, b) => a.position - b.position);
+
+    let orderIndex = 0;
+    for (const entry of sortedEntries) {
+      // Find the full meal data to get side recipes
+      const meal = allMeals.find((m) => m.id === entry.meal_id);
+      if (!meal) continue;
+
+      // Add main recipe first
+      if (meal.main_recipe?.recipe_name) {
+        orderMap.set(meal.main_recipe.recipe_name, orderIndex++);
+      }
+
+      // Add sides in order
+      for (const side of meal.side_recipes || []) {
+        if (side.recipe_name && !orderMap.has(side.recipe_name)) {
+          orderMap.set(side.recipe_name, orderIndex++);
+        }
+      }
+    }
+
+    return orderMap;
+  }, [plannerEntries, allMeals]);
+
+  // Convert to array and sort by meal order (falling back to alphabetical)
   const recipes = Object.entries(recipeData)
     .map(([name, counts]) => ({
       name,
       itemCount: counts.itemCount,
       collectedCount: counts.collectedCount,
     }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => {
+      const orderA = recipeOrderMap.get(a.name);
+      const orderB = recipeOrderMap.get(b.name);
+
+      // Both have order: sort by order
+      if (orderA !== undefined && orderB !== undefined) {
+        return orderA - orderB;
+      }
+      // Only one has order: the one with order comes first
+      if (orderA !== undefined) return -1;
+      if (orderB !== undefined) return 1;
+      // Neither has order: sort alphabetically
+      return a.name.localeCompare(b.name);
+    });
 
   // Count manual items
   const manualItems = shoppingData?.items.filter((i) => i.source === "manual") ?? [];
