@@ -2,6 +2,15 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-01-04 - Bug Fixes
+- Fixed issue with adding meals to the planner from the Recipe Browser
+
+## 2026-01-04 - Improvements
+- Added multi-select filters to the Meal Planner for easier meal searching and filtering
+
+## 2026-01-04 - New Features
+- Revamped Meal Planner UI 
+
 ## 2026-01-02 - Improvements
 - Enhanced Meal Genie Assistant: 
 -     chat history persistence across sessions
