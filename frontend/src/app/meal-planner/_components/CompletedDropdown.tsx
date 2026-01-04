@@ -69,7 +69,6 @@ export function CompletedDropdown({
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          size="sm"
           className={cn("gap-2 text-muted-foreground", className)}
         >
           <Check className="h-4 w-4 text-success" strokeWidth={1.5} />

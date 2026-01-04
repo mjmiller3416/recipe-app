@@ -550,14 +550,42 @@
   --color-recipe-dietary-text: var(--recipe-dietary-text);
   --color-recipe-favorite: var(--recipe-favorite);
   
-  /* Fonts */
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  
   /* Easing functions */
   --ease-physical: var(--ease-physical);
   --ease-bounce: var(--ease-bounce);
   --ease-snap: var(--ease-snap);
+
+  /* Fonts */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Font Sizes with Line Heights (Size / Line-Height) */
+  --text-xs: 0.75rem;     /* 12px */
+  --text-xs--line: 1rem;  /* 16px */
+  
+  --text-sm: 0.875rem;    /* 14px */
+  --text-sm--line: 1.25rem; /* 20px */
+  
+  --text-base: 1rem;      /* 16px */
+  --text-base--line: 1.5rem; /* 24px */
+  
+  --text-lg: 1.125rem;    /* 18px */
+  --text-lg--line: 1.75rem; /* 28px */
+  
+  --text-xl: 1.25rem;     /* 20px */
+  --text-xl--line: 1.75rem; /* 28px */
+  
+  --text-2xl: 1.5rem;     /* 24px */
+  --text-2xl--line: 2rem;   /* 32px */
+  
+  --text-3xl: 1.875rem;   /* 30px */
+  --text-3xl--line: 2.25rem; /* 36px */
+
+  /* Font Weights */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
 }
 
 
@@ -956,4 +984,58 @@ html body[data-scroll-locked="1"] {
 
 .nav-dot-pulse {
   animation: nav-dot-pulse 2s ease-in-out infinite;
+}
+
+/* ============================================
+   TYPOGRAPHY UTILITIES
+   ============================================ */
+
+/* Page Titles (e.g. "Meal Planner", "Settings") */
+@utility text-page-title {
+  font-size: var(--text-2xl);
+  line-height: var(--text-2xl--line);
+  font-weight: var(--font-bold);
+  letter-spacing: -0.02em; /* Tighten large text */
+  color: var(--foreground);
+}
+
+/* Section Headers (e.g. "This Week's Menu", "Account & Profile") */
+@utility text-section-header {
+  font-size: var(--text-lg);
+  line-height: var(--text-lg--line);
+  font-weight: var(--font-semibold);
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+
+/* Card Titles (e.g. "Bruschetta Shrimp Pasta") */
+@utility text-card-title {
+  font-size: var(--text-base);
+  line-height: 1.4; /* Slightly tighter than standard body */
+  font-weight: var(--font-semibold);
+  color: var(--foreground);
+}
+
+/* Body Text (Standard readability) */
+@utility text-body {
+  font-size: var(--text-sm); /* 14px is standard for dense apps */
+  line-height: var(--text-sm--line);
+  font-weight: var(--font-normal);
+  color: var(--foreground-subtle);
+}
+
+/* Metadata / Captions (e.g. "4 servings", "30m") */
+@utility text-meta {
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line);
+  font-weight: var(--font-medium);
+  color: var(--muted-foreground);
+  letter-spacing: 0.01em; /* Widen tiny text slightly */
+}
+
+/* Input / Button Text */
+@utility text-ui {
+  font-size: 0.875rem;
+  font-weight: var(--font-medium);
+  letter-spacing: 0;
 }
