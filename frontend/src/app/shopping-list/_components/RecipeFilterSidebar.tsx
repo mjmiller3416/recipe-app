@@ -2,11 +2,13 @@
 
 import { cn } from "@/lib/utils";
 import { getRecipeEmoji } from "@/lib/recipeEmoji";
+import { Separator } from "@/components/ui/separator";
 
 interface RecipeInfo {
   name: string;
   itemCount: number;
   collectedCount: number;
+  isFirstInMeal?: boolean; // True if this recipe starts a new meal grouping
 }
 
 interface RecipeFilterSidebarProps {
@@ -54,40 +56,44 @@ export function RecipeFilterSidebar({
         </h3>
 
         <div className="flex flex-col gap-2 overflow-y-auto overflow-x-hidden flex-1">
-          {recipes.map((recipe) => {
+          {recipes.map((recipe, index) => {
             const isActive = activeFilter === recipe.name;
             const emoji = getRecipeEmoji(recipe.name);
+            // Show separator before new meal groups (but not the first one)
+            const showSeparator = recipe.isFirstInMeal && index > 0;
 
             return (
-              <button
-                key={recipe.name}
-                onClick={() => handleRecipeClick(recipe.name)}
-                className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg text-left w-full",
-                  "transition-all duration-150 ease-out",
-                  isActive
-                    ? "bg-primary/15 border border-primary/50"
-                    : "bg-hover border border-transparent hover:translate-x-1"
-                )}
-              >
-                {/* Recipe emoji */}
-                <span className="text-xl flex-shrink-0">{emoji}</span>
+              <div key={recipe.name}>
+                {showSeparator && <Separator className="my-2" />}
+                <button
+                  onClick={() => handleRecipeClick(recipe.name)}
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-lg text-left w-full",
+                    "transition-all duration-150 ease-out",
+                    isActive
+                      ? "bg-primary/15 border border-primary/50"
+                      : "bg-hover border border-transparent hover:translate-x-1"
+                  )}
+                >
+                  {/* Recipe emoji */}
+                  <span className="text-xl flex-shrink-0">{emoji}</span>
 
-                {/* Recipe info */}
-                <div className="flex-1 min-w-0">
-                  <div
-                    className={cn(
-                      "font-medium text-sm truncate",
-                      isActive ? "text-primary" : "text-foreground"
-                    )}
-                  >
-                    {recipe.name}
+                  {/* Recipe info */}
+                  <div className="flex-1 min-w-0">
+                    <div
+                      className={cn(
+                        "font-medium text-sm truncate",
+                        isActive ? "text-primary" : "text-foreground"
+                      )}
+                    >
+                      {recipe.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {recipe.collectedCount}/{recipe.itemCount} items
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {recipe.collectedCount}/{recipe.itemCount} items
-                  </div>
-                </div>
-              </button>
+                </button>
+              </div>
             );
           })}
 

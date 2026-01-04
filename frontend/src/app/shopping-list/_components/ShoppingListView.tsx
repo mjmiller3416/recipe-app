@@ -294,10 +294,11 @@ export function ShoppingListView() {
     return acc;
   }, {}) ?? {};
 
-  // Build recipe order map from planner meals (main recipe first, then sides)
-  const recipeOrderMap = useMemo(() => {
+  // Build recipe order map and track main recipes (first in each meal group)
+  const { recipeOrderMap, mainRecipeNames } = useMemo(() => {
     const orderMap = new Map<string, number>();
-    if (!plannerEntries || !allMeals) return orderMap;
+    const mainRecipes = new Set<string>();
+    if (!plannerEntries || !allMeals) return { recipeOrderMap: orderMap, mainRecipeNames: mainRecipes };
 
     // Sort entries by position (meal planner order)
     const sortedEntries = [...plannerEntries]
@@ -310,9 +311,10 @@ export function ShoppingListView() {
       const meal = allMeals.find((m) => m.id === entry.meal_id);
       if (!meal) continue;
 
-      // Add main recipe first
+      // Add main recipe first (mark as first in meal)
       if (meal.main_recipe?.recipe_name) {
         orderMap.set(meal.main_recipe.recipe_name, orderIndex++);
+        mainRecipes.add(meal.main_recipe.recipe_name);
       }
 
       // Add sides in order
@@ -323,7 +325,7 @@ export function ShoppingListView() {
       }
     }
 
-    return orderMap;
+    return { recipeOrderMap: orderMap, mainRecipeNames: mainRecipes };
   }, [plannerEntries, allMeals]);
 
   // Convert to array and sort by meal order (falling back to alphabetical)
@@ -332,6 +334,7 @@ export function ShoppingListView() {
       name,
       itemCount: counts.itemCount,
       collectedCount: counts.collectedCount,
+      isFirstInMeal: mainRecipeNames.has(name),
     }))
     .sort((a, b) => {
       const orderA = recipeOrderMap.get(a.name);
