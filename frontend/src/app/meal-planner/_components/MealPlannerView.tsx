@@ -303,7 +303,6 @@ export function MealPlannerPage() {
           <Button
             onClick={handleCreateMealClick}
             variant="outline"
-            size="sm"
             className="gap-2"
           >
             <ChefHat className="h-4 w-4" strokeWidth={1.5} />

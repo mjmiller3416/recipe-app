@@ -387,7 +387,6 @@ export function ShoppingListView() {
       {manualItemCount > 0 && (
         <Button
           variant="outline"
-          size="sm"
           onClick={handleClearManualItems}
           className="text-muted-foreground hover:text-foreground"
         >
@@ -399,7 +398,6 @@ export function ShoppingListView() {
       {hasCheckedItems && (
         <Button
           variant="outline"
-          size="sm"
           onClick={handleToggleHideCompleted}
           className="text-muted-foreground hover:text-foreground"
         >

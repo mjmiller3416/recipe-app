@@ -274,8 +274,8 @@ class PlannerService:
             CookingStreakDTO with streak and activity data
         """
         try:
-            # Get all completed entries
-            entries = self.repo.get_completed_entries()
+            # Get all entries with completion history (includes cleared entries)
+            entries = self.repo.get_cooking_history_entries()
 
             # Determine the timezone to use for date calculations
             try:

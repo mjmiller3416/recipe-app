@@ -271,16 +271,15 @@ export function SelectedMealCard({
             {/* Action Buttons */}
             {!isCompleted ? (
               <div className="grid grid-cols-2 gap-3">
-                <Button onClick={onMarkComplete} size="lg">
+                <Button onClick={onMarkComplete}>
                   Mark Complete
                 </Button>
-                <Button onClick={onEditMeal} variant="outline" size="lg">
+                <Button onClick={onEditMeal} variant="outline">
                   Edit Meal
                 </Button>
                 <Button
                   onClick={onToggleFavorite}
                   variant="outline"
-                  size="lg"
                   className="gap-1.5"
                 >
                   <Heart
@@ -295,7 +294,6 @@ export function SelectedMealCard({
                 <Button
                   onClick={onRemove}
                   variant="outline"
-                  size="lg"
                   className="border-destructive text-destructive hover:bg-destructive/10"
                 >
                   Remove
@@ -310,7 +308,6 @@ export function SelectedMealCard({
                 <Button
                   onClick={onMarkComplete}
                   variant="outline"
-                  size="lg"
                   className="w-full"
                 >
                   Mark Incomplete

@@ -72,13 +72,15 @@ class PlannerRepo:
 
     def get_all(self) -> List[PlannerEntry]:
         """
-        Get all planner entries ordered by position, with eager-loaded relationships.
+        Get all active planner entries ordered by position, with eager-loaded relationships.
+        Excludes cleared entries.
 
         Returns:
-            List of all planner entries
+            List of all active planner entries
         """
         stmt = (
             select(PlannerEntry)
+            .where(PlannerEntry.is_cleared == False)
             .options(
                 joinedload(PlannerEntry.meal).joinedload(Meal.main_recipe)
             )
@@ -124,14 +126,16 @@ class PlannerRepo:
 
     def get_completed_entries(self) -> List[PlannerEntry]:
         """
-        Get all completed planner entries.
+        Get all completed planner entries that haven't been cleared.
+        Used for the completed dropdown UI.
 
         Returns:
-            List of completed entries
+            List of completed entries (excludes cleared)
         """
         stmt = (
             select(PlannerEntry)
             .where(PlannerEntry.is_completed == True)
+            .where(PlannerEntry.is_cleared == False)
             .options(
                 joinedload(PlannerEntry.meal).joinedload(Meal.main_recipe)
             )
@@ -140,16 +144,32 @@ class PlannerRepo:
         result = self.session.execute(stmt)
         return result.scalars().unique().all()
 
-    def get_incomplete_entries(self) -> List[PlannerEntry]:
+    def get_cooking_history_entries(self) -> List[PlannerEntry]:
         """
-        Get all incomplete planner entries.
+        Get all entries with completion history for streak calculation.
+        Includes cleared entries to preserve cooking history.
 
         Returns:
-            List of incomplete entries
+            List of all entries that have ever been completed
+        """
+        stmt = (
+            select(PlannerEntry)
+            .where(PlannerEntry.completed_at.isnot(None))
+        )
+        result = self.session.execute(stmt)
+        return result.scalars().unique().all()
+
+    def get_incomplete_entries(self) -> List[PlannerEntry]:
+        """
+        Get all incomplete planner entries that haven't been cleared.
+
+        Returns:
+            List of incomplete entries (excludes cleared)
         """
         stmt = (
             select(PlannerEntry)
             .where(PlannerEntry.is_completed == False)
+            .where(PlannerEntry.is_cleared == False)
             .options(
                 joinedload(PlannerEntry.meal).joinedload(Meal.main_recipe)
             )
@@ -354,12 +374,18 @@ class PlannerRepo:
 
     def clear_completed(self) -> int:
         """
-        Clear all completed planner entries.
+        Soft-delete all completed planner entries by marking them as cleared.
+        Preserves cooking history for streak calculation.
 
         Returns:
             Number of entries cleared
         """
-        stmt = delete(PlannerEntry).where(PlannerEntry.is_completed == True)
+        stmt = (
+            update(PlannerEntry)
+            .where(PlannerEntry.is_completed == True)
+            .where(PlannerEntry.is_cleared == False)
+            .values(is_cleared=True)
+        )
         result = self.session.execute(stmt)
         self.session.flush()
         self._normalize_positions()
@@ -368,12 +394,16 @@ class PlannerRepo:
     # -- Utility Methods -------------------------------------------------------------------------
     def count(self) -> int:
         """
-        Count total number of planner entries.
+        Count total number of active planner entries (excludes cleared).
 
         Returns:
-            Total count
+            Total count of active entries
         """
-        stmt = select(func.count()).select_from(PlannerEntry)
+        stmt = (
+            select(func.count())
+            .select_from(PlannerEntry)
+            .where(PlannerEntry.is_cleared == False)
+        )
         return self.session.execute(stmt).scalar() or 0
 
     def count_completed(self) -> int:

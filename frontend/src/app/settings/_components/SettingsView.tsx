@@ -188,7 +188,6 @@ export function SettingsView() {
             )}
             <Button
               variant="ghost"
-              size="sm"
               onClick={handleResetSection}
               className="gap-2 text-muted-foreground hover:text-foreground"
             >
@@ -197,7 +196,6 @@ export function SettingsView() {
             </Button>
             <Button
               variant="default"
-              size="sm"
               onClick={handleSave}
               disabled={!hasUnsavedChanges}
               className="gap-2"

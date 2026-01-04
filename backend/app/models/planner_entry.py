@@ -59,6 +59,9 @@ class PlannerEntry(Base):
     # Exclude from shopping list generation
     exclude_from_shopping: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # Soft-delete flag for cleared entries (preserves cooking history for streak)
+    is_cleared: Mapped[bool] = mapped_column(Boolean, default=False)
+
     # -- Relationships ---------------------------------------------------------------------------
     meal: Mapped["Meal"] = relationship(
         "Meal",

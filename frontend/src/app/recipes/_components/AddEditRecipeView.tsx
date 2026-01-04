@@ -160,7 +160,6 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
         actions={
           <Button
             variant="default"
-            size="sm"
             className="gap-2 hidden md:flex"
             onClick={form.handleSubmit}
             disabled={form.isSubmitting}

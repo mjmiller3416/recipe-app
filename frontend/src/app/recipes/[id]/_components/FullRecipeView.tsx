@@ -179,7 +179,7 @@ function RecipeNotFound() {
           deleted or the link might be incorrect.
         </p>
         <Link href="/recipes">
-          <Button size="lg" className="gap-2">
+          <Button className="gap-2">
             <ArrowLeft className="h-4 w-4" />
             Back to Recipes
           </Button>
