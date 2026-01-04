@@ -101,6 +101,7 @@ const FOOD_KEYWORDS: Record<string, string> = {
   sub: "🥖",
   wrap: "🌯",
   bread: "🍞",
+  roll: "🍞",
   panini: "🥪",
 
   // Desserts
@@ -122,7 +123,8 @@ const FOOD_KEYWORDS: Record<string, string> = {
   roast: "🍖",
   kebab: "🍢",
   skewer: "🍢",
-};
+  sides: "🍽️"
+};  
 
 // ============================================================================
 // CATEGORY TO EMOJI MAPPING

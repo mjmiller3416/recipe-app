@@ -16,3 +16,6 @@ backend/.env
 # IntelliJ IDEA
 .idea/
 node_modules/
+
+# Frontend public folder
+frontend/public/

@@ -110,6 +110,14 @@ function AddManualItemForm({
           ))}
         </SelectContent>
       </Select>
+      <Input
+        value={itemName}
+        onChange={(e) => setItemName(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Add item..."
+        className="flex-1 min-w-[150px] h-9"
+        disabled={isAdding}
+      />
       <Select value={category} onValueChange={setCategory}>
         <SelectTrigger className="w-28 h-9">
           <SelectValue placeholder="Category" />
@@ -122,14 +130,6 @@ function AddManualItemForm({
           ))}
         </SelectContent>
       </Select>
-      <Input
-        value={itemName}
-        onChange={(e) => setItemName(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Add item..."
-        className="flex-1 min-w-[150px] h-9"
-        disabled={isAdding}
-      />
       <Button
         onClick={onAdd}
         disabled={!itemName.trim() || isAdding}

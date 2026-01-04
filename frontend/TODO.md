@@ -1,7 +1,5 @@
-Fix recipe page add to meal planner
-Add multi-selection filters in meal planner
-Implemented delete saved meal functionality 
-
+Change Selected Meal cook time to the main dish cook time
+Clearing completed meals should not reset Streak counter
 
 # Frontend TODO
 
