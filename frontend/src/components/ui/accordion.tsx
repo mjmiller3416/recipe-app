@@ -3,8 +3,37 @@
 import * as React from "react"
 import * as AccordionPrimitive from "@radix-ui/react-accordion"
 import { ChevronDownIcon } from "lucide-react"
+import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
+
+const accordionTriggerVariants = cva(
+  [
+    "flex flex-1 items-center justify-between gap-4 text-left font-medium text-foreground outline-none rounded-md",
+    "transition-all duration-200 ease-in-out",
+    "hover:text-primary hover:bg-accent/50",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    "active:scale-[0.99] active:translate-y-px",
+    "disabled:pointer-events-none disabled:opacity-50",
+    "[&[data-state=open]>svg]:rotate-180",
+  ],
+  {
+    variants: {
+      size: {
+        sm: "min-h-9 py-2 text-xs",
+        default: "min-h-10 py-4 text-sm",
+        lg: "min-h-12 py-5 text-base",
+      },
+    },
+    defaultVariants: {
+      size: "default",
+    },
+  }
+)
+
+export interface AccordionTriggerProps
+  extends React.ComponentProps<typeof AccordionPrimitive.Trigger>,
+    VariantProps<typeof accordionTriggerVariants> {}
 
 function Accordion({
   ...props
@@ -28,24 +57,21 @@ function AccordionItem({
 function AccordionTrigger({
   className,
   children,
+  size,
   ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Trigger>) {
+}: AccordionTriggerProps) {
   return (
     <AccordionPrimitive.Header className="flex">
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
-        className={cn(
-          "flex flex-1 items-center justify-between gap-4 py-4 text-left text-sm font-medium text-foreground transition-colors outline-none",
-          "hover:text-primary",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1 rounded-md",
-          "disabled:pointer-events-none disabled:opacity-50",
-          "[&[data-state=open]>svg]:rotate-180",
-          className
-        )}
+        className={cn(accordionTriggerVariants({ size }), className)}
         {...props}
       >
         {children}
-        <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground transition-transform duration-200" />
+        <ChevronDownIcon
+          className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 ease-in-out"
+          strokeWidth={1.5}
+        />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   )
@@ -67,4 +93,4 @@ function AccordionContent({
   )
 }
 
-export { Accordion, AccordionItem, AccordionTrigger, AccordionContent }
+export { Accordion, AccordionItem, AccordionTrigger, AccordionContent, accordionTriggerVariants }

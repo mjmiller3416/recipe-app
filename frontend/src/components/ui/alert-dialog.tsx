@@ -37,6 +37,9 @@ function AlertDialogOverlay({
       data-slot="alert-dialog-overlay"
       className={cn(
         "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm",
+        // Smooth transition for opacity changes
+        "transition-opacity duration-200 ease-physical",
+        // Radix data-state animations
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         className
@@ -62,8 +65,9 @@ function AlertDialogContent({
           // Visual styling - using elevated background for dialog surfaces
           "bg-elevated border border-border rounded-xl shadow-xl shadow-black/20",
           "grid gap-4 p-6",
-          // Animations
-          "duration-200",
+          // Smooth transitions
+          "transition-all duration-200 ease-physical",
+          // Radix data-state animations
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
@@ -136,7 +140,8 @@ function AlertDialogAction({
 }: React.ComponentProps<typeof AlertDialogPrimitive.Action>) {
   return (
     <AlertDialogPrimitive.Action
-      className={cn(buttonVariants(), className)}
+      data-slot="alert-dialog-action"
+      className={cn(buttonVariants({ variant: "default", size: "default" }), className)}
       {...props}
     />
   )
@@ -148,11 +153,8 @@ function AlertDialogCancel({
 }: React.ComponentProps<typeof AlertDialogPrimitive.Cancel>) {
   return (
     <AlertDialogPrimitive.Cancel
-      className={cn(
-        buttonVariants({ variant: "outline" }),
-        "border-border hover:bg-hover hover:text-foreground",
-        className
-      )}
+      data-slot="alert-dialog-cancel"
+      className={cn(buttonVariants({ variant: "outline", size: "default" }), className)}
       {...props}
     />
   )

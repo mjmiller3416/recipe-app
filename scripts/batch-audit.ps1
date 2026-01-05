@@ -49,7 +49,7 @@ foreach ($file in $files) {
     Write-Host "[$current/$fileCount] $timestamp - $($file.Name)" -ForegroundColor Yellow
 
     # Run the existing /audit command for each file
-    claude "/audit $($file.FullName)" > "$outputDir/$($file.BaseName)-audit.md" 2>&1
+    claude "/audit $($file.FullName)" 2>&1 | Out-File -FilePath "$outputDir/$($file.BaseName)-audit.md" -Encoding UTF8
 
     if ($LASTEXITCODE -eq 0) {
         Write-Host "         [OK] Saved to $($file.BaseName)-audit.md" -ForegroundColor Green
