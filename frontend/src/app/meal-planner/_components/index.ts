@@ -8,10 +8,10 @@ export { MealDialog } from "./meal-dialog/MealDialog";
 export { MealGrid } from "./MealGrid";
 export { MealGridCard } from "./MealGridCard";
 export { CompletedDropdown } from "./CompletedDropdown";
-export { SelectedMealCard } from "./SelectedMealCard";
-export { SideChip } from "./SideChip";
-export { AISuggestionsPlaceholder } from "./AISuggestionsPlaceholder";
-export { MealStats } from "./MealStats";
+export { SelectedMealCard } from "./meal-display/SelectedMealCard";
+export { SideChip } from "./meal-display/SideChip";
+export { AISuggestionsPlaceholder } from "./meal-display/AISuggestionsPlaceholder";
+export { MealStats } from "./meal-display/MealStats";
 
 // Types
 export type { MealGridItem } from "./MealGridCard";

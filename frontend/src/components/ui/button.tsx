@@ -21,10 +21,8 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 transition-colors duration-150",
         link: "text-primary underline-offset-4 hover:underline transition-colors duration-150",
-        
-        // Dashed Variant (Co-located here, not in CSS)
         dashed: 
-          "border border-dashed border-border-strong bg-transparent text-muted-foreground shadow-sm hover:border-primary hover:text-primary hover:bg-primary/5 transition-all duration-150 ease-physical",
+          "border border-dashed border-primary/40 bg-primary/5 text-muted-foreground shadow-sm hover:border-primary hover:text-primary hover:bg-primary/10 transition-all duration-150 ease-physical",
       },
       size: {
         // Default is now 40px (h-10) to match inputs

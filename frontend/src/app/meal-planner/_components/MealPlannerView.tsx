@@ -10,7 +10,7 @@ import { MealDialog } from "./meal-dialog/MealDialog";
 import { MealGrid } from "./MealGrid";
 import { MealGridItem } from "./MealGridCard";
 import { CompletedDropdown, CompletedMealItem } from "./CompletedDropdown";
-import { SelectedMealCard } from "./SelectedMealCard";
+import { SelectedMealCard } from "./meal-display/SelectedMealCard";
 import { ChefHat } from "lucide-react";
 
 // ============================================================================
@@ -351,7 +351,7 @@ export function MealPlannerPage() {
                 Add a meal to your weekly menu to get started
               </p>
             </div>
-            <Button onClick={handleAddMealClick} size="xl">
+            <Button onClick={handleAddMealClick} size="default">
               + Add Meal
             </Button>
           </div>

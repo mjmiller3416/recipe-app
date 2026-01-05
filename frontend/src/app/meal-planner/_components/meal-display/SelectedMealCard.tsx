@@ -227,6 +227,8 @@ export function SelectedMealCard({
                 Sides
               </h4>
               <div className="flex gap-2 flex-wrap">
+                
+                {/* 1. Render Existing Sides */}
                 {sideRecipes.map((side: RecipeCardDTO) => (
                   <SideChip
                     key={side.id}
@@ -235,21 +237,15 @@ export function SelectedMealCard({
                     onClick={() => handleRecipeClick(side.id)}
                   />
                 ))}
-                {/* Add Side Button - only show if not completed and room for more sides */}
+
+                {/* 2. Render "Add Side" Slot (if room exists) */}
                 {!isCompleted && sideRecipes.length < 3 && (
-                  <button
-                    onClick={onAddSide}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-2 rounded-lg",
-                      "border border-dashed border-muted",
-                      "text-muted-foreground hover:border-primary/50 hover:text-primary",
-                      "transition-colors duration-150"
-                    )}
-                  >
-                    <Plus className="h-4 w-4" strokeWidth={1.5} />
-                    <span className="text-sm">Add Side</span>
-                  </button>
+                  <SideChip 
+                    onClick={onAddSide} 
+                    // No 'name' prop passed -> Renders as the "Add Side" dashed button automatically
+                  />
                 )}
+                
               </div>
             </div>
 
