@@ -1,19 +1,8 @@
-Change Selected Meal cook time to the main dish cook time
-Clearing completed meals should not reset Streak counter
+
 
 # Frontend TODO
 
 ## 🟠 High Priority
-
-### #44 [Bug Report] Recipe Not Adding to Meal Planner from Recipe Page
-- **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx` (add to meal action)
-- **Issue**: When adding a recipe to the meal plan from the recipe itself, it does not actually add anything to the meal planner. The confirmation appears but the recipe isn't there.
-- **Solution**: Investigate the add-to-meal-plan flow from the recipe page and fix the disconnect between UI confirmation and actual data persistence.
-
-### #43 [Bug Report] No Option to Create New Meal When Adding from Recipe
-- **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx` (add to meal dialog)
-- **Issue**: When adding a recipe to the meal planner from the recipe itself, there is no option to create a new meal — only existing meals are shown.
-- **Solution**: Add a "Create New Meal" option to the meal selection dialog when adding from the recipe page.
 
 ### 1. Re-enable Ingredient Form Validation
 - **Location**: `src/app/recipes/add/page.tsx` (lines 174-176)
@@ -50,6 +39,11 @@ Clearing completed meals should not reset Streak counter
 - **Issue**: When adding new ingredients, the window should scroll to the newly added ingredient row to improve user experience.
 - **Solution**: Implement a scrollIntoView call after adding a new ingredient row.
 
+### Fix Recipe Usage Count in Shopping List Tooltip
+- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
+- **Issue**: When the same recipe appears in multiple meals, the shopping list tooltip should show usage count (e.g., "Classic Burgers (×2)") — but the `breakdownMap` is created empty and never populated with recipe contribution data.
+- **Solution**: Populate the `breakdownMap` with `IngredientBreakdownDTO` data (either from the API response or by computing it from `recipe_sources` on each item), so the existing tooltip logic in `ShoppingItem.tsx:135` can display the `usage_count`.
+
 ## 🔵 Low Priority
 
 ### 3. Prevent Accidental Ingredient Deletion via Keyboard
@@ -68,6 +62,16 @@ Clearing completed meals should not reset Streak counter
 - **Solution**: Add `transition-transform duration-500 group-hover:scale-105` to the `RecipeCardImage` component (line 86), matching the pattern used in `MainDishCard.tsx`.
 
 ## ✅ Completed
+
+### #44 [Bug Report] Recipe Not Adding to Meal Planner from Recipe Page
+- **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx` (add to meal action)
+- **Issue**: When adding a recipe to the meal plan from the recipe itself, it does not actually add anything to the meal planner. The confirmation appears but the recipe isn't there.
+- **Solution**: Investigate the add-to-meal-plan flow from the recipe page and fix the disconnect between UI confirmation and actual data persistence.
+
+### #43 [Bug Report] No Option to Create New Meal When Adding from Recipe
+- **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx` (add to meal dialog)
+- **Issue**: When adding a recipe to the meal planner from the recipe itself, there is no option to create a new meal — only existing meals are shown.
+- **Solution**: Add a "Create New Meal" option to the meal selection dialog when adding from the recipe page.
 
 ### #45 [Bug Report] Shopping List Items Stay Checked Between Weeks
 - **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`

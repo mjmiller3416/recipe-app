@@ -37,7 +37,7 @@ import {
   useAddManualItem,
   useClearManualItems,
   useRefreshShoppingList,
-} from "@/lib/hooks/useShoppingList";
+} from "@/hooks/useShoppingList";
 
 /**
  * StatCard - Individual stat card for the summary section

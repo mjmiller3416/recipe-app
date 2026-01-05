@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 // ============================================================================
 // Types
@@ -122,15 +123,11 @@ export function FilterPillGroup({
   align = "start",
   className,
 }: FilterPillGroupProps) {
-  // Normalize activeIds to work with both Set and array
-  const isActive = (id: string): boolean => {
-    if (activeIds instanceof Set) {
-      return activeIds.has(id);
-    }
-    return activeIds.includes(id);
-  };
+  
+  // Helper to check active state
+  const isActive = (id: string) => 
+    activeIds instanceof Set ? activeIds.has(id) : activeIds.includes(id);
 
-  // Alignment classes
   const alignClasses = {
     start: "justify-start",
     center: "justify-center",
@@ -138,22 +135,30 @@ export function FilterPillGroup({
   };
 
   return (
-    <div
-      className={cn(
-        "flex flex-wrap gap-2",
-        alignClasses[align],
-        className
-      )}
-    >
-      {options.map((option) => (
-        <FilterPill
-          key={option.id}
-          option={option}
-          isActive={isActive(option.id)}
-          onToggle={onToggle}
-          variant={variant}
-        />
-      ))}
+    <div className={cn("flex flex-wrap gap-2", alignClasses[align], className)}>
+      {options.map((option) => {
+        const active = isActive(option.id);
+        
+        return (
+          <Button
+            key={option.id}
+            onClick={() => onToggle(option.id)}
+            // 1. Use the new "pill" shape
+            shape="pill" 
+            // 2. Swap variants based on active state
+            variant={active ? "default" : "outline"} 
+            // 3. Handle the specific "glass" look via utility override if needed
+            className={cn(
+              "font-medium transition-all",
+              variant === "glass" && !active && "bg-elevated/80 backdrop-blur-sm border-border/50"
+            )}
+            // 4. Adjust size for pills (usually smaller)
+            size="sm" 
+          >
+            {option.label}
+          </Button>
+        );
+      })}
     </div>
   );
 }

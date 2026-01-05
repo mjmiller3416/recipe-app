@@ -20,13 +20,39 @@ You are a Senior Frontend Architect performing a "Design System Usage Audit" on 
 2. We have a `globals.css` file defining strict tokens for colors, spacing, and typography.
 3. The target file contains "Legacy" or "Manual" implementations that need to be refactored to use the Design System.
 
-**Audit Goals (The "Red Flags" to Hunt):**
+**The Golden Rule:** Never write raw HTML/CSS for a UI element if a Base UI component exists for it.
 
-1.  **Detect "Rogue" HTML Elements:**
-    * Find any raw `<button>`, `<input>`, or `<div>` that is styling itself to look like a base component.
-    * *Action:* Replace them with the imported UI component (e.g., replace `<button className="rounded bg-primary..."` with `<Button />`).
+**Audit Checklist (Fix these specific patterns):**
 
-2.  **Strip Redundant Interaction Props (The "Clean-Up"):**
+1.  **Button & Icon Cleanup (Priority: High)**
+    * **Target:** `IngredientRow.tsx`, `ShoppingItem.tsx`
+    * **Pattern:** `<button className="p-1 text-muted-foreground...">`
+    * **Fix:** Replace with `<Button variant="ghost" size="icon" shape="default">`.
+    * **Constraint:** Ensure `size="icon"` (h-10 w-10) or `"icon-sm"` (h-8 w-8) is used to maintain touch targets.
+
+2.  **"Fake Card" Elimination**
+    * **Target:** `ShoppingListView.tsx` (StatCard), `MealQueueWidget.tsx`
+    * **Pattern:** `<div className="bg-card border border-border rounded-xl...">`
+    * **Fix:** Replace wrapper with `<Card>`. Use `<CardHeader/Content/Footer>` only if semantic structure is needed; otherwise, `<Card className="p-4 flex...">` is acceptable.
+
+3.  **Pill & Badge Standardization**
+    * **Target:** `RecipeCard.tsx` (RecipeBadge), `FilterPillGroup.tsx`
+    * **Rule:**
+        * **Read-Only Labels:** Must use `<Badge variant="...">`. (e.g. "Gluten Free").
+        * **Interactive Toggles:** Must use `<Button shape="pill" variant={active ? 'default' : 'outline'}>`.
+    * **Fix:** Replace manual `span` or `div` badges with the library components.
+
+4.  **Form Input Alignment**
+    * **Target:** `ShoppingListView.tsx` (AddManualItemForm)
+    * **Pattern:** Inputs with manual height overrides (e.g., `h-9` or `h-12`).
+    * **Fix:** Remove height classes. Rely on the default `h-10` defined in `input.tsx` and `button.tsx`.
+    * **Exception:** If it is a "Hero" search bar (RecipeBrowser), `h-12` is allowed via the `size="lg"` prop, NOT manual CSS.
+
+5.  **Typography & Colors**
+    * **Pattern:** `text-gray-500`, `bg-purple-600`.
+    * **Fix:** Convert to semantic tokens: `text-muted-foreground`, `bg-primary`.
+
+6.  **Strip Redundant Interaction Props (The "Clean-Up"):**
     * **Audit Principle:** Base components (Button, Card, Input) ALREADY handle `hover:`, `active:`, `focus:`, and `transition` states internally.
     * **The Violation:** Finding these classes on component instances:
         * `hover:bg-...`
@@ -39,11 +65,7 @@ You are a Senior Frontend Architect performing a "Design System Usage Audit" on 
         * ❌ `<Button className="bg-primary hover:bg-primary/90 transition-all">`
         * ✅ `<Button>` (The `default` variant already handles the background and hover).
 
-3.  **Standardize Typography:**
-    * Identify any raw `<h1>`, `<h2>`, `<p>` tags with manual Tailwind classes (e.g., `text-2xl font-bold`).
-    * *Action:* Replace manual classes with your semantic utility classes from `globals.css` (e.g., `text-page-title`, `text-section-header`, `text-body`).
-
-4.  **Hardcoded Values Check:**
+7.  **Hardcoded Values Check:**
     * Flag any use of arbitrary values: `w-[250px]`, `px-[15px]`, `text-[#333]`.
     * *Action:* Snap them to the nearest Tailwind token (e.g., `w-64`, `px-4`, `text-neutral`).
 
