@@ -16,6 +16,9 @@ $pattern = "frontend/src/components/ui/*.tsx"
 # Output location for audit reports
 $outputDir = "audit-results"
 
+# Mode: "audit" (report only) or "fix" (audit + auto-resolve)
+$mode = "fix"
+
 # ============================================
 # SCRIPT (no need to edit below)
 # ============================================
@@ -37,8 +40,9 @@ if ($fileCount -eq 0) {
     exit 1
 }
 
+$modeLabel = if ($mode -eq "fix") { "AUDIT + FIX" } else { "AUDIT ONLY" }
 Write-Host "`n========================================" -ForegroundColor Cyan
-Write-Host "  BATCH AUDIT - $fileCount files queued" -ForegroundColor Cyan
+Write-Host "  BATCH $modeLabel - $fileCount files queued" -ForegroundColor Cyan
 Write-Host "========================================`n" -ForegroundColor Cyan
 
 $current = 0
@@ -48,13 +52,20 @@ foreach ($file in $files) {
 
     Write-Host "[$current/$fileCount] $timestamp - $($file.Name)" -ForegroundColor Yellow
 
-    # Run the existing /audit command for each file
-    claude "/audit $($file.FullName)" 2>&1 | Out-File -FilePath "$outputDir/$($file.BaseName)-audit.md" -Encoding UTF8
+    if ($mode -eq "fix") {
+        # Run /implement which audits AND applies fixes
+        Write-Host "         [~] Auditing and fixing..." -ForegroundColor Cyan
+        claude "/implement $($file.FullName)" 2>&1 | Out-File -FilePath "$outputDir/$($file.BaseName)-audit.md" -Encoding UTF8
+    } else {
+        # Run /audit for report only
+        claude "/audit $($file.FullName)" 2>&1 | Out-File -FilePath "$outputDir/$($file.BaseName)-audit.md" -Encoding UTF8
+    }
 
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "         [OK] Saved to $($file.BaseName)-audit.md" -ForegroundColor Green
+        $actionLabel = if ($mode -eq "fix") { "Fixed & saved" } else { "Saved" }
+        Write-Host "         [OK] $actionLabel to $($file.BaseName)-audit.md" -ForegroundColor Green
     } else {
-        Write-Host "         [X] Error auditing file" -ForegroundColor Red
+        Write-Host "         [X] Error processing file" -ForegroundColor Red
     }
 }
 

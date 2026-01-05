@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ShoppingCategory } from "./ShoppingCategory";
 import { plannerApi } from "@/lib/api";
 import type { ShoppingItemResponseDTO, IngredientBreakdownDTO } from "@/types";
@@ -52,10 +53,10 @@ function StatCard({
   colorClass: string;
 }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-4 rounded-xl border border-border bg-card">
+    <Card className="flex-1 flex flex-col items-center justify-center p-4">
       <span className={`text-3xl font-bold ${colorClass}`}>{value}</span>
       <span className="text-sm text-muted-foreground mt-1">{label}</span>
-    </div>
+    </Card>
   );
 }
 
@@ -93,15 +94,15 @@ function AddManualItemForm({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 p-3 mb-4 rounded-xl border border-border bg-card">
+    <Card className="flex flex-row flex-wrap items-center gap-2 p-3 mb-4">
       <QuantityInput
         value={quantity}
         onChange={setQuantity}
         placeholder="Qty"
-        className="w-16 h-9"
+        className="w-16"
       />
       <Select value={unit} onValueChange={setUnit}>
-        <SelectTrigger className="w-24 h-9">
+        <SelectTrigger className="w-24">
           <SelectValue placeholder="Unit" />
         </SelectTrigger>
         <SelectContent>
@@ -117,11 +118,11 @@ function AddManualItemForm({
         onChange={(e) => setItemName(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder="Add item..."
-        className="flex-1 min-w-[150px] h-9"
+        className="flex-1 min-w-40"
         disabled={isAdding}
       />
       <Select value={category} onValueChange={setCategory}>
-        <SelectTrigger className="w-28 h-9">
+        <SelectTrigger className="w-28">
           <SelectValue placeholder="Category" />
         </SelectTrigger>
         <SelectContent>
@@ -135,12 +136,11 @@ function AddManualItemForm({
       <Button
         onClick={onAdd}
         disabled={!itemName.trim() || isAdding}
-        size="sm"
-        className="h-9 px-3"
+        size="icon"
       >
         <Plus className="h-4 w-4" />
       </Button>
-    </div>
+    </Card>
   );
 }
 
@@ -578,12 +578,14 @@ export function ShoppingListView() {
               <span className="text-sm text-primary truncate">
                 Filtering by: {getFilterDisplayName()}
               </span>
-              <button
+              <Button
+                variant="ghost"
+                size="icon-sm"
                 onClick={() => setFilterRecipeName(null)}
-                className="ml-auto p-1 rounded-md hover:bg-primary/20 transition-colors"
+                className="ml-auto text-primary"
               >
-                <X className="h-4 w-4 text-primary" />
-              </button>
+                <X className="h-4 w-4" />
+              </Button>
             </div>
           )}
 
