@@ -28,6 +28,43 @@ import {
   type ReactNode,
 } from "react"
 import { Badge } from "@/components/ui/badge"
+import { cva, type VariantProps } from "class-variance-authority"
+
+/* ============================================
+   CVA VARIANTS - Trigger Sizes
+   ============================================ */
+const multiSelectTriggerVariants = cva(
+  // BASE STYLES - matches button.tsx patterns
+  [
+    "inline-flex w-fit items-center justify-between gap-2 overflow-hidden",
+    "rounded-lg border border-input bg-input text-sm font-medium",
+    "shadow-sm transition-all duration-150 ease-physical",
+    // Hover states with tactile feedback
+    "hover:bg-hover hover:border-border-strong hover:-translate-y-px hover:shadow-raised",
+    // Active/press state
+    "active:translate-y-0 active:shadow-inset-sm",
+    // Focus states
+    "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 outline-none",
+    // Disabled
+    "disabled:cursor-not-allowed disabled:opacity-50 disabled:pointer-events-none",
+    // Aria states
+    "data-[placeholder]:text-muted-foreground",
+    // SVG defaults
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  ],
+  {
+    variants: {
+      size: {
+        default: "h-10 px-3 py-2",
+        sm: "h-8 px-2.5 py-1.5 text-sm",
+        lg: "h-12 px-4 py-3 text-base",
+      },
+    },
+    defaultVariants: {
+      size: "default",
+    },
+  }
+)
 
 type MultiSelectContextType = {
   open: boolean
@@ -37,6 +74,7 @@ type MultiSelectContextType = {
   items: Map<string, ReactNode>
   single: boolean
   onItemAdded: (value: string, label: ReactNode) => void
+  size: "default" | "sm" | "lg"
 }
 const MultiSelectContext = createContext<MultiSelectContextType | null>(null)
 
@@ -46,12 +84,14 @@ export function MultiSelect({
   defaultValues,
   onValuesChange,
   single = false,
+  size = "default",
 }: {
   children: ReactNode
   values?: string[]
   defaultValues?: string[]
   onValuesChange?: (values: string[]) => void
   single?: boolean
+  size?: "default" | "sm" | "lg"
 }) {
   const [open, setOpen] = useState(false)
   const [internalValues, setInternalValues] = useState(
@@ -95,6 +135,7 @@ export function MultiSelect({
         toggleValue,
         items,
         onItemAdded,
+        size,
       }}
     >
       <Popover open={open} onOpenChange={setOpen} modal={true}>
@@ -107,12 +148,15 @@ export function MultiSelect({
 export function MultiSelectTrigger({
   className,
   children,
+  size,
   ...props
 }: {
   className?: string
   children?: ReactNode
-} & ComponentPropsWithoutRef<typeof Button>) {
-  const { open } = useMultiSelectContext()
+  size?: "default" | "sm" | "lg"
+} & Omit<ComponentPropsWithoutRef<typeof Button>, "size">) {
+  const context = useMultiSelectContext()
+  const triggerSize = size ?? context.size
 
   return (
     <PopoverTrigger asChild>
@@ -120,23 +164,17 @@ export function MultiSelectTrigger({
         {...props}
         variant={props.variant ?? "outline"}
         role={props.role ?? "combobox"}
-        aria-expanded={props["aria-expanded"] ?? open}
+        aria-expanded={props["aria-expanded"] ?? context.open}
         className={cn(
-          "flex h-auto min-h-10 w-fit items-center justify-between gap-2 overflow-hidden",
-          "rounded-md border border-input bg-input px-3 py-2 text-sm",
-          "shadow-sm hover:bg-hover hover:border-border-strong",
-          "transition-colors duration-150",
-          // Prevent any transform/movement on hover
-          "hover:transform-none hover:translate-y-0",
-          "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50",
-          "disabled:cursor-not-allowed disabled:opacity-50",
-          "data-[placeholder]:text-muted-foreground",
-          "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+          multiSelectTriggerVariants({ size: triggerSize }),
           className,
         )}
       >
         {children}
-        <ChevronsUpDownIcon className="size-4 shrink-0 text-muted-foreground" />
+        <ChevronsUpDownIcon
+          className="size-4 shrink-0 text-muted-foreground"
+          strokeWidth={1.5}
+        />
       </Button>
     </PopoverTrigger>
   )
@@ -245,8 +283,12 @@ export function MultiSelectValue({
             className={cn(
               "group flex items-center gap-1",
               "bg-primary/10 text-primary border-primary/20",
-              "hover:bg-primary/20 hover:border-primary/30",
-              clickToRemove && "cursor-pointer"
+              "transition-all duration-150 ease-physical",
+              clickToRemove && [
+                "cursor-pointer",
+                "hover:bg-primary/20 hover:border-primary/30",
+                "active:scale-95",
+              ]
             )}
             key={value}
             onClick={
@@ -260,7 +302,10 @@ export function MultiSelectValue({
           >
             {items.get(value)}
             {clickToRemove && (
-              <XIcon className="size-2.5 text-primary/60 group-hover:text-destructive transition-colors" />
+              <XIcon
+                className="size-2.5 text-primary/60 group-hover:text-destructive transition-colors duration-150"
+                strokeWidth={1.5}
+              />
             )}
           </Badge>
         ))}
@@ -354,8 +399,8 @@ export function MultiSelectItem({
         onSelect?.(value)
       }}
       className={cn(
-        // Override base CommandItem styles
-        "rounded-md cursor-pointer",
+        // Base styles with transitions
+        "rounded-lg cursor-pointer transition-all duration-150 ease-physical",
         // Keyboard navigation state (cmdk's selected)
         "data-[selected=true]:bg-accent/80 data-[selected=true]:text-foreground",
         // Checked state (our multi-select selection)
@@ -364,9 +409,10 @@ export function MultiSelectItem({
     >
       <CheckIcon
         className={cn(
-          "mr-2 size-4 shrink-0 transition-opacity",
-          isSelected ? "opacity-100 text-primary" : "opacity-0"
+          "mr-2 size-4 shrink-0 transition-all duration-150",
+          isSelected ? "opacity-100 text-primary scale-100" : "opacity-0 scale-75"
         )}
+        strokeWidth={1.5}
       />
       <span className="truncate">{children}</span>
     </CommandItem>

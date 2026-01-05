@@ -3,6 +3,7 @@
 import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
 import { SearchIcon } from "lucide-react"
+import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 import {
@@ -21,7 +22,7 @@ function Command({
     <CommandPrimitive
       data-slot="command"
       className={cn(
-        "bg-popover text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md",
+        "bg-popover text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-lg",
         className
       )}
       {...props}
@@ -60,20 +61,37 @@ function CommandDialog({
   )
 }
 
-function CommandInput({
-  className,
-  ...props
-}: React.ComponentProps<typeof CommandPrimitive.Input>) {
+const commandInputVariants = cva(
+  "flex items-center gap-2 border-b border-border px-3 transition-colors duration-200 ease-in-out",
+  {
+    variants: {
+      size: {
+        sm: "h-8",
+        default: "h-10",
+        lg: "h-12",
+      },
+    },
+    defaultVariants: {
+      size: "default",
+    },
+  }
+)
+
+export interface CommandInputProps
+  extends Omit<React.ComponentProps<typeof CommandPrimitive.Input>, "size">,
+    VariantProps<typeof commandInputVariants> {}
+
+function CommandInput({ className, size, ...props }: CommandInputProps) {
   return (
     <div
       data-slot="command-input-wrapper"
-      className="flex h-9 items-center gap-2 border-b px-3"
+      className={commandInputVariants({ size })}
     >
-      <SearchIcon className="size-4 shrink-0 opacity-50" />
+      <SearchIcon className="size-4 shrink-0 opacity-50" strokeWidth={1.5} />
       <CommandPrimitive.Input
         data-slot="command-input"
         className={cn(
-          "placeholder:text-muted-foreground flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
+          "placeholder:text-muted-foreground flex h-full w-full bg-transparent text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         {...props}
@@ -139,15 +157,46 @@ function CommandSeparator({
   )
 }
 
-function CommandItem({
-  className,
-  ...props
-}: React.ComponentProps<typeof CommandPrimitive.Item>) {
+const commandItemVariants = cva(
+  [
+    "relative flex cursor-default items-center gap-2 px-2 text-sm font-medium outline-hidden select-none",
+    "transition-all duration-200 ease-in-out",
+    "[&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  ],
+  {
+    variants: {
+      size: {
+        sm: "py-1 rounded-md text-xs",
+        default: "py-2 rounded-lg",
+        lg: "py-3 rounded-lg",
+      },
+    },
+    defaultVariants: {
+      size: "default",
+    },
+  }
+)
+
+export interface CommandItemProps
+  extends React.ComponentProps<typeof CommandPrimitive.Item>,
+    VariantProps<typeof commandItemVariants> {}
+
+function CommandItem({ className, size, ...props }: CommandItemProps) {
   return (
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        commandItemVariants({ size }),
+        // Selected state (keyboard navigation)
+        "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground",
+        // Hover state
+        "hover:bg-accent/50 hover:text-accent-foreground",
+        // Active/Press state
+        "active:scale-[0.98] active:bg-accent/80",
+        // Focus visible state
+        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        // Disabled state
+        "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
         className
       )}
       {...props}
@@ -181,4 +230,6 @@ export {
   CommandItem,
   CommandShortcut,
   CommandSeparator,
+  commandInputVariants,
+  commandItemVariants,
 }

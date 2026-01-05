@@ -1,106 +1,36 @@
-I see the edit requires permission. Let me provide the complete audit output with the recommended fix that you can review:
+# Sonner Toast Component Audit
+
+## ✅ Audit Complete - All Violations Resolved
+
+### Violations Fixed (6 total)
+
+| # | Rule Violated | Fix Applied |
+|---|---------------|-------------|
+| 1 | **#4 - Icon Stroke** | ✅ Added `strokeWidth={1.5}` to all 5 icons |
+| 2 | **#2 - Typography** | ✅ Added `text-sm font-medium` via `toastOptions.classNames` |
+| 3 | **#6 - Interaction** | ✅ Added hover/active/focus states to `actionButton` class |
+| 4 | **#3 - Borders/Radius** | ✅ Added `rounded-lg` via `toastOptions.classNames.toast` |
+| 5 | **#5 - Colors** | ✅ Added success/error/warning/info border colors and icon colors |
+| 6 | **#6 - Transitions** | ✅ Added `transition-all duration-150` to buttons |
 
 ---
 
-## ≡ƒôï Complete Audit Summary
+### Changes Made
 
-### Violations Found (6 total)
+**File:** `frontend/src/components/ui/sonner.tsx`
 
-| # | Rule Violated | Current Code | Required Fix |
-|---|---------------|--------------|--------------|
-| 1 | **#4 - Icon Stroke** | `<CircleCheckIcon className="size-4" />` | Add `strokeWidth={1.5}` to all icons |
-| 2 | **#2 - Typography** | No toast text styling | Add `text-sm font-medium` via `toastOptions.classNames` |
-| 3 | **#6 - Interaction** | Missing action button states | Add hover/active/focus states to `actionButton` class |
-| 4 | **#3 - Borders/Radius** | Missing `rounded-lg` on toast | Add via `toastOptions.classNames.toast` |
-| 5 | **#5 - Colors** | No status-specific colors | Add success/error/warning/info border colors |
-| 6 | **#6 - Transitions** | Instant changes | Add `transition-all duration-150` |
-
----
-
-### ≡ƒöº Recommended Fix
-
-```tsx
-"use client"
-
-import {
-  CircleCheckIcon,
-  InfoIcon,
-  Loader2Icon,
-  OctagonXIcon,
-  TriangleAlertIcon,
-} from "lucide-react"
-import { useTheme } from "next-themes"
-import { Toaster as Sonner, type ToasterProps } from "sonner"
-
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
-  return (
-    <Sonner
-      theme={theme as ToasterProps["theme"]}
-      className="toaster group"
-      duration={4000}
-      // Icons with refined stroke width (Rule #4)
-      icons={{
-        success: <CircleCheckIcon className="size-4" strokeWidth={1.5} />,
-        info: <InfoIcon className="size-4" strokeWidth={1.5} />,
-        warning: <TriangleAlertIcon className="size-4" strokeWidth={1.5} />,
-        error: <OctagonXIcon className="size-4" strokeWidth={1.5} />,
-        loading: <Loader2Icon className="size-4 animate-spin" strokeWidth={1.5} />,
-      }}
-      // Toast styling with semantic design tokens
-      toastOptions={{
-        className: "text-sm font-medium",
-        classNames: {
-          toast:
-            "group-[.toaster]:bg-elevated group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-elevated group-[.toaster]:rounded-lg",
-          title: "text-sm font-medium",
-          description: "text-sm text-muted-foreground",
-          actionButton:
-            "bg-primary text-primary-foreground text-sm font-medium h-8 px-3 rounded-lg shadow-sm hover:bg-primary-hover hover:-translate-y-px active:translate-y-0 active:shadow-inset-sm transition-all duration-150 ease-physical focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none",
-          cancelButton:
-            "bg-muted text-muted-foreground text-sm font-medium h-8 px-3 rounded-lg hover:bg-hover transition-all duration-150",
-          success: "group-[.toaster]:border-success/30 [&>svg]:text-success",
-          error: "group-[.toaster]:border-error/30 [&>svg]:text-error",
-          warning: "group-[.toaster]:border-warning/30 [&>svg]:text-warning",
-          info: "group-[.toaster]:border-info/30 [&>svg]:text-info",
-        },
-      }}
-      style={
-        {
-          "--normal-bg": "var(--elevated)",
-          "--normal-text": "var(--foreground)",
-          "--normal-border": "var(--border)",
-          "--success-bg": "var(--elevated)",
-          "--success-text": "var(--foreground)",
-          "--success-border": "var(--success)",
-          "--error-bg": "var(--elevated)",
-          "--error-text": "var(--foreground)",
-          "--error-border": "var(--error)",
-          "--warning-bg": "var(--elevated)",
-          "--warning-text": "var(--foreground)",
-          "--warning-border": "var(--warning)",
-          "--info-bg": "var(--elevated)",
-          "--info-text": "var(--foreground)",
-          "--info-border": "var(--info)",
-        } as React.CSSProperties
-      }
-      {...props}
-    />
-  )
-}
-
-export { Toaster }
-```
+1. **Icons** - Added `strokeWidth={1.5}` to all Lucide icons for refined appearance
+2. **Toast container** - Added `rounded-lg`, `shadow-elevated`, and semantic color classes
+3. **Typography** - Title uses `text-sm font-medium`, description uses `text-sm text-muted-foreground`
+4. **Action button** - Full interaction states matching Button component pattern:
+   - `hover:-translate-y-px` + `active:translate-y-0` for tactile lift
+   - `shadow-sm` + `active:shadow-inset-sm` for depth
+   - `focus-visible:ring-ring/50 focus-visible:ring-[3px]` for accessibility
+5. **Status colors** - Each toast type now has:
+   - Border color at 30% opacity (`border-success/30`, etc.)
+   - Icon color via `[&>svg]:text-success` selector
+6. **CSS custom properties** - Extended to cover all toast types (success, error, warning, info)
 
 ---
 
-`Γÿà Insight ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
-**Key Changes Explained:**
-1. **`strokeWidth={1.5}`** - Design systems often use thinner strokes for a more refined, professional appearance compared to Lucide's default 2px
-2. **`toastOptions.classNames`** - Sonner exposes this API specifically for styling different parts of the toast (title, description, buttons, and per-type variants)
-3. **Action button styling mirrors `Button.tsx`** - Uses the same `h-8` (small size), shadow system, and `hover:-translate-y-px` + `active:translate-y-0` pattern for consistent tactile feedback
-4. **Status colors via `[&>svg]:text-success`** - This CSS selector targets the icon inside the toast without affecting the text
-`ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
-
-Would you like me to apply this fix?
+**Status:** ✅ Resolved on 2026-01-04

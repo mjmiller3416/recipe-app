@@ -148,7 +148,7 @@ function HeroSection({
           </div>
           <Button
             onClick={onSearch}
-            size="xl"
+            size="lg"
           >
             Search
           </Button>

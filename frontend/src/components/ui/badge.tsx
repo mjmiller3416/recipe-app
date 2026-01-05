@@ -5,22 +5,68 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center justify-center rounded-full border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden",
+  // Base styles with proper transitions and focus states
+  [
+    "inline-flex items-center justify-center",
+    "rounded-lg border font-medium whitespace-nowrap shrink-0",
+    "transition-all duration-200 ease-in-out",
+    // Icon sizing
+    "[&>svg]:size-3 [&>svg]:pointer-events-none gap-1",
+    // Focus states with proper ring offset
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    // Disabled states
+    "disabled:opacity-50 disabled:pointer-events-none",
+    // Aria-invalid styling
+    "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  ],
   {
     variants: {
       variant: {
-        default:
-          "border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
-        destructive:
-          "border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
-        outline:
-          "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+        default: [
+          "border-transparent bg-primary text-primary-foreground",
+          "hover:bg-primary-hover active:bg-primary-active",
+        ],
+        secondary: [
+          "border-transparent bg-secondary text-secondary-foreground",
+          "hover:bg-secondary-hover active:bg-secondary-active",
+        ],
+        destructive: [
+          "border-transparent bg-destructive text-destructive-foreground",
+          "hover:bg-destructive/90 active:bg-destructive/80",
+          "focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
+        ],
+        outline: [
+          "border-border bg-transparent text-foreground",
+          "hover:bg-accent hover:text-accent-foreground",
+          "active:bg-accent/80",
+        ],
+        // Additional semantic variants using design tokens
+        success: [
+          "border-transparent bg-success text-white",
+          "hover:bg-success/90 active:bg-success/80",
+        ],
+        warning: [
+          "border-transparent bg-warning text-white",
+          "hover:bg-warning/90 active:bg-warning/80",
+        ],
+        info: [
+          "border-transparent bg-info text-info-foreground",
+          "hover:bg-info/90 active:bg-info/80",
+        ],
+        muted: [
+          "border-transparent bg-muted text-muted-foreground",
+          "hover:bg-muted/80 active:bg-muted/70",
+        ],
+      },
+      size: {
+        sm: "h-5 px-2 text-xs",        // 20px height, 12px text
+        default: "h-6 px-2.5 text-xs", // 24px height, 12px text
+        lg: "h-7 px-3 text-sm",        // 28px height, 14px text
       },
     },
     defaultVariants: {
       variant: "default",
+      size: "default",
     },
   }
 )
@@ -28,6 +74,7 @@ const badgeVariants = cva(
 function Badge({
   className,
   variant,
+  size,
   asChild = false,
   ...props
 }: React.ComponentProps<"span"> &
@@ -37,7 +84,7 @@ function Badge({
   return (
     <Comp
       data-slot="badge"
-      className={cn(badgeVariants({ variant }), className)}
+      className={cn(badgeVariants({ variant, size }), className)}
       {...props}
     />
   )

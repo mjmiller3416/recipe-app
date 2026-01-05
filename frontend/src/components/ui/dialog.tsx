@@ -2,9 +2,26 @@
 
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
+import { cva, type VariantProps } from "class-variance-authority"
 import { XIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+
+const dialogContentVariants = cva(
+  "bg-card text-card-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border border-border shadow-floating duration-200 outline-none",
+  {
+    variants: {
+      size: {
+        sm: "sm:max-w-md p-4",
+        default: "sm:max-w-lg p-6",
+        lg: "sm:max-w-2xl p-6",
+      },
+    },
+    defaultVariants: {
+      size: "default",
+    },
+  }
+)
 
 function Dialog({
   ...props
@@ -50,28 +67,36 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  size,
   ...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> & {
-  showCloseButton?: boolean
-}) {
+}: React.ComponentProps<typeof DialogPrimitive.Content> &
+  VariantProps<typeof dialogContentVariants> & {
+    showCloseButton?: boolean
+  }) {
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
-        className={cn(
-          "bg-card text-card-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg p-6 shadow-floating duration-200 outline-none sm:max-w-lg",
-          className
-        )}
+        className={cn(dialogContentVariants({ size }), className)}
         {...props}
       >
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="text-muted-foreground hover:text-foreground focus:ring-ring absolute top-4 right-4 rounded-sm transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-offset-card focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+            className={cn(
+              "absolute top-4 right-4",
+              "flex h-8 w-8 items-center justify-center rounded-lg",
+              "text-muted-foreground",
+              "transition-all duration-200 ease-in-out",
+              "hover:bg-accent hover:text-foreground",
+              "active:scale-95",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+              "disabled:pointer-events-none disabled:opacity-50"
+            )}
           >
-            <XIcon />
+            <XIcon className="size-4" strokeWidth={1.5} />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}

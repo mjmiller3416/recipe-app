@@ -1,22 +1,51 @@
 import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
-function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
+const textareaVariants = cva(
+  // BASE STYLES
+  [
+    "flex w-full rounded-lg border border-border bg-background px-3 text-sm font-medium shadow-sm",
+    "placeholder:text-muted-foreground",
+    "hover:border-border-strong hover:bg-input",
+    "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:border-ring",
+    "disabled:cursor-not-allowed disabled:opacity-50 disabled:pointer-events-none",
+    "transition-all duration-150 ease-physical",
+    "field-sizing-content",
+  ],
+  {
+    variants: {
+      size: {
+        // Default matches input field sizing - min-h based on content
+        default: "min-h-20 py-2",
+
+        // Small variant - more compact
+        sm: "min-h-16 py-1.5 text-sm",
+
+        // Large variant - more spacious
+        lg: "min-h-28 py-3 text-base",
+      },
+    },
+    defaultVariants: {
+      size: "default",
+    },
+  }
+)
+
+function Textarea({
+  className,
+  size = "default",
+  ...props
+}: React.ComponentProps<"textarea"> & VariantProps<typeof textareaVariants>) {
   return (
     <textarea
       data-slot="textarea"
-      className={cn(
-        "flex field-sizing-content min-h-16 w-full rounded-md border border-border bg-background px-3 py-2 text-base shadow-sm transition-colors",
-        "placeholder:text-muted-foreground",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        "md:text-sm",
-        className
-      )}
+      data-size={size}
+      className={cn(textareaVariants({ size, className }))}
       {...props}
     />
   )
 }
 
-export { Textarea }
+export { Textarea, textareaVariants }

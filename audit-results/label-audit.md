@@ -1,36 +1,43 @@
-I've completed the audit analysis. Here's the summary:
-
----
-
 ## Audit Summary for `label.tsx`
 
-### Violations Found
+### Status: RESOLVED
 
-| Rule | Status | Issue |
-|------|--------|-------|
-| Size Variants | Γ¥î | No `cva` variants for `default`, `sm`, `lg` |
-| Typography | ΓÜá∩╕Å | Uses `leading-none` instead of design system line-height tokens |
-| Color Tokens | ΓÜá∩╕Å | No explicit semantic color (relies on inheritance) |
-| Disabled States | Γ£à | Correctly handles `group-data-[disabled=true]` and `peer-disabled` |
-| Font Weight | Γ£à | Uses `font-medium` correctly |
+All violations have been fixed.
 
-### Recommended Fix
+### Violations Found & Fixed
 
-The fixed component would:
+| Rule | Status | Issue | Resolution |
+|------|--------|-------|------------|
+| Size Variants | ✅ Fixed | No `cva` variants for `default`, `sm`, `lg` | Added `cva` with size variants using design tokens |
+| Typography | ✅ Fixed | Uses `leading-none` instead of design system line-height tokens | Now uses `--text-sm--line`, `--text-xs--line`, `--text-base--line` |
+| Color Tokens | ✅ Fixed | No explicit semantic color (relies on inheritance) | Added explicit `text-foreground` |
+| Disabled States | ✅ | Correctly handles `group-data-[disabled=true]` and `peer-disabled` | No changes needed |
+| Font Weight | ✅ | Uses `font-medium` correctly | No changes needed |
 
-1. **Add `cva` with size variants:**
-   - `default`: `text-sm` with `--text-sm--line` line-height
-   - `sm`: `text-xs` with `--text-xs--line` line-height  
-   - `lg`: `text-base` with `--text-base--line` line-height
+### Changes Applied
 
-2. **Use explicit semantic color:** Add `text-foreground` for clarity
+1. **Added `cva` with size variants:**
+   - `default`: `text-sm` with `--text-sm--line` line-height (14px/20px)
+   - `sm`: `text-xs` with `--text-xs--line` line-height (12px/16px)
+   - `lg`: `text-base` with `--text-base--line` line-height (16px/24px)
 
-3. **Export `labelVariants`** for external use with `cn()`
+2. **Added explicit semantic color:** `text-foreground` for consistent color across container contexts
 
-Would you like me to apply these fixes to the component?
+3. **Exported `labelVariants`** for external use with `cn()`
 
-`Γÿà Insight ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
-- **Labels are non-interactive**, so hover/active/focus rules don't applyΓÇöbut they DO need proper cursor inheritance for form associations
-- **`cva` with size variants** allows consistent scaling across the app (e.g., a dense form could use `size="sm"` labels throughout)
-- **Explicit `text-foreground`** prevents color inconsistencies when labels appear in different container contexts
-`ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
+### Usage Examples
+
+```tsx
+// Default size (14px)
+<Label>Email Address</Label>
+
+// Small size for dense forms (12px)
+<Label size="sm">Optional field</Label>
+
+// Large size for prominent labels (16px)
+<Label size="lg">Section Title</Label>
+
+// Using labelVariants directly
+import { labelVariants } from "@/components/ui/label"
+<span className={cn(labelVariants({ size: "sm" }), "custom-class")}>Custom label</span>
+```

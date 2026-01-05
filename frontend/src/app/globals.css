@@ -435,13 +435,35 @@
 }
 
 @keyframes pulse-soft {
-  0%, 100% { 
-    opacity: 1; 
-    transform: scale(1); 
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
   }
-  50% { 
-    opacity: 0.7; 
-    transform: scale(0.95); 
+  50% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes collapse-down {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes collapse-up {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
   }
 }
 
@@ -468,6 +490,14 @@
 
 .animate-pulse-soft {
   animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.animate-collapse-down {
+  animation: collapse-down var(--duration-normal) var(--ease-out);
+}
+
+.animate-collapse-up {
+  animation: collapse-up var(--duration-normal) var(--ease-out);
 }
 
 /* ============================================

@@ -1,62 +1,8 @@
-I need permission to write to the file. Here's the **complete rewritten component** that fixes all violations:
+# Skeleton Component Audit - ✅ RESOLVED
 
----
+## Changes Applied
 
-### Fixed Component Code:
-
-```tsx
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
-
-const skeletonVariants = cva(
-  // Base styles - using design system tokens
-  "bg-accent animate-pulse",
-  {
-    variants: {
-      // Size variants for common use cases
-      size: {
-        default: "h-4 w-full",      // Default text line skeleton
-        sm: "h-3 w-full",           // Small text line
-        lg: "h-6 w-full",           // Large text line / heading
-        avatar: "h-10 w-10",        // Avatar placeholder (matches h-10 standard)
-        "avatar-sm": "h-8 w-8",     // Small avatar
-        "avatar-lg": "h-12 w-12",   // Large avatar
-        card: "h-32 w-full",        // Card placeholder
-        button: "h-10 w-24",        // Button placeholder
-        "button-sm": "h-8 w-20",    // Small button placeholder
-      },
-      // Shape variants
-      shape: {
-        default: "rounded-lg",      // Standard radius from design system
-        circle: "rounded-full",     // For avatars and circular elements
-        none: "rounded-none",       // Sharp edges when needed
-      },
-    },
-    defaultVariants: {
-      size: "default",
-      shape: "default",
-    },
-  }
-)
-
-interface SkeletonProps
-  extends React.ComponentProps<"div">,
-    VariantProps<typeof skeletonVariants> {}
-
-function Skeleton({ className, size, shape, ...props }: SkeletonProps) {
-  return (
-    <div
-      data-slot="skeleton"
-      className={cn(skeletonVariants({ size, shape }), className)}
-      {...props}
-    />
-  )
-}
-
-export { Skeleton, skeletonVariants }
-```
-
----
+The Skeleton component has been updated to comply with design system standards.
 
 ### Summary of Changes:
 
@@ -68,10 +14,24 @@ export { Skeleton, skeletonVariants }
 | Shape Options | None | `default`, `circle`, `none` |
 | Type Safety | Basic props | Full `VariantProps` inference |
 
-`Γÿà Insight ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
-- The avatar sizes (`h-8`, `h-10`, `h-12`) align with the button sizing standards in Rule #1
-- Exporting `skeletonVariants` allows external usage for custom skeleton compositions
-- The `className` prop still allows overriding dimensions when the preset sizes don't fit
-`ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
+### New API:
 
-Would you like me to apply this change to the file?
+```tsx
+// Basic usage (defaults to h-4 w-full rounded-lg)
+<Skeleton />
+
+// Size variants
+<Skeleton size="sm" />
+<Skeleton size="lg" />
+<Skeleton size="avatar" shape="circle" />
+<Skeleton size="card" />
+<Skeleton size="button" />
+
+// Custom dimensions still work via className
+<Skeleton className="h-20 w-40" />
+```
+
+### Design System Alignment:
+- Avatar sizes (`h-8`, `h-10`, `h-12`) match button sizing standards
+- `rounded-lg` is the standard radius from the design system
+- Exports `skeletonVariants` for custom skeleton compositions
