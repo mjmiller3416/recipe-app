@@ -5,7 +5,7 @@
 
 # Option A: Glob pattern (audit all .tsx files in a folder)
 # Use -Recurse below to include subdirectories
-$pattern = "frontend/src/app/shopping-list"
+$pattern = "frontend/src/app/meal-planner"
 $filter = "*.tsx"
 $recurse = $true
 
