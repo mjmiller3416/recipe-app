@@ -54,7 +54,7 @@
   /* Transparent secondary surfaces (for info boxes, stats cards) */
   --secondary-surface-alpha: rgba(20, 184, 166, 0.08); /* 8% teal background */
   --secondary-border-alpha: rgba(20, 184, 166, 0.2);   /* 20% teal border */
-  
+
   /* ============================================
      NEUTRAL COLORS
      ============================================ */
@@ -71,6 +71,10 @@
   --destructive-foreground: #fafafa; /* Text on destructive background */
   --info: #3b82f6;              /* Informational states */
   --info-foreground: #ffffff;   /* Text on info background */
+
+  /* Success surface colors (for tinted backgrounds) */
+  --success-surface: rgba(16, 185, 129, 0.08);      /* Subtle green background */
+  --success-surface-border: rgba(16, 185, 129, 0.4); /* Green border */
 
   /* ============================================
      UI ELEMENTS
@@ -272,7 +276,7 @@
   /* Transparent secondary surfaces (for info boxes, stats cards) */
   --secondary-surface-alpha: rgba(20, 184, 166, 0.08); /* 8% teal background */
   --secondary-border-alpha: rgba(20, 184, 166, 0.2);   /* 20% teal border */
-  
+
   /* ============================================
      NEUTRAL COLORS
      ============================================ */
@@ -289,6 +293,10 @@
   --destructive-foreground: #fafafa; /* Text on destructive background */
   --info: #3b82f6;              /* Informational states */
   --info-foreground: #ffffff;   /* Text on info background */
+
+  /* Success surface colors (for tinted backgrounds - light mode) */
+  --success-surface: rgba(16, 185, 129, 0.1);       /* Slightly stronger for light bg */
+  --success-surface-border: rgba(16, 185, 129, 0.35); /* Softer border for light mode */
 
   /* ============================================
      UI ELEMENTS
@@ -526,12 +534,20 @@
   --color-primary-hover: var(--primary-hover);
   --color-primary-active: var(--primary-active);
   --color-primary-foreground: var(--primary-foreground);
-  
+  --color-primary-surface: var(--primary-surface);
+  --color-primary-surface-hover: var(--primary-surface-hover);
+  --color-primary-muted: var(--primary-muted);
+  --color-primary-on-surface: var(--primary-on-surface);
+
   /* Secondary */
   --color-secondary: var(--secondary);
   --color-secondary-hover: var(--secondary-hover);
   --color-secondary-active: var(--secondary-active);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-surface: var(--secondary-surface);
+  --color-secondary-surface-hover: var(--secondary-surface-hover);
+  --color-secondary-muted: var(--secondary-muted);
+  --color-secondary-on-surface: var(--secondary-on-surface);
   --color-secondary-surface-alpha: var(--secondary-surface-alpha);
   --color-secondary-border-alpha: var(--secondary-border-alpha);
   
@@ -541,13 +557,15 @@
   
   /* Status */
   --color-success: var(--success);
+  --color-success-surface: var(--success-surface);
+  --color-success-surface-border: var(--success-surface-border);
   --color-warning: var(--warning);
   --color-error: var(--error);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
-  
+
   /* UI */
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);

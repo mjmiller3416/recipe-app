@@ -13,8 +13,8 @@ powershell -ExecutionPolicy Bypass -File scripts/batch-audit.ps1
 ```
 
 **Important Notes:**
-- This script runs the `/audit` command on each file individually (full context per file)
+- This script runs the `/ds-fix` command on each file individually (full context per file)
 - Results are saved to `audit-results/` directory as individual markdown files
 - Each file gets the complete audit with all design system rules from `.claude/commands/audit.md`
 
-**After completion:** Summarize how many files were audited and where results are saved.
+**After completion:** Summarize how many files were audited, and highlight any common issues found across multiple files.

@@ -5,6 +5,9 @@ import { ShoppingItem } from "./ShoppingItem";
 import type { ShoppingItemResponseDTO, IngredientBreakdownDTO } from "@/types";
 import { cn } from "@/lib/utils";
 import { ChevronUp } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 // Storage key prefix for persisting collapsed state
 const COLLAPSED_STORAGE_KEY = "shopping-category-collapsed";
@@ -124,18 +127,17 @@ export function ShoppingCategory({
   const emoji = getCategoryEmoji(category);
 
   return (
-    <div
+    <Card
       className={cn(
-        "rounded-xl overflow-hidden transition-all duration-200",
-        isComplete
-          ? "bg-success/5 border border-success/40"
-          : "bg-card border border-transparent"
+        "overflow-hidden",
+        isComplete && "bg-success/5 border-success/40"
       )}
     >
       {/* Category header */}
-      <button
+      <Button
+        variant="ghost"
         onClick={handleToggleExpanded}
-        className="w-full flex items-center gap-3 px-4 py-4 hover:bg-hover/30 transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-4 h-auto justify-start rounded-none"
       >
         {/* Category emoji */}
         <span className="text-2xl flex-shrink-0">{emoji}</span>
@@ -147,12 +149,12 @@ export function ShoppingCategory({
               {category || "Other"}
             </h3>
             {isComplete && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-success/20 text-success font-semibold">
+              <Badge variant="success" size="sm">
                 Complete
-              </span>
+              </Badge>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground font-normal">
             {checkedCount} of {totalItems} items
           </p>
         </div>
@@ -168,11 +170,11 @@ export function ShoppingCategory({
         {/* Chevron */}
         <ChevronUp
           className={cn(
-            "h-5 w-5 text-muted-foreground transition-transform duration-200",
+            "size-5 text-muted-foreground transition-transform duration-200",
             !isExpanded && "rotate-180"
           )}
         />
-      </button>
+      </Button>
 
       {/* Items list */}
       {isExpanded && (
@@ -188,6 +190,6 @@ export function ShoppingCategory({
           ))}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

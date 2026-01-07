@@ -388,7 +388,6 @@ export function ShoppingListView() {
         <Button
           variant="outline"
           onClick={handleClearManualItems}
-          className="text-muted-foreground hover:text-foreground"
         >
           <Trash2 className="h-4 w-4 mr-2" />
           Clear manual
@@ -399,7 +398,6 @@ export function ShoppingListView() {
         <Button
           variant="outline"
           onClick={handleToggleHideCompleted}
-          className="text-muted-foreground hover:text-foreground"
         >
           {hideCompleted ? (
             <>
@@ -548,7 +546,7 @@ export function ShoppingListView() {
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <span className="text-sm text-muted-foreground tabular-nums min-w-[40px] text-right">
+        <span className="text-sm text-muted-foreground tabular-nums min-w-10 text-right">
           {progressPercent}%
         </span>
       </div>

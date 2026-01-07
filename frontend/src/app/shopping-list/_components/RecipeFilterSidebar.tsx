@@ -3,6 +3,8 @@
 import { cn } from "@/lib/utils";
 import { getRecipeEmoji } from "@/lib/recipeEmoji";
 import { Separator } from "@/components/ui/separator";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface RecipeInfo {
   name: string;
@@ -50,7 +52,7 @@ export function RecipeFilterSidebar({
   }
 
   return (
-    <div className="rounded-xl bg-card border border-border p-4 flex flex-col max-h-[calc(100vh-8rem)]">
+    <Card className="p-4 flex flex-col max-h-[calc(100vh-8rem)]">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex-shrink-0">
           Recipes in this list
         </h3>
@@ -65,21 +67,19 @@ export function RecipeFilterSidebar({
             return (
               <div key={recipe.name}>
                 {showSeparator && <Separator className="my-2" />}
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => handleRecipeClick(recipe.name)}
                   className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg text-left w-full",
-                    "transition-all duration-150 ease-out",
-                    isActive
-                      ? "bg-primary/15 border border-primary/50"
-                      : "bg-hover border border-transparent hover:translate-x-1"
+                    "flex items-center gap-3 p-3 h-auto w-full justify-start",
+                    isActive && "bg-primary/15 border border-primary/50"
                   )}
                 >
                   {/* Recipe emoji */}
                   <span className="text-xl flex-shrink-0">{emoji}</span>
 
                   {/* Recipe info */}
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 text-left">
                     <div
                       className={cn(
                         "font-medium text-sm truncate",
@@ -88,11 +88,11 @@ export function RecipeFilterSidebar({
                     >
                       {recipe.name}
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-xs text-muted-foreground font-normal">
                       {recipe.collectedCount}/{recipe.itemCount} items
                     </div>
                   </div>
-                </button>
+                </Button>
               </div>
             );
           })}
@@ -101,23 +101,21 @@ export function RecipeFilterSidebar({
           {manualItemCount > 0 && (
             <>
               {recipes.length > 0 && (
-                <div className="h-px bg-border my-2" />
+                <Separator className="my-2" />
               )}
-              <button
+              <Button
+                variant="ghost"
                 onClick={handleManualClick}
                 className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg text-left w-full",
-                  "transition-all duration-150 ease-out",
-                  activeFilter === "__manual__"
-                    ? "bg-secondary/15 border border-secondary/50"
-                    : "bg-hover border border-transparent hover:translate-x-1"
+                  "flex items-center gap-3 p-3 h-auto w-full justify-start",
+                  activeFilter === "__manual__" && "bg-secondary/15 border border-secondary/50"
                 )}
               >
                 {/* Manual emoji */}
                 <span className="text-xl flex-shrink-0">✏️</span>
 
                 {/* Manual info */}
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 text-left">
                   <div
                     className={cn(
                       "font-medium text-sm",
@@ -128,14 +126,14 @@ export function RecipeFilterSidebar({
                   >
                     Manual items
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-xs text-muted-foreground font-normal">
                     {manualCollectedCount}/{manualItemCount} items
                   </div>
                 </div>
-              </button>
+              </Button>
             </>
           )}
         </div>
-    </div>
+    </Card>
   );
 }

@@ -10,6 +10,8 @@ import {
 import { cn } from "@/lib/utils";
 import { formatQuantity } from "@/lib/quantityUtils";
 import type { ShoppingItemResponseDTO, IngredientBreakdownDTO } from "@/types";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface ShoppingItemProps {
   item: ShoppingItemResponseDTO;
@@ -82,23 +84,17 @@ export function ShoppingItem({ item, onToggle, onToggleFlagged, breakdown }: Sho
         onCheckedChange={() => onToggle(item.id)}
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          "transition-all duration-200",
           item.have && "data-[state=checked]:bg-success data-[state=checked]:border-success"
         )}
       />
 
       {/* Quantity badge */}
-      <span
-        className={cn(
-          "text-sm font-semibold px-2.5 py-1 rounded-lg whitespace-nowrap",
-          "transition-all duration-150",
-          item.have
-            ? "bg-muted/50 text-muted-foreground"
-            : "bg-primary/20 text-primary"
-        )}
+      <Badge
+        variant={item.have ? "muted" : "secondary"}
+        className="whitespace-nowrap"
       >
         {quantityBadge}
-      </span>
+      </Badge>
 
       {/* Item content */}
       <div className="flex-1 min-w-0">
@@ -155,11 +151,12 @@ export function ShoppingItem({ item, onToggle, onToggleFlagged, breakdown }: Sho
       </div>
 
       {/* Flag icon - anchored to right */}
-      <button
+      <Button
+        variant="ghost"
+        size="icon-sm"
         onClick={handleFlagClick}
         className={cn(
-          "p-1.5 rounded-md transition-all duration-150 shrink-0",
-          "hover:bg-hover/50",
+          "shrink-0",
           item.flagged
             ? "text-warning"
             : "text-muted-foreground/40 hover:text-muted-foreground"
@@ -167,11 +164,11 @@ export function ShoppingItem({ item, onToggle, onToggleFlagged, breakdown }: Sho
       >
         <Flag
           className={cn(
-            "h-4 w-4 transition-all duration-150",
+            "size-4",
             item.flagged && "fill-warning"
           )}
         />
-      </button>
+      </Button>
     </div>
   );
 }
