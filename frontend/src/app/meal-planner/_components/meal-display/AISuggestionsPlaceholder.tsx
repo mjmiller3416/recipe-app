@@ -2,6 +2,7 @@
 
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 // ============================================================================
 // TYPES
@@ -21,10 +22,9 @@ interface AISuggestionsPlaceholderProps {
  */
 export function AISuggestionsPlaceholder({ className }: AISuggestionsPlaceholderProps) {
   return (
-    <div
+    <Card
       className={cn(
-        "rounded-xl p-4 border",
-        "bg-primary/10 border-primary/20",
+        "p-4 bg-primary/10 border-primary/20",
         className
       )}
     >
@@ -38,6 +38,6 @@ export function AISuggestionsPlaceholder({ className }: AISuggestionsPlaceholder
       <p className="text-sm text-primary/70 leading-relaxed">
         Coming soon! AI-powered suggestions to enhance your meals with perfect pairings and cooking tips.
       </p>
-    </div>
+    </Card>
   );
 }

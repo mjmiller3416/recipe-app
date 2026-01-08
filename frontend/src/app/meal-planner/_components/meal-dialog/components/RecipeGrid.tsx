@@ -1,6 +1,7 @@
 "use client";
 
 import { RecipeCard } from "@/components/recipe/RecipeCard";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { RecipeCardData } from "@/types";
@@ -27,13 +28,13 @@ function RecipeGridSkeleton() {
   return (
     <div className="grid grid-cols-2 gap-3">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 p-3 rounded-lg border">
+        <Card key={i} className="flex items-center gap-3 p-3">
           <Skeleton className="w-16 h-16 rounded-lg flex-shrink-0" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-3 w-1/2" />
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   );
@@ -85,8 +86,7 @@ export function RecipeGrid({
     <div
       className={cn(
         "grid grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto px-1",
-        // Custom scrollbar styling
-        "scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent",
+        "scrollbar-overlay",
         className
       )}
     >

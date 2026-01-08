@@ -3,7 +3,7 @@
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getRecipeEmoji } from "@/lib/recipeEmoji";
-import { Button } from "@/components/ui/button"; // Import your new component
+import { Button } from "@/components/ui/button";
 
 // ============================================================================
 // TYPES
@@ -38,21 +38,16 @@ export function SideChip({ name, category, onClick, className }: SideChipProps) 
     );
   }
 
-  // 2. FILLED SLOT VARIANT (Uses 'outline' variant with background override)
+  // 2. FILLED SLOT VARIANT (Uses 'outline' variant)
   const emoji = getRecipeEmoji(name, category);
 
   return (
     <Button
       variant="outline"
       onClick={onClick}
-      className={cn(
-        // Override the default transparent/gray bg with your specific 'elevated' card color
-        "bg-elevated hover:bg-hover", 
-        "font-normal justify-start", 
-        className
-      )}
+      className={cn("font-normal justify-start", className)}
     >
-      <span className="text-base shrink-0 mr-1">{emoji}</span>
+      <span className="text-base shrink-0">{emoji}</span>
       <span className="truncate">{name}</span>
     </Button>
   );

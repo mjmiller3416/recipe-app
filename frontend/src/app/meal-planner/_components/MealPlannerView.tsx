@@ -305,7 +305,7 @@ export function MealPlannerPage() {
             variant="outline"
             className="gap-2"
           >
-            <ChefHat className="h-4 w-4" strokeWidth={1.5} />
+            <ChefHat strokeWidth={1.5} />
             Create Meal
           </Button>
 

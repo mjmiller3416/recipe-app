@@ -293,12 +293,10 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
         <Button
           variant={showFavoritesOnly ? "default" : "outline"}
           size="sm"
+          shape="pill"
           onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-          className="rounded-full"
         >
-          <Heart
-            className={cn("h-4 w-4", showFavoritesOnly && "fill-current")}
-          />
+          <Heart className={cn(showFavoritesOnly && "fill-current")} />
           Favorites
         </Button>
       </div>

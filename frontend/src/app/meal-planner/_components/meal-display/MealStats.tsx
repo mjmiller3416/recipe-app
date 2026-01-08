@@ -2,6 +2,7 @@
 
 import { Info, Clock, Users, CheckCircle, Calendar, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 // ============================================================================
 // TYPES
@@ -88,7 +89,7 @@ interface StatRowProps {
 function StatRow({ label, value, icon }: StatRowProps) {
   return (
     <div className="flex justify-between items-center">
-      <span className="flex items-center gap-2 text-secondary/70">
+      <span className="flex items-center gap-2 text-muted-foreground">
         {icon}
         {label}
       </span>
@@ -122,15 +123,11 @@ export function MealStats({
   }
 
   return (
-    <div
+    <Card
       className={cn(
-        "rounded-xl p-4 border",
+        "p-4 bg-secondary-surface-alpha border-secondary-border-alpha",
         className
       )}
-      style={{
-        backgroundColor: "var(--secondary-surface-alpha)",
-        borderColor: "var(--secondary-border-alpha)",
-      }}
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-3">
@@ -182,6 +179,6 @@ export function MealStats({
           />
         )}
       </div>
-    </div>
+    </Card>
   );
 }

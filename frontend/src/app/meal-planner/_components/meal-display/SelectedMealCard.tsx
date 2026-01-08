@@ -290,7 +290,7 @@ export function SelectedMealCard({
                 <Button
                   onClick={onRemove}
                   variant="outline"
-                  className="border-destructive text-destructive hover:bg-destructive/10"
+                  className="border-destructive text-destructive"
                 >
                   Remove
                 </Button>

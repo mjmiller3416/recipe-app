@@ -2,7 +2,7 @@
 
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { MealGridCard, MealGridItem } from "./MealGridCard";
 
 // ============================================================================
@@ -28,29 +28,15 @@ interface AddMealCardProps {
 
 function AddMealCard({ onClick }: AddMealCardProps) {
   return (
-    <Card
+    <Button
+      variant="dashed"
       onClick={onClick}
-      tabIndex={0}
-      role="button"
       aria-label="Add a new meal"
-      className={cn(
-        // Match height of meal cards (image h-28 + content ~60px)
-        "h-44 cursor-pointer",
-        "pb-0 pt-0 gap-0",
-        // Dashed border style
-        "border-2 border-dashed border-muted",
-        // Hover effects
-        "hover:border-primary/50 hover:bg-hover",
-        "transition-colors duration-150",
-        // Focus styles
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-      )}
+      className="h-44 flex-col gap-2"
     >
-      <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground hover:text-primary transition-colors">
-        <Plus className="h-6 w-6" strokeWidth={1.5} />
-        <span className="text-sm font-medium">Add Meal</span>
-      </div>
-    </Card>
+      <Plus className="size-6" strokeWidth={1.5} />
+      <span>Add Meal</span>
+    </Button>
   );
 }
 
