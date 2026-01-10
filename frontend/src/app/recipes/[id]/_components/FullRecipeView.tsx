@@ -119,38 +119,38 @@ function RecipeDetailSkeleton() {
       {/* Hero Skeleton */}
       <div className="relative h-[300px] md:h-[400px] bg-elevated" />
 
-      <div className="max-w-5xl mx-auto px-6 -mt-16 relative z-10">
+      <div className="relative z-10 max-w-5xl px-6 mx-auto -mt-16">
         {/* Header Card Skeleton */}
         <Card className="mb-8">
           <CardContent className="p-8">
-            <div className="h-10 w-3/4 bg-hover rounded-lg mb-4" />
+            <div className="w-3/4 h-10 mb-4 rounded-lg bg-hover" />
             <div className="flex gap-3 mb-6">
-              <div className="h-8 w-24 bg-hover rounded-full" />
-              <div className="h-8 w-20 bg-hover rounded-full" />
-              <div className="h-8 w-28 bg-hover rounded-full" />
+              <div className="w-24 h-8 rounded-full bg-hover" />
+              <div className="w-20 h-8 rounded-full bg-hover" />
+              <div className="h-8 rounded-full w-28 bg-hover" />
             </div>
             <div className="flex gap-8">
-              <div className="h-6 w-32 bg-hover rounded" />
-              <div className="h-6 w-32 bg-hover rounded" />
+              <div className="w-32 h-6 rounded bg-hover" />
+              <div className="w-32 h-6 rounded bg-hover" />
             </div>
           </CardContent>
         </Card>
 
         {/* Content Skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           <div className="lg:col-span-4">
-            <div className="h-8 w-32 bg-hover rounded mb-4" />
+            <div className="w-32 h-8 mb-4 rounded bg-hover" />
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="h-6 bg-hover rounded" />
+                <div key={i} className="h-6 rounded bg-hover" />
               ))}
             </div>
           </div>
           <div className="lg:col-span-8">
-            <div className="h-8 w-32 bg-hover rounded mb-4" />
+            <div className="w-32 h-8 mb-4 rounded bg-hover" />
             <div className="space-y-4">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-20 bg-hover rounded" />
+                <div key={i} className="h-20 rounded bg-hover" />
               ))}
             </div>
           </div>
@@ -166,21 +166,21 @@ function RecipeDetailSkeleton() {
 
 function RecipeNotFound() {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-6">
-      <div className="text-center max-w-md">
-        <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-elevated flex items-center justify-center">
-          <ChefHat className="h-12 w-12 text-muted-foreground" />
+    <div className="flex items-center justify-center min-h-screen px-6 bg-background">
+      <div className="max-w-md text-center">
+        <div className="flex items-center justify-center w-24 h-24 mx-auto mb-6 rounded-full bg-elevated">
+          <ChefHat className="w-12 h-12 text-muted-foreground" />
         </div>
-        <h1 className="text-3xl font-bold text-foreground mb-3">
+        <h1 className="mb-3 text-3xl font-bold text-foreground">
           Recipe Not Found
         </h1>
-        <p className="text-muted-foreground mb-8">
+        <p className="mb-8 text-muted-foreground">
           Sorry, we couldn't find the recipe you're looking for. It may have been
           deleted or the link might be incorrect.
         </p>
         <Link href="/recipes">
           <Button className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="w-4 h-4" />
             Back to Recipes
           </Button>
         </Link>
@@ -343,7 +343,7 @@ export function FullRecipeView() {
                 className="gap-2 bg-background/80 backdrop-blur-sm hover:bg-background"
                 onClick={() => router.back()}
               >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="w-4 h-4" />
                 Back
               </Button>
             </div>
@@ -361,52 +361,54 @@ export function FullRecipeView() {
         </div>
 
         {/* Print-Only Layout */}
-        <div className="hidden print:block p-8">
-          {/* Header: Title and Meta */}
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-black uppercase tracking-wide">
-                {recipe.recipe_name}
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                {[recipe.meal_type, recipe.recipe_category, recipe.diet_pref].filter(Boolean).join(" • ")}
-              </p>
+        <div className="hidden p-6 print:block">
+          {/* Wrap entire recipe to prevent page breaks */}
+          <div className="print-recipe-content">
+            {/* Header: Title and Meta */}
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h1 className="text-2xl font-bold tracking-wide text-black uppercase">
+                  {recipe.recipe_name}
+                </h1>
+                <p className="mt-1 text-sm text-gray-600">
+                  {[recipe.meal_type, recipe.recipe_category, recipe.diet_pref].filter(Boolean).join(" • ")}
+                </p>
+              </div>
+              {printOptions.showMeta && (
+                <div className="text-sm text-right text-gray-700">
+                  <div className="flex items-center justify-end gap-1 mb-1">
+                    <span>{recipe.servings || "—"} servings</span>
+                  </div>
+                  <div className="flex items-center justify-end gap-1">
+                    <span>{formatTime(recipe.total_time)}</span>
+                  </div>
+                </div>
+              )}
             </div>
-            {printOptions.showMeta && (
-              <div className="text-right text-sm text-gray-700">
-                <div className="flex items-center justify-end gap-1 mb-1">
-                  <span>{recipe.servings || "—"} servings</span>
-                </div>
-                <div className="flex items-center justify-end gap-1">
-                  <span>{formatTime(recipe.total_time)}</span>
-                </div>
+
+            {/* Recipe Image */}
+            {printOptions.showImage && recipe.reference_image_path && (
+              <div className="mb-4">
+                <img
+                  src={recipe.reference_image_path}
+                  alt={recipe.recipe_name}
+                  className="object-cover w-full rounded-lg max-h-48"
+                />
               </div>
             )}
-          </div>
 
-          {/* Recipe Image */}
-          {printOptions.showImage && recipe.reference_image_path && (
-            <div className="mb-6">
-              <img
-                src={recipe.reference_image_path}
-                alt={recipe.recipe_name}
-                className="w-full max-h-64 object-cover rounded-lg"
-              />
-            </div>
-          )}
-
-          {/* Two Column: Ingredients & Directions */}
-          <div className="flex gap-6">
+            {/* Two Column: Ingredients & Directions */}
+            <div className="flex gap-6">
             {/* Ingredients Column */}
-            <div className="w-1/3 border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <h2 className="text-lg font-bold text-black uppercase tracking-wide mb-3 border-b border-gray-300 pb-2">
+            <div className="w-1/3 p-3 border border-gray-200 rounded-lg bg-gray-50">
+              <h2 className="pb-1 mb-2 text-base font-bold tracking-wide text-black uppercase border-b border-gray-300">
                 Ingredients
               </h2>
               <div className="space-y-1 text-sm">
                 {sortCategoryEntries(Array.from(groupedIngredients.entries())).map(([category, ingredients]) => (
                   <div key={category}>
                     {groupedIngredients.size > 1 && (
-                      <p className="font-semibold text-gray-700 mt-3 mb-1 first:mt-0 text-xs uppercase">
+                      <p className="mt-3 mb-1 text-xs font-semibold text-gray-700 uppercase first:mt-0">
                         {category}
                       </p>
                     )}
@@ -423,13 +425,13 @@ export function FullRecipeView() {
             </div>
 
             {/* Directions Column */}
-            <div className="w-2/3 border border-gray-200 rounded-lg p-4">
-              <h2 className="text-lg font-bold text-black uppercase tracking-wide mb-3 border-b border-gray-300 pb-2">
+            <div className="w-2/3 p-3 border border-gray-200 rounded-lg">
+              <h2 className="pb-1 mb-2 text-base font-bold tracking-wide text-black uppercase border-b border-gray-300">
                 Directions
               </h2>
-              <ol className="space-y-2 text-sm list-decimal list-outside ml-4">
+              <ol className="ml-4 space-y-2 text-sm list-decimal list-outside">
                 {directions.map((step, index) => (
-                  <li key={index} className="text-black leading-relaxed pl-1">
+                  <li key={index} className="pl-1 leading-relaxed text-black">
                     {step}
                   </li>
                 ))}
@@ -437,22 +439,23 @@ export function FullRecipeView() {
             </div>
           </div>
 
-          {/* Chef's Notes */}
-          {printOptions.showNotes && recipe.notes && (
-            <div className="mt-4 border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <h3 className="text-base font-bold text-black mb-2">Chef's Notes</h3>
-              <p className="text-sm text-gray-800">{recipe.notes}</p>
-            </div>
-          )}
+            {/* Chef's Notes */}
+            {printOptions.showNotes && recipe.notes && (
+              <div className="p-3 mt-3 border border-gray-200 rounded-lg bg-gray-50">
+                <h3 className="mb-1 text-sm font-bold text-black">Chef's Notes</h3>
+                <p className="text-xs text-gray-800">{recipe.notes}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Main Content - Hidden for Print */}
-        <div className="max-w-5xl mx-auto px-6 -mt-16 relative z-10 pb-12 print:hidden">
+        <div className="relative z-10 max-w-5xl px-6 pb-12 mx-auto -mt-16 print:hidden">
           {/* Recipe Header Card */}
           <Card className="mb-8 shadow-xl">
             <CardContent className="p-6 md:p-8">
               {/* Recipe Name */}
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4 leading-tight">
+              <h1 className="mb-4 text-3xl font-bold leading-tight md:text-4xl text-foreground">
                 {recipe.recipe_name}
               </h1>
 
@@ -484,8 +487,8 @@ export function FullRecipeView() {
               {/* Quick Stats */}
               <div className="flex flex-wrap items-center gap-6 text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Clock className="h-5 w-5 text-primary" />
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Clock className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Total Time</p>
@@ -496,8 +499,8 @@ export function FullRecipeView() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Users className="h-5 w-5 text-primary" />
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Users className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Servings</p>
@@ -508,8 +511,8 @@ export function FullRecipeView() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <UtensilsCrossed className="h-5 w-5 text-primary" />
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <UtensilsCrossed className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Ingredients</p>
@@ -528,13 +531,13 @@ export function FullRecipeView() {
                   onClick={() => setMealPlanDialogOpen(true)}
                   className="gap-2"
                 >
-                  <CalendarPlus className="h-4 w-4" />
+                  <CalendarPlus className="w-4 h-4" />
                   Add to Meal Plan
                 </Button>
 
                 <Link href={`/recipes/${recipeId}/edit`}>
                   <Button variant="secondary" className="gap-2">
-                    <Edit3 className="h-4 w-4" />
+                    <Edit3 className="w-4 h-4" />
                     Edit Recipe
                   </Button>
                 </Link>
@@ -542,7 +545,7 @@ export function FullRecipeView() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="outline" size="icon" onClick={() => setPrintDialogOpen(true)}>
-                      <Printer className="h-4 w-4" />
+                      <Printer className="w-4 h-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Print Recipe</TooltipContent>
@@ -551,7 +554,7 @@ export function FullRecipeView() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="outline" size="icon">
-                      <Share2 className="h-4 w-4" />
+                      <Share2 className="w-4 h-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Share Recipe</TooltipContent>
@@ -560,7 +563,7 @@ export function FullRecipeView() {
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="outline" size="icon" className="text-muted-foreground hover:text-error hover:border-error">
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
@@ -586,7 +589,7 @@ export function FullRecipeView() {
           </Card>
 
           {/* Two Column Layout: Ingredients & Directions */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 print:block print:space-y-6">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 print:block print:space-y-6">
             {/* Ingredients Column */}
             <div className="lg:col-span-4 print:w-full">
               <Card className="sticky top-6 print:static print:shadow-none print:border print:border-gray-200">
@@ -594,8 +597,8 @@ export function FullRecipeView() {
                   {/* Section Header */}
                   <div className="flex items-center justify-between mb-4 print:mb-2">
                     <div className="flex items-center gap-3 print:gap-0">
-                      <div className="p-2 bg-secondary/10 rounded-lg print:hidden">
-                        <BookOpen className="h-5 w-5 text-secondary" />
+                      <div className="p-2 rounded-lg bg-secondary/10 print:hidden">
+                        <BookOpen className="w-5 h-5 text-secondary" />
                       </div>
                       <h2 className="text-xl font-bold text-foreground print:text-lg print:text-black">
                         Ingredients
@@ -612,7 +615,7 @@ export function FullRecipeView() {
                   {ingredientProgress > 0 && (
                     <div className="h-1.5 bg-elevated rounded-full overflow-hidden mb-4 print:hidden">
                       <div
-                        className="h-full bg-secondary transition-all duration-300"
+                        className="h-full transition-all duration-300 bg-secondary"
                         style={{ width: `${ingredientProgress}%` }}
                       />
                     </div>
@@ -624,7 +627,7 @@ export function FullRecipeView() {
                       {sortCategoryEntries(Array.from(groupedIngredients.entries())).map(([category, ingredients]) => (
                         <div key={category}>
                           {groupedIngredients.size > 1 && (
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-4 mb-2 first:mt-0">
+                            <p className="mt-4 mb-2 text-xs font-semibold tracking-wider uppercase text-muted-foreground first:mt-0">
                               {category}
                             </p>
                           )}
@@ -640,7 +643,7 @@ export function FullRecipeView() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground text-center py-8">
+                    <p className="py-8 text-center text-muted-foreground">
                       No ingredients listed
                     </p>
                   )}
@@ -655,8 +658,8 @@ export function FullRecipeView() {
                   {/* Section Header */}
                   <div className="flex items-center justify-between mb-4 print:mb-2">
                     <div className="flex items-center gap-3 print:gap-0">
-                      <div className="p-2 bg-primary/10 rounded-lg print:hidden">
-                        <UtensilsCrossed className="h-5 w-5 text-primary" />
+                      <div className="p-2 rounded-lg bg-primary/10 print:hidden">
+                        <UtensilsCrossed className="w-5 h-5 text-primary" />
                       </div>
                       <h2 className="text-xl font-bold text-foreground print:text-lg print:text-black">
                         Directions
@@ -673,7 +676,7 @@ export function FullRecipeView() {
                   {stepProgress > 0 && (
                     <div className="h-1.5 bg-elevated rounded-full overflow-hidden mb-4 print:hidden">
                       <div
-                        className="h-full bg-primary transition-all duration-300"
+                        className="h-full transition-all duration-300 bg-primary"
                         style={{ width: `${stepProgress}%` }}
                       />
                     </div>
@@ -693,7 +696,7 @@ export function FullRecipeView() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground text-center py-8">
+                    <p className="py-8 text-center text-muted-foreground">
                       No directions available
                     </p>
                   )}
@@ -705,14 +708,14 @@ export function FullRecipeView() {
                 <Card className="mt-8 border-warning/30 bg-warning/5 print:mt-4 print:border print:border-gray-300 print:bg-gray-50 print:shadow-none">
                   <CardContent className="p-6 print:p-4">
                     <div className="flex items-start gap-4 print:gap-2">
-                      <div className="p-2 bg-warning/20 rounded-lg flex-shrink-0 print:hidden">
-                        <Lightbulb className="h-5 w-5 text-warning" />
+                      <div className="flex-shrink-0 p-2 rounded-lg bg-warning/20 print:hidden">
+                        <Lightbulb className="w-5 h-5 text-warning" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-foreground mb-2 print:text-base print:text-black print:mb-1">
+                        <h3 className="mb-2 text-lg font-bold text-foreground print:text-base print:text-black print:mb-1">
                           Chef's Notes
                         </h3>
-                        <p className="text-foreground/80 leading-relaxed print:text-sm print:text-black">
+                        <p className="leading-relaxed text-foreground/80 print:text-sm print:text-black">
                           {recipe.notes}
                         </p>
                       </div>
@@ -879,6 +882,12 @@ export function FullRecipeView() {
           .hidden.print\\:block {
             page-break-inside: avoid;
             break-inside: avoid;
+          }
+
+          /* Keep image and content together - prevents page break between them */
+          .print-recipe-content {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
 
           /* Keep content together */

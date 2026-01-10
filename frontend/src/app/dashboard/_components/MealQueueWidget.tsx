@@ -137,19 +137,19 @@ export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProp
   const hasEntries = activeEntries.length > 0;
 
   return (
-    <div className="h-full flex flex-col bg-card rounded-xl border border-border shadow-raised pt-5 px-5 pb-3 overflow-hidden">
+    <div className="flex flex-col h-full px-5 pt-5 pb-3 overflow-hidden border bg-card rounded-xl border-border shadow-raised">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <UtensilsCrossed className="h-5 w-5 text-secondary" />
+          <UtensilsCrossed className="w-5 h-5 text-secondary" />
           <h2 className="text-lg font-semibold text-foreground">Meal Queue</h2>
         </div>
         <Link
           href="/meal-planner"
-          className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors duration-150"
+          className="flex items-center gap-1 text-sm transition-colors duration-150 text-primary hover:text-primary/80"
         >
           View All
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
 
@@ -158,20 +158,20 @@ export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProp
         <div className="flex-1 space-y-2">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="flex items-center gap-3 p-3">
-              <Skeleton className="h-5 w-5" />
-              <Skeleton className="h-12 w-12 rounded-lg" />
+              <Skeleton className="w-5 h-5" />
+              <Skeleton className="w-12 h-12 rounded-lg" />
               <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-1/3" />
+                <Skeleton className="w-3/4 h-4" />
+                <Skeleton className="w-1/3 h-3" />
               </div>
             </div>
           ))}
         </div>
       ) : !hasEntries ? (
-        <div className="flex-1 flex items-center justify-center text-center text-muted-foreground">
+        <div className="flex items-center justify-center flex-1 text-center text-muted-foreground">
           <div>
             <p>No meals in queue</p>
-            <p className="text-sm mt-1">Add some meals to get started!</p>
+            <p className="mt-1 text-sm">Add some meals to get started!</p>
           </div>
         </div>
       ) : (
@@ -210,7 +210,7 @@ export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProp
       {/* Add Meal Footer */}
       <Link href="/meal-planner?create=true" className="block mt-4">
         <Button className="w-full interactive-subtle">
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="w-4 h-4 mr-2" />
           Add Meal
         </Button>
       </Link>
