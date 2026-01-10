@@ -4,16 +4,6 @@
 
 ## 🟠 High Priority
 
-### #47 [Bug Report] Print Layout Separates Image and Recipe
-- **Location**: `src/app/recipes/[id]/_components/` (print styles)
-- **Issue**: Printing is separating the picture and the recipe on two different pages.
-- **Solution**: Adjust print CSS to keep the recipe image and content together on the same page using `page-break-inside: avoid` or similar techniques.
-
-### #46 [Bug Report] Print Layout Issue When Deselecting Chef's Notes
-- **Location**: `src/app/recipes/[id]/_components/` (print preview)
-- **Issue**: When printing a recipe with chef's notes deselected, it separates the picture and the recipe on two different pages.
-- **Solution**: Review print preview CSS when chef's notes toggle is off — ensure layout doesn't create a page break between image and content.
-
 ### 1. Re-enable Ingredient Form Validation
 - **Location**: `src/app/recipes/add/page.tsx` (lines 174-176)
 - **Components affected**: `QuantityInput.tsx`, `IngredientRow.tsx`
@@ -72,6 +62,16 @@
 - **Solution**: Add `transition-transform duration-500 group-hover:scale-105` to the `RecipeCardImage` component (line 86), matching the pattern used in `MainDishCard.tsx`.
 
 ## ✅ Completed
+
+### #47 [Bug Report] Print Layout Separates Image and Recipe
+- **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx` (print styles)
+- **Issue**: Printing is separating the picture and the recipe on two different pages.
+- **Solution**: Added `page-break-inside: avoid` CSS rule to the print layout container to keep all recipe content together on one page.
+
+### #46 [Bug Report] Print Layout Issue When Deselecting Chef's Notes
+- **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx` (print preview)
+- **Issue**: When printing a recipe with chef's notes deselected, it separates the picture and the recipe on two different pages.
+- **Solution**: Fixed by the same CSS rule as #47 — the print container now prevents page breaks within the entire recipe layout.
 
 ### #47 [Bug Report] Flagged Shopping Items Disappear After Meal Plan Changes
 - **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`

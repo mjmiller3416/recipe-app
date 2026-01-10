@@ -20,16 +20,12 @@ async def get_cooking_tip() -> CookingTipResponseDTO:
         service = get_cooking_tip_service()
         result = service.generate_tip()
 
-        if not result["success"]:
+        if not result.success:
             raise HTTPException(
-                status_code=500, detail=result.get("error", "Tip generation failed")
+                status_code=500, detail=result.error or "Tip generation failed"
             )
 
-        return CookingTipResponseDTO(
-            success=True,
-            tip=result["tip"],
-            error=None,
-        )
+        return result
 
     except HTTPException:
         raise

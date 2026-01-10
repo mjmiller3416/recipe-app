@@ -3,6 +3,7 @@
 // ============================================
 const CHANGELOG_MD = `
 ## 2026-01-10 - Bug Fixes
+- Print layout now keeps the recipe image and content together on the same page
 - Flagged shopping items now stay flagged when you make changes to your meal plan
 - Chef's Tips on the Dashboard now shows a wider variety of cooking tips instead of repeating the same ones
 

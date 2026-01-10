@@ -875,6 +875,12 @@ export function FullRecipeView() {
             break-after: avoid;
           }
 
+          /* Keep entire recipe together on one page */
+          .hidden.print\\:block {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+
           /* Keep content together */
           .print\\:border {
             page-break-inside: avoid;
