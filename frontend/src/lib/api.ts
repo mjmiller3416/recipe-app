@@ -690,7 +690,7 @@ export const imageGenerationApi = {
     recipeName: string,
     customPrompt?: string
   ): Promise<ImageGenerationResponseDTO> =>
-    fetchApi<ImageGenerationResponseDTO>("/api/generate-image", {
+    fetchApi<ImageGenerationResponseDTO>("/api/ai/image-generation", {
       method: "POST",
       body: JSON.stringify({
         recipe_name: recipeName,
@@ -709,7 +709,7 @@ export const cookingTipApi = {
    * @returns Response with cooking tip on success
    */
   getTip: (): Promise<CookingTipResponseDTO> =>
-    fetchApi<CookingTipResponseDTO>("/api/cooking-tip"),
+    fetchApi<CookingTipResponseDTO>("/api/ai/cooking-tip"),
 };
 
 // ============================================================================
@@ -727,7 +727,7 @@ export const mealGenieApi = {
     message: string,
     conversationHistory?: MealGenieMessage[]
   ): Promise<MealGenieResponseDTO> =>
-    fetchApi<MealGenieResponseDTO>("/api/meal-genie/ask", {
+    fetchApi<MealGenieResponseDTO>("/api/ai/meal-genie/ask", {
       method: "POST",
       body: JSON.stringify({
         message,

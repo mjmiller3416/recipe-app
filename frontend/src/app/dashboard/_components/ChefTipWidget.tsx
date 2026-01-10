@@ -18,6 +18,8 @@ export function ChefTipWidget() {
     try {
       const data = await cookingTipApi.getTip();
       if (data.success && data.tip) {
+        // Debug logging for tip consistency testing
+        console.log("[ChefTip]", new Date().toLocaleTimeString(), "Received:", data.tip);
         setTip(data.tip);
       }
     } catch (error) {

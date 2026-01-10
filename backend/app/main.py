@@ -9,7 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-from app.api import cooking_tips, dashboard, data_management, feedback, image_generation, meal_genie, meals, planner, recipes, shopping, ingredients, upload, unit_conversions
+from app.api import dashboard, data_management, feedback, meals, planner, recipes, shopping, ingredients, upload, unit_conversions
+from app.api.ai import cooking_tips_router, meal_genie_router, image_generation_router
 
 # Create FastAPI app
 app = FastAPI(
@@ -39,11 +40,13 @@ app.include_router(ingredients.router, prefix="/api/ingredients", tags=["ingredi
 app.include_router(data_management.router, prefix="/api/data-management", tags=["data-management"])
 app.include_router(upload.router, prefix="/api/upload", tags=["upload"])
 app.include_router(feedback.router, prefix="/api/feedback", tags=["feedback"])
-app.include_router(image_generation.router, prefix="/api/generate-image", tags=["image-generation"])
 app.include_router(unit_conversions.router, prefix="/api/unit-conversions", tags=["unit-conversions"])
-app.include_router(cooking_tips.router, prefix="/api/cooking-tip", tags=["cooking-tips"])
-app.include_router(meal_genie.router, prefix="/api/meal-genie", tags=["meal-genie"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
+
+# AI-powered services (consolidated under /api/ai/)
+app.include_router(cooking_tips_router, prefix="/api/ai/cooking-tip", tags=["ai", "cooking-tips"])
+app.include_router(meal_genie_router, prefix="/api/ai/meal-genie", tags=["ai", "meal-genie"])
+app.include_router(image_generation_router, prefix="/api/ai/image-generation", tags=["ai", "image-generation"])
 
 
 @app.get("/")

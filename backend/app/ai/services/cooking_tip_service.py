@@ -1,11 +1,52 @@
 """Service for generating cooking tips using Gemini."""
 
+import logging
 import os
+import random
 from typing import Optional
 from dotenv import load_dotenv
 
+from app.ai.config.cooking_tips_config import (
+    TIP_CATEGORIES,
+    TIP_PROMPT_TEMPLATE,
+    MODEL_NAME,
+    TEMPERATURE,
+    MAX_RECENT_CATEGORIES,
+    API_KEY_ENV_VAR,
+    API_KEY_ENV_VAR_ALT,
+)
+
+logger = logging.getLogger(__name__)
+
 # Load environment variables
 load_dotenv()
+
+# Track recently used categories to prevent repetition
+_recent_categories: list[str] = []
+
+
+def _get_next_category() -> str:
+    """Get a random category that hasn't been used recently."""
+    global _recent_categories
+
+    # Get categories not recently used
+    available = [c for c in TIP_CATEGORIES if c not in _recent_categories]
+
+    # If we've exhausted all categories, reset the recent list
+    if not available:
+        _recent_categories = []
+        available = TIP_CATEGORIES.copy()
+
+    # Pick a random category from available ones
+    category = random.choice(available)
+
+    # Track it as recently used
+    _recent_categories.append(category)
+    if len(_recent_categories) > MAX_RECENT_CATEGORIES:
+        _recent_categories.pop(0)
+
+    return category
+
 
 # Lazy import to avoid issues if package not installed
 _genai_client = None
@@ -18,22 +59,9 @@ def _get_genai_client():
         from google import genai
 
         # Use dedicated key if set, otherwise fall back to shared key
-        api_key = os.getenv("GEMINI_COOKING_TIP_API_KEY") or os.getenv("GEMINI_TIP_API_KEY")
+        api_key = os.getenv(API_KEY_ENV_VAR_ALT) or os.getenv(API_KEY_ENV_VAR)
         _genai_client = genai.Client(api_key=api_key)
     return _genai_client
-
-
-# Prompt for generating cooking tips
-TIP_PROMPT = """Generate a single, helpful cooking tip. The tip should be:
-- Practical and actionable
-- About 1-2 sentences long
-- Related to cooking techniques, ingredient handling, food safety, kitchen efficiency, or flavor enhancement
-- Suitable for home cooks of all skill levels
-
-Just provide the tip text directly, no prefix like "Tip:" or bullet points."""
-
-# Model configuration
-MODEL_NAME = "gemini-2.0-flash"
 
 
 class CookingTipService:
@@ -42,10 +70,10 @@ class CookingTipService:
     def __init__(self):
         """Initialize the cooking tip service."""
         # Use dedicated key if set, otherwise fall back to shared key
-        self.api_key = os.getenv("GEMINI_TIP_API_KEY")
+        self.api_key = os.getenv(API_KEY_ENV_VAR)
         if not self.api_key:
             raise ValueError(
-                "GEMINI_TIP_API_KEY environment variable is not set"
+                f"{API_KEY_ENV_VAR} environment variable is not set"
             )
 
     def generate_tip(self) -> dict:
@@ -56,12 +84,21 @@ class CookingTipService:
             dict with 'success', 'tip', and optional 'error'
         """
         try:
+            from google.genai import types
+
             client = _get_genai_client()
 
-            # Generate the tip
+            # Pick a category that hasn't been used recently
+            category = _get_next_category()
+            prompt = TIP_PROMPT_TEMPLATE.format(category=category)
+
+            # Generate the tip with high temperature for variety
             response = client.models.generate_content(
                 model=MODEL_NAME,
-                contents=[TIP_PROMPT],
+                contents=[prompt],
+                config=types.GenerateContentConfig(
+                    temperature=TEMPERATURE,
+                ),
             )
 
             # Extract the text from the response
@@ -70,9 +107,12 @@ class CookingTipService:
                     if candidate.content and candidate.content.parts:
                         for part in candidate.content.parts:
                             if hasattr(part, "text") and part.text:
+                                tip_text = part.text.strip()
+                                # Debug logging for tip consistency testing
+                                logger.info(f"[ChefTip] Category: {category} | Generated: {tip_text[:60]}...")
                                 return {
                                     "success": True,
-                                    "tip": part.text.strip(),
+                                    "tip": tip_text,
                                     "error": None,
                                 }
 

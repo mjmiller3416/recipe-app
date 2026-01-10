@@ -24,6 +24,7 @@ class ShoppingState(Base):
     quantity: Mapped[float] = mapped_column(Float, nullable=False)
     unit: Mapped[str] = mapped_column(String(50), nullable=False)
     checked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    flagged: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # ── String Representation ───────────────────────────────────────────────────────────────────────────────
     def __repr__(self) -> str:

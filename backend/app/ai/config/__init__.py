@@ -1,0 +1,46 @@
+"""Configuration modules for AI services."""
+
+from .cooking_tips_config import (
+    TIP_CATEGORIES,
+    TIP_PROMPT_TEMPLATE,
+    MODEL_NAME as COOKING_TIP_MODEL,
+    TEMPERATURE as COOKING_TIP_TEMPERATURE,
+    MAX_RECENT_CATEGORIES,
+    API_KEY_ENV_VAR as COOKING_TIP_API_KEY_ENV,
+)
+from .image_generation_config import (
+    PROMPT_TEMPLATE as IMAGE_PROMPT_TEMPLATE,
+    MODEL_NAME as IMAGE_MODEL,
+    ASPECT_RATIO as IMAGE_ASPECT_RATIO,
+    API_KEY_ENV_VAR as IMAGE_API_KEY_ENV,
+)
+from .meal_genie_config import (
+    BASE_SYSTEM_PROMPT,
+    TOOLS,
+    MODEL_NAME as MEAL_GENIE_MODEL,
+    API_KEY_ENV_VAR as MEAL_GENIE_API_KEY_ENV,
+    get_system_prompt,
+    get_enabled_tools,
+)
+
+__all__ = [
+    # Cooking Tips
+    "TIP_CATEGORIES",
+    "TIP_PROMPT_TEMPLATE",
+    "COOKING_TIP_MODEL",
+    "COOKING_TIP_TEMPERATURE",
+    "MAX_RECENT_CATEGORIES",
+    "COOKING_TIP_API_KEY_ENV",
+    # Image Generation
+    "IMAGE_PROMPT_TEMPLATE",
+    "IMAGE_MODEL",
+    "IMAGE_ASPECT_RATIO",
+    "IMAGE_API_KEY_ENV",
+    # Meal Genie
+    "BASE_SYSTEM_PROMPT",
+    "TOOLS",
+    "MEAL_GENIE_MODEL",
+    "MEAL_GENIE_API_KEY_ENV",
+    "get_system_prompt",
+    "get_enabled_tools",
+]

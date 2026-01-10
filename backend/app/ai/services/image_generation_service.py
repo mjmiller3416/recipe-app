@@ -5,6 +5,12 @@ import base64
 from typing import Optional
 from dotenv import load_dotenv
 
+from app.ai.config.image_generation_config import (
+    PROMPT_TEMPLATE,
+    MODEL_NAME,
+    API_KEY_ENV_VAR,
+)
+
 # Load environment variables
 load_dotenv()
 
@@ -18,24 +24,9 @@ def _get_genai_client():
     if _genai_client is None:
         from google import genai
 
-        api_key = os.getenv("GEMINI_IMAGE_API_KEY")
+        api_key = os.getenv(API_KEY_ENV_VAR)
         _genai_client = genai.Client(api_key=api_key)
     return _genai_client
-
-
-# Prompt template for food photography
-PROMPT_TEMPLATE = (
-    "A professional food photograph of {recipe_name} captured at a 45-degree "
-    "angle. The dish is placed on a rustic wooden table with cutting board, "
-    "shallow depth of field, steam rising, scattered herbs and seasonings, "
-    "complementary ingredients as props in soft-focus background, "
-    "cozy home kitchen atmosphere, appetizing, high detail, "
-    "no people, no hands, square format"
-)
-
-# Model configuration
-MODEL_NAME = "gemini-2.5-flash-image"
-ASPECT_RATIO = "1:1"  # Square format
 
 
 class ImageGenerationService:
@@ -43,9 +34,9 @@ class ImageGenerationService:
 
     def __init__(self):
         """Initialize the image generation service."""
-        self.api_key = os.getenv("GEMINI_IMAGE_API_KEY")
+        self.api_key = os.getenv(API_KEY_ENV_VAR)
         if not self.api_key:
-            raise ValueError("GEMINI_IMAGE_API_KEY environment variable is not set")
+            raise ValueError(f"{API_KEY_ENV_VAR} environment variable is not set")
 
     def generate_recipe_image(
         self, recipe_name: str, custom_prompt: str = None

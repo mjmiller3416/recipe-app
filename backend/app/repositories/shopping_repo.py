@@ -412,7 +412,8 @@ class ShoppingRepo:
             key: str,
             quantity: float,
             unit: str,
-            checked: bool
+            checked: bool,
+            flagged: bool = False
         ) -> ShoppingState:
         """
         Save or update shopping state.
@@ -422,6 +423,7 @@ class ShoppingRepo:
             quantity (float): Quantity.
             unit (str): Unit.
             checked (bool): Checked status.
+            flagged (bool): Flagged status.
 
         Returns:
             ShoppingState: Saved shopping state.
@@ -436,6 +438,7 @@ class ShoppingRepo:
             existing_state.quantity = quantity
             existing_state.unit = unit
             existing_state.checked = checked
+            existing_state.flagged = flagged
             # flush so updates land before we refresh/read them back
             self.session.flush()
             state = existing_state
@@ -444,7 +447,8 @@ class ShoppingRepo:
                 key=normalized_key,
                 quantity=quantity,
                 unit=unit,
-                checked=checked
+                checked=checked,
+                flagged=flagged
             )
             self.session.add(state)
             # flush to assign primary key and persist the new state

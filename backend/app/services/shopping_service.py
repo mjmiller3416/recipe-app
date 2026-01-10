@@ -127,13 +127,16 @@ class ShoppingService:
                             item.have = False
                         else:
                             item.have = saved_state.checked
+                        # Always restore flagged status (flags are user preference, not quantity-dependent)
+                        item.flagged = saved_state.flagged
 
             # Update saved state quantities to match current quantities
             # This ensures future regenerations compare against accurate values
+            # Save state for items that are checked OR flagged
             for item in recipe_items:
-                if item.state_key and item.have:
+                if item.state_key and (item.have or item.flagged):
                     self.shopping_repo.save_shopping_state(
-                        item.state_key, item.quantity, item.unit or "", item.have
+                        item.state_key, item.quantity, item.unit or "", item.have, item.flagged
                     )
 
             # save new items
@@ -377,7 +380,7 @@ class ShoppingService:
                 # update state if this is a recipe item
                 if item.state_key and item.source == "recipe":
                     self.shopping_repo.save_shopping_state(
-                        item.state_key, item.quantity, item.unit or "", item.have
+                        item.state_key, item.quantity, item.unit or "", item.have, item.flagged
                     )
 
             updated_item = self.shopping_repo.update_item(item)
@@ -477,7 +480,7 @@ class ShoppingService:
             # update state for recipe items
             if item.state_key and item.source == "recipe":
                 self.shopping_repo.save_shopping_state(
-                    item.state_key, item.quantity, item.unit or "", item.have
+                    item.state_key, item.quantity, item.unit or "", item.have, item.flagged
                 )
 
             self.shopping_repo.update_item(item)
@@ -504,6 +507,13 @@ class ShoppingService:
                 return None
 
             item.flagged = not item.flagged
+
+            # persist flagged state for recipe items so it survives regeneration
+            if item.state_key and item.source == "recipe":
+                self.shopping_repo.save_shopping_state(
+                    item.state_key, item.quantity, item.unit or "", item.have, item.flagged
+                )
+
             self.shopping_repo.update_item(item)
             self.session.commit()
             return item.flagged
@@ -547,7 +557,7 @@ class ShoppingService:
                 # update state for recipe items
                 if item.state_key and item.source == "recipe":
                     self.shopping_repo.save_shopping_state(
-                        item.state_key, item.quantity, item.unit or "", item.have
+                        item.state_key, item.quantity, item.unit or "", item.have, item.flagged
                     )
                 self.shopping_repo.update_item(item)
                 updated_count += 1

@@ -2,11 +2,11 @@
 
 from fastapi import APIRouter, HTTPException
 
-from app.dtos.image_generation_dtos import (
+from app.ai.dtos import (
     ImageGenerationRequestDTO,
     ImageGenerationResponseDTO,
 )
-from app.services.image_generation_service import get_image_generation_service
+from app.ai.services import get_image_generation_service
 
 router = APIRouter()
 

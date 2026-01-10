@@ -2,6 +2,10 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-01-10 - Bug Fixes
+- Flagged shopping items now stay flagged when you make changes to your meal plan
+- Chef's Tips on the Dashboard now shows a wider variety of cooking tips instead of repeating the same ones
+
 ## 2026-01-04 - Bug Fixes
 - Fixed issue with adding meals to the planner from the Recipe Browser
 

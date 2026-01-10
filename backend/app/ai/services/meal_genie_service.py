@@ -4,7 +4,12 @@ import os
 from typing import Optional, List
 from dotenv import load_dotenv
 
-from app.dtos.meal_genie_dtos import MealGenieMessageDTO
+from app.ai.dtos.meal_genie_dtos import MealGenieMessageDTO
+from app.ai.config.meal_genie_config import (
+    MODEL_NAME,
+    API_KEY_ENV_VAR,
+    get_system_prompt,
+)
 
 # Load environment variables
 load_dotenv()
@@ -19,58 +24,9 @@ def _get_genai_client():
     if _genai_client is None:
         from google import genai
 
-        api_key = os.getenv("GEMINI_ASSISTANT_API_KEY")
+        api_key = os.getenv(API_KEY_ENV_VAR)
         _genai_client = genai.Client(api_key=api_key)
     return _genai_client
-
-
-# System prompt for Meal Genie Tier 1
-SYSTEM_PROMPT = """
-You are **Meal Genie** 🧞‍♂️ — a warm, clever cooking spirit living inside this app.
-Your job: give practical kitchen help with a pinch of magic and a lot of real-world usefulness.
-
-You help with:
-- Cooking techniques and tips
-- Ingredient substitutions
-- Recipe suggestions and meal ideas
-- Food safety questions
-- Kitchen troubleshooting (sauces broke, meat dry, rice mushy, etc.)
-
-STYLE + TONE
-- Sound like a friendly kitchen mentor with light genie flair (sparingly).
-- Be concise: usually 2–4 sentences. If the user asks for steps, use a short numbered list (max 6 steps).
-- Prefer clarity over poetry. No long stories, no roleplay scenes.
-- Use occasional genie phrases like "Your wish is my whisk" or "*poof*" — but max once per response, and only on first reply.
-- No emoji spam (0–1 emoji total, optional).
-
-HOW TO ANSWER
-1) Start with the most helpful direct answer.
-2) Give one "do this next" action or pro tip.
-3) Only ask a clarifying question if you truly need more info. Never repeat a question the user already answered.
-
-CONVERSATION AWARENESS (CRITICAL)
-- Pay close attention to what the user has already told you in this conversation.
-- If they said "chicken" — don't ask what protein. If they said "30 minutes" — don't ask about time.
-- Build on what you know. Each reply should feel like a natural continuation, not a restart.
-- When you have enough info, just give the answer — no need to keep asking questions.
-
-COOKING INTELLIGENCE RULES
-- If recommending substitutions, include a quick "best match" + "if you don't have that" backup.
-- Default to common pantry assumptions only when reasonable; otherwise ask a clarifying question.
-- When giving recipe ideas, offer 2–3 options with brief descriptions. Vary your formatting — don't always use numbered lists.
-
-FOOD SAFETY
-- Be confident but careful. For high-risk foods (chicken, seafood, leftovers), include safe temps/time guidance.
-- If user asks something risky, prioritize safety over brevity.
-
-LIMITATIONS
-- You do NOT have access to the user's recipes, meal plans, favorites, or shopping lists.
-- If asked to read personal data, say: "That feature isn't connected yet — coming soon." Then offer a workaround:
-  ask them to paste the recipe / list ingredients / describe their goal.
-"""
-
-# Model configuration
-MODEL_NAME = "gemini-3-flash-preview"
 
 
 class MealGenieService:
@@ -78,14 +34,15 @@ class MealGenieService:
 
     def __init__(self):
         """Initialize the Meal Genie service."""
-        self.api_key = os.getenv("GEMINI_ASSISTANT_API_KEY")
+        self.api_key = os.getenv(API_KEY_ENV_VAR)
         if not self.api_key:
-            raise ValueError("GEMINI_ASSISTANT_API_KEY environment variable is not set")
+            raise ValueError(f"{API_KEY_ENV_VAR} environment variable is not set")
 
     def ask(
         self,
         message: str,
         conversation_history: Optional[List[MealGenieMessageDTO]] = None,
+        tool: str = "chat",
     ) -> dict:
         """
         Send a message to Meal Genie and get a response.
@@ -93,6 +50,7 @@ class MealGenieService:
         Args:
             message: The user's message
             conversation_history: Optional list of previous messages for context
+            tool: The tool to use (default: "chat", future: "recipe_search", etc.)
 
         Returns:
             dict with 'success', 'response', and optional 'error'
@@ -100,11 +58,14 @@ class MealGenieService:
         try:
             client = _get_genai_client()
 
+            # Get the system prompt for the specified tool
+            system_prompt = get_system_prompt(tool)
+
             # Build the conversation contents
             contents = []
 
             # Add system prompt as first message
-            contents.append({"role": "user", "parts": [{"text": SYSTEM_PROMPT}]})
+            contents.append({"role": "user", "parts": [{"text": system_prompt}]})
             contents.append(
                 {
                     "role": "model",
