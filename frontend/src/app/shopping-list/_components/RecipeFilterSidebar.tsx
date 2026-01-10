@@ -57,7 +57,7 @@ export function RecipeFilterSidebar({
           Recipes in this list
         </h3>
 
-        <div className="flex flex-col gap-2 overflow-y-auto overflow-x-hidden flex-1">
+        <div className="flex flex-col gap-2 overflow-y-auto overflow-x-hidden flex-1 px-1 -mx-1">
           {recipes.map((recipe, index) => {
             const isActive = activeFilter === recipe.name;
             const emoji = getRecipeEmoji(recipe.name);
@@ -71,7 +71,7 @@ export function RecipeFilterSidebar({
                   variant="ghost"
                   onClick={() => handleRecipeClick(recipe.name)}
                   className={cn(
-                    "flex items-center gap-3 p-3 h-auto w-full justify-start",
+                    "flex items-center gap-3 p-3 h-auto w-full justify-start bg-accent transition-all hover:scale-[1.02] hover:bg-accent dark:hover:bg-accent",
                     isActive && "bg-primary/15 border border-primary/50"
                   )}
                 >
@@ -107,7 +107,7 @@ export function RecipeFilterSidebar({
                 variant="ghost"
                 onClick={handleManualClick}
                 className={cn(
-                  "flex items-center gap-3 p-3 h-auto w-full justify-start",
+                  "flex items-center gap-3 p-3 h-auto w-full justify-start bg-accent transition-all hover:scale-[1.02] hover:bg-accent dark:hover:bg-accent",
                   activeFilter === "__manual__" && "bg-secondary/15 border border-secondary/50"
                 )}
               >

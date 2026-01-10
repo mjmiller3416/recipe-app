@@ -90,8 +90,11 @@ export function ShoppingItem({ item, onToggle, onToggleFlagged, breakdown }: Sho
 
       {/* Quantity badge */}
       <Badge
-        variant={item.have ? "muted" : "secondary"}
-        className="whitespace-nowrap"
+        variant={item.have ? "muted" : "outline"}
+        className={cn(
+          "whitespace-nowrap",
+          !item.have && "bg-primary/20 text-primary border-transparent"
+        )}
       >
         {quantityBadge}
       </Badge>

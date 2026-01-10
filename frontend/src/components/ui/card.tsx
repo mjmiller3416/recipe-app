@@ -9,9 +9,9 @@ const cardVariants = cva(
   {
     variants: {
       size: {
-        sm: "gap-4 pt-1.5 pb-3",
-        default: "gap-6 pt-2 pb-4",
-        lg: "gap-8 pt-3 pb-6",
+        sm: "",
+        default: "",
+        lg: "",
       },
       interactive: {
         true: "cursor-pointer hover:border-border-strong hover:shadow-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.99]",

@@ -42,8 +42,7 @@ const badgeVariants = cva(
         ],
         // Additional semantic variants using design tokens
         success: [
-          "border-transparent bg-success text-white",
-          "hover:bg-success/90 active:bg-success/80",
+          "border-transparent bg-success/20 text-white",
         ],
         warning: [
           "border-transparent bg-warning text-white",

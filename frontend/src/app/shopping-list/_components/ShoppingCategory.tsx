@@ -129,7 +129,7 @@ export function ShoppingCategory({
   return (
     <Card
       className={cn(
-        "overflow-hidden",
+        "overflow-hidden p-0",
         isComplete && "bg-success/5 border-success/40"
       )}
     >
@@ -149,7 +149,7 @@ export function ShoppingCategory({
               {category || "Other"}
             </h3>
             {isComplete && (
-              <Badge variant="success" size="sm">
+              <Badge variant="success" size="sm" className="text-success font-semibold" >
                 Complete
               </Badge>
             )}
