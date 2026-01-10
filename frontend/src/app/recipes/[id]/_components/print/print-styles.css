@@ -1,0 +1,159 @@
+/**
+ * Print-specific styles for recipe printout.
+ * Converts web layout to printer-friendly format.
+ */
+
+@media print {
+  /* Page setup */
+  @page {
+    margin: 0.5in;
+    size: letter;
+  }
+
+  /* Base styles */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide interactive/web-only elements */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .hidden.print\:block {
+    display: block !important;
+  }
+
+  /* Reset positioning */
+  .print\:static {
+    position: static !important;
+  }
+
+  /* Remove shadows */
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+
+  /* Border utilities */
+  .print\:border-0 {
+    border: none !important;
+  }
+
+  .print\:border {
+    border-width: 1px !important;
+  }
+
+  .print\:border-gray-200 {
+    border-color: #e5e7eb !important;
+  }
+
+  .print\:border-gray-300 {
+    border-color: #d1d5db !important;
+  }
+
+  /* Background colors */
+  .print\:bg-white {
+    background: white !important;
+  }
+
+  .print\:bg-gray-50 {
+    background: #f9fafb !important;
+  }
+
+  /* Text colors */
+  .print\:text-black {
+    color: black !important;
+  }
+
+  /* Typography */
+  .print\:text-lg {
+    font-size: 1.125rem !important;
+  }
+
+  .print\:text-base {
+    font-size: 1rem !important;
+  }
+
+  .print\:text-sm {
+    font-size: 0.875rem !important;
+  }
+
+  /* Spacing */
+  .print\:mt-0 {
+    margin-top: 0 !important;
+  }
+
+  .print\:mt-4 {
+    margin-top: 1rem !important;
+  }
+
+  .print\:mb-1 {
+    margin-bottom: 0.25rem !important;
+  }
+
+  .print\:mb-2 {
+    margin-bottom: 0.5rem !important;
+  }
+
+  .print\:p-4 {
+    padding: 1rem !important;
+  }
+
+  .print\:space-y-6 > * + * {
+    margin-top: 1.5rem !important;
+  }
+
+  .print\:gap-0 {
+    gap: 0 !important;
+  }
+
+  .print\:gap-2 {
+    gap: 0.5rem !important;
+  }
+
+  /* Width */
+  .print\:w-full {
+    width: 100% !important;
+  }
+
+  /* Layout */
+  .print\:block {
+    display: block !important;
+  }
+
+  /* Page break controls */
+  h2, h3 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Keep entire recipe together on one page */
+  .hidden.print\:block {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Keep image and content together - prevents page break between them */
+  .print-recipe-content {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Keep content together */
+  .print\:border {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Links */
+  a {
+    text-decoration: none !important;
+    color: black !important;
+  }
+}

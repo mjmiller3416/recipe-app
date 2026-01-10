@@ -3,5 +3,10 @@
     "@dnd-kit/modifiers": "^9.0.0",
     "dnd-kit": "^0.0.2",
     "framer-motion": "^12.23.26"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "prettier": "^3.7.4",
+    "prettier-eslint": "^16.4.2"
   }
 }

@@ -1,193 +1,24 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import {
-  Clock,
-  Users,
-  ChefHat,
-  ArrowLeft,
-  Edit3,
-  Trash2,
-  Printer,
-  CalendarPlus,
-  BookOpen,
-  Lightbulb,
-  UtensilsCrossed,
-  Share2,
-} from "lucide-react";
+import { ArrowLeft, BookOpen, Lightbulb, UtensilsCrossed } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { RecipeBadge, RecipeBadgeGroup } from "@/components/recipe/RecipeBadge";
 import { FavoriteButton } from "@/components/common/FavoriteButton";
 import { RecipeHeroImage } from "@/components/recipe/RecipeImage";
-import { recipeApi, plannerApi } from "@/lib/api";
-import type { RecipeResponseDTO, PlannerEntryResponseDTO } from "@/types";
-import { formatQuantity } from "@/lib/utils";
-import { INGREDIENT_CATEGORY_ORDER } from "@/lib/constants";
-import { useRecentRecipes } from "@/hooks";
+import type { RecipeResponseDTO } from "@/types";
 
+import { sortCategoryEntries } from "./recipe-utils";
+import { useRecipeView } from "./useRecipeView";
+import { RecipeSkeleton } from "./RecipeSkeleton";
+import { RecipeNotFound } from "./RecipeNotFound";
+import { RecipeHeaderCard } from "./RecipeHeaderCard";
 import { IngredientItem } from "./IngredientItem";
 import { DirectionStep } from "./DirectionStep";
 import { AddToMealPlanDialog } from "./AddToMealPlanDialog";
-import { PrintPreviewDialog, type PrintOptions } from "./PrintPreviewDialog";
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-function formatTime(minutes: number | null): string {
-  if (!minutes) return "—";
-  if (minutes < 60) return `${minutes} min`;
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-}
-
-function parseDirections(directions: string | null): string[] {
-  if (!directions) return [];
-
-  // Split by numbered steps (1. 2. etc.) or by newlines
-  const steps = directions
-    .split(/\n/)
-    .map(step => step.trim())
-    .filter(step => step.length > 0)
-    .map(step => {
-      // Remove leading numbers like "1." or "1)"
-      return step.replace(/^\d+[\.\)]\s*/, "");
-    });
-
-  return steps;
-}
-
-// Group ingredients by category for better organization
-function groupIngredientsByCategory(
-  ingredients: RecipeResponseDTO["ingredients"]
-): Map<string, RecipeResponseDTO["ingredients"]> {
-  const grouped = new Map<string, RecipeResponseDTO["ingredients"]>();
-
-  ingredients.forEach(ing => {
-    const category = ing.ingredient_category || "Other";
-    if (!grouped.has(category)) {
-      grouped.set(category, []);
-    }
-    grouped.get(category)!.push(ing);
-  });
-
-  return grouped;
-}
-
-// Sort grouped categories by priority order (Meat first, then logical order)
-function sortCategoryEntries(
-  entries: [string, RecipeResponseDTO["ingredients"]][]
-): [string, RecipeResponseDTO["ingredients"]][] {
-  return entries.sort(([a], [b]) => {
-    const aIndex = INGREDIENT_CATEGORY_ORDER.indexOf(a.toLowerCase() as typeof INGREDIENT_CATEGORY_ORDER[number]);
-    const bIndex = INGREDIENT_CATEGORY_ORDER.indexOf(b.toLowerCase() as typeof INGREDIENT_CATEGORY_ORDER[number]);
-    // Unknown categories go to the end
-    const aOrder = aIndex === -1 ? INGREDIENT_CATEGORY_ORDER.length : aIndex;
-    const bOrder = bIndex === -1 ? INGREDIENT_CATEGORY_ORDER.length : bIndex;
-    return aOrder - bOrder;
-  });
-}
-
-// ============================================================================
-// SKELETON LOADING COMPONENT
-// ============================================================================
-
-function RecipeDetailSkeleton() {
-  return (
-    <div className="min-h-screen bg-background animate-pulse">
-      {/* Hero Skeleton */}
-      <div className="relative h-[300px] md:h-[400px] bg-elevated" />
-
-      <div className="relative z-10 max-w-5xl px-6 mx-auto -mt-16">
-        {/* Header Card Skeleton */}
-        <Card className="mb-8">
-          <CardContent className="p-8">
-            <div className="w-3/4 h-10 mb-4 rounded-lg bg-hover" />
-            <div className="flex gap-3 mb-6">
-              <div className="w-24 h-8 rounded-full bg-hover" />
-              <div className="w-20 h-8 rounded-full bg-hover" />
-              <div className="h-8 rounded-full w-28 bg-hover" />
-            </div>
-            <div className="flex gap-8">
-              <div className="w-32 h-6 rounded bg-hover" />
-              <div className="w-32 h-6 rounded bg-hover" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Content Skeleton */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-          <div className="lg:col-span-4">
-            <div className="w-32 h-8 mb-4 rounded bg-hover" />
-            <div className="space-y-3">
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="h-6 rounded bg-hover" />
-              ))}
-            </div>
-          </div>
-          <div className="lg:col-span-8">
-            <div className="w-32 h-8 mb-4 rounded bg-hover" />
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-20 rounded bg-hover" />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// 404 NOT FOUND COMPONENT
-// ============================================================================
-
-function RecipeNotFound() {
-  return (
-    <div className="flex items-center justify-center min-h-screen px-6 bg-background">
-      <div className="max-w-md text-center">
-        <div className="flex items-center justify-center w-24 h-24 mx-auto mb-6 rounded-full bg-elevated">
-          <ChefHat className="w-12 h-12 text-muted-foreground" />
-        </div>
-        <h1 className="mb-3 text-3xl font-bold text-foreground">
-          Recipe Not Found
-        </h1>
-        <p className="mb-8 text-muted-foreground">
-          Sorry, we couldn't find the recipe you're looking for. It may have been
-          deleted or the link might be incorrect.
-        </p>
-        <Link href="/recipes">
-          <Button className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Recipes
-          </Button>
-        </Link>
-      </div>
-    </div>
-  );
-}
+import { PrintPreviewDialog, RecipePrintLayout, usePrintRecipe } from "./print";
 
 // ============================================================================
 // MAIN VIEW COMPONENT
@@ -197,120 +28,41 @@ export function FullRecipeView() {
   const params = useParams();
   const router = useRouter();
   const recipeId = Number(params.id);
-  const { addToRecent } = useRecentRecipes();
 
-  // State
-  const [recipe, setRecipe] = useState<RecipeResponseDTO | null>(null);
-  const [plannerEntries, setPlannerEntries] = useState<PlannerEntryResponseDTO[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isFavorite, setIsFavorite] = useState(false);
+  // Recipe data and handlers from custom hook
+  const {
+    recipe,
+    loading,
+    isFavorite,
+    plannerEntries,
+    directions,
+    groupedIngredients,
+    checkedIngredients,
+    completedSteps,
+    ingredientProgress,
+    stepProgress,
+    handleFavoriteToggle,
+    handleIngredientToggle,
+    handleStepToggle,
+    handleDelete,
+    handleMealAdded,
+  } = useRecipeView(recipeId);
+
+  // Print functionality from custom hook
+  const { printDialogOpen, setPrintDialogOpen, printOptions, handlePrint } = usePrintRecipe();
+
+  // Local state for meal plan dialog
   const [mealPlanDialogOpen, setMealPlanDialogOpen] = useState(false);
-  const [checkedIngredients, setCheckedIngredients] = useState<Set<number>>(new Set());
-  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
-  const [printDialogOpen, setPrintDialogOpen] = useState(false);
-  const [printOptions, setPrintOptions] = useState<PrintOptions>({
-    showImage: true,
-    showNotes: true,
-    showMeta: true,
-  });
 
-  // Load recipe data
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [foundRecipe, entries] = await Promise.all([
-          recipeApi.get(recipeId),
-          plannerApi.getEntries(),
-        ]);
-        setRecipe(foundRecipe);
-        setIsFavorite(foundRecipe.is_favorite);
-        setPlannerEntries(entries);
-
-        // Track this recipe as recently viewed
-        addToRecent({
-          id: foundRecipe.id,
-          name: foundRecipe.recipe_name,
-          category: foundRecipe.recipe_category || undefined,
-        });
-      } catch (error) {
-        console.error("Failed to fetch recipe:", error);
-        setRecipe(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-  }, [recipeId, addToRecent]);
-
-  // Parse directions
-  const directions = useMemo(() => {
-    return parseDirections(recipe?.directions || null);
-  }, [recipe?.directions]);
-
-  // Group ingredients
-  const groupedIngredients = useMemo(() => {
-    if (!recipe?.ingredients) return new Map();
-    return groupIngredientsByCategory(recipe.ingredients);
-  }, [recipe?.ingredients]);
-
-  // Handlers
-  const handleFavoriteToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsFavorite(!isFavorite);
-    // In production: await fetch(`/api/recipes/${recipeId}/favorite`, { method: 'POST' })
-  };
-
-  const handleIngredientToggle = (ingredientId: number) => {
-    setCheckedIngredients(prev => {
-      const next = new Set(prev);
-      if (next.has(ingredientId)) {
-        next.delete(ingredientId);
-      } else {
-        next.add(ingredientId);
-      }
-      return next;
-    });
-  };
-
-  const handleStepToggle = (stepIndex: number) => {
-    setCompletedSteps(prev => {
-      const next = new Set(prev);
-      if (next.has(stepIndex)) {
-        next.delete(stepIndex);
-      } else {
-        next.add(stepIndex);
-      }
-      return next;
-    });
-  };
-
-  const handleDelete = async () => {
-    try {
-      await recipeApi.delete(recipeId);
-      router.push("/recipes");
-    } catch (error) {
-      console.error("Failed to delete recipe:", error);
-    }
-  };
-
-  const handlePrint = (options: PrintOptions) => {
-    setPrintOptions(options);
-    // Use setTimeout to ensure state is updated before printing
-    setTimeout(() => {
-      window.print();
-    }, 100);
-  };
-
-  const handleMealAdded = async () => {
-    // Refresh planner entries after adding recipe to meal
-    const entries = await plannerApi.getEntries();
-    setPlannerEntries(entries);
+  // Share handler - copies URL to clipboard
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast.success("Link copied to clipboard!");
   };
 
   // Loading state
   if (loading) {
-    return <RecipeDetailSkeleton />;
+    return <RecipeSkeleton />;
   }
 
   // Not found state
@@ -318,17 +70,17 @@ export function FullRecipeView() {
     return <RecipeNotFound />;
   }
 
-  // Progress calculations
-  const ingredientProgress = recipe.ingredients.length > 0
-    ? Math.round((checkedIngredients.size / recipe.ingredients.length) * 100)
-    : 0;
-  const stepProgress = directions.length > 0
-    ? Math.round((completedSteps.size / directions.length) * 100)
-    : 0;
-
   return (
     <>
       <div className="min-h-screen bg-background print:bg-white">
+        {/* Print-Only Layout */}
+        <RecipePrintLayout
+          recipe={recipe}
+          directions={directions}
+          groupedIngredients={groupedIngredients}
+          printOptions={printOptions}
+        />
+
         {/* Hero Image Section - Hidden for Print */}
         <div className="print:hidden">
           <RecipeHeroImage
@@ -360,233 +112,17 @@ export function FullRecipeView() {
           </RecipeHeroImage>
         </div>
 
-        {/* Print-Only Layout */}
-        <div className="hidden p-6 print:block">
-          {/* Wrap entire recipe to prevent page breaks */}
-          <div className="print-recipe-content">
-            {/* Header: Title and Meta */}
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h1 className="text-2xl font-bold tracking-wide text-black uppercase">
-                  {recipe.recipe_name}
-                </h1>
-                <p className="mt-1 text-sm text-gray-600">
-                  {[recipe.meal_type, recipe.recipe_category, recipe.diet_pref].filter(Boolean).join(" • ")}
-                </p>
-              </div>
-              {printOptions.showMeta && (
-                <div className="text-sm text-right text-gray-700">
-                  <div className="flex items-center justify-end gap-1 mb-1">
-                    <span>{recipe.servings || "—"} servings</span>
-                  </div>
-                  <div className="flex items-center justify-end gap-1">
-                    <span>{formatTime(recipe.total_time)}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Recipe Image */}
-            {printOptions.showImage && recipe.reference_image_path && (
-              <div className="mb-4">
-                <img
-                  src={recipe.reference_image_path}
-                  alt={recipe.recipe_name}
-                  className="object-cover w-full rounded-lg max-h-48"
-                />
-              </div>
-            )}
-
-            {/* Two Column: Ingredients & Directions */}
-            <div className="flex gap-6">
-            {/* Ingredients Column */}
-            <div className="w-1/3 p-3 border border-gray-200 rounded-lg bg-gray-50">
-              <h2 className="pb-1 mb-2 text-base font-bold tracking-wide text-black uppercase border-b border-gray-300">
-                Ingredients
-              </h2>
-              <div className="space-y-1 text-sm">
-                {sortCategoryEntries(Array.from(groupedIngredients.entries())).map(([category, ingredients]) => (
-                  <div key={category}>
-                    {groupedIngredients.size > 1 && (
-                      <p className="mt-3 mb-1 text-xs font-semibold text-gray-700 uppercase first:mt-0">
-                        {category}
-                      </p>
-                    )}
-                    {ingredients.map((ingredient: RecipeResponseDTO["ingredients"][0]) => (
-                      <p key={ingredient.id} className="text-black py-0.5">
-                        <span className="font-medium">{formatQuantity(ingredient.quantity)} {ingredient.unit || ""}</span>
-                        {(ingredient.quantity || ingredient.unit) && " "}
-                        {ingredient.ingredient_name}
-                      </p>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Directions Column */}
-            <div className="w-2/3 p-3 border border-gray-200 rounded-lg">
-              <h2 className="pb-1 mb-2 text-base font-bold tracking-wide text-black uppercase border-b border-gray-300">
-                Directions
-              </h2>
-              <ol className="ml-4 space-y-2 text-sm list-decimal list-outside">
-                {directions.map((step, index) => (
-                  <li key={index} className="pl-1 leading-relaxed text-black">
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </div>
-
-            {/* Chef's Notes */}
-            {printOptions.showNotes && recipe.notes && (
-              <div className="p-3 mt-3 border border-gray-200 rounded-lg bg-gray-50">
-                <h3 className="mb-1 text-sm font-bold text-black">Chef's Notes</h3>
-                <p className="text-xs text-gray-800">{recipe.notes}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Main Content - Hidden for Print */}
         <div className="relative z-10 max-w-5xl px-6 pb-12 mx-auto -mt-16 print:hidden">
           {/* Recipe Header Card */}
-          <Card className="mb-8 shadow-xl">
-            <CardContent className="p-6 md:p-8">
-              {/* Recipe Name */}
-              <h1 className="mb-4 text-3xl font-bold leading-tight md:text-4xl text-foreground">
-                {recipe.recipe_name}
-              </h1>
-
-              {/* Badges */}
-              <RecipeBadgeGroup className="mb-6">
-                {recipe.meal_type && (
-                  <RecipeBadge
-                    label={recipe.meal_type}
-                    type="mealType"
-                    size="md"
-                  />
-                )}
-                {recipe.recipe_category && (
-                  <RecipeBadge
-                    label={recipe.recipe_category}
-                    type="category"
-                    size="md"
-                  />
-                )}
-                {recipe.diet_pref && (
-                  <RecipeBadge
-                    label={recipe.diet_pref}
-                    type="dietary"
-                    size="md"
-                  />
-                )}
-              </RecipeBadgeGroup>
-
-              {/* Quick Stats */}
-              <div className="flex flex-wrap items-center gap-6 text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Clock className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Total Time</p>
-                    <p className="font-semibold text-foreground">
-                      {formatTime(recipe.total_time)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Users className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Servings</p>
-                    <p className="font-semibold text-foreground">
-                      {recipe.servings || "—"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <UtensilsCrossed className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Ingredients</p>
-                    <p className="font-semibold text-foreground">
-                      {recipe.ingredients.length} items
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <Separator className="my-6 print:hidden" />
-
-              <div className="flex flex-wrap gap-3 print:hidden">
-                <Button
-                  onClick={() => setMealPlanDialogOpen(true)}
-                  className="gap-2"
-                >
-                  <CalendarPlus className="w-4 h-4" />
-                  Add to Meal Plan
-                </Button>
-
-                <Link href={`/recipes/${recipeId}/edit`}>
-                  <Button variant="secondary" className="gap-2">
-                    <Edit3 className="w-4 h-4" />
-                    Edit Recipe
-                  </Button>
-                </Link>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" onClick={() => setPrintDialogOpen(true)}>
-                      <Printer className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Print Recipe</TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon">
-                      <Share2 className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Share Recipe</TooltipContent>
-                </Tooltip>
-
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="icon" className="text-muted-foreground hover:text-error hover:border-error">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete "{recipe.recipe_name}"? This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleDelete}
-                        className="bg-error hover:bg-error/90"
-                      >
-                        Delete Recipe
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </CardContent>
-          </Card>
+          <RecipeHeaderCard
+            recipe={recipe}
+            recipeId={recipeId}
+            onMealPlanClick={() => setMealPlanDialogOpen(true)}
+            onPrintClick={() => setPrintDialogOpen(true)}
+            onShare={handleShare}
+            onDelete={handleDelete}
+          />
 
           {/* Two Column Layout: Ingredients & Directions */}
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 print:block print:space-y-6">
@@ -745,164 +281,6 @@ export function FullRecipeView() {
         hasImage={!!recipe.reference_image_path}
         hasNotes={!!recipe.notes}
       />
-
-      {/* Print Styles */}
-      <style jsx global>{`
-        @media print {
-          /* Page setup */
-          @page {
-            margin: 0.5in;
-            size: letter;
-          }
-
-          /* Base styles */
-          body {
-            background: white !important;
-            color: black !important;
-            font-size: 11pt !important;
-            line-height: 1.4 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-
-          /* Hide interactive/web-only elements */
-          .print\\:hidden {
-            display: none !important;
-          }
-
-          /* Show print-only elements */
-          .hidden.print\\:block {
-            display: block !important;
-          }
-
-          /* Reset positioning */
-          .print\\:static {
-            position: static !important;
-          }
-
-          /* Remove shadows */
-          .print\\:shadow-none {
-            box-shadow: none !important;
-          }
-
-          /* Border utilities */
-          .print\\:border-0 {
-            border: none !important;
-          }
-
-          .print\\:border {
-            border-width: 1px !important;
-          }
-
-          .print\\:border-gray-200 {
-            border-color: #e5e7eb !important;
-          }
-
-          .print\\:border-gray-300 {
-            border-color: #d1d5db !important;
-          }
-
-          /* Background colors */
-          .print\\:bg-white {
-            background: white !important;
-          }
-
-          .print\\:bg-gray-50 {
-            background: #f9fafb !important;
-          }
-
-          /* Text colors */
-          .print\\:text-black {
-            color: black !important;
-          }
-
-          /* Typography */
-          .print\\:text-lg {
-            font-size: 1.125rem !important;
-          }
-
-          .print\\:text-base {
-            font-size: 1rem !important;
-          }
-
-          .print\\:text-sm {
-            font-size: 0.875rem !important;
-          }
-
-          /* Spacing */
-          .print\\:mt-0 {
-            margin-top: 0 !important;
-          }
-
-          .print\\:mt-4 {
-            margin-top: 1rem !important;
-          }
-
-          .print\\:mb-1 {
-            margin-bottom: 0.25rem !important;
-          }
-
-          .print\\:mb-2 {
-            margin-bottom: 0.5rem !important;
-          }
-
-          .print\\:p-4 {
-            padding: 1rem !important;
-          }
-
-          .print\\:space-y-6 > * + * {
-            margin-top: 1.5rem !important;
-          }
-
-          .print\\:gap-0 {
-            gap: 0 !important;
-          }
-
-          .print\\:gap-2 {
-            gap: 0.5rem !important;
-          }
-
-          /* Width */
-          .print\\:w-full {
-            width: 100% !important;
-          }
-
-          /* Layout */
-          .print\\:block {
-            display: block !important;
-          }
-
-          /* Page break controls */
-          h2, h3 {
-            page-break-after: avoid;
-            break-after: avoid;
-          }
-
-          /* Keep entire recipe together on one page */
-          .hidden.print\\:block {
-            page-break-inside: avoid;
-            break-inside: avoid;
-          }
-
-          /* Keep image and content together - prevents page break between them */
-          .print-recipe-content {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-          }
-
-          /* Keep content together */
-          .print\\:border {
-            page-break-inside: avoid;
-            break-inside: avoid;
-          }
-
-          /* Links */
-          a {
-            text-decoration: none !important;
-            color: black !important;
-          }
-        }
-      `}</style>
     </>
   );
 }
