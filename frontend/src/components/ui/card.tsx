@@ -101,9 +101,9 @@ function CardAction({ className, ...props }: React.ComponentProps<"div">) {
 const cardContentVariants = cva("", {
   variants: {
     size: {
-      sm: "px-4",
-      default: "px-6",
-      lg: "px-8",
+      sm: "p-4",
+      default: "p-6",
+      lg: "p-8",
     },
   },
   defaultVariants: {
