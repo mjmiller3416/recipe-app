@@ -24,6 +24,7 @@ import { ChangelogDialog } from "@/components/common/ChangelogDialog";
 import { CHANGELOG_TOTAL_ITEMS } from "@/data/changelog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { appConfig } from "@/lib/config";
+import { useSettings } from "@/hooks/useSettings";
 import { shoppingApi } from "@/lib/api";
 
 const navigation = [
@@ -47,6 +48,7 @@ interface SidebarContentProps {
  */
 export function SidebarContent({ onNavigate, onOpenMealGenie }: SidebarContentProps) {
   const pathname = usePathname();
+  const { settings } = useSettings();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [hasNewUpdates, setHasNewUpdates] = useState(false);
@@ -177,22 +179,21 @@ export function SidebarContent({ onNavigate, onOpenMealGenie }: SidebarContentPr
         <Link
           href="/settings"
           onClick={onNavigate}
-          className="flex items-center gap-3 rounded-lg p-3 bg-elevated hover:bg-hover transition-colors group interactive-subtle"
+          className="flex items-center gap-3 rounded-lg p-3 bg-elevated hover:bg-hover transition-colors group"
         >
           <div className="relative flex-shrink-0">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={appConfig.user.avatar} />
+              <AvatarImage src={settings.profile.avatar} />
               <AvatarFallback className="bg-primary text-primary-foreground">
-                {appConfig.user.name.charAt(0).toUpperCase()}
+                {settings.profile.displayName.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="absolute bottom-0 right-0 h-3 w-3 bg-status-online rounded-full border-2 border-sidebar" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">
-              {appConfig.user.name}
+              {settings.profile.displayName}
             </p>
-            <p className="text-xs text-muted-foreground">Online</p>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
         </Link>
