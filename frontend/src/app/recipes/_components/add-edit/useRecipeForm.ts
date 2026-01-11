@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useEffect, useId, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { recipeApi, ingredientApi, uploadApi } from "@/lib/api";
 import { base64ToFile } from "@/lib/utils";
+import type { GeneratedRecipeDTO } from "@/types";
+
+// Session storage key for AI-generated recipe (must match MealGenieChatContent)
+const AI_RECIPE_STORAGE_KEY = "meal-genie-generated-recipe";
 import type { RecipeCreateDTO, RecipeUpdateDTO, RecipeIngredientDTO, RecipeResponseDTO } from "@/types";
 import type { Ingredient } from "./IngredientRow";
 import type { Ingredient as AutocompleteIngredient } from "./IngredientAutocomplete";
@@ -117,6 +121,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
   } = options;
 
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Generate a stable ID for the initial ingredient (prevents hydration mismatch)
   const initialIngredientId = useId();
@@ -251,6 +256,69 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
       setIsInitialized(true);
     }
   }, [mode, initialData, isInitialized]);
+
+  // Load AI-generated recipe from sessionStorage (when navigating from Meal Genie)
+  useEffect(() => {
+    // Only load AI recipe in create mode when from=ai query param is present
+    if (mode !== 'create' || searchParams.get('from') !== 'ai') {
+      return;
+    }
+
+    try {
+      const storedData = sessionStorage.getItem(AI_RECIPE_STORAGE_KEY);
+      if (!storedData) {
+        return;
+      }
+
+      const { recipe, imageData } = JSON.parse(storedData) as {
+        recipe: GeneratedRecipeDTO;
+        imageData: string | null;
+      };
+
+      // Pre-fill form with AI-generated recipe
+      setRecipeNameState(recipe.recipe_name);
+      setTotalTimeState(recipe.total_time?.toString() || "");
+      setServingsState(recipe.servings?.toString() || "");
+      setMealTypeState(recipe.meal_type || "");
+      setCategoryState(recipe.recipe_category || "");
+      setDietaryPreferenceState(recipe.diet_pref || "");
+      setDirectionsState(recipe.directions || "");
+      setNotesState(recipe.notes || "");
+
+      // Populate ingredients
+      if (recipe.ingredients && recipe.ingredients.length > 0) {
+        setIngredients(
+          recipe.ingredients.map((ing) => ({
+            id: uuidv4(),
+            quantity: ing.quantity ?? null,
+            unit: ing.unit || "",
+            name: ing.ingredient_name,
+            category: ing.ingredient_category || "",
+          }))
+        );
+      }
+
+      // Handle AI-generated image
+      if (imageData) {
+        // Convert base64 to data URL for preview
+        const dataUrl = `data:image/png;base64,${imageData}`;
+        setImagePreview(dataUrl);
+        setGeneratedImageData(imageData);
+        setIsAiGenerated(true);
+        // Convert to File for upload
+        const file = base64ToFile(imageData, `recipe-ai-generated.png`);
+        setImageFile(file);
+      }
+
+      // Clear sessionStorage after loading
+      sessionStorage.removeItem(AI_RECIPE_STORAGE_KEY);
+
+      // Show a toast to confirm the recipe was loaded
+      toast.success("AI recipe loaded! Review and save when ready.");
+    } catch (error) {
+      console.error("Failed to load AI recipe from storage:", error);
+    }
+  }, [mode, searchParams]);
 
   // Fetch available ingredients on mount
   useEffect(() => {

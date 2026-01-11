@@ -452,6 +452,48 @@ export interface MealGenieResponseDTO {
   error?: string;
 }
 
+// Recipe Generation Types
+
+export interface GeneratedIngredientDTO {
+  ingredient_name: string;
+  ingredient_category: string;
+  quantity?: number;
+  unit?: string;
+}
+
+export interface GeneratedRecipeDTO {
+  recipe_name: string;
+  recipe_category: string;
+  meal_type: string;
+  diet_pref?: string;
+  total_time?: number;
+  servings?: number;
+  directions?: string;
+  notes?: string;
+  ingredients: GeneratedIngredientDTO[];
+}
+
+export interface RecipeGenerationRequestDTO {
+  message: string;
+  conversation_history?: MealGenieMessage[];
+  generate_image?: boolean;
+}
+
+export interface RecipeGenerationResponseDTO {
+  success: boolean;
+  recipe?: GeneratedRecipeDTO;
+  image_data?: string; // Base64 encoded
+  ai_message?: string;
+  needs_more_info: boolean;
+  error?: string;
+}
+
+// Extended message type for chat with recipe data
+export interface MealGenieChatMessage extends MealGenieMessage {
+  recipe?: GeneratedRecipeDTO;
+  imageData?: string;
+}
+
 // ============================================================================
 // Dashboard Types
 // ============================================================================

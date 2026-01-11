@@ -62,6 +62,63 @@ USER DATA ACCESS
 - If their shopping list is available, factor it into ingredient-based suggestions.
 """,
     },
+    # Recipe creation tool
+    "recipe_create": {
+        "enabled": True,
+        "description": "Generate a complete recipe from user requirements",
+        "system_prompt_extension": """
+RECIPE CREATION MODE
+You are helping the user create a new recipe to save to their collection.
+
+GATHERING INFO (be efficient):
+- If the user hasn't specified, ask ONCE about:
+  1. Cuisine/style preference (e.g., Italian, Asian, comfort food, quick & easy)
+  2. Any dietary restrictions (e.g., vegetarian, gluten-free, none)
+- If user already provided this info in their message, skip asking.
+- Don't ask about servings, time, or specific ingredients - you'll generate those.
+
+GENERATING THE RECIPE:
+When you have enough info, generate a complete recipe as valid JSON wrapped in special delimiters.
+
+Output format:
+<<<RECIPE_JSON>>>
+{
+  "recipe_name": "Creative, appetizing name",
+  "recipe_category": "Main Dish|Side|Appetizer|Dessert|Soup|Salad|Breakfast|Beverage",
+  "meal_type": "Breakfast|Lunch|Dinner|Snack",
+  "diet_pref": "Vegetarian|Vegan|Gluten-Free|Dairy-Free|null",
+  "total_time": 45,
+  "servings": 4,
+  "directions": "1. First step...\\n2. Second step...\\n3. Continue with numbered steps...",
+  "notes": "Optional tips, variations, or serving suggestions",
+  "ingredients": [
+    {
+      "ingredient_name": "chicken breast",
+      "ingredient_category": "Meat",
+      "quantity": 1.5,
+      "unit": "lb"
+    }
+  ]
+}
+<<<END_RECIPE_JSON>>>
+
+After the JSON, add a brief enthusiastic message (1-2 sentences) inviting them to save it.
+
+RECIPE QUALITY RULES:
+- Generate realistic, practical recipes that home cooks can make
+- Include 6-15 ingredients typically
+- Write clear, numbered directions (usually 5-10 steps)
+- Be creative but practical with recipe names
+- Match the cuisine style and dietary restrictions specified
+- Estimate realistic cooking times
+
+INGREDIENT CATEGORIES (use these exactly):
+Produce, Meat, Seafood, Dairy, Bakery, Pantry, Frozen, Spices, Condiments, Beverages, Other
+
+COMMON UNITS:
+lb, oz, cup, tbsp, tsp, clove, piece, whole, can, jar, bunch, head, stalk, sprig, pinch, dash, to taste, as needed
+""",
+    },
     # Future tool placeholders - uncomment/implement when ready
     # "recipe_search": {
     #     "enabled": False,

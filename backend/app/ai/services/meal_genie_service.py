@@ -1,10 +1,12 @@
 """Service for Meal Genie conversational AI using Gemini."""
 
 import os
+import re
+import json
 from typing import Optional, List
 from dotenv import load_dotenv
 
-from app.ai.dtos.meal_genie_dtos import MealGenieMessageDTO
+from app.ai.dtos.meal_genie_dtos import MealGenieMessageDTO, GeneratedRecipeDTO
 from app.ai.config.meal_genie_config import (
     MODEL_NAME,
     API_KEY_ENV_VAR,
@@ -124,6 +126,96 @@ class MealGenieService:
                 "response": None,
                 "error": str(e),
             }
+
+    def generate_recipe(
+        self,
+        message: str,
+        conversation_history: Optional[List[MealGenieMessageDTO]] = None,
+        user_context: str = "",
+    ) -> dict:
+        """
+        Generate a recipe using the recipe_create tool.
+
+        Args:
+            message: The user's message/request
+            conversation_history: Previous messages for context
+            user_context: Optional user context (recipes, meal plan, etc.)
+
+        Returns:
+            dict with 'success', 'recipe' (GeneratedRecipeDTO), 'ai_message',
+            'needs_more_info', and optional 'error'
+        """
+        # Call the AI with the recipe_create tool
+        result = self.ask(
+            message=message,
+            conversation_history=conversation_history,
+            tool="recipe_create",
+            user_context=user_context,
+        )
+
+        if not result["success"]:
+            return {
+                "success": False,
+                "recipe": None,
+                "ai_message": None,
+                "needs_more_info": False,
+                "error": result.get("error"),
+            }
+
+        response_text = result["response"]
+
+        # Try to extract recipe JSON from the response
+        recipe_data = self._extract_recipe_json(response_text)
+        ai_message = self._extract_ai_message(response_text)
+
+        if recipe_data:
+            # Successfully parsed a recipe
+            try:
+                recipe = GeneratedRecipeDTO(**recipe_data)
+                return {
+                    "success": True,
+                    "recipe": recipe,
+                    "ai_message": ai_message,
+                    "needs_more_info": False,
+                    "error": None,
+                }
+            except Exception as e:
+                return {
+                    "success": False,
+                    "recipe": None,
+                    "ai_message": response_text,
+                    "needs_more_info": False,
+                    "error": f"Failed to parse recipe: {str(e)}",
+                }
+        else:
+            # No recipe JSON found - AI is probably asking questions
+            return {
+                "success": True,
+                "recipe": None,
+                "ai_message": response_text,
+                "needs_more_info": True,
+                "error": None,
+            }
+
+    def _extract_recipe_json(self, response: str) -> Optional[dict]:
+        """Extract recipe JSON from AI response using delimiters."""
+        pattern = r"<<<RECIPE_JSON>>>(.*?)<<<END_RECIPE_JSON>>>"
+        match = re.search(pattern, response, re.DOTALL)
+
+        if match:
+            try:
+                json_str = match.group(1).strip()
+                return json.loads(json_str)
+            except json.JSONDecodeError:
+                return None
+        return None
+
+    def _extract_ai_message(self, response: str) -> str:
+        """Extract the friendly message text (outside JSON block)."""
+        # Remove the JSON block and get the remaining text
+        pattern = r"<<<RECIPE_JSON>>>.*?<<<END_RECIPE_JSON>>>"
+        message = re.sub(pattern, "", response, flags=re.DOTALL).strip()
+        return message if message else "Here's your recipe!"
 
 
 # Singleton instance

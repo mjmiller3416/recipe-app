@@ -22,6 +22,7 @@ import type {
   DashboardStatsDTO,
   MealGenieMessage,
   MealGenieResponseDTO,
+  RecipeGenerationResponseDTO,
 } from "@/types";
 
 // API base URL from environment variable or default to localhost
@@ -673,6 +674,40 @@ export const uploadApi = {
 
     return response.json();
   },
+
+  /**
+   * Upload a base64 encoded image to Cloudinary
+   * Used for AI-generated images
+   * @param imageData - Base64 encoded image data
+   * @param recipeId - The recipe ID (used to organize the file)
+   * @param imageType - Either "reference" (thumbnail) or "banner" (hero image)
+   * @returns The path to the uploaded image
+   */
+  uploadBase64Image: async (
+    imageData: string,
+    recipeId: number,
+    imageType: "reference" | "banner" = "reference"
+  ): Promise<{ success: boolean; path: string; filename: string }> => {
+    const formData = new FormData();
+    formData.append("image_data", imageData);
+    formData.append("recipeId", recipeId.toString());
+    formData.append("imageType", imageType);
+
+    const response = await fetch(`${API_BASE}/api/upload/base64`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new ApiError(
+        error.detail || "Failed to upload image",
+        response.status
+      );
+    }
+
+    return response.json();
+  },
 };
 
 // ============================================================================
@@ -732,6 +767,27 @@ export const mealGenieApi = {
       body: JSON.stringify({
         message,
         conversation_history: conversationHistory,
+      }),
+    }),
+
+  /**
+   * Generate a recipe with optional AI image
+   * @param message The user's message/request
+   * @param conversationHistory Optional previous messages for context
+   * @param generateImage Whether to generate an AI image (default: true)
+   * @returns Response with generated recipe and optional image
+   */
+  generateRecipe: (
+    message: string,
+    conversationHistory?: MealGenieMessage[],
+    generateImage = true
+  ): Promise<RecipeGenerationResponseDTO> =>
+    fetchApi<RecipeGenerationResponseDTO>("/api/ai/meal-genie/generate-recipe", {
+      method: "POST",
+      body: JSON.stringify({
+        message,
+        conversation_history: conversationHistory,
+        generate_image: generateImage,
       }),
     }),
 };
