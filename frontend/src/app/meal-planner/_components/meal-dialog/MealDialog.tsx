@@ -482,7 +482,7 @@ export function MealDialog({
                              data-[state=active]:bg-transparent data-[state=active]:shadow-none
                              data-[state=active]:text-primary
                              border-b-2 border-transparent data-[state=active]:border-primary
-                             rounded-none hover:text-foreground"
+                             rounded-none hover:bg-transparent hover:text-foreground hover:border-muted-foreground/50"
                 >
                   Saved Meals
                 </TabsTrigger>
@@ -492,7 +492,7 @@ export function MealDialog({
                              data-[state=active]:bg-transparent data-[state=active]:shadow-none
                              data-[state=active]:text-primary
                              border-b-2 border-transparent data-[state=active]:border-primary
-                             rounded-none hover:text-foreground"
+                             rounded-none hover:bg-transparent hover:text-foreground hover:border-muted-foreground/50"
                 >
                   Create Meal
                 </TabsTrigger>

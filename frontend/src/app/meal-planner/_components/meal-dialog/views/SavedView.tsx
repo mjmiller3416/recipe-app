@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CircularImage } from "@/components/common/CircularImage";
+import { ScrollableCardList } from "@/components/common/ScrollableCardList";
 import { plannerApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import {
@@ -346,24 +347,25 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
       </MultiSelect>
 
       {/* Meal List - Fixed height container for consistent dialog size */}
-      <div className="min-h-[40vh] max-h-[40vh] overflow-y-auto">
-        {filteredMeals.length === 0 ? (
-          <div className="h-full flex items-center justify-center">
-            <EmptyNoResults />
-          </div>
-        ) : (
-          <div className="space-y-2 pr-1">
-            {filteredMeals.map((meal) => (
-              <MealCard
-                key={meal.id}
-                meal={meal}
-                isAdding={addingMealId === meal.id}
-                onClick={() => handleMealClick(meal)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      {filteredMeals.length === 0 ? (
+        <div className="min-h-[40vh] flex items-center justify-center">
+          <EmptyNoResults />
+        </div>
+      ) : (
+        <ScrollableCardList
+          className="min-h-[40vh] max-h-[40vh]"
+          innerClassName="space-y-2"
+        >
+          {filteredMeals.map((meal) => (
+            <MealCard
+              key={meal.id}
+              meal={meal}
+              isAdding={addingMealId === meal.id}
+              onClick={() => handleMealClick(meal)}
+            />
+          ))}
+        </ScrollableCardList>
+      )}
     </div>
   );
 }
