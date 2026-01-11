@@ -4,6 +4,9 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { Sparkles, Send, ChefHat, Lightbulb, Calendar } from "lucide-react";
 import { mealGenieApi } from "@/lib/api";
 import { useChatHistory } from "@/hooks";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const SUGGESTIONS = [
   { icon: ChefHat, text: "What can I make with chicken?" },
@@ -55,7 +58,7 @@ export function AskMealGenieWidget() {
   const hasMessages = messages.length > 0;
 
   return (
-    <div className="relative rounded-xl border border-border shadow-raised flex flex-col overflow-hidden h-full">
+    <Card className="relative shadow-raised flex flex-col overflow-hidden h-full">
       {/* Noise texture background */}
       <div 
         className="absolute inset-0 bg-elevated"
@@ -74,12 +77,14 @@ export function AskMealGenieWidget() {
             <h2 className="text-lg font-semibold text-foreground">Ask Meal Genie</h2>
           </div>
           {hasMessages && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={clearHistory}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs h-7"
             >
               Clear
-            </button>
+            </Button>
           )}
         </div>
 
@@ -122,28 +127,18 @@ export function AskMealGenieWidget() {
             /* Empty State with Suggestions - centered vertically */
             <div className="h-full flex flex-col items-center justify-center px-4 py-6">
               <p className="text-xs text-muted-foreground mb-3">Try asking:</p>
-              <div className="space-y-2 w-full max-w-[280px]">
+              <div className="space-y-2 w-full max-w-xs">
                 {SUGGESTIONS.map((suggestion, index) => (
-                  <button
+                  <Button
                     key={index}
+                    variant="outline"
                     onClick={() => handleSubmit(suggestion.text)}
                     disabled={isLoading}
-                    className="
-                      w-full flex items-center gap-2.5 px-3 py-2.5
-                      text-sm text-left text-muted-foreground
-                      bg-background/60 hover:bg-background
-                      border border-border hover:border-border-strong
-                      rounded-lg 
-                      button-weighted
-                      disabled:opacity-50 disabled:cursor-not-allowed
-                      group
-                    "
+                    className="w-full justify-start gap-2.5 text-muted-foreground hover:text-foreground group"
                   >
-                    <suggestion.icon className="h-4 w-4 text-secondary/70 group-hover:text-secondary transition-colors duration-150" />
-                    <span className="group-hover:text-foreground transition-colors duration-150">
-                      {suggestion.text}
-                    </span>
-                  </button>
+                    <suggestion.icon className="h-4 w-4 text-secondary/70 group-hover:text-secondary" />
+                    <span>{suggestion.text}</span>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -153,37 +148,26 @@ export function AskMealGenieWidget() {
         {/* Input Area - anchored to bottom with mt-auto */}
         <div className="mt-auto p-3 border-t border-border">
           <div className="flex items-center gap-2">
-            <input
+            <Input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask about recipes, cooking tips..."
-              className="
-                flex-1 px-3 py-2 text-sm
-                bg-background border border-border rounded-lg
-                placeholder:text-muted-foreground
-                focus:outline-none focus:ring-2 focus:ring-secondary/40 focus:border-secondary
-                transition-shadow duration-150
-              "
+              className="flex-1"
             />
-            <button
+            <Button
+              variant="secondary"
+              size="icon"
               onClick={() => handleSubmit()}
               disabled={!input.trim() || isLoading}
-              className="
-                p-2 rounded-lg
-                bg-secondary text-secondary-foreground
-                hover:bg-secondary-hover
-                button-weighted
-                disabled:opacity-40 disabled:cursor-not-allowed
-                disabled:transform-none disabled:shadow-none
-              "
+              aria-label="Send message"
             >
               <Send className="h-4 w-4" />
-            </button>
+            </Button>
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

@@ -2,6 +2,13 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-01-10 - New Features
+- Meal Genie Assistant can now create recipes when prompted - just ask it to "create a recipe for ..."
+
+## 2026-01-10 - Improvements
+- Meal Genie Assistant now has context-aware knowledge about your Saved Meals, Meal Planner, and Shopping List.
+- Suggestions from the Meal Genie are now more relevant, using your existing meals, shopping list, and preferences to tailor its responses.
+
 ## 2026-01-10 - Bug Fixes
 - Print layout now keeps the recipe image and content together on the same page
 - Flagged shopping items now stay flagged when you make changes to your meal plan

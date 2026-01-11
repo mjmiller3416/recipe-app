@@ -173,7 +173,7 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
           </Button>
         }
       >
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex flex-col md:flex-row gap-6 md:items-start">
           {/* Form Cards - Top on mobile, left column on desktop */}
           <div className="flex-1 min-w-0 space-y-6">
             {/* Recipe Info Section */}
@@ -218,8 +218,8 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
           </div>
 
           {/* Image Upload - Bottom on mobile, right sidebar on desktop */}
-          <div className="md:w-80 md:flex-shrink-0">
-            <div className="md:sticky md:top-24">
+          <div className="md:w-80 md:flex-shrink-0 md:self-stretch">
+            <div data-sticky-sidebar className="md:sticky md:top-24">
               <ImageUploadCard
                 imagePreview={form.imagePreview}
                 onImageUpload={form.handleImageUpload}

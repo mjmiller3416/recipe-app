@@ -12,6 +12,7 @@ interface MealGeniePopupProps {
 
 export function MealGeniePopup({ open, onOpenChange }: MealGeniePopupProps) {
   const [isMobile, setIsMobile] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   // Track viewport size to determine mobile vs desktop
   useEffect(() => {
@@ -20,6 +21,13 @@ export function MealGeniePopup({ open, onOpenChange }: MealGeniePopupProps) {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Reset minimized state when popup is closed
+  useEffect(() => {
+    if (!open) {
+      setIsMinimized(false);
+    }
+  }, [open]);
 
   // Handle escape key for desktop
   useEffect(() => {
@@ -66,7 +74,8 @@ export function MealGeniePopup({ open, onOpenChange }: MealGeniePopupProps) {
     <div
       className={cn(
         "fixed bottom-6 right-6 z-50",
-        "w-96 h-[500px]",
+        "w-96",
+        isMinimized ? "h-11" : "h-[500px]",
         "bg-elevated rounded-xl border border-border",
         "shadow-lg",
         "flex flex-col overflow-hidden",
@@ -88,7 +97,14 @@ export function MealGeniePopup({ open, onOpenChange }: MealGeniePopupProps) {
 
       {/* Content */}
       <div className="relative flex-1 min-h-0">
-        {open && <MealGenieChatContent onClose={() => onOpenChange(false)} />}
+        {open && (
+          <MealGenieChatContent
+            onClose={() => onOpenChange(false)}
+            isMinimized={isMinimized}
+            onMinimize={() => setIsMinimized(true)}
+            onExpand={() => setIsMinimized(false)}
+          />
+        )}
       </div>
     </div>
   );

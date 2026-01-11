@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Send, ChefHat, Lightbulb, Calendar, Minus, Trash2, Plus, ExternalLink } from "lucide-react";
+import { Sparkles, Send, ChefHat, Lightbulb, Calendar, Minus, Trash2, Plus, ExternalLink, X } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { mealGenieApi } from "@/lib/api";
@@ -41,9 +41,12 @@ function isRecipeCreationRequest(text: string): boolean {
 
 interface MealGenieChatContentProps {
   onClose?: () => void;
+  isMinimized?: boolean;
+  onMinimize?: () => void;
+  onExpand?: () => void;
 }
 
-export function MealGenieChatContent({ onClose }: MealGenieChatContentProps) {
+export function MealGenieChatContent({ onClose, isMinimized, onMinimize, onExpand }: MealGenieChatContentProps) {
   const router = useRouter();
   const [input, setInput] = useState("");
   const { messages, addMessage, clearHistory } = useChatHistory();
@@ -164,13 +167,16 @@ export function MealGenieChatContent({ onClose }: MealGenieChatContentProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div
+        className={`flex items-center justify-between border-b border-border ${isMinimized ? 'px-3 py-2 cursor-pointer' : 'p-4'}`}
+        onClick={isMinimized ? onExpand : undefined}
+      >
         <div className="flex items-center gap-3">
           <Sparkles className="h-5 w-5 text-secondary" />
           <h2 className="text-lg font-semibold text-foreground">Ask Meal Genie</h2>
         </div>
         <div className="flex items-center gap-1">
-          {hasMessages && (
+          {hasMessages && !isMinimized && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -183,11 +189,11 @@ export function MealGenieChatContent({ onClose }: MealGenieChatContentProps) {
               <TooltipContent side="top">Clear chat</TooltipContent>
             </Tooltip>
           )}
-          {onClose && (
+          {onMinimize && !isMinimized && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={onClose}
+                  onClick={(e) => { e.stopPropagation(); onMinimize(); }}
                   className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-hover transition-colors"
                 >
                   <Minus className="h-4 w-4" />
@@ -196,10 +202,24 @@ export function MealGenieChatContent({ onClose }: MealGenieChatContentProps) {
               <TooltipContent side="top">Minimize</TooltipContent>
             </Tooltip>
           )}
+          {onClose && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onClose(); }}
+                  className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-hover transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">Close</TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </div>
 
-      {/* Messages / Empty State Area */}
+      {/* Messages / Empty State Area - Hidden when minimized */}
+      {!isMinimized && (
       <div className="flex-1 overflow-y-auto">
         {hasMessages ? (
           <div className="px-4 py-3 space-y-3">
@@ -280,8 +300,10 @@ export function MealGenieChatContent({ onClose }: MealGenieChatContentProps) {
           </div>
         )}
       </div>
+      )}
 
-      {/* Input Area */}
+      {/* Input Area - Hidden when minimized */}
+      {!isMinimized && (
       <div className="p-3 border-t border-border">
         <div className="flex items-center gap-2">
           <input
@@ -315,6 +337,7 @@ export function MealGenieChatContent({ onClose }: MealGenieChatContentProps) {
           </button>
         </div>
       </div>
+      )}
     </div>
   );
 }
