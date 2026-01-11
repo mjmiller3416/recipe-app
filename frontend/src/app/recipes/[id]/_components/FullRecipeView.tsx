@@ -362,43 +362,41 @@ export function FullRecipeView() {
 
         {/* Print-Only Layout */}
         <div className="hidden p-6 print:block">
-          {/* Wrap entire recipe to prevent page breaks */}
-          <div className="print-recipe-content">
-            {/* Header: Title and Meta */}
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h1 className="text-2xl font-bold tracking-wide text-black uppercase">
-                  {recipe.recipe_name}
-                </h1>
-                <p className="mt-1 text-sm text-gray-600">
-                  {[recipe.meal_type, recipe.recipe_category, recipe.diet_pref].filter(Boolean).join(" • ")}
-                </p>
-              </div>
-              {printOptions.showMeta && (
-                <div className="text-sm text-right text-gray-700">
-                  <div className="flex items-center justify-end gap-1 mb-1">
-                    <span>{recipe.servings || "—"} servings</span>
-                  </div>
-                  <div className="flex items-center justify-end gap-1">
-                    <span>{formatTime(recipe.total_time)}</span>
-                  </div>
-                </div>
-              )}
+          {/* Header: Title and Meta */}
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="text-2xl font-bold tracking-wide text-black uppercase">
+                {recipe.recipe_name}
+              </h1>
+              <p className="mt-1 text-sm text-gray-600">
+                {[recipe.meal_type, recipe.recipe_category, recipe.diet_pref].filter(Boolean).join(" • ")}
+              </p>
             </div>
-
-            {/* Recipe Image */}
-            {printOptions.showImage && recipe.reference_image_path && (
-              <div className="mb-4">
-                <img
-                  src={recipe.reference_image_path}
-                  alt={recipe.recipe_name}
-                  className="object-cover w-full rounded-lg max-h-48"
-                />
+            {printOptions.showMeta && (
+              <div className="text-sm text-right text-gray-700">
+                <div className="flex items-center justify-end gap-1 mb-1">
+                  <span>{recipe.servings || "—"} servings</span>
+                </div>
+                <div className="flex items-center justify-end gap-1">
+                  <span>{formatTime(recipe.total_time)}</span>
+                </div>
               </div>
             )}
+          </div>
 
-            {/* Two Column: Ingredients & Directions */}
-            <div className="flex gap-6">
+          {/* Recipe Image */}
+          {printOptions.showImage && recipe.reference_image_path && (
+            <div className="mb-4">
+              <img
+                src={recipe.reference_image_path}
+                alt={recipe.recipe_name}
+                className="object-cover w-full rounded-lg max-h-48"
+              />
+            </div>
+          )}
+
+          {/* Two Column: Ingredients & Directions */}
+          <div className="print-columns flex gap-6">
             {/* Ingredients Column */}
             <div className="w-1/3 p-3 border border-gray-200 rounded-lg bg-gray-50">
               <h2 className="pb-1 mb-2 text-base font-bold tracking-wide text-black uppercase border-b border-gray-300">
@@ -439,14 +437,13 @@ export function FullRecipeView() {
             </div>
           </div>
 
-            {/* Chef's Notes */}
-            {printOptions.showNotes && recipe.notes && (
-              <div className="p-3 mt-3 border border-gray-200 rounded-lg bg-gray-50">
-                <h3 className="mb-1 text-sm font-bold text-black">Chef's Notes</h3>
-                <p className="text-xs text-gray-800">{recipe.notes}</p>
-              </div>
-            )}
-          </div>
+          {/* Chef's Notes */}
+          {printOptions.showNotes && recipe.notes && (
+            <div className="print-notes p-3 mt-4 border border-gray-200 rounded-lg bg-gray-50">
+              <h3 className="mb-1 text-sm font-bold text-black">Chef's Notes</h3>
+              <p className="text-xs text-gray-800">{recipe.notes}</p>
+            </div>
+          )}
         </div>
 
         {/* Main Content - Hidden for Print */}
@@ -878,20 +875,20 @@ export function FullRecipeView() {
             break-after: avoid;
           }
 
-          /* Keep entire recipe together on one page */
-          .hidden.print\\:block {
+          /* Keep the two-column content block together */
+          .print-columns {
             page-break-inside: avoid;
             break-inside: avoid;
           }
 
-          /* Keep image and content together - prevents page break between them */
-          .print-recipe-content {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
+          /* Keep Chef's Notes together */
+          .print-notes {
+            page-break-inside: avoid;
+            break-inside: avoid;
           }
 
-          /* Keep content together */
-          .print\\:border {
+          /* Never break inside individual items */
+          li, .print-columns p {
             page-break-inside: avoid;
             break-inside: avoid;
           }

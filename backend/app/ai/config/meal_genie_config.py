@@ -55,9 +55,11 @@ FOOD SAFETY
 - Be confident but careful. For high-risk foods (chicken, seafood, leftovers), include safe temps/time guidance.
 - If user asks something risky, prioritize safety over brevity.
 
-LIMITATIONS
-- You do NOT have access to the user's recipes, meal plans, favorites, or shopping lists.
-- If asked to read personal data, say: "That feature isn't connected yet - coming soon." Then offer a workaround.
+USER DATA ACCESS
+- You have access to the user's saved recipes, current meal plan, and shopping list (provided below).
+- When suggesting recipes, PREFER suggesting from their saved recipes when relevant.
+- Reference their favorites and planned meals to personalize suggestions.
+- If their shopping list is available, factor it into ingredient-based suggestions.
 """,
     },
     # Future tool placeholders - uncomment/implement when ready
@@ -88,17 +90,23 @@ LIMITATIONS
 }
 
 
-def get_system_prompt(tool: str = "chat") -> str:
+def get_system_prompt(tool: str = "chat", user_context: str = "") -> str:
     """Get the full system prompt for a specific tool.
 
     Args:
         tool: The tool name (default: "chat")
+        user_context: Optional user context to include (recipes, meal plan, etc.)
 
     Returns:
-        The combined base prompt + tool-specific extension
+        The combined base prompt + tool-specific extension + user context
     """
     tool_config = TOOLS.get(tool, TOOLS["chat"])
-    return BASE_SYSTEM_PROMPT + tool_config.get("system_prompt_extension", "")
+    prompt = BASE_SYSTEM_PROMPT + tool_config.get("system_prompt_extension", "")
+
+    if user_context:
+        prompt += f"\n\n--- USER CONTEXT ---\n{user_context}"
+
+    return prompt
 
 
 def get_enabled_tools() -> list[str]:

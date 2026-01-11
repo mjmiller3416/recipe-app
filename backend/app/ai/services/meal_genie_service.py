@@ -43,6 +43,7 @@ class MealGenieService:
         message: str,
         conversation_history: Optional[List[MealGenieMessageDTO]] = None,
         tool: str = "chat",
+        user_context: str = "",
     ) -> dict:
         """
         Send a message to Meal Genie and get a response.
@@ -51,6 +52,7 @@ class MealGenieService:
             message: The user's message
             conversation_history: Optional list of previous messages for context
             tool: The tool to use (default: "chat", future: "recipe_search", etc.)
+            user_context: Optional user context (recipes, meal plan, shopping list)
 
         Returns:
             dict with 'success', 'response', and optional 'error'
@@ -58,8 +60,8 @@ class MealGenieService:
         try:
             client = _get_genai_client()
 
-            # Get the system prompt for the specified tool
-            system_prompt = get_system_prompt(tool)
+            # Get the system prompt for the specified tool, with user context
+            system_prompt = get_system_prompt(tool, user_context)
 
             # Build the conversation contents
             contents = []
