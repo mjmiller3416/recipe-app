@@ -218,8 +218,9 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
           </div>
 
           {/* Image Upload - Bottom on mobile, right sidebar on desktop */}
+          {/* Image Upload - Bottom on mobile, right sidebar on desktop */}
           <div className="md:w-80 md:flex-shrink-0 md:self-stretch">
-            <div>
+            <div className="md:sticky md:top-[97px] z-10 transform-gpu">
               <ImageUploadCard
                 imagePreview={form.imagePreview}
                 onImageUpload={form.handleImageUpload}
