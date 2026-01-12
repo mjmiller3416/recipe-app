@@ -41,7 +41,6 @@ function SelectTrigger({
         "data-[placeholder]:text-muted-foreground",
         "focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary",
         "disabled:cursor-not-allowed disabled:opacity-50",
-        "active:scale-[0.98] active:bg-muted",
         "data-[size=default]:h-10 data-[size=sm]:h-8 data-[size=lg]:h-12 data-[size=lg]:py-3 data-[size=lg]:text-base",
         "*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -52,7 +51,7 @@ function SelectTrigger({
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-4 text-primary transition-transform duration-200 group-hover:scale-125" strokeWidth={1.5} />
+        <ChevronDownIcon className="transition-transform duration-200 size-4 text-primary group-hover:scale-125" strokeWidth={1.5} />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   )
