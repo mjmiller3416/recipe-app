@@ -12,7 +12,7 @@ interface MealGeniePopupProps {
 
 export function MealGeniePopup({ open, onOpenChange }: MealGeniePopupProps) {
   const [isMobile, setIsMobile] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true);
 
   // Track viewport size to determine mobile vs desktop
   useEffect(() => {
@@ -25,7 +25,7 @@ export function MealGeniePopup({ open, onOpenChange }: MealGeniePopupProps) {
   // Reset minimized state when popup is closed
   useEffect(() => {
     if (!open) {
-      setIsMinimized(false);
+      setIsMinimized(true);
     }
   }, [open]);
 

@@ -295,11 +295,188 @@ export function FullRecipeView() {
   };
 
   const handlePrint = (options: PrintOptions) => {
-    setPrintOptions(options);
-    // Use setTimeout to ensure state is updated before printing
-    setTimeout(() => {
-      window.print();
-    }, 100);
+    if (!recipe) return;
+
+    // Generate clean HTML for printing - bypasses all CSS inheritance issues
+    const printContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${recipe.recipe_name}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 11pt;
+      line-height: 1.4;
+      color: black;
+      padding: 0.5in;
+    }
+    .header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+    .title { 
+      font-size: 18pt; 
+      font-weight: bold; 
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .subtitle { 
+      font-size: 10pt; 
+      color: #666; 
+      margin-top: 0.25rem;
+    }
+    .meta { 
+      text-align: right; 
+      font-size: 10pt; 
+      color: #444;
+    }
+    .image { 
+      width: 100%; 
+      max-height: 200px; 
+      object-fit: cover; 
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+    .section { 
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+    .section-title { 
+      font-size: 12pt; 
+      font-weight: bold; 
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 0.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .ingredients-grid {
+      columns: 2;
+      column-gap: 1.5rem;
+    }
+    .category { 
+      font-size: 9pt; 
+      font-weight: 600; 
+      text-transform: uppercase;
+      color: #555;
+      margin: 0.5rem 0 0.25rem 0;
+      break-inside: avoid;
+    }
+    .category:first-child { margin-top: 0; }
+    .ingredient { 
+      font-size: 10pt; 
+      padding: 0.1rem 0;
+    }
+    .ingredient strong { font-weight: 600; }
+    .directions { 
+      padding-left: 1.25rem;
+    }
+    .directions li { 
+      font-size: 10pt; 
+      margin-bottom: 0.5rem;
+      line-height: 1.5;
+    }
+    .notes-section {
+      background: #fef3c7;
+      border-color: #fcd34d;
+    }
+    .notes-title {
+      font-size: 11pt;
+      font-weight: bold;
+      margin-bottom: 0.25rem;
+    }
+    .notes-text {
+      font-size: 10pt;
+    }
+    @media print {
+      body { padding: 0; }
+      @page { margin: 0.5in; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="title">${recipe.recipe_name}</div>
+      <div class="subtitle">${[recipe.meal_type, recipe.recipe_category, recipe.diet_pref].filter(Boolean).join(" • ")}</div>
+    </div>
+    ${options.showMeta ? `
+    <div class="meta">
+      <div>${recipe.servings || "—"} servings</div>
+      <div>${formatTime(recipe.total_time)}</div>
+    </div>
+    ` : ""}
+  </div>
+
+  ${options.showImage && recipe.reference_image_path ? `
+  <img class="image" src="${recipe.reference_image_path}" alt="${recipe.recipe_name}">
+  ` : ""}
+
+  <div class="section">
+    <div class="section-title">Ingredients</div>
+    <div class="ingredients-grid">
+      ${sortCategoryEntries(Array.from(groupedIngredients.entries())).map(([category, ings]) => `
+        ${groupedIngredients.size > 1 ? `<div class="category">${category}</div>` : ""}
+        ${ings.map((ing: RecipeResponseDTO["ingredients"][0]) => `
+          <div class="ingredient">
+            <strong>${formatQuantity(ing.quantity)} ${ing.unit || ""}</strong>${(ing.quantity || ing.unit) ? " " : ""}${ing.ingredient_name}
+          </div>
+        `).join("")}
+      `).join("")}
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Directions</div>
+    <ol class="directions">
+      ${directions.map(step => `<li>${step}</li>`).join("")}
+    </ol>
+  </div>
+
+  ${options.showNotes && recipe.notes ? `
+  <div class="section notes-section">
+    <div class="notes-title">Chef's Notes</div>
+    <div class="notes-text">${recipe.notes}</div>
+  </div>
+  ` : ""}
+</body>
+</html>`;
+
+    // Create a hidden iframe for printing
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "none";
+    document.body.appendChild(iframe);
+
+    const iframeDoc = iframe.contentWindow?.document;
+    if (iframeDoc) {
+      iframeDoc.open();
+      iframeDoc.write(printContent);
+      iframeDoc.close();
+
+      // Wait for content to load (especially images), then print
+      iframe.onload = () => {
+        setTimeout(() => {
+          iframe.contentWindow?.print();
+          // Remove iframe after printing
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+          }, 1000);
+        }, 250);
+      };
+    }
   };
 
   const handleMealAdded = async () => {
@@ -395,23 +572,19 @@ export function FullRecipeView() {
             </div>
           )}
 
-          {/* Two Column: Ingredients & Directions */}
-          <div className="print-columns flex gap-6">
-            {/* Ingredients Column */}
-            <div className="w-1/3 p-3 border border-gray-200 rounded-lg bg-gray-50">
-              <h2 className="pb-1 mb-2 text-base font-bold tracking-wide text-black uppercase border-b border-gray-300">
-                Ingredients
-              </h2>
-              <div className="space-y-1 text-sm">
+          {/* Simple stacked layout for reliable printing */}
+          <div className="print-content">
+            {/* Ingredients Section */}
+            <div className="print-section">
+              <h2 className="print-section-header">Ingredients</h2>
+              <div className="print-section-body">
                 {sortCategoryEntries(Array.from(groupedIngredients.entries())).map(([category, ingredients]) => (
                   <div key={category}>
                     {groupedIngredients.size > 1 && (
-                      <p className="mt-3 mb-1 text-xs font-semibold text-gray-700 uppercase first:mt-0">
-                        {category}
-                      </p>
+                      <p className="print-category">{category}</p>
                     )}
                     {ingredients.map((ingredient: RecipeResponseDTO["ingredients"][0]) => (
-                      <p key={ingredient.id} className="text-black py-0.5">
+                      <p key={ingredient.id} className="print-ingredient">
                         <span className="font-medium">{formatQuantity(ingredient.quantity)} {ingredient.unit || ""}</span>
                         {(ingredient.quantity || ingredient.unit) && " "}
                         {ingredient.ingredient_name}
@@ -422,28 +595,24 @@ export function FullRecipeView() {
               </div>
             </div>
 
-            {/* Directions Column */}
-            <div className="w-2/3 p-3 border border-gray-200 rounded-lg">
-              <h2 className="pb-1 mb-2 text-base font-bold tracking-wide text-black uppercase border-b border-gray-300">
-                Directions
-              </h2>
-              <ol className="ml-4 space-y-2 text-sm list-decimal list-outside">
+            {/* Directions Section */}
+            <div className="print-section">
+              <h2 className="print-section-header">Directions</h2>
+              <ol className="print-directions-list">
                 {directions.map((step, index) => (
-                  <li key={index} className="pl-1 leading-relaxed text-black">
-                    {step}
-                  </li>
+                  <li key={index}>{step}</li>
                 ))}
               </ol>
             </div>
-          </div>
 
-          {/* Chef's Notes */}
-          {printOptions.showNotes && recipe.notes && (
-            <div className="print-notes p-3 mt-4 border border-gray-200 rounded-lg bg-gray-50">
-              <h3 className="mb-1 text-sm font-bold text-black">Chef's Notes</h3>
-              <p className="text-xs text-gray-800">{recipe.notes}</p>
-            </div>
-          )}
+            {/* Chef's Notes */}
+            {printOptions.showNotes && recipe.notes && (
+              <div className="print-section print-notes-section">
+                <h3 className="print-notes-header">Chef's Notes</h3>
+                <p className="print-notes-text">{recipe.notes}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Main Content - Hidden for Print */}
@@ -869,28 +1038,84 @@ export function FullRecipeView() {
             display: block !important;
           }
 
-          /* Page break controls */
-          h2, h3 {
-            page-break-after: avoid;
-            break-after: avoid;
+          /* ========== SIMPLE PRINT LAYOUT ========== */
+          
+          .print-content {
+            font-size: 11pt;
+            line-height: 1.4;
           }
 
-          /* Keep the two-column content block together */
-          .print-columns {
-            page-break-inside: avoid;
+          .print-section {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            background: #f9fafb;
+          }
+
+          .print-section-header {
+            margin: 0 0 0.5rem 0;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid #d1d5db;
+            font-size: 12pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+          }
+
+          .print-section-body {
+            columns: 2;
+            column-gap: 1.5rem;
+          }
+
+          .print-category {
+            margin: 0.5rem 0 0.25rem 0;
+            font-size: 9pt;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #4b5563;
             break-inside: avoid;
           }
 
-          /* Keep Chef's Notes together */
-          .print-notes {
-            page-break-inside: avoid;
+          .print-category:first-child {
+            margin-top: 0;
+          }
+
+          .print-ingredient {
+            margin: 0;
+            padding: 0.125rem 0;
+            font-size: 10pt;
             break-inside: avoid;
           }
 
-          /* Never break inside individual items */
-          li, .print-columns p {
-            page-break-inside: avoid;
-            break-inside: avoid;
+          .print-directions-list {
+            margin: 0;
+            padding-left: 1.25rem;
+            list-style: decimal outside;
+          }
+
+          .print-directions-list li {
+            margin-bottom: 0.5rem;
+            padding-left: 0.25rem;
+            font-size: 10pt;
+            line-height: 1.5;
+          }
+
+          .print-notes-section {
+            background: #fef3c7;
+            border-color: #fcd34d;
+          }
+
+          .print-notes-header {
+            margin: 0 0 0.25rem 0;
+            font-size: 11pt;
+            font-weight: bold;
+          }
+
+          .print-notes-text {
+            margin: 0;
+            font-size: 10pt;
+            line-height: 1.4;
           }
 
           /* Links */
