@@ -9,7 +9,7 @@ interface PageHeaderProps {
 export function PageHeader({ children, className }: PageHeaderProps) {
   return (
     <div className={cn(
-      "sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-sm",
+      "sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur-sm",
       className
     )}>
       {/* pl-16 on mobile creates space for the hamburger menu button */}

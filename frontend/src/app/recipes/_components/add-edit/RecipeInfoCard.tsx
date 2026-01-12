@@ -57,14 +57,14 @@ export function RecipeInfoCard({
     <Card>
       <CardContent className="pt-6">
         <div className="flex items-start gap-3 mb-6">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Info className="h-5 w-5 text-primary" />
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Info className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1">
             <h2 className="text-lg font-semibold text-foreground">
               Recipe Information
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="mt-1 text-sm text-muted-foreground">
               Basic details about your recipe including name, timing, and classification
             </p>
           </div>
@@ -73,7 +73,7 @@ export function RecipeInfoCard({
           {/* Recipe Name */}
           <div data-field="recipeName">
             <Label htmlFor="recipe-name" className="flex items-center gap-2">
-              <ChefHat className="h-4 w-4 text-muted-foreground" />
+              <ChefHat className="w-4 h-4 text-muted-foreground" />
               Recipe Name
             </Label>
             <Input
@@ -85,7 +85,7 @@ export function RecipeInfoCard({
               autoFocus={autoFocusName}
             />
             {getError("recipeName") && (
-              <p className="text-sm text-destructive mt-1">{getError("recipeName")}</p>
+              <p className="mt-1 text-sm text-destructive">{getError("recipeName")}</p>
             )}
           </div>
 
@@ -93,7 +93,7 @@ export function RecipeInfoCard({
           <div className="grid grid-cols-2 gap-4">
             <div data-field="totalTime">
               <Label htmlFor="total-time" className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
+                <Clock className="w-4 h-4 text-muted-foreground" />
                 Total Time (mins)
               </Label>
               <Input
@@ -104,12 +104,12 @@ export function RecipeInfoCard({
                 className={cn("mt-2", hasError("totalTime") && "border-destructive")}
               />
               {getError("totalTime") && (
-                <p className="text-sm text-destructive mt-1">{getError("totalTime")}</p>
+                <p className="mt-1 text-sm text-destructive">{getError("totalTime")}</p>
               )}
             </div>
             <div data-field="servings">
               <Label htmlFor="servings" className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <Users className="w-4 h-4 text-muted-foreground" />
                 Servings
               </Label>
               <Input
@@ -120,16 +120,16 @@ export function RecipeInfoCard({
                 className={cn("mt-2", hasError("servings") && "border-destructive")}
               />
               {getError("servings") && (
-                <p className="text-sm text-destructive mt-1">{getError("servings")}</p>
+                <p className="mt-1 text-sm text-destructive">{getError("servings")}</p>
               )}
             </div>
           </div>
 
           {/* Classification Row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div data-field="mealType">
               <Label htmlFor="meal-type" className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-muted-foreground" />
+                <Tag className="w-4 h-4 text-muted-foreground" />
                 Meal Type
               </Label>
               <Select value={mealType} onValueChange={setMealType}>
@@ -148,12 +148,12 @@ export function RecipeInfoCard({
                 </SelectContent>
               </Select>
               {getError("mealType") && (
-                <p className="text-sm text-destructive mt-1">{getError("mealType")}</p>
+                <p className="mt-1 text-sm text-destructive">{getError("mealType")}</p>
               )}
             </div>
             <div data-field="category">
               <Label htmlFor="category" className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-muted-foreground" />
+                <Tag className="w-4 h-4 text-muted-foreground" />
                 Category
               </Label>
               <Select value={category} onValueChange={setCategory}>
@@ -172,12 +172,12 @@ export function RecipeInfoCard({
                 </SelectContent>
               </Select>
               {getError("category") && (
-                <p className="text-sm text-destructive mt-1">{getError("category")}</p>
+                <p className="mt-1 text-sm text-destructive">{getError("category")}</p>
               )}
             </div>
             <div>
               <Label htmlFor="dietary-preference" className="flex items-center gap-2">
-                <Leaf className="h-4 w-4 text-muted-foreground" />
+                <Leaf className="w-4 h-4 text-muted-foreground" />
                 Dietary Preference
               </Label>
               <Select
