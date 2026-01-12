@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AppLayout } from "@/components/layout/AppLayout";
+import { ConditionalAppLayout } from "@/components/layout/ConditionalAppLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/lib/providers/QueryProvider";
 
@@ -40,7 +40,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <QueryProvider>
-          <AppLayout>{children}</AppLayout>
+          <ConditionalAppLayout>{children}</ConditionalAppLayout>
           <Toaster />
         </QueryProvider>
       </body>
