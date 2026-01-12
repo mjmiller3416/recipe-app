@@ -44,7 +44,7 @@ function SelectTrigger({
         "data-[size=default]:h-10 data-[size=sm]:h-8 data-[size=lg]:h-12 data-[size=lg]:py-3 data-[size=lg]:text-base",
         "*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        "hover:cursor-pointer group",
+        "hover:cursor-pointer group select-none",
         className
       )}
       {...props}

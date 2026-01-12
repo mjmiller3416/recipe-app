@@ -32,7 +32,7 @@ export function IngredientItem({ ingredient, checked, onToggle }: IngredientItem
             ? "border-primary bg-primary"
             : "border-muted group-hover:border-primary"
         )}>
-          {checked && <Check className="h-3 w-3 text-primary-foreground" />}
+          {checked && <Check className="w-3 h-3 text-primary-foreground" />}
         </div>
         <span className={cn(
           "flex-1 text-foreground transition-all",

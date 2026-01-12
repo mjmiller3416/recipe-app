@@ -53,7 +53,7 @@ function StatCard({
   colorClass: string;
 }) {
   return (
-    <Card className="flex-1 flex flex-col items-center justify-center p-4 gap-1">
+    <Card className="flex flex-col items-center justify-center flex-1 gap-1 p-4">
       <span className={`text-3xl font-bold ${colorClass}`}>{value}</span>
       <span className="text-sm text-muted-foreground">{label}</span>
     </Card>
@@ -94,7 +94,7 @@ function AddManualItemForm({
   };
 
   return (
-    <Card className="flex flex-row flex-wrap items-center gap-2 p-3 mb-4">
+    <Card className="flex flex-row flex-wrap items-center gap-2 p-3 mb-6">
       <QuantityInput
         value={quantity}
         onChange={setQuantity}
@@ -138,7 +138,7 @@ function AddManualItemForm({
         disabled={!itemName.trim() || isAdding}
         size="icon"
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="w-4 h-4" />
       </Button>
     </Card>
   );
@@ -389,7 +389,7 @@ export function ShoppingListView() {
           variant="outline"
           onClick={handleClearManualItems}
         >
-          <Trash2 className="h-4 w-4 mr-2" />
+          <Trash2 className="w-4 h-4 mr-2" />
           Clear manual
         </Button>
       )}
@@ -401,12 +401,12 @@ export function ShoppingListView() {
         >
           {hideCompleted ? (
             <>
-              <Eye className="h-4 w-4 mr-2" />
+              <Eye className="w-4 h-4 mr-2" />
               Show collected
             </>
           ) : (
             <>
-              <EyeOff className="h-4 w-4 mr-2" />
+              <EyeOff className="w-4 h-4 mr-2" />
               Hide collected
             </>
           )}
@@ -425,10 +425,10 @@ export function ShoppingListView() {
         <div className="space-y-6">
           {[1, 2, 3].map((i) => (
             <div key={i} className="space-y-2">
-              <Skeleton className="h-4 w-24" />
+              <Skeleton className="w-24 h-4" />
               <div className="space-y-1">
                 {[1, 2, 3].map((j) => (
-                  <Skeleton key={j} className="h-12 w-full rounded-xl" />
+                  <Skeleton key={j} className="w-full h-12 rounded-xl" />
                 ))}
               </div>
             </div>
@@ -447,13 +447,13 @@ export function ShoppingListView() {
         actions={headerActions}
       >
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="p-4 bg-destructive/10 rounded-full mb-4">
-            <ShoppingCart className="h-12 w-12 text-destructive" />
+          <div className="p-4 mb-4 rounded-full bg-destructive/10">
+            <ShoppingCart className="w-12 h-12 text-destructive" />
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">
+          <h3 className="mb-2 text-lg font-semibold text-foreground">
             Something went wrong
           </h3>
-          <p className="text-sm text-muted-foreground max-w-sm mb-4">
+          <p className="max-w-sm mb-4 text-sm text-muted-foreground">
             {error instanceof Error ? error.message : "Failed to load shopping list"}
           </p>
           <Button onClick={() => refetch()}>Try Again</Button>
@@ -485,13 +485,13 @@ export function ShoppingListView() {
         />
 
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="p-4 bg-elevated rounded-full mb-4">
-            <ShoppingCart className="h-12 w-12 text-muted-foreground" />
+          <div className="p-4 mb-4 rounded-full bg-elevated">
+            <ShoppingCart className="w-12 h-12 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">
+          <h3 className="mb-2 text-lg font-semibold text-foreground">
             Your shopping list is empty
           </h3>
-          <p className="text-sm text-muted-foreground max-w-sm">
+          <p className="max-w-sm text-sm text-muted-foreground">
             Add meals to your planner or use the form above to add items manually.
           </p>
         </div>
@@ -540,13 +540,13 @@ export function ShoppingListView() {
 
       {/* Overall progress bar */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+        <div className="flex-1 h-2 overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full bg-success rounded-full transition-all duration-500 ease-out"
+            className="h-full transition-all duration-500 ease-out rounded-full bg-success"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
-        <span className="text-sm text-muted-foreground tabular-nums min-w-10 text-right">
+        <span className="text-sm text-right text-muted-foreground tabular-nums min-w-10">
           {progressPercent}%
         </span>
       </div>
@@ -572,8 +572,8 @@ export function ShoppingListView() {
           {/* Active filter indicator */}
           {filterRecipeName && (
             <div className="flex items-center gap-2 px-3 py-2.5 mb-4 rounded-lg bg-primary/10 border border-primary/30">
-              <Filter className="h-4 w-4 text-primary flex-shrink-0" />
-              <span className="text-sm text-primary truncate">
+              <Filter className="flex-shrink-0 w-4 h-4 text-primary" />
+              <span className="text-sm truncate text-primary">
                 Filtering by: {getFilterDisplayName()}
               </span>
               <Button
@@ -582,7 +582,7 @@ export function ShoppingListView() {
                 onClick={() => setFilterRecipeName(null)}
                 className="ml-auto text-primary"
               >
-                <X className="h-4 w-4" />
+                <X className="w-4 h-4" />
               </Button>
             </div>
           )}
@@ -604,7 +604,7 @@ export function ShoppingListView() {
 
         {/* Recipe filter sidebar (desktop only) - sticky below header */}
         <div className="hidden lg:block">
-          <div className="sticky top-24">
+          <div className="sticky top-[113px] transform-gpu">
             <RecipeFilterSidebar
               recipes={recipes}
               manualItemCount={manualItemCount}

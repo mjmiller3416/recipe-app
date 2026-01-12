@@ -17,12 +17,12 @@ export function PageHeader({ children, className }: PageHeaderProps) {
         className
       )}>
         {/* pl-16 on mobile creates space for the hamburger menu button */}
-        <div className="max-w-7xl mx-auto pl-16 pr-4 md:px-6 py-4">
+        <div className="py-4 pl-16 pr-4 mx-auto max-w-7xl md:px-6">
           {children}
         </div>
       </div>
       {/* Spacer to push content below fixed header */}
-      <div className="h-[73px]" aria-hidden="true" />
+      <div className="h-[89px]" aria-hidden="true" />
     </>
   );
 }
@@ -53,7 +53,7 @@ export function PageHeaderTitle({ title, description, className }: PageHeaderTit
         {title}
       </h1>
       {description && (
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="mt-1 text-sm text-muted-foreground">
           {description}
         </p>
       )}
