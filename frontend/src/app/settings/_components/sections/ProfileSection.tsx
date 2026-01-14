@@ -11,19 +11,19 @@ import { Separator } from "@/components/ui/separator";
 import { SectionHeader } from "../SectionHeader";
 
 interface ProfileSectionProps {
-  displayName: string;
+  userName: string;
   email: string;
   avatar: string;
-  onDisplayNameChange: (value: string) => void;
+  onuserNameChange: (value: string) => void;
   onEmailChange: (value: string) => void;
   onAvatarChange: (value: string) => void;
 }
 
 export function ProfileSection({
-  displayName,
+  userName,
   email,
   avatar,
-  onDisplayNameChange,
+  onuserNameChange,
   onEmailChange,
   onAvatarChange,
 }: ProfileSectionProps) {
@@ -52,9 +52,9 @@ export function ProfileSection({
           <div className="flex items-center gap-6">
             <div className="relative group">
               <Avatar className="h-24 w-24 border-4 border-elevated">
-                <AvatarImage src={avatar} alt={displayName} />
+                <AvatarImage src={avatar} alt={userName} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                  {displayName.charAt(0).toUpperCase()}
+                  {userName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <button
@@ -90,17 +90,17 @@ export function ProfileSection({
 
           <Separator />
 
-          {/* Display Name */}
+          {/* Username */}
           <div className="space-y-2">
             <Label htmlFor="display-name" className="flex items-center gap-2">
               <User className="h-3.5 w-3.5 text-muted-foreground" />
-              Display Name
+              Username
             </Label>
             <Input
               id="display-name"
               placeholder="Enter your name"
-              value={displayName}
-              onChange={(e) => onDisplayNameChange(e.target.value)}
+              value={userName}
+              onChange={(e) => onuserNameChange(e.target.value)}
               className="max-w-md"
             />
             <p className="text-xs text-muted-foreground">

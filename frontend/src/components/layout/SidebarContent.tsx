@@ -185,14 +185,14 @@ export function SidebarContent({ onNavigate, onOpenMealGenie }: SidebarContentPr
             <Avatar className="h-10 w-10">
               <AvatarImage src={settings.profile.avatar} />
               <AvatarFallback className="bg-primary text-primary-foreground">
-                {settings.profile.displayName.charAt(0).toUpperCase()}
+                {settings.profile.userName.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="absolute bottom-0 right-0 h-3 w-3 bg-status-online rounded-full border-2 border-sidebar" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">
-              {settings.profile.displayName}
+              {settings.profile.userName}
             </p>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />

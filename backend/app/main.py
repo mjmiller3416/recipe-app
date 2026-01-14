@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 from app.api import dashboard, data_management, feedback, meals, planner, recipes, shopping, ingredients, upload, unit_conversions
-from app.api.ai import cooking_tips_router, meal_genie_router, image_generation_router
+from app.api.ai import cooking_tips_router, meal_genie_router, image_generation_router, meal_suggestions_router
 
 # Create FastAPI app
 app = FastAPI(
@@ -47,6 +47,7 @@ app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"]
 app.include_router(cooking_tips_router, prefix="/api/ai/cooking-tip", tags=["ai", "cooking-tips"])
 app.include_router(meal_genie_router, prefix="/api/ai/meal-genie", tags=["ai", "meal-genie"])
 app.include_router(image_generation_router, prefix="/api/ai/image-generation", tags=["ai", "image-generation"])
+app.include_router(meal_suggestions_router, prefix="/api/ai/meal-suggestions", tags=["ai", "meal-suggestions"])
 
 
 @app.get("/")

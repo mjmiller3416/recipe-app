@@ -53,7 +53,7 @@ class PantryAcquisition(Base):
 
     id: int                     # Primary key
     state_key: str              # Normalized ingredient key (e.g., "olive oil::cup")
-    ingredient_name: str        # Display name
+    ingredient_name: str        # Username
     ingredient_category: str    # For shelf-life rules (pantry, produce, dairy, etc.)
 
     # Acquisition tracking

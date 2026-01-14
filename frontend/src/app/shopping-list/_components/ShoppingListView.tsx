@@ -507,8 +507,8 @@ export function ShoppingListView() {
       ? Math.round((shoppingData.checked_items / shoppingData.total_items) * 100)
       : 0;
 
-  // Get display name for active filter
-  const getFilterDisplayName = () => {
+  // Get Username for active filter
+  const getFilteruserName = () => {
     if (!filterRecipeName) return null;
     if (filterRecipeName === "__manual__") return "Manual items";
     return filterRecipeName;
@@ -575,7 +575,7 @@ export function ShoppingListView() {
             <div className="flex items-center gap-2 px-3 py-2.5 mb-4 rounded-lg bg-primary/10 border border-primary/30">
               <Filter className="flex-shrink-0 w-4 h-4 text-primary" />
               <span className="text-sm truncate text-primary">
-                Filtering by: {getFilterDisplayName()}
+                Filtering by: {getFilteruserName()}
               </span>
               <Button
                 variant="ghost"

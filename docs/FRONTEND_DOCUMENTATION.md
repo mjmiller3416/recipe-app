@@ -1285,8 +1285,8 @@ function SettingsPage() {
   return (
     <form onSubmit={(e) => { e.preventDefault(); saveSettings(); }}>
       <Input
-        value={settings.profile.displayName}
-        onChange={(e) => updateSettings("profile", { displayName: e.target.value })}
+        value={settings.profile.userName}
+        onChange={(e) => updateSettings("profile", { userName: e.target.value })}
       />
 
       <Select
@@ -1314,7 +1314,7 @@ function SettingsPage() {
 ```typescript
 interface AppSettings {
   profile: {
-    displayName: string;
+    userName: string;
     email: string;
     avatar: string;
   };

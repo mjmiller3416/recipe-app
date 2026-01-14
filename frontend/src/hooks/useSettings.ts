@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 // ============================================================================
 
 export interface UserProfile {
-  displayName: string;
+  userName: string;
   email: string;
   avatar: string; // URL or empty string
 }
@@ -65,7 +65,7 @@ export interface AppSettings {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   profile: {
-    displayName: "User",
+    userName: "User",
     email: "",
     avatar: "",
   },
@@ -163,7 +163,7 @@ interface UseSettingsReturn {
  * const { settings, updateSettings, saveSettings, hasUnsavedChanges } = useSettings();
  * 
  * // Update profile
- * updateSettings('profile', { displayName: 'John' });
+ * updateSettings('profile', { userName: 'John' });
  * 
  * // Save to storage
  * saveSettings();

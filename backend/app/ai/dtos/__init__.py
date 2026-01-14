@@ -11,6 +11,10 @@ from .meal_genie_dtos import (
     RecipeGenerationRequestDTO,
     RecipeGenerationResponseDTO,
 )
+from .meal_suggestions_dtos import (
+    MealSuggestionsRequestDTO,
+    MealSuggestionsResponseDTO,
+)
 
 __all__ = [
     "CookingTipResponseDTO",
@@ -23,4 +27,6 @@ __all__ = [
     "GeneratedRecipeDTO",
     "RecipeGenerationRequestDTO",
     "RecipeGenerationResponseDTO",
+    "MealSuggestionsRequestDTO",
+    "MealSuggestionsResponseDTO",
 ]

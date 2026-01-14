@@ -23,6 +23,8 @@ import type {
   MealGenieMessage,
   MealGenieResponseDTO,
   RecipeGenerationResponseDTO,
+  MealSuggestionsRequestDTO,
+  MealSuggestionsResponseDTO,
 } from "@/types";
 
 // API base URL from environment variable or default to localhost
@@ -745,6 +747,25 @@ export const cookingTipApi = {
    */
   getTip: (): Promise<CookingTipResponseDTO> =>
     fetchApi<CookingTipResponseDTO>("/api/ai/cooking-tip"),
+};
+
+// ============================================================================
+// Meal Suggestions API
+// ============================================================================
+
+export const mealSuggestionsApi = {
+  /**
+   * Get AI-powered side dish suggestions and cooking tip for a meal
+   * @param request The meal details to generate suggestions for
+   * @returns Response with suggestions on success
+   */
+  getSuggestions: (
+    request: MealSuggestionsRequestDTO
+  ): Promise<MealSuggestionsResponseDTO> =>
+    fetchApi<MealSuggestionsResponseDTO>("/api/ai/meal-suggestions", {
+      method: "POST",
+      body: JSON.stringify(request),
+    }),
 };
 
 // ============================================================================

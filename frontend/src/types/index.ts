@@ -424,6 +424,22 @@ export interface CookingTipResponseDTO {
 }
 
 // ============================================================================
+// Meal Suggestions Types
+// ============================================================================
+
+export interface MealSuggestionsRequestDTO {
+  main_recipe_name: string;
+  main_recipe_category?: string;
+  meal_type?: string;
+}
+
+export interface MealSuggestionsResponseDTO {
+  success: boolean;
+  cooking_tip?: string;
+  error?: string;
+}
+
+// ============================================================================
 // Cooking Streak Types
 // ============================================================================
 
