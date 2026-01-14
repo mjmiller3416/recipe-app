@@ -2,6 +2,10 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-01-13 - New Features
+- Shopping list toggle now has three modes: include all ingredients, include only produce, or exclude entirely — click the cart icon on meal cards to cycle through options
+- Hover over the shopping cart icon to see a tooltip explaining the current mode
+
 ## 2026-01-10 - New Features
 - Meal Genie Assistant can now create recipes when prompted - just ask it to "create a recipe for ..."
 
