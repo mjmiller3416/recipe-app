@@ -301,8 +301,9 @@ export function ShoppingListView() {
     if (!plannerEntries || !allMeals) return { recipeOrderMap: orderMap, mainRecipeNames: mainRecipes };
 
     // Sort entries by position (meal planner order)
+    // Include entries in "all" or "produce_only" mode (not "none")
     const sortedEntries = [...plannerEntries]
-      .filter((e) => !e.exclude_from_shopping && !e.is_completed)
+      .filter((e) => e.shopping_mode !== "none" && !e.is_completed)
       .sort((a, b) => a.position - b.position);
 
     let orderIndex = 0;

@@ -420,9 +420,9 @@ class PlannerService:
             self.session.rollback()
             return None
 
-    def toggle_exclude_from_shopping(self, entry_id: int) -> Optional[PlannerEntryResponseDTO]:
+    def cycle_shopping_mode(self, entry_id: int) -> Optional[PlannerEntryResponseDTO]:
         """
-        Toggle the exclude_from_shopping status of a planner entry.
+        Cycle the shopping mode of a planner entry: all -> produce_only -> none -> all.
 
         Args:
             entry_id: ID of the entry
@@ -431,7 +431,7 @@ class PlannerService:
             Updated entry as DTO or None if not found
         """
         try:
-            entry = self.repo.toggle_exclude_from_shopping(entry_id)
+            entry = self.repo.cycle_shopping_mode(entry_id)
             if not entry:
                 return None
 
@@ -573,7 +573,7 @@ class PlannerService:
             is_completed=entry.is_completed,
             completed_at=entry.completed_at.isoformat() if entry.completed_at else None,
             scheduled_date=entry.scheduled_date.isoformat() if entry.scheduled_date else None,
-            exclude_from_shopping=entry.exclude_from_shopping,
+            shopping_mode=entry.shopping_mode,
             meal_name=meal.meal_name if meal else None,
             meal_is_favorite=meal.is_favorite if meal else None,
             main_recipe_id=meal.main_recipe_id if meal else None,

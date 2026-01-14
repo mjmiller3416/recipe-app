@@ -132,7 +132,7 @@ export interface PlannerEntryResponseDTO {
   is_completed: boolean;
   completed_at: string | null;
   scheduled_date: string | null;
-  exclude_from_shopping?: boolean;
+  shopping_mode?: ShoppingMode;
   // Hydrated meal data
   meal_name: string | null;
   meal_is_favorite?: boolean;
@@ -154,6 +154,9 @@ export interface MealPlanSummaryDTO {
 // ============================================================================
 
 export type ShoppingSource = "recipe" | "manual";
+
+/** Shopping mode for planner entries - controls ingredient inclusion in shopping list */
+export type ShoppingMode = "all" | "produce_only" | "none";
 
 export interface ShoppingItemBaseDTO {
   ingredient_name: string;

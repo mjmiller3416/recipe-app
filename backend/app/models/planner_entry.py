@@ -9,8 +9,15 @@ from __future__ import annotations
 from datetime import date, datetime, timezone
 from typing import TYPE_CHECKING, Optional
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+
+# -- Shopping Mode Constants ---------------------------------------------------------------------
+SHOPPING_MODE_ALL = "all"
+SHOPPING_MODE_PRODUCE_ONLY = "produce_only"
+SHOPPING_MODE_NONE = "none"
+SHOPPING_MODES = [SHOPPING_MODE_ALL, SHOPPING_MODE_PRODUCE_ONLY, SHOPPING_MODE_NONE]
 
 from ..database.base import Base
 
@@ -56,8 +63,8 @@ class PlannerEntry(Base):
     # Future calendar feature - nullable for now
     scheduled_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
-    # Exclude from shopping list generation
-    exclude_from_shopping: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Shopping mode: 'all' (include all), 'produce_only' (produce only), 'none' (exclude)
+    shopping_mode: Mapped[str] = mapped_column(String(20), nullable=False, default=SHOPPING_MODE_ALL)
 
     # Soft-delete flag for cleared entries (preserves cooking history for streak)
     is_cleared: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -100,12 +107,13 @@ class PlannerEntry(Base):
             self.mark_completed()
         return self.is_completed
 
-    def toggle_exclude_from_shopping(self) -> bool:
+    def cycle_shopping_mode(self) -> str:
         """
-        Toggle the exclude_from_shopping status.
+        Cycle through shopping modes: all -> produce_only -> none -> all.
 
         Returns:
-            The new exclude_from_shopping value
+            The new shopping_mode value
         """
-        self.exclude_from_shopping = not self.exclude_from_shopping
-        return self.exclude_from_shopping
+        current_idx = SHOPPING_MODES.index(self.shopping_mode) if self.shopping_mode in SHOPPING_MODES else 0
+        self.shopping_mode = SHOPPING_MODES[(current_idx + 1) % len(SHOPPING_MODES)]
+        return self.shopping_mode

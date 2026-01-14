@@ -292,10 +292,10 @@ export const plannerApi = {
     }),
 
   /**
-   * Toggle exclude_from_shopping status of a planner entry
+   * Cycle the shopping mode of a planner entry: all -> produce_only -> none -> all
    */
-  toggleExcludeFromShopping: (entryId: number): Promise<PlannerEntryResponseDTO> =>
-    fetchApi<PlannerEntryResponseDTO>(`/api/planner/entries/${entryId}/toggle-shopping`, {
+  cycleShoppingMode: (entryId: number): Promise<PlannerEntryResponseDTO> =>
+    fetchApi<PlannerEntryResponseDTO>(`/api/planner/entries/${entryId}/cycle-shopping-mode`, {
       method: "POST",
     }),
 

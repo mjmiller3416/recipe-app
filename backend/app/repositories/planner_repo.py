@@ -180,7 +180,7 @@ class PlannerRepo:
 
     def get_shopping_entries(self) -> List[PlannerEntry]:
         """
-        Get incomplete planner entries that are NOT excluded from shopping.
+        Get incomplete planner entries that have any shopping mode except 'none'.
 
         Returns:
             List of entries to include in shopping list generation
@@ -188,7 +188,8 @@ class PlannerRepo:
         stmt = (
             select(PlannerEntry)
             .where(PlannerEntry.is_completed == False)
-            .where(PlannerEntry.exclude_from_shopping == False)
+            .where(PlannerEntry.is_cleared == False)
+            .where(PlannerEntry.shopping_mode != 'none')
             .options(
                 joinedload(PlannerEntry.meal).joinedload(Meal.main_recipe)
             )
@@ -306,9 +307,9 @@ class PlannerRepo:
         self.session.flush()
         return entry
 
-    def toggle_exclude_from_shopping(self, entry_id: int) -> Optional[PlannerEntry]:
+    def cycle_shopping_mode(self, entry_id: int) -> Optional[PlannerEntry]:
         """
-        Toggle the exclude_from_shopping status of a planner entry.
+        Cycle the shopping mode of a planner entry: all -> produce_only -> none -> all.
 
         Args:
             entry_id: ID of the entry
@@ -320,7 +321,7 @@ class PlannerRepo:
         if not entry:
             return None
 
-        entry.toggle_exclude_from_shopping()
+        entry.cycle_shopping_mode()
         self.session.flush()
         return entry
 

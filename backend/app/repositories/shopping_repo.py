@@ -66,7 +66,11 @@ class ShoppingRepo:
 
         return result
 
-    def aggregate_ingredients(self, recipe_ids: List[int]) -> List[ShoppingItem]:
+    def aggregate_ingredients(
+        self,
+        recipe_ids: List[int],
+        category_filter: Optional[str] = None
+    ) -> List[ShoppingItem]:
         """
         Aggregate ingredients from recipes into shopping items.
         Groups by (ingredient_id, dimension) to properly handle different unit types.
@@ -74,6 +78,8 @@ class ShoppingRepo:
 
         Args:
             recipe_ids (List[int]): List of recipe IDs to aggregate ingredients from.
+            category_filter (Optional[str]): If provided, only include ingredients
+                matching this category (e.g., "produce").
 
         Returns:
             List[ShoppingItem]: List of aggregated ShoppingItem objects with recipe_sources populated.
@@ -92,6 +98,11 @@ class ShoppingRepo:
 
         for ri in recipe_ingredients:
             ingredient: Ingredient = ri.ingredient
+
+            # Skip if category filter doesn't match
+            if category_filter and ingredient.ingredient_category != category_filter:
+                continue
+
             dimension = get_dimension(ri.unit)
             key = (ri.ingredient_id, dimension)
 
