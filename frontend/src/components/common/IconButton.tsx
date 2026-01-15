@@ -34,9 +34,9 @@ export function IconButton({
           )}
           aria-label={ariaLabel ?? tooltip}
         >
-          <Icon className="w-5 h-5 text-foreground group-hover:text-primary transition-colors" />
+          <Icon className="w-5 h-5 transition-colors text-foreground group-hover:text-primary" />
           {badge && (
-            <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
+            <span className="absolute w-2 h-2 rounded-full top-1 right-1 bg-primary animate-pulse" />
           )}
         </button>
       </TooltipTrigger>

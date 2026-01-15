@@ -7,6 +7,7 @@ import { Dices, RefreshCw, Clock, Users, ChefHat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { recipeApi } from "@/lib/api";
+import { getRecipeCardUrl } from "@/lib/imageUtils";
 import type { RecipeCardDTO } from "@/types";
 
 // Animation variants
@@ -148,9 +149,9 @@ export function RecipeRouletteWidget() {
   };
 
   return (
-    <div className="bg-card rounded-xl p-4 border border-border shadow-raised">
+    <div className="h-full flex flex-col bg-card rounded-xl p-4 border border-border shadow-raised">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 shrink-0">
         <div className="flex items-center gap-3">
           <motion.div
             animate={isSpinning ? { rotate: [0, 15, -15, 10, -10, 0] } : {}}
@@ -197,15 +198,16 @@ export function RecipeRouletteWidget() {
             initial="initial"
             animate="animate"
             exit="exit"
+            className="flex-1 min-h-0 flex flex-col"
           >
-            {/* Recipe Image */}
+            {/* Recipe Image - flexible height */}
             <div
-              className="relative aspect-video rounded-lg overflow-hidden bg-background mb-3 cursor-pointer group"
+              className="relative flex-1 min-h-24 rounded-lg overflow-hidden bg-background mb-3 cursor-pointer group"
               onClick={handleViewRecipe}
             >
               {currentRecipe.reference_image_path ? (
                 <motion.img
-                  src={currentRecipe.reference_image_path}
+                  src={getRecipeCardUrl(currentRecipe.reference_image_path, 400, 300) || currentRecipe.reference_image_path}
                   alt={currentRecipe.recipe_name}
                   className="w-full h-full object-cover"
                   whileHover={{ scale: 1.05 }}
@@ -232,7 +234,7 @@ export function RecipeRouletteWidget() {
 
             {/* Recipe Info */}
             <motion.h4
-              className="text-sm font-semibold text-foreground line-clamp-1 mb-2 cursor-pointer hover:text-primary transition-colors"
+              className="shrink-0 text-sm font-semibold text-foreground line-clamp-1 mb-2 cursor-pointer hover:text-primary transition-colors"
               onClick={handleViewRecipe}
               variants={metadataVariants}
               custom={0}
@@ -244,7 +246,7 @@ export function RecipeRouletteWidget() {
 
             {/* Metadata */}
             <motion.div
-              className="flex items-center gap-3 text-xs text-muted-foreground mb-3"
+              className="shrink-0 flex items-center gap-3 text-xs text-muted-foreground mb-3"
               variants={metadataVariants}
               custom={1}
               initial="initial"
@@ -263,6 +265,7 @@ export function RecipeRouletteWidget() {
 
             {/* View Recipe Button */}
             <motion.div
+              className="shrink-0"
               variants={metadataVariants}
               custom={2}
               initial="initial"

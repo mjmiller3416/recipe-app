@@ -6,7 +6,7 @@ import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { MealGeniePopup } from "@/components/meal-genie";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const [isMealGenieOpen, setIsMealGenieOpen] = useState(false);
+  const [isMealGenieOpen, setIsMealGenieOpen] = useState(true);
 
   return (
     <div className="flex min-h-screen print:block">

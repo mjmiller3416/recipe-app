@@ -12,6 +12,7 @@ __pycache__/
 # SQLite databases
 *.db
 backend/.env
+.env
 
 # IntelliJ IDEA
 .idea/

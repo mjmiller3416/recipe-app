@@ -3,8 +3,10 @@
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
 import { ShoppingCart, Users, Clock, Heart } from "lucide-react";
+import { ShoppingMode } from "@/types";
 
 // ============================================================================
 // TYPES
@@ -17,14 +19,14 @@ export interface MealGridItem {
   servings?: number | null;
   totalTime?: number | null;
   isFavorite?: boolean;
-  excludeFromShopping?: boolean;
+  shoppingMode?: ShoppingMode;
 }
 
 interface MealGridCardProps {
   item: MealGridItem;
   isSelected?: boolean;
   onClick?: () => void;
-  onToggleExcludeFromShopping?: () => void;
+  onCycleShoppingMode?: () => void;
   className?: string;
 }
 
@@ -41,6 +43,30 @@ function formatTime(minutes: number): string {
   return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 }
 
+/** Get tooltip text explaining the current shopping mode */
+function getShoppingModeTooltip(mode: ShoppingMode): string {
+  switch (mode) {
+    case "all":
+      return "All ingredients added to shopping list";
+    case "produce_only":
+      return "Only produce added to shopping list";
+    case "none":
+      return "Excluded from shopping list";
+  }
+}
+
+/** Get aria-label for the shopping mode button */
+function getShoppingModeAriaLabel(mode: ShoppingMode): string {
+  switch (mode) {
+    case "all":
+      return "Click to include only produce";
+    case "produce_only":
+      return "Click to exclude from shopping list";
+    case "none":
+      return "Click to include all ingredients";
+  }
+}
+
 // ============================================================================
 // MEAL GRID CARD COMPONENT
 // ============================================================================
@@ -53,9 +79,11 @@ export function MealGridCard({
   item,
   isSelected = false,
   onClick,
-  onToggleExcludeFromShopping,
+  onCycleShoppingMode,
   className,
 }: MealGridCardProps) {
+  const shoppingMode = item.shoppingMode ?? "all";
+
   return (
     <Card
       onClick={onClick}
@@ -88,30 +116,39 @@ export function MealGridCard({
 
         {/* Status Icons - Top Right */}
         <div className="absolute top-2 right-2 flex gap-1">
-          {/* Shopping Cart Toggle */}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleExcludeFromShopping?.();
-            }}
-            className="relative size-6 rounded-full bg-overlay-strong"
-            aria-label={item.excludeFromShopping ? "Include in shopping list" : "Exclude from shopping list"}
-          >
-            <ShoppingCart
-              className={cn(
-                "size-3.5",
-                item.excludeFromShopping ? "text-destructive" : "text-secondary"
-              )}
-              strokeWidth={1.5}
-            />
-            {item.excludeFromShopping && (
-              <span className="absolute inset-0 flex items-center justify-center">
-                <span className="w-4 h-0.5 bg-destructive rotate-[-45deg]" />
-              </span>
-            )}
-          </Button>
+          {/* Shopping Cart Toggle with Tooltip */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCycleShoppingMode?.();
+                }}
+                className="relative size-6 rounded-full bg-overlay-strong"
+                aria-label={getShoppingModeAriaLabel(shoppingMode)}
+              >
+                <ShoppingCart
+                  className={cn(
+                    "size-3.5",
+                    shoppingMode === "none" && "text-destructive",
+                    shoppingMode === "produce_only" && "text-warning",
+                    shoppingMode === "all" && "text-secondary"
+                  )}
+                  strokeWidth={1.5}
+                />
+                {shoppingMode === "none" && (
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="w-4 h-0.5 bg-destructive rotate-[-45deg]" />
+                  </span>
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {getShoppingModeTooltip(shoppingMode)}
+            </TooltipContent>
+          </Tooltip>
 
           {/* Favorite Indicator */}
           {item.isFavorite && (

@@ -180,11 +180,18 @@ def mark_incomplete(entry_id: int, session: Session = Depends(get_session)):
     return entry
 
 
-@router.post("/entries/{entry_id}/toggle-shopping", response_model=PlannerEntryResponseDTO)
-def toggle_exclude_from_shopping(entry_id: int, session: Session = Depends(get_session)):
-    """Toggle whether a planner entry is excluded from shopping list generation."""
+@router.post("/entries/{entry_id}/cycle-shopping-mode", response_model=PlannerEntryResponseDTO)
+def cycle_shopping_mode(entry_id: int, session: Session = Depends(get_session)):
+    """
+    Cycle the shopping mode of a planner entry.
+
+    Cycles through: all -> produce_only -> none -> all
+    - all: Include all ingredients in shopping list
+    - produce_only: Include only produce category ingredients
+    - none: Exclude from shopping list entirely
+    """
     service = PlannerService(session)
-    entry = service.toggle_exclude_from_shopping(entry_id)
+    entry = service.cycle_shopping_mode(entry_id)
     if not entry:
         raise HTTPException(status_code=404, detail="Planner entry not found")
     return entry

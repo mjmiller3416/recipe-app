@@ -33,7 +33,7 @@ class PlannerEntryUpdateDTO(BaseModel):
     position: Optional[int] = Field(None, ge=0)
     is_completed: Optional[bool] = None
     scheduled_date: Optional[date] = None
-    exclude_from_shopping: Optional[bool] = None
+    shopping_mode: Optional[str] = Field(None, description="Shopping mode: 'all', 'produce_only', or 'none'")
 
 
 class PlannerEntryResponseDTO(BaseModel):
@@ -47,7 +47,7 @@ class PlannerEntryResponseDTO(BaseModel):
     is_completed: bool
     completed_at: Optional[str] = None  # ISO format datetime string
     scheduled_date: Optional[str] = None  # ISO format date string
-    exclude_from_shopping: bool = False
+    shopping_mode: str = "all"  # 'all', 'produce_only', or 'none'
 
     # Meal information (denormalized for convenience)
     meal_name: Optional[str] = None

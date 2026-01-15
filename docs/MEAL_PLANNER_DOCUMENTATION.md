@@ -173,7 +173,7 @@ interface MealMainRecipe {
 interface MealQueueEntry {
   id: number;              // PlannerEntry ID (for reordering, removal)
   mealId: number;          // Underlying Meal ID (for editing)
-  name: string;            // Display name
+  name: string;            // Username
   mainRecipe: MealMainRecipe;
   sideRecipes: MealSideRecipe[];  // max 3
   completed: boolean;

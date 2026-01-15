@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
 import { plannerApi } from "@/lib/api";
 import { SideChip } from "./SideChip";
-import { AISuggestionsPlaceholder } from "./AISuggestionsPlaceholder";
+import { AISuggestions } from "./AISuggestions";
 import { MealStats } from "./MealStats";
 import type { MealSelectionResponseDTO, RecipeCardDTO } from "@/types";
 
@@ -249,8 +249,13 @@ export function SelectedMealCard({
               </div>
             </div>
 
-            {/* AI Suggestions Placeholder */}
-            <AISuggestionsPlaceholder />
+            {/* AI Tip */}
+            <AISuggestions
+              mainRecipeName={mainRecipe.recipe_name}
+              mainRecipeCategory={mainRecipe.recipe_category}
+              mealType={mainRecipe.meal_type}
+              mealId={meal.id}
+            />
           </div>
 
           {/* RIGHT: Stats & Actions Section */}

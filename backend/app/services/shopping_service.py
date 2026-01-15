@@ -205,23 +205,36 @@ class ShoppingService:
 
     def generate_from_active_planner(self) -> ShoppingListGenerationResultDTO:
         """
-        Generate shopping list from active (non-completed, non-excluded) planner entries.
+        Generate shopping list from active planner entries with mode-aware filtering.
+
+        Shopping modes:
+        - 'all': Include all ingredients from the meal
+        - 'produce_only': Include only produce category ingredients
+        - 'none': Excluded (filtered out by get_shopping_entries)
 
         Returns:
             ShoppingListGenerationResultDTO: Generation result with statistics.
         """
         try:
-            # Get planner entries that should be included in shopping list
+            # Get planner entries (excludes 'none' mode entries)
             entries = self.planner_repo.get_shopping_entries()
 
-            # Extract recipe IDs from all meals in incomplete entries
-            recipe_ids: List[int] = []
+            # Group recipe IDs by shopping mode
+            all_recipe_ids: List[int] = []
+            produce_only_recipe_ids: List[int] = []
+
             for entry in entries:
                 if entry.meal:
-                    recipe_ids.extend(entry.meal.get_all_recipe_ids())
+                    recipe_ids = entry.meal.get_all_recipe_ids()
+                    if entry.shopping_mode == "produce_only":
+                        produce_only_recipe_ids.extend(recipe_ids)
+                    else:  # 'all' mode (default)
+                        all_recipe_ids.extend(recipe_ids)
 
-            # Generate shopping list from collected recipe IDs
-            return self.generate_shopping_list(recipe_ids)
+            # Generate shopping list with mode-aware aggregation
+            return self._generate_mode_aware_shopping_list(
+                all_recipe_ids, produce_only_recipe_ids
+            )
 
         except SQLAlchemyError as e:
             return ShoppingListGenerationResultDTO(
@@ -232,6 +245,133 @@ class ShoppingService:
                 message="Failed to generate shopping list from planner",
                 errors=[str(e)]
             )
+
+    def _generate_mode_aware_shopping_list(
+        self,
+        all_recipe_ids: List[int],
+        produce_only_recipe_ids: List[int]
+    ) -> ShoppingListGenerationResultDTO:
+        """
+        Generate shopping list with mode-aware ingredient filtering.
+
+        Args:
+            all_recipe_ids: Recipe IDs to include all ingredients from
+            produce_only_recipe_ids: Recipe IDs to include only produce from
+
+        Returns:
+            ShoppingListGenerationResultDTO: Generation result.
+        """
+        try:
+            # Handle empty case
+            if not all_recipe_ids and not produce_only_recipe_ids:
+                self.shopping_repo.clear_shopping_items(source="recipe")
+                self.shopping_repo.delete_orphaned_states([])
+                self.session.commit()
+                total_items = len(self.shopping_repo.get_all_shopping_items())
+                return ShoppingListGenerationResultDTO(
+                    success=True,
+                    items_created=0,
+                    items_updated=0,
+                    total_items=total_items,
+                    message="Cleared recipe items (no active meals)"
+                )
+
+            # Clear existing recipe items
+            self.shopping_repo.clear_shopping_items(source="recipe")
+
+            # Aggregate ingredients from "all" mode entries
+            all_items = self.shopping_repo.aggregate_ingredients(all_recipe_ids) if all_recipe_ids else []
+
+            # Aggregate only produce from "produce_only" mode entries
+            produce_items = self.shopping_repo.aggregate_ingredients(
+                produce_only_recipe_ids, category_filter="produce"
+            ) if produce_only_recipe_ids else []
+
+            # Merge items (combine quantities for duplicates)
+            recipe_items = self._merge_shopping_items(all_items, produce_items)
+
+            # Restore saved states (same logic as generate_shopping_list_from_recipes)
+            state_keys = [item.state_key for item in recipe_items if item.state_key]
+            saved_states = self.shopping_repo.get_shopping_states_batch(state_keys)
+
+            for item in recipe_items:
+                if item.state_key:
+                    normalized_key = item.state_key.lower().strip()
+                    saved_state = saved_states.get(normalized_key)
+                    if saved_state:
+                        if item.quantity > saved_state.quantity + 0.01:
+                            item.have = False
+                        else:
+                            item.have = saved_state.checked
+                        item.flagged = saved_state.flagged
+
+            # Save states for checked/flagged items
+            for item in recipe_items:
+                if item.state_key and (item.have or item.flagged):
+                    self.shopping_repo.save_shopping_state(
+                        item.state_key, item.quantity, item.unit or "", item.have, item.flagged
+                    )
+
+            # Create shopping items
+            items_created = 0
+            for item in recipe_items:
+                self.shopping_repo.create_shopping_item(item)
+                items_created += 1
+
+            # Clean up orphaned states
+            valid_state_keys = [item.state_key for item in recipe_items if item.state_key]
+            self.shopping_repo.delete_orphaned_states(valid_state_keys)
+
+            self.session.commit()
+            total_items = len(self.shopping_repo.get_all_shopping_items())
+
+            return ShoppingListGenerationResultDTO(
+                success=True,
+                items_created=items_created,
+                items_updated=0,
+                total_items=total_items,
+                message=f"Successfully generated shopping list with {items_created} recipe items"
+            )
+
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            return ShoppingListGenerationResultDTO(
+                success=False,
+                items_created=0,
+                items_updated=0,
+                total_items=0,
+                message=f"Database error: {e}",
+                errors=[str(e)]
+            )
+
+    def _merge_shopping_items(
+        self,
+        items1: List[ShoppingItem],
+        items2: List[ShoppingItem]
+    ) -> List[ShoppingItem]:
+        """
+        Merge two lists of shopping items, combining quantities for duplicates.
+        Uses state_key as the unique identifier for merging.
+        """
+        merged: Dict[str, ShoppingItem] = {}
+
+        for item in items1:
+            key = item.state_key or f"{item.ingredient_name}::{item.unit}"
+            merged[key] = item
+
+        for item in items2:
+            key = item.state_key or f"{item.ingredient_name}::{item.unit}"
+            if key in merged:
+                # Combine quantities and recipe sources
+                existing = merged[key]
+                existing.quantity += item.quantity
+                existing_sources = set(existing.recipe_sources or [])
+                new_sources = set(item.recipe_sources or [])
+                existing.recipe_sources = sorted(list(existing_sources | new_sources))
+            else:
+                merged[key] = item
+
+        return list(merged.values())
 
     # ── Shopping List Retrieval ─────────────────────────────────────────────────────────────────────────────
     def get_shopping_list(

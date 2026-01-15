@@ -14,7 +14,7 @@ interface MealGridProps {
   selectedId?: number | null;
   onItemClick?: (item: MealGridItem) => void;
   onAddMealClick?: () => void;
-  onToggleExcludeFromShopping?: (item: MealGridItem) => void;
+  onCycleShoppingMode?: (item: MealGridItem) => void;
   className?: string;
 }
 
@@ -53,7 +53,7 @@ export function MealGrid({
   selectedId,
   onItemClick,
   onAddMealClick,
-  onToggleExcludeFromShopping,
+  onCycleShoppingMode,
   className,
 }: MealGridProps) {
   return (
@@ -69,7 +69,7 @@ export function MealGrid({
             item={item}
             isSelected={selectedId === item.id}
             onClick={() => onItemClick?.(item)}
-            onToggleExcludeFromShopping={() => onToggleExcludeFromShopping?.(item)}
+            onCycleShoppingMode={() => onCycleShoppingMode?.(item)}
           />
         ))}
 

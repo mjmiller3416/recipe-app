@@ -46,25 +46,25 @@ function EditRecipeSkeleton() {
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <Skeleton className="h-8 w-48" />
+        <div className="px-6 py-4 mx-auto max-w-7xl">
+          <Skeleton className="w-48 h-8" />
         </div>
       </div>
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
+      <div className="px-6 py-8 mx-auto max-w-7xl">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-4">
-                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="w-full h-10" />
                   <div className="grid grid-cols-2 gap-4">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="w-full h-10" />
+                    <Skeleton className="w-full h-10" />
                   </div>
                   <div className="grid grid-cols-3 gap-4">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="w-full h-10" />
+                    <Skeleton className="w-full h-10" />
+                    <Skeleton className="w-full h-10" />
                   </div>
                 </div>
               </CardContent>
@@ -160,20 +160,20 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
         actions={
           <Button
             variant="default"
-            className="gap-2 hidden md:flex"
+            className="hidden gap-2 md:flex"
             onClick={form.handleSubmit}
             disabled={form.isSubmitting}
           >
             {form.isSubmitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Save className="h-4 w-4" />
+              <Save className="w-4 h-4" />
             )}
             {form.isSubmitting ? "Saving..." : saveButtonText}
           </Button>
         }
       >
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex flex-col gap-6 md:flex-row md:items-start">
           {/* Form Cards - Top on mobile, left column on desktop */}
           <div className="flex-1 min-w-0 space-y-6">
             {/* Recipe Info Section */}
@@ -218,8 +218,9 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
           </div>
 
           {/* Image Upload - Bottom on mobile, right sidebar on desktop */}
-          <div className="md:w-80 md:flex-shrink-0">
-            <div className="md:sticky md:top-24">
+          {/* Image Upload - Bottom on mobile, right sidebar on desktop */}
+          <div className="md:w-80 md:flex-shrink-0 md:self-stretch">
+            <div className="md:sticky md:top-[113px] z-10 transform-gpu">
               <ImageUploadCard
                 imagePreview={form.imagePreview}
                 onImageUpload={form.handleImageUpload}
@@ -234,7 +235,7 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
       </PageLayout>
 
       {/* Mobile Fixed Save Button - positioned above bottom nav */}
-      <div className="md:hidden fixed bottom-16 left-0 right-0 z-40 bg-sidebar border-t border-border p-4">
+      <div className="fixed left-0 right-0 z-40 p-4 border-t md:hidden bottom-16 bg-sidebar border-border">
         <Button
           variant="default"
           className="w-full gap-2"
@@ -242,9 +243,9 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
           disabled={form.isSubmitting}
         >
           {form.isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <Save className="h-4 w-4" />
+            <Save className="w-4 h-4" />
           )}
           {form.isSubmitting ? "Saving..." : saveButtonText}
         </Button>
@@ -255,7 +256,7 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-secondary" />
+              <AlertTriangle className="w-5 h-5 text-secondary" />
               Unsaved Changes
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -264,7 +265,7 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={cancelLeave}>Keep Editing</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmLeave} className="bg-destructive text-white hover:bg-destructive/90">
+            <AlertDialogAction onClick={confirmLeave} className="text-white bg-destructive hover:bg-destructive/90">
               Discard Changes
             </AlertDialogAction>
           </AlertDialogFooter>

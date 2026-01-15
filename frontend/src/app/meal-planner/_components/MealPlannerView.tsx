@@ -80,7 +80,7 @@ export function MealPlannerPage() {
     servings: entry.main_recipe?.servings ?? null,
     totalTime: entry.main_recipe?.total_time ?? null,
     isFavorite: entry.meal_is_favorite ?? false,
-    excludeFromShopping: entry.exclude_from_shopping ?? false,
+    shoppingMode: entry.shopping_mode ?? "all",
   }));
 
   // Transform completed entries to CompletedMealItem format
@@ -242,26 +242,32 @@ export function MealPlannerPage() {
     }
   };
 
-  // Handle toggling exclude from shopping for a meal
-  const handleToggleExcludeFromShopping = async (item: MealGridItem) => {
+  // Handle cycling shopping mode for a meal: all -> produce_only -> none -> all
+  const handleCycleShoppingMode = async (item: MealGridItem) => {
     const previousEntries = entries;
+
+    // Calculate next mode for optimistic update
+    const currentMode = item.shoppingMode ?? "all";
+    const modes = ["all", "produce_only", "none"] as const;
+    const currentIndex = modes.indexOf(currentMode);
+    const nextMode = modes[(currentIndex + 1) % modes.length];
 
     // Optimistic UI update
     setEntries((prev) =>
       prev.map((entry) =>
         entry.id === item.id
-          ? { ...entry, exclude_from_shopping: !entry.exclude_from_shopping }
+          ? { ...entry, shopping_mode: nextMode }
           : entry
       )
     );
 
     try {
-      await plannerApi.toggleExcludeFromShopping(item.id);
+      await plannerApi.cycleShoppingMode(item.id);
       window.dispatchEvent(new Event("planner-updated"));
     } catch (err) {
       // Rollback on error
       setEntries(previousEntries);
-      setError(err instanceof Error ? err.message : "Failed to update shopping exclusion");
+      setError(err instanceof Error ? err.message : "Failed to update shopping mode");
     }
   };
 
@@ -326,7 +332,7 @@ export function MealPlannerPage() {
           selectedId={selectedEntryId}
           onItemClick={handleGridItemClick}
           onAddMealClick={handleAddMealClick}
-          onToggleExcludeFromShopping={handleToggleExcludeFromShopping}
+          onCycleShoppingMode={handleCycleShoppingMode}
         />
 
         {/* BOTTOM: SELECTED MEAL CARD */}

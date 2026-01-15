@@ -87,11 +87,11 @@ export function SettingsView() {
       case "profile":
         return (
           <ProfileSection
-            displayName={settings.profile.displayName}
+            userName={settings.profile.userName}
             email={settings.profile.email}
             avatar={settings.profile.avatar}
-            onDisplayNameChange={(value) =>
-              updateSettings("profile", { displayName: value })
+            onuserNameChange={(value) =>
+              updateSettings("profile", { userName: value })
             }
             onEmailChange={(value) =>
               updateSettings("profile", { email: value })

@@ -56,7 +56,7 @@ interface PageLayoutProps {
  * <PageLayout title="Add Recipe">
  *   <div className="flex gap-6">
  *     <main className="flex-1">{formContent}</main>
- *     <aside className="sticky top-24 self-start">{sidebar}</aside>
+ *     <aside className="sticky self-start top-24">{sidebar}</aside>
  *   </div>
  * </PageLayout>
  *
@@ -102,14 +102,14 @@ export function PageLayout({
       {headerContent ?? (
         <PageHeaderContent>
           {showBackButton ? (
-            <div className="flex items-center gap-4 flex-1">
+            <div className="flex items-center flex-1 gap-4">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                aria-label="Go back"
                 onClick={handleBackClick}
               >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="w-4 h-4" />
               </Button>
               <PageHeaderTitle title={title} description={description} />
             </div>
@@ -136,7 +136,7 @@ export function PageLayout({
         {stickyHeader && (
           <div
             data-sticky-header
-            className="sticky top-0 z-40 bg-background border-b border-border"
+            className="sticky top-0 z-40 border-b bg-background border-border"
           >
             {stickyHeader}
           </div>

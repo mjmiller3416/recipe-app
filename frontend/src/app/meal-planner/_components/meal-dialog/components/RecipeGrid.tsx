@@ -3,6 +3,7 @@
 import { RecipeCard } from "@/components/recipe/RecipeCard";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollableCardList } from "@/components/common/ScrollableCardList";
 import { cn } from "@/lib/utils";
 import type { RecipeCardData } from "@/types";
 
@@ -83,12 +84,9 @@ export function RecipeGrid({
   }
 
   return (
-    <div
-      className={cn(
-        "grid grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto px-1",
-        "scrollbar-overlay",
-        className
-      )}
+    <ScrollableCardList
+      className={cn("max-h-[40vh] scrollbar-overlay", className)}
+      innerClassName="grid grid-cols-2 gap-3"
     >
       {recipes.map((recipe) => (
         <RecipeCard
@@ -100,6 +98,6 @@ export function RecipeGrid({
           showFavorite={false}
         />
       ))}
-    </div>
+    </ScrollableCardList>
   );
 }

@@ -1,6 +1,7 @@
 """Upload API endpoints for image handling via Cloudinary."""
 
 import os
+import base64
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 import cloudinary
 import cloudinary.uploader
@@ -85,3 +86,55 @@ async def delete_recipe_image(public_id: str):
         return {"success": result.get("result") == "ok"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Delete failed: {str(e)}")
+
+
+@router.post("/base64")
+async def upload_base64_image(
+    image_data: str = Form(...),
+    recipeId: str = Form(...),
+    imageType: str = Form(default="reference")
+):
+    """
+    Upload a base64 encoded image to Cloudinary.
+
+    Used for AI-generated images that come as base64 strings.
+
+    Args:
+        image_data: Base64 encoded image data
+        recipeId: The recipe ID (used for organizing/naming)
+        imageType: Either "reference" (thumbnail) or "banner" (hero image)
+
+    Returns:
+        success: Whether upload succeeded
+        path: The Cloudinary URL for the image
+        filename: The public ID of the uploaded image
+    """
+    # Validate imageType
+    if imageType not in ("reference", "banner"):
+        imageType = "reference"
+
+    try:
+        # Decode base64 to bytes
+        image_bytes = base64.b64decode(image_data)
+
+        # Upload to Cloudinary with recipe-specific folder structure
+        result = cloudinary.uploader.upload(
+            image_bytes,
+            folder=f"meal-genie/recipes/{recipeId}",
+            public_id=f"{imageType}_{recipeId}",
+            overwrite=True,
+            resource_type="image",
+            transformation=[
+                {"quality": "auto:good"},
+                {"fetch_format": "auto"}
+            ]
+        )
+
+        return {
+            "success": True,
+            "path": result["secure_url"],
+            "filename": result["public_id"]
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")

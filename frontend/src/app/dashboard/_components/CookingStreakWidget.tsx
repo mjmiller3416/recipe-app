@@ -97,7 +97,7 @@ export function CookingStreakWidget() {
                       isActive
                         ? "bg-secondary text-secondary-foreground"
                         : "bg-muted/20 text-muted-foreground"
-                    } ${isToday ? "ring-2 ring-primary ring-offset-1 ring-offset-transparent" : ""}`}
+                    } ${isToday ? "ring-2 ring-primary ring-offset-1 ring-offset-transparent" : "ring-1 ring-muted-foreground/30"}`}
                   >
                     {isActive && <Check className="h-3.5 w-3.5" strokeWidth={2.5} />}
                   </div>

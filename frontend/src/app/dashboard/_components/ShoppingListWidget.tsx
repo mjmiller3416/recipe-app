@@ -158,7 +158,7 @@ export function ShoppingListWidget({ shoppingData: initialData }: ShoppingListWi
           </div>
 
           {/* Category Breakdown */}
-          <div className="flex-1 min-h-0 overflow-auto divide-y divide-border">
+          <div className="flex-1 min-h-0 overflow-auto divide-y divide-border pr-3">
             {categoryProgress.map((category) => {
               const isComplete = category.checked === category.total;
               return (
