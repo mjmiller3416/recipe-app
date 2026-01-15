@@ -176,9 +176,38 @@ export function getHeroBannerUrl(url: string | null | undefined): string | undef
     // c_fill: fill the dimensions, cropping as needed
     // g_auto: AI-powered gravity - finds the subject automatically
     // q_auto: automatic quality optimization
-    return applyCloudinaryTransformation(url, "w_1200,h_400,c_fill,g_auto,q_auto");
+    return applyCloudinaryTransformation(url, "w_1200,h_400,c_fill,g_auto/q_auto");
   }
 
   // Non-Cloudinary URLs pass through unchanged
+  return url;
+}
+
+/**
+ * Transform an image URL for recipe card display with food-focused AI cropping.
+ *
+ * Uses Cloudinary's g_auto:food to intelligently focus on the dish,
+ * ensuring the main subject stays visible even when cropped to different aspect ratios.
+ *
+ * @param url - The original image URL
+ * @param width - Target width (default: 400)
+ * @param height - Target height (default: 300)
+ * @returns URL optimized for card display
+ */
+export function getRecipeCardUrl(
+  url: string | null | undefined,
+  width = 400,
+  height = 300
+): string | undefined {
+  if (!url) {
+    return undefined;
+  }
+
+  if (isCloudinaryUrl(url)) {
+    // c_fill: fill dimensions, cropping as needed
+    // g_auto: AI-powered smart cropping (finds subject automatically)
+    return applyCloudinaryTransformation(url, `w_${width},h_${height},c_fill,g_auto`);
+  }
+
   return url;
 }

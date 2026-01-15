@@ -9,6 +9,7 @@ import { ShoppingListWidget } from "./ShoppingListWidget";
 import { ChefTipWidget } from "./ChefTipWidget";
 import { CookingStreakWidget } from "./CookingStreakWidget";
 import { RecipeRouletteWidget } from "./RecipeRouletteWidget";
+import { QuickAddWidget } from "./QuickAddWidget";
 import { dashboardApi, plannerApi, shoppingApi } from "@/lib/api";
 import type { PlannerEntryResponseDTO, ShoppingListResponseDTO } from "@/types";
 
@@ -102,24 +103,30 @@ export function DashboardView() {
       </div>
 
       {/* Widgets Section - fills remaining space */}
-      <div className="mt-6 flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        {/* Column 1: Cooking Streak + Meal Queue */}
-        <div className="widget-column">
+      <div className="mt-6 flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-[1fr_1.5fr_1fr] xl:grid-rows-[1fr_auto] gap-6">
+        {/* Column 1: Cooking Streak + Shopping List - spans 2 rows on xl */}
+        <div className="widget-column xl:row-span-2">
           <CookingStreakWidget />
+          <div className="flex-1 min-h-0">
+            <ShoppingListWidget shoppingData={shoppingData} />
+          </div>
+        </div>
+        {/* Column 2: Meal Queue */}
+        <div className="widget-column">
           <div className="flex-1 min-h-0">
             <MealQueueWidget entries={plannerEntries} />
           </div>
         </div>
-        {/* Column 2: Shopping List + Chef's Tip */}
+        {/* Column 3: Recipe Roulette + Quick Add */}
         <div className="widget-column">
           <div className="flex-1 min-h-0">
-            <ShoppingListWidget shoppingData={shoppingData} />
+            <RecipeRouletteWidget />
           </div>
-          <ChefTipWidget />
+          <QuickAddWidget />
         </div>
-        {/* Column 3: Recipe Roulette */}
-        <div className="widget-column lg:col-span-2 xl:col-span-1">
-          <RecipeRouletteWidget />
+        {/* Chef's Tip - spans columns 2-3 on xl */}
+        <div className="xl:col-span-2">
+          <ChefTipWidget />
         </div>
       </div>
     </PageLayout>

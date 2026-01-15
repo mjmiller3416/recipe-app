@@ -7,6 +7,46 @@
     "next-devtools": {
       "command": "npx",
       "args": ["-y", "next-devtools-mcp@latest"]
+    },
+    "cloudinary-asset-mgmt": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "--package", "@cloudinary/asset-management", "--", "mcp", "start"],
+      "env": {
+        "CLOUDINARY_CLOUD_NAME": "dfbeydsmt",
+        "CLOUDINARY_API_KEY": "898326138311578",
+        "CLOUDINARY_API_SECRET": "y2JlvJ7UsRlTA71cRZzPQsI8VDU"
+      }
+    },
+    "cloudinary-env-config": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "--package", "@cloudinary/environment-config", "--", "mcp", "start"],
+      "env": {
+        "CLOUDINARY_CLOUD_NAME": "dfbeydsmt",
+        "CLOUDINARY_API_KEY": "898326138311578",
+        "CLOUDINARY_API_SECRET": "y2JlvJ7UsRlTA71cRZzPQsI8VDU"
+      }
+    },
+    "cloudinary-metadata": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "--package", "@cloudinary/structured-metadata", "--", "mcp", "start"],
+      "env": {
+        "CLOUDINARY_CLOUD_NAME": "dfbeydsmt",
+        "CLOUDINARY_API_KEY": "898326138311578",
+        "CLOUDINARY_API_SECRET": "y2JlvJ7UsRlTA71cRZzPQsI8VDU"
+      }
+    },
+    "cloudinary-analysis": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "--package", "@cloudinary/analysis", "--", "mcp", "start"],
+      "env": {
+        "CLOUDINARY_CLOUD_NAME": "dfbeydsmt",
+        "CLOUDINARY_API_KEY": "898326138311578",
+        "CLOUDINARY_API_SECRET": "y2JlvJ7UsRlTA71cRZzPQsI8VDU"
+      }
     }
   }
 }
