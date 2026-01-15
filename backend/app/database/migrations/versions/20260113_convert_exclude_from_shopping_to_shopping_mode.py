@@ -39,7 +39,7 @@ def upgrade() -> None:
     op.execute("""
         UPDATE planner_entries
         SET shopping_mode = 'none'
-        WHERE exclude_from_shopping = 1
+        WHERE exclude_from_shopping = TRUE
     """)
 
     # Step 3: Drop the old column
@@ -51,7 +51,7 @@ def downgrade() -> None:
     # Step 1: Add back the boolean column
     op.add_column(
         'planner_entries',
-        sa.Column('exclude_from_shopping', sa.Boolean(), nullable=False, server_default='0')
+        sa.Column('exclude_from_shopping', sa.Boolean(), nullable=False, server_default='false')
     )
 
     # Step 2: Migrate data back
@@ -59,7 +59,7 @@ def downgrade() -> None:
     # 'all' or 'produce_only' -> False (included)
     op.execute("""
         UPDATE planner_entries
-        SET exclude_from_shopping = 1
+        SET exclude_from_shopping = TRUE
         WHERE shopping_mode = 'none'
     """)
 
