@@ -4,6 +4,7 @@
 const CHANGELOG_MD = `
 # 2026-01-14 - New Features
 - Add recipe specific AI suggestions to the Meal Planner
+- Quick Add feature for adding shopping list items directly from the Dashboard
 
 ## 2026-01-13 - New Features
 - Shopping list toggle now has three modes: include all ingredients, include only produce, or exclude entirely — click the cart icon on meal cards to cycle through options
