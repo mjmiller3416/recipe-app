@@ -20,3 +20,5 @@ node_modules/
 
 # Frontend public folder
 frontend/public/
+.mcp.json
+.mcp.json
