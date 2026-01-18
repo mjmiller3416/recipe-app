@@ -2,6 +2,9 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+# 2026-01-17 - Bug Fixes
+- Fixed issue with printing recipes. Content now stays together on the same page.
+
 # 2026-01-14 - New Features
 - Add recipe specific AI suggestions to the Meal Planner
 - Quick Add feature for adding shopping list items directly from the Dashboard
