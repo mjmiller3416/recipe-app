@@ -20,6 +20,9 @@ python-dotenv>=1.0.0
 # Image Upload
 cloudinary>=1.36.0
 
+# Image Processing
+Pillow>=10.0.0
+
 # AI Integration (optional - for recipe generation features)
 openai>=1.0.0
 google-genai>=1.0.0
