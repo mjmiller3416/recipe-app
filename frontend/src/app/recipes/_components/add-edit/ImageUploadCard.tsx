@@ -22,8 +22,12 @@ interface ImageUploadCardProps {
   imagePreview: string | null;
   /** Handler for file upload input changes */
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  /** Handler when user accepts a generated image */
-  onGeneratedImageAccept: (base64Data: string, dataUrl: string) => void;
+  /** Handler when user accepts a generated image (reference + optional banner) */
+  onGeneratedImageAccept: (
+    referenceBase64: string,
+    referenceDataUrl: string,
+    bannerBase64?: string
+  ) => void;
   /** Recipe name used for generating the image prompt */
   recipeName: string;
   /** Whether the current image was AI-generated */
@@ -82,10 +86,14 @@ export function ImageUploadCard({
         recipeName,
         settings.aiFeatures.imageGenerationPrompt
       );
-      if (result.success && result.image_data) {
-        const dataUrl = `data:image/png;base64,${result.image_data}`;
-        // Auto-accept the generated image (no confirmation step needed)
-        onGeneratedImageAccept(result.image_data, dataUrl);
+      if (result.success && result.reference_image_data) {
+        const dataUrl = `data:image/png;base64,${result.reference_image_data}`;
+        // Auto-accept the generated images (reference + banner)
+        onGeneratedImageAccept(
+          result.reference_image_data,
+          dataUrl,
+          result.banner_image_data
+        );
         onAiGeneratedChange?.(true);
         setImageState("generated");
       } else {

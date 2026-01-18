@@ -57,7 +57,8 @@ export function MealGenieChatContent({ onClose, isMinimized, onMinimize, onExpan
   // Recipe creation state
   const [isRecipeMode, setIsRecipeMode] = useState(false);
   const [pendingRecipe, setPendingRecipe] = useState<GeneratedRecipeDTO | null>(null);
-  const [pendingImageData, setPendingImageData] = useState<string | null>(null);
+  const [pendingReferenceImageData, setPendingReferenceImageData] = useState<string | null>(null);
+  const [pendingBannerImageData, setPendingBannerImageData] = useState<string | null>(null);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -76,21 +77,23 @@ export function MealGenieChatContent({ onClose, isMinimized, onMinimize, onExpan
   const handlePreviewRecipe = useCallback(() => {
     if (!pendingRecipe) return;
 
-    // Store recipe data in sessionStorage
+    // Store recipe data in sessionStorage (both images)
     const recipeData = {
       recipe: pendingRecipe,
-      imageData: pendingImageData,
+      referenceImageData: pendingReferenceImageData,
+      bannerImageData: pendingBannerImageData,
     };
     sessionStorage.setItem(AI_RECIPE_STORAGE_KEY, JSON.stringify(recipeData));
 
     // Clear pending state
     setPendingRecipe(null);
-    setPendingImageData(null);
+    setPendingReferenceImageData(null);
+    setPendingBannerImageData(null);
     setIsRecipeMode(false);
 
     // Navigate to Add Recipe page
     router.push("/recipes/add?from=ai");
-  }, [pendingRecipe, pendingImageData, router]);
+  }, [pendingRecipe, pendingReferenceImageData, pendingBannerImageData, router]);
 
   const handleSubmit = useCallback(async (messageText?: string) => {
     const textToSend = messageText || input.trim();
@@ -122,7 +125,8 @@ export function MealGenieChatContent({ onClose, isMinimized, onMinimize, onExpan
         } else if (response.recipe) {
           // We have a complete recipe - store it and show preview button
           setPendingRecipe(response.recipe);
-          setPendingImageData(response.image_data || null);
+          setPendingReferenceImageData(response.reference_image_data || null);
+          setPendingBannerImageData(response.banner_image_data || null);
           addMessage({
             role: "assistant",
             content: `Your recipe "${response.recipe.recipe_name}" is ready! Click the button below to preview and edit it before saving.`,
@@ -158,7 +162,8 @@ export function MealGenieChatContent({ onClose, isMinimized, onMinimize, onExpan
   const handleClearHistory = useCallback(() => {
     clearHistory();
     setPendingRecipe(null);
-    setPendingImageData(null);
+    setPendingReferenceImageData(null);
+    setPendingBannerImageData(null);
     setIsRecipeMode(false);
   }, [clearHistory]);
 

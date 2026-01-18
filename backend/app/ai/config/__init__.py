@@ -10,8 +10,10 @@ from .cooking_tips_config import (
 )
 from .image_generation_config import (
     PROMPT_TEMPLATE as IMAGE_PROMPT_TEMPLATE,
+    BANNER_PROMPT_TEMPLATE as IMAGE_BANNER_PROMPT_TEMPLATE,
     MODEL_NAME as IMAGE_MODEL,
     ASPECT_RATIO as IMAGE_ASPECT_RATIO,
+    BANNER_ASPECT_RATIO as IMAGE_BANNER_ASPECT_RATIO,
     API_KEY_ENV_VAR as IMAGE_API_KEY_ENV,
 )
 from .meal_genie_config import (
@@ -33,8 +35,10 @@ __all__ = [
     "COOKING_TIP_API_KEY_ENV",
     # Image Generation
     "IMAGE_PROMPT_TEMPLATE",
+    "IMAGE_BANNER_PROMPT_TEMPLATE",
     "IMAGE_MODEL",
     "IMAGE_ASPECT_RATIO",
+    "IMAGE_BANNER_ASPECT_RATIO",
     "IMAGE_API_KEY_ENV",
     # Meal Genie
     "BASE_SYSTEM_PROMPT",

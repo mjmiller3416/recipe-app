@@ -110,24 +110,32 @@ async def generate_recipe(
                 needs_more_info=True,
             )
 
-        # We have a recipe - optionally generate an image
+        # We have a recipe - optionally generate images
         recipe = result["recipe"]
-        image_data = None
+        reference_image_data = None
+        banner_image_data = None
 
         if request.generate_image and recipe:
             try:
                 image_service = get_image_generation_service()
-                image_result = image_service.generate_recipe_image(recipe.recipe_name)
+                image_result = image_service.generate_dual_recipe_images(
+                    recipe.recipe_name
+                )
                 if image_result["success"]:
-                    image_data = image_result["image_data"]
-            except Exception:
+                    reference_image_data = image_result.get("reference_image_data")
+                    banner_image_data = image_result.get("banner_image_data")
+                # Log any errors from image generation
+                if image_result.get("errors"):
+                    print(f"Image generation errors: {image_result['errors']}")
+            except Exception as e:
                 # Image generation failed, but we still have the recipe
-                pass
+                print(f"Image generation exception: {e}")
 
         return RecipeGenerationResponseDTO(
             success=True,
             recipe=recipe,
-            image_data=image_data,
+            reference_image_data=reference_image_data,
+            banner_image_data=banner_image_data,
             ai_message=result["ai_message"],
             needs_more_info=False,
         )

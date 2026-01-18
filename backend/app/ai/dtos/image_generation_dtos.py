@@ -15,5 +15,6 @@ class ImageGenerationResponseDTO(BaseModel):
     """Response DTO for image generation."""
 
     success: bool
-    image_data: Optional[str] = None  # Base64 encoded image data
+    reference_image_data: Optional[str] = None  # Base64 encoded (1:1 square)
+    banner_image_data: Optional[str] = None  # Base64 encoded (21:9 ultrawide)
     error: Optional[str] = None

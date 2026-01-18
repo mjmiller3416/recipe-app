@@ -31,18 +31,19 @@ async def generate_recipe_image(
 
     try:
         service = get_image_generation_service()
-        result = service.generate_recipe_image(
-            request.recipe_name, custom_prompt=request.custom_prompt
-        )
+        result = service.generate_dual_recipe_images(request.recipe_name)
 
         if not result["success"]:
+            errors = result.get("errors", [])
             raise HTTPException(
-                status_code=500, detail=result.get("error", "Image generation failed")
+                status_code=500,
+                detail="; ".join(errors) if errors else "Image generation failed",
             )
 
         return ImageGenerationResponseDTO(
             success=True,
-            image_data=result["image_data"],
+            reference_image_data=result.get("reference_image_data"),
+            banner_image_data=result.get("banner_image_data"),
             error=None,
         )
 

@@ -61,11 +61,12 @@ class RecipeGenerationRequestDTO(BaseModel):
 
 
 class RecipeGenerationResponseDTO(BaseModel):
-    """Response DTO containing generated recipe + optional image."""
+    """Response DTO containing generated recipe + optional images."""
 
     success: bool
     recipe: Optional[GeneratedRecipeDTO] = None
-    image_data: Optional[str] = None  # Base64 encoded image
+    reference_image_data: Optional[str] = None  # Base64 encoded (1:1 square)
+    banner_image_data: Optional[str] = None  # Base64 encoded (21:9 ultrawide)
     ai_message: Optional[str] = None  # Friendly message from AI
     needs_more_info: bool = False  # True if AI is asking follow-up questions
     error: Optional[str] = None

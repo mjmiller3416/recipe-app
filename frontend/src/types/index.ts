@@ -409,7 +409,8 @@ export interface ImageGenerationRequestDTO {
 
 export interface ImageGenerationResponseDTO {
   success: boolean;
-  image_data?: string; // Base64 encoded image
+  reference_image_data?: string; // Base64 encoded (1:1 square)
+  banner_image_data?: string; // Base64 encoded (21:9 ultrawide)
   error?: string;
 }
 
@@ -501,7 +502,8 @@ export interface RecipeGenerationRequestDTO {
 export interface RecipeGenerationResponseDTO {
   success: boolean;
   recipe?: GeneratedRecipeDTO;
-  image_data?: string; // Base64 encoded
+  reference_image_data?: string; // Base64 encoded (1:1 square)
+  banner_image_data?: string; // Base64 encoded (21:9 ultrawide)
   ai_message?: string;
   needs_more_info: boolean;
   error?: string;

@@ -92,7 +92,11 @@ export interface RecipeFormState {
 
   // Image handlers
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleGeneratedImageAccept: (base64Data: string, dataUrl: string) => void;
+  handleGeneratedImageAccept: (
+    referenceBase64: string,
+    referenceDataUrl: string,
+    bannerBase64?: string
+  ) => void;
 
   // Form submission
   handleSubmit: () => Promise<void>;
@@ -158,11 +162,15 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
   const [directions, setDirectionsState] = useState("");
   const [notes, setNotesState] = useState("");
 
-  // Image state
+  // Image state (reference image - 1:1 square)
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   // Track original image path (for edit mode - to know if image changed)
   const [originalImagePath, setOriginalImagePath] = useState<string | null>(null);
+
+  // Banner image state (21:9 ultrawide)
+  const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
+  const [bannerImageData, setBannerImageData] = useState<string | null>(null);
 
   // AI Image generation state
   const [isAiGenerated, setIsAiGenerated] = useState(false);
@@ -270,9 +278,10 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
         return;
       }
 
-      const { recipe, imageData } = JSON.parse(storedData) as {
+      const { recipe, referenceImageData, bannerImageData: storedBannerImageData } = JSON.parse(storedData) as {
         recipe: GeneratedRecipeDTO;
-        imageData: string | null;
+        referenceImageData: string | null;
+        bannerImageData: string | null;
       };
 
       // Pre-fill form with AI-generated recipe
@@ -298,16 +307,24 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
         );
       }
 
-      // Handle AI-generated image
-      if (imageData) {
+      // Handle AI-generated reference image (1:1 square)
+      if (referenceImageData) {
         // Convert base64 to data URL for preview
-        const dataUrl = `data:image/png;base64,${imageData}`;
+        const dataUrl = `data:image/png;base64,${referenceImageData}`;
         setImagePreview(dataUrl);
-        setGeneratedImageData(imageData);
+        setGeneratedImageData(referenceImageData);
         setIsAiGenerated(true);
         // Convert to File for upload
-        const file = base64ToFile(imageData, `recipe-ai-generated.png`);
+        const file = base64ToFile(referenceImageData, `recipe-ai-reference.png`);
         setImageFile(file);
+      }
+
+      // Handle AI-generated banner image (21:9 ultrawide)
+      if (storedBannerImageData) {
+        setBannerImageData(storedBannerImageData);
+        // Convert to File for upload
+        const bannerFile = base64ToFile(storedBannerImageData, `recipe-ai-banner.png`);
+        setBannerImageFile(bannerFile);
       }
 
       // Clear sessionStorage after loading
@@ -406,15 +423,25 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
 
   // AI-generated image accept handler
   // Convert base64 to File immediately so it's ready for upload
-  const handleGeneratedImageAccept = useCallback((base64Data: string, dataUrl: string) => {
-    markDirty();
-    setImagePreview(dataUrl);
-    setGeneratedImageData(base64Data);
-    setIsAiGenerated(true);
-    // Convert to File immediately so it's ready for upload
-    const file = base64ToFile(base64Data, `recipe-ai-generated.png`);
-    setImageFile(file);
-  }, [markDirty]);
+  const handleGeneratedImageAccept = useCallback(
+    (referenceBase64: string, referenceDataUrl: string, bannerBase64?: string) => {
+      markDirty();
+      // Handle reference image (1:1 square)
+      setImagePreview(referenceDataUrl);
+      setGeneratedImageData(referenceBase64);
+      setIsAiGenerated(true);
+      const refFile = base64ToFile(referenceBase64, `recipe-ai-reference.png`);
+      setImageFile(refFile);
+
+      // Handle banner image (21:9 ultrawide) if provided
+      if (bannerBase64) {
+        setBannerImageData(bannerBase64);
+        const bannerFile = base64ToFile(bannerBase64, `recipe-ai-banner.png`);
+        setBannerImageFile(bannerFile);
+      }
+    },
+    [markDirty]
+  );
 
   // Validate entire form and return normalized values
   const validateForm = () => {
@@ -545,18 +572,45 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
 
         const createdRecipe = await recipeApi.create(payload);
 
-        // Upload image if one exists (AI-generated or user-uploaded)
+        // Upload images if they exist (AI-generated or user-uploaded)
+        let referenceImagePath: string | undefined;
+        let bannerImagePath: string | undefined;
+
+        // Upload reference image (1:1 square)
         if (imageFile) {
           try {
             const uploadResult = await uploadApi.uploadRecipeImage(imageFile, createdRecipe.id);
-            // Update recipe with the image path
-            await recipeApi.update(createdRecipe.id, {
-              reference_image_path: uploadResult.path,
-            });
+            referenceImagePath = uploadResult.path;
           } catch (uploadError) {
-            console.error("Failed to upload image:", uploadError);
-            toast.warning("Recipe created, but image upload failed. You can add it later by editing the recipe.");
+            console.error("Failed to upload reference image:", uploadError);
           }
+        }
+
+        // Upload banner image (21:9 ultrawide)
+        if (bannerImageFile) {
+          try {
+            const bannerUploadResult = await uploadApi.uploadRecipeImage(
+              bannerImageFile,
+              createdRecipe.id,
+              "banner"
+            );
+            bannerImagePath = bannerUploadResult.path;
+          } catch (uploadError) {
+            console.error("Failed to upload banner image:", uploadError);
+          }
+        }
+
+        // Update recipe with image paths if any were uploaded
+        if (referenceImagePath || bannerImagePath) {
+          await recipeApi.update(createdRecipe.id, {
+            ...(referenceImagePath && { reference_image_path: referenceImagePath }),
+            ...(bannerImagePath && { banner_image_path: bannerImagePath }),
+          });
+        }
+
+        // Warn if some images failed to upload
+        if ((imageFile && !referenceImagePath) || (bannerImageFile && !bannerImagePath)) {
+          toast.warning("Recipe created, but some images failed to upload. You can add them later by editing the recipe.");
         }
 
         toast.success("Recipe created successfully!");
@@ -567,15 +621,30 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
           throw new Error("Recipe ID is required for edit mode");
         }
 
-        // Upload new image if one was selected
+        // Upload new reference image if one was selected
         let imagePath = originalImagePath;
         if (imageFile) {
           try {
             const uploadResult = await uploadApi.uploadRecipeImage(imageFile, recipeId);
             imagePath = uploadResult.path;
           } catch (uploadError) {
-            console.error("Failed to upload image:", uploadError);
+            console.error("Failed to upload reference image:", uploadError);
             toast.error("Failed to upload image. Recipe will be saved without the new image.");
+          }
+        }
+
+        // Upload new banner image if one was generated
+        let bannerPath: string | undefined;
+        if (bannerImageFile) {
+          try {
+            const bannerUploadResult = await uploadApi.uploadRecipeImage(
+              bannerImageFile,
+              recipeId,
+              "banner"
+            );
+            bannerPath = bannerUploadResult.path;
+          } catch (uploadError) {
+            console.error("Failed to upload banner image:", uploadError);
           }
         }
 
@@ -590,6 +659,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
           directions: values.directions as string,
           notes: values.notes,
           reference_image_path: imagePath,
+          ...(bannerPath && { banner_image_path: bannerPath }),
           ingredients: apiIngredients,
         };
 

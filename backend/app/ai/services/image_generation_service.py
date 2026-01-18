@@ -7,7 +7,10 @@ from dotenv import load_dotenv
 
 from app.ai.config.image_generation_config import (
     PROMPT_TEMPLATE,
+    BANNER_PROMPT_TEMPLATE,
     MODEL_NAME,
+    ASPECT_RATIO,
+    BANNER_ASPECT_RATIO,
     API_KEY_ENV_VAR,
 )
 
@@ -39,7 +42,7 @@ class ImageGenerationService:
             raise ValueError(f"{API_KEY_ENV_VAR} environment variable is not set")
 
     def generate_recipe_image(
-        self, recipe_name: str, custom_prompt: str = None
+        self, recipe_name: str, custom_prompt: str = None, aspect_ratio: str = "1:1"
     ) -> dict:
         """
         Generate an AI image for a recipe.
@@ -47,6 +50,7 @@ class ImageGenerationService:
         Args:
             recipe_name: The name of the recipe to generate an image for.
             custom_prompt: Optional custom prompt template (must include {recipe_name}).
+            aspect_ratio: Image aspect ratio (default "1:1"). Supported: "1:1", "21:9", etc.
 
         Returns:
             dict with 'success', 'image_data' (base64), and optional 'error'
@@ -59,6 +63,8 @@ class ImageGenerationService:
             }
 
         try:
+            from google.genai import types
+
             client = _get_genai_client()
 
             # Build the prompt - use custom_prompt if provided and valid, else use default
@@ -69,10 +75,16 @@ class ImageGenerationService:
             )
             prompt = template.format(recipe_name=recipe_name.strip())
 
-            # Generate the image
+            # Generate the image with specified aspect ratio
             response = client.models.generate_content(
                 model=MODEL_NAME,
                 contents=[prompt],
+                config=types.GenerateContentConfig(
+                    response_modalities=["IMAGE"],
+                    image_config=types.ImageConfig(
+                        aspect_ratio=aspect_ratio,
+                    ),
+                ),
             )
 
             # Extract the image data from the response
@@ -112,6 +124,52 @@ class ImageGenerationService:
                 "image_data": None,
                 "error": str(e),
             }
+
+    def generate_dual_recipe_images(self, recipe_name: str) -> dict:
+        """
+        Generate both reference (1:1) and banner (21:9) images for a recipe.
+
+        Args:
+            recipe_name: The name of the recipe to generate images for.
+
+        Returns:
+            dict with 'success', 'reference_image_data', 'banner_image_data', and 'errors'
+        """
+        result = {
+            "success": False,
+            "reference_image_data": None,
+            "banner_image_data": None,
+            "errors": [],
+        }
+
+        # Generate reference image (1:1 square)
+        ref_result = self.generate_recipe_image(
+            recipe_name,
+            custom_prompt=PROMPT_TEMPLATE,
+            aspect_ratio=ASPECT_RATIO,
+        )
+        if ref_result["success"]:
+            result["reference_image_data"] = ref_result["image_data"]
+        else:
+            result["errors"].append(f"Reference: {ref_result.get('error')}")
+
+        # Generate banner image (21:9 ultrawide)
+        banner_result = self.generate_recipe_image(
+            recipe_name,
+            custom_prompt=BANNER_PROMPT_TEMPLATE,
+            aspect_ratio=BANNER_ASPECT_RATIO,
+        )
+        if banner_result["success"]:
+            result["banner_image_data"] = banner_result["image_data"]
+        else:
+            result["errors"].append(f"Banner: {banner_result.get('error')}")
+
+        # Success if at least one image was generated
+        result["success"] = bool(
+            result["reference_image_data"] or result["banner_image_data"]
+        )
+
+        return result
 
 
 # Singleton instance
