@@ -46,7 +46,7 @@ export function MealGeniePopup({ open, onOpenChange }: MealGeniePopupProps) {
   // Mobile: Use Sheet component
   if (isMobile) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
+      <Sheet open={open} onOpenChange={onOpenChange} className="print:hidden">
         <SheetContent
           side="bottom"
           className="h-[calc(100dvh-env(safe-area-inset-top,0px))] p-0 rounded-t-xl"
@@ -73,7 +73,7 @@ export function MealGeniePopup({ open, onOpenChange }: MealGeniePopupProps) {
   return (
     <div
       className={cn(
-        "fixed bottom-6 right-6 z-50",
+        "fixed bottom-6 right-6 z-50 print:hidden",
         "w-96",
         isMinimized ? "h-11" : "h-[500px]",
         "bg-elevated rounded-xl border border-border",

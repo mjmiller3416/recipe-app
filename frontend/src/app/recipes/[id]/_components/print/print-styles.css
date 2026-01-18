@@ -122,6 +122,11 @@
     width: 100% !important;
   }
 
+  /* Height - reset min-height to allow natural sizing */
+  .print\:min-h-0 {
+    min-height: 0 !important;
+  }
+
   /* Layout */
   .print\:block {
     display: block !important;
@@ -133,22 +138,70 @@
     break-after: avoid;
   }
 
-  /* Keep entire recipe together on one page */
+  /* Force ALL elements in print layout to allow page breaks */
+  /* This overrides any browser defaults that might keep content together */
+  .hidden.print\:block,
+  .hidden.print\:block *,
+  .print-recipe-content,
+  .print-recipe-content *,
+  .flex,
+  .flex > * {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    page-break-before: auto !important;
+    break-before: auto !important;
+  }
+
+  /* Convert two-column flex layout to float-based layout for reliable print pagination */
+  /* Target specifically the gap-6 flex container (two-column layout), not the header */
+  .print-recipe-content > .flex.gap-6 {
+    display: block !important;
+  }
+
+  .print-recipe-content > .flex.gap-6 > .w-1\/3 {
+    float: left !important;
+    width: 32% !important;
+    margin-right: 2% !important;
+  }
+
+  .print-recipe-content > .flex.gap-6 > .w-2\/3 {
+    float: left !important;
+    width: 66% !important;
+  }
+
+  /* Clear floats after the two-column section */
+  .print-recipe-content > .flex.gap-6::after {
+    content: "" !important;
+    display: table !important;
+    clear: both !important;
+  }
+
+  /* Prevent blank trailing pages */
+  html, body {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure print layout doesn't create extra space */
   .hidden.print\:block {
-    page-break-inside: avoid;
-    break-inside: avoid;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
   }
 
-  /* Keep image and content together - prevents page break between them */
-  .print-recipe-content {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  /* Keep content together */
-  .print\:border {
-    page-break-inside: avoid;
-    break-inside: avoid;
+  /* Nuclear option: hide ALL fixed positioned elements except print content */
+  /* This catches any dialogs, overlays, nav elements, or embeds that might cause blank pages */
+  *[style*="position: fixed"],
+  *[style*="position:fixed"],
+  [data-radix-portal],
+  embed,
+  iframe:not([src]) {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    position: static !important;
   }
 
   /* Links */

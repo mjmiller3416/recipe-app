@@ -58,7 +58,7 @@ export function AskMealGenieWidget() {
   const hasMessages = messages.length > 0;
 
   return (
-    <Card className="relative shadow-raised flex flex-col overflow-hidden h-full">
+    <Card className="relative shadow-raised flex flex-col overflow-hidden h-full print:hidden">
       {/* Noise texture background */}
       <div 
         className="absolute inset-0 bg-elevated"

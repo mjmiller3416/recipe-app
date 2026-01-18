@@ -72,7 +72,7 @@ export function FullRecipeView() {
 
   return (
     <>
-      <div className="min-h-screen bg-background print:bg-white">
+      <div className="min-h-screen bg-background print:bg-white print:min-h-0">
         {/* Print-Only Layout */}
         <RecipePrintLayout
           recipe={recipe}
