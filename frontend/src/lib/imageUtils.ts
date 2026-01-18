@@ -184,9 +184,9 @@ export function getHeroBannerUrl(url: string | null | undefined): string | undef
 }
 
 /**
- * Transform an image URL for recipe card display with food-focused AI cropping.
+ * Transform an image URL for recipe card display with AI-powered cropping.
  *
- * Uses Cloudinary's g_auto:food to intelligently focus on the dish,
+ * Uses Cloudinary's g_auto to intelligently focus on the main subject,
  * ensuring the main subject stays visible even when cropped to different aspect ratios.
  *
  * @param url - The original image URL
