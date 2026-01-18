@@ -5,15 +5,27 @@
 
 # Option A: Glob pattern (audit all .tsx files in a folder)
 # Use -Recurse below to include subdirectories
-$pattern = "frontend/src/app/meal-planner"
-$filter = "*.tsx"
-$recurse = $true
+# $pattern = "frontend/src/app/meal-planner"
+# $filter = "*.tsx"
+# $recurse = $true
 
 # Option B: Explicit file list (uncomment and edit to use instead)
-# $explicitFiles = @(
-#     "frontend/src/app/shopping-list/_components/ShoppingItem.tsx",
-#     "frontend/src/app/shopping-list/_components/ShoppingListView.tsx"
-# )
+$explicitFiles = @(
+    "frontend/src/app/recipes/_components/add-edit/ImageUploadCard.tsx",
+    "frontend/src/components/recipe/RecipeImage.tsx",
+    "frontend/src/app/recipes/_components/add-edit/useRecipeForm.ts",
+    "frontend/src/lib/imageUtils.ts",
+    "frontend/src/components/recipe/RecipeCard.tsx",
+    "frontend/src/components/common/CircularImage.tsx",
+    "frontend/src/app/meal-planner/_components/meal-dialog/components/MealSlot.tsx",
+    "frontend/src/app/dashboard/_components/MealQueueItem.tsx",
+    "frontend/src/app/meal-planner/_components/MealGridCard.tsx",
+    "frontend/src/app/dashboard/_components/RecipeRouletteWidget.tsx",
+    "frontend/src/app/recipes/[id]/_components/FullRecipeView.tsx",
+    "frontend/src/app/meal-planner/_components/meal-display/SelectedMealCard.tsx",
+    "frontend/src/app/recipes/[id]/_components/print/RecipePrintLayout.tsx",
+    "frontend/src/app/meal-planner/_components/meal-dialog/views/SavedView.tsx"
+)
 
 # Output location for audit reports
 $outputDir = "audit-results"

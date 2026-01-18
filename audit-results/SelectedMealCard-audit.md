@@ -1,25 +1,25 @@
 ﻿## Summary
 
 `Γÿà Insight ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
-**Design System Compliance Analysis:**
-- The `SelectedMealCard.tsx` component was already well-written and mostly compliant with the design system rules.
-- The only violation found was a **redundant hover interaction** (`hover:bg-destructive/10`) on the Remove button at line 293.
-- Per rule **A5 (No Redundant Interaction Classes)**, manual hover states should be removed from Button components because the base Button already handles interaction physics through its `outline` variant.
-- The `border-destructive text-destructive` classes are acceptable because they provide semantic coloring (intentional customization), not interaction behavior.
+**Design Token Semantics Matter:**
+- `text-destructive` (#b94a4a) = muted coral for dangerous/delete actions
+- `text-error` (#ef4444) = bright red for errors AND favorites (per `--recipe-favorite: var(--error)`)
+
+The design system intentionally separates these: destructive buttons should feel "dangerous but not alarming" while favorites need the vibrant red heart users expect.
 `ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
 
-### Changes Made
+### Changes Made:
 
-| Line | Before | After |
-|------|--------|-------|
-| 293 | `className="border-destructive text-destructive hover:bg-destructive/10"` | `className="border-destructive text-destructive"` |
+| Line | Before | After | Reason |
+|------|--------|-------|--------|
+| 216 | `text-destructive` | `text-error` | Favorites use `--recipe-favorite` which maps to `--error` |
+| 289 | `text-destructive` | `text-error` | Same - heart icon in favorite button should use error color |
 
-### What Passed Inspection Γ£ô
-
-The rest of the file is compliant:
-- Γ£ô Uses `<Card>` component correctly (not fake cards)
-- Γ£ô Uses `<Button>` component with proper variants (no raw buttons)
-- Γ£ô Uses semantic color tokens (`text-muted-foreground`, `text-destructive`, `bg-elevated`, etc.)
-- Γ£ô Icon sizing follows design system (`h-4 w-4`, `h-5 w-5`, `h-12 w-12`)
-- Γ£ô Lucide icons use `strokeWidth={1.5}` as required
-- Γ£ô Skeleton states use appropriate patterns
+### Items Verified as Compliant:
+- Γ£à All buttons use `<Button>` component with proper variants
+- Γ£à All cards use `<Card>` component
+- Γ£à Skeleton loading patterns follow D1 guidelines (`bg-muted animate-pulse`)
+- Γ£à No raw badges or fake cards
+- Γ£à No hardcoded colors (except the fixed ones above)
+- Γ£à Icons use `strokeWidth={1.5}` per B4
+- Γ£à No arbitrary pixel values

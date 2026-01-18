@@ -213,7 +213,7 @@ export function SelectedMealCard({
                   </span>
                 )}
                 {isFavorite && (
-                  <span className="flex items-center gap-1.5 text-destructive">
+                  <span className="flex items-center gap-1.5 text-error">
                     <Heart className="h-4 w-4 fill-current" strokeWidth={1.5} />
                     Favorite
                   </span>
@@ -286,7 +286,7 @@ export function SelectedMealCard({
                   <Heart
                     className={cn(
                       "h-4 w-4",
-                      isFavorite && "fill-current text-destructive"
+                      isFavorite && "fill-current text-error"
                     )}
                     strokeWidth={1.5}
                   />

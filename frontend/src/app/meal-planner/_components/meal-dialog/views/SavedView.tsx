@@ -138,7 +138,7 @@ function MealCard({ meal, isAdding, onClick }: MealCardProps) {
           )}
         </div>
         {meal.is_favorite && (
-          <Heart className="h-4 w-4 text-destructive fill-destructive flex-shrink-0" />
+          <Heart className="h-4 w-4 text-destructive fill-destructive flex-shrink-0" aria-hidden="true" />
         )}
       </div>
     </Card>

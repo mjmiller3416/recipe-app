@@ -1,22 +1,22 @@
-﻿`bg-overlay` is used in the dialog component, so `bg-overlay-strong` should work with Tailwind's theme integration. The fix is valid.
-
----
-
-## Summary of Changes
-
-| Change | Before | After |
-|--------|--------|-------|
-| **Import** | Missing `Button` import | Added `Button` import |
-| **Shopping Cart Toggle** | Raw `<button>` with manual styles | `<Button variant="ghost" size="icon-sm">` |
-| **Hover/Focus/Transition** | Manual `hover:bg-black/80 transition-colors focus-visible:...` | Removed (built into Button) |
-| **Background Color** | Hardcoded `bg-black/60` | Semantic token `bg-overlay-strong` |
-| **Icon Sizing** | `h-3.5 w-3.5` | `size-3.5` (cleaner shorthand) |
-| **Favorite Indicator** | `w-6 h-6` | `size-6` (cleaner shorthand) |
-
----
+﻿## Summary
 
 `Γÿà Insight ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
-- **Why `variant="ghost"`?** Ghost buttons have transparent backgrounds by default but gain a subtle hover state - perfect for icon buttons that need to overlay content
-- **Why keep `bg-overlay-strong` override?** The design requires a semi-transparent dark background for visibility on images. This overrides ghost's default transparent bg while still using a design token
-- **Why not use Badge for favorite?** The favorite indicator is decorative (not clickable or semantic status) - keeping it as a styled div is appropriate here. Badge would be overkill for a pure visual indicator.
+**1. Component Props vs. Manual Classes:** The Button component in this codebase has a `shape` variant with `"pill"` option that applies `rounded-full`. Using the prop instead of manual classes ensures consistency if the design system's pill shape ever changes.
+
+**2. This file was already well-compliant:** The MealGridCard uses proper semantic color tokens (`text-destructive`, `text-warning`, `text-secondary`), the `Card` component, `Button` component with appropriate variants, and follows accessibility patterns with `aria-label`.
 `ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
+
+### Changes Made:
+
+| Line | Before | After |
+|------|--------|-------|
+| 129 | `className="relative size-6 rounded-full bg-overlay-strong"` | Added `shape="pill"` prop, removed redundant `rounded-full` from className |
+
+### No Violations Found For:
+- Γ£à Uses `<Card>` component (not fake card divs)
+- Γ£à Uses `<Button>` component with proper variants
+- Γ£à All colors use semantic tokens (`text-destructive`, `text-warning`, `text-secondary`, `text-muted-foreground`, `text-foreground`, `text-primary`, `bg-overlay-strong`, `bg-elevated`)
+- Γ£à Icon button has `aria-label` for accessibility
+- Γ£à Uses standard Tailwind spacing scale (`gap-1`, `gap-3`, `p-3`, etc.)
+- Γ£à Icons use `strokeWidth={1.5}` as per design system rules
+- Γ£à Uses design system transition class (`liftable`) for hover effects

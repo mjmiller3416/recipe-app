@@ -67,16 +67,15 @@ export function MealSlot({
   if (!recipe) {
     return (
       <Card
+        interactive
         className={cn(
-          "overflow-hidden transition-all duration-200 ease-in-out cursor-pointer",
+          "overflow-hidden cursor-pointer",
           "border-dashed border-2",
           "pb-0 pt-0 gap-0",
           // Active state: primary border
           isActive
             ? "border-primary bg-primary/5 shadow-lg shadow-primary/10"
             : "border-muted hover:border-primary/30 hover:bg-hover",
-          // Focus state
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           // All cards use aspect-square for consistent sizing
           "aspect-square",
           className
@@ -117,15 +116,14 @@ export function MealSlot({
   // Filled state
   return (
     <Card
+      interactive
       className={cn(
-        "group relative overflow-hidden transition-all duration-200 ease-in-out cursor-pointer",
+        "group relative overflow-hidden cursor-pointer",
         "pb-0 pt-0 gap-0",
         // Active state: primary border
         isActive
           ? "border-2 border-primary shadow-lg shadow-primary/10"
           : "border border-border hover:shadow-lg hover:shadow-primary/5 hover:bg-hover",
-        // Focus state
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         // All cards use aspect-square for consistent sizing
         "aspect-square",
         className
@@ -145,7 +143,7 @@ export function MealSlot({
           className={cn(
             "absolute top-2 right-2 z-10 size-6",
             "bg-background/80 backdrop-blur-sm border border-border",
-            "opacity-0 group-hover:opacity-100 transition-opacity",
+            "opacity-0 group-hover:opacity-100",
             "hover:bg-destructive hover:text-destructive-foreground hover:border-destructive"
           )}
           aria-label={`Remove ${recipe.name}`}

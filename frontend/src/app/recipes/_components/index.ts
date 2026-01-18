@@ -1,2 +1,2 @@
 export { RecipeBrowserView } from "./RecipeBrowserView";
-export { AddEditRecipeView } from "./AddEditRecipeView";
+export { AddEditRecipeView } from "./add-edit";

@@ -122,11 +122,12 @@ export function MealGridCard({
               <Button
                 variant="ghost"
                 size="icon-sm"
+                shape="pill"
                 onClick={(e) => {
                   e.stopPropagation();
                   onCycleShoppingMode?.();
                 }}
-                className="relative size-6 rounded-full bg-overlay-strong"
+                className="relative size-6 bg-overlay-strong"
                 aria-label={getShoppingModeAriaLabel(shoppingMode)}
               >
                 <ShoppingCart

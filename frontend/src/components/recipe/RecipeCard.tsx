@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import type { RecipeCardData } from "@/types";
 import { FavoriteButton } from "../common/FavoriteButton";
 import { RecipeBadge, RecipeBadgeGroup } from "./RecipeBadge";
-import { RecipeCardImage } from "./RecipeImage";
+import { RecipeImage } from "./RecipeImage";
 
 interface RecipeCardBaseProps {
   recipe: RecipeCardData;
@@ -139,11 +139,9 @@ function RecipeCardSmall({
 }: CardVariantProps) {
   return (
     <Card
+      interactive
       className={cn(
-        "group cursor-pointer overflow-hidden",
-        // Liftable provides subtle hover lift, shadow-raised adds depth
-        "liftable shadow-raised hover:bg-hover",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "group overflow-hidden",
         "pb-0 pt-0 gap-0",
         className
       )}
@@ -156,11 +154,12 @@ function RecipeCardSmall({
       <div className="flex items-center gap-3 p-3">
         {/* Thumbnail */}
         <div className="relative w-16 h-16 flex-shrink-0 overflow-hidden rounded-lg bg-elevated">
-          <RecipeCardImage
+          <RecipeImage
             src={recipe.imageUrl}
             alt={recipe.name}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
             iconSize="sm"
+            showLoadingState={false}
           />
         </div>
 
@@ -212,17 +211,11 @@ function RecipeCardMedium({
 }: CardVariantProps) {
   return (
     <Card
+      interactive
       className={cn(
-        "group cursor-pointer overflow-hidden",
-        // Base shadow and border
-        "shadow-raised border border-border",
-        // Transitions for all properties
-        "transition-all duration-300 ease-physical",
-        // Hover effects: lift, deeper shadow, border highlight
-        "hover:-translate-y-2 hover:shadow-elevated hover:border-border-strong",
-        // Focus ring
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        // Reset card padding
+        "group overflow-hidden",
+        // Enhanced lift effect for medium cards
+        "hover:-translate-y-2",
         "pb-0 pt-0 gap-0",
         className
       )}
@@ -234,15 +227,16 @@ function RecipeCardMedium({
     >
       {/* Image Container - Fixed hover glitch */}
       <div className="relative w-full aspect-[4/3] overflow-hidden bg-elevated">
-        <RecipeCardImage
+        <RecipeImage
           src={recipe.imageUrl}
           alt={recipe.name}
-          className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
           iconSize="lg"
+          showLoadingState={false}
         />
         {/* Hover Overlay - Scales with image */}
         {recipe.imageUrl && (
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 ease-in-out group-hover:scale-105"
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out group-hover:scale-105"
                style={{ transformOrigin: 'center center' }}
           />
         )}
@@ -324,11 +318,9 @@ function RecipeCardLarge({
 
   return (
     <Card
+      interactive
       className={cn(
-        "group cursor-pointer overflow-hidden",
-        // Interactive utility provides lift on hover + press feedback
-        "interactive shadow-raised",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "group overflow-hidden",
         "pb-0 pt-0 gap-0",
         className
       )}
@@ -342,11 +334,12 @@ function RecipeCardLarge({
       <div className="flex flex-col md:flex-row">
         {/* Left: Image */}
         <div className="relative w-full md:w-1/3 aspect-square md:aspect-auto overflow-hidden bg-elevated">
-          <RecipeCardImage
+          <RecipeImage
             src={recipe.imageUrl}
             alt={recipe.name}
-            className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
             iconSize="xl"
+            showLoadingState={false}
           />
         </div>
 

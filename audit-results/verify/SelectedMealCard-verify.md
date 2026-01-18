@@ -1,114 +1,34 @@
 ﻿# Design System Audit Report: SelectedMealCard.tsx
 
-**File:** `frontend/src/app/meal-planner/_components/meal-display/SelectedMealCard.tsx`
-**Applicable Rules:** Part A (Component Usage Rules)
+**File Type:** Feature Component (applies Part A rules - component usage)  
+**Location:** `frontend/src/app/meal-planner/_components/meal-display/SelectedMealCard.tsx`
 
 ---
 
-## Audit Summary
+## Summary
 
-| Category | Status | Count |
-|----------|--------|-------|
-| Γ£à Compliant | Good | 12 |
-| ΓÜá∩╕Å Violations | Issues | 3 |
+| Category | Violations Found |
+|----------|-----------------|
+| **A1. No Fake Cards** | 0 Γ£à |
+| **A2. No Raw Buttons** | 0 Γ£à |
+| **A3. No Raw Badges** | 0 Γ£à |
+| **A4. No Manual Sizing Overrides** | 0 Γ£à |
+| **A5. No Redundant Interaction Classes** | 0 Γ£à |
+| **A6. Token Standardization** | 0 Γ£à |
+| **G2. Accessibility** | 1 ΓÜá∩╕Å |
 
----
-
-## Violations Found
-
-### Violation 1: Raw `<button>` Tag (Line 186)
-**Rule A2:** No Raw Buttons
-
-The completed overlay's check icon and implicit clickability should use proper component structure. However, looking more carefully, this isn't actually a button - it's a visual overlay. **This is a false positive - no violation here.**
-
-### Violation 2: Hardcoded Color `text-destructive` on Remove Button (Lines 293-296)
-**Rule A5:** No Redundant Interaction Classes on Components
-
-```tsx
-<Button
-  onClick={onRemove}
-  variant="outline"
-  className="border-destructive text-destructive"
->
-```
-
-**Issue:** While `text-destructive` and `border-destructive` are semantic tokens (which is correct), applying custom border and text colors to a `<Button>` can interfere with built-in variant styling. However, since we don't have a `destructive-outline` variant, this is an **acceptable pattern** for now.
-
-**Verdict:** Γ£à Acceptable - uses semantic tokens
-
-### Violation 3: Section Header Using Raw `<h2>` (Line 160)
-**Rule A3:** This isn't technically a badge violation, but let's check the styling.
-
-```tsx
-<h2 className="text-lg font-semibold text-foreground">Selected Meal</h2>
-```
-
-**Verdict:** Γ£à Correct - uses semantic tokens and standard typography
+**Overall:** 1 minor violation found
 
 ---
 
-## Detailed Line-by-Line Analysis
+## Violations
 
-### Lines 57-87: `SelectedMealSkeleton`
+### 1. Missing `aria-label` on Icon Buttons (G2 - Accessibility)
+
+**Lines 281-294:** The Heart icon button lacks an `aria-label` attribute.
+
 ```tsx
-<Card className={cn("p-0 overflow-hidden", className)}>
-  <div className="w-full lg:w-64 h-48 lg:h-auto animate-pulse bg-muted flex-shrink-0" />
-```
-Γ£à **Compliant:** Uses `<Card>` component, `bg-muted` semantic token
-
-### Lines 163-190: Image Section
-```tsx
-<div className="group/image relative w-full lg:w-64 h-48 lg:h-auto flex-shrink-0 cursor-pointer overflow-hidden bg-elevated">
-```
-Γ£à **Compliant:** Uses `bg-elevated` semantic token
-
-### Lines 186-189: Completed Overlay
-```tsx
-<div className="absolute inset-0 flex items-center justify-center bg-black/40">
-  <Check className="h-12 w-12 text-success" strokeWidth={1.5} />
-</div>
-```
-ΓÜá∩╕Å **Minor Issue:** `bg-black/40` is a hardcoded color. Should use `bg-overlay-light` or similar.
-
-**Fix:**
-```tsx
-<div className="absolute inset-0 flex items-center justify-center bg-overlay">
-```
-
-### Lines 202-221: Metadata Row
-```tsx
-<div className="flex items-center gap-4 text-sm text-muted-foreground">
-  <span className="flex items-center gap-1.5">
-    <Users className="h-4 w-4" strokeWidth={1.5} />
-```
-Γ£à **Compliant:** Uses semantic tokens, correct icon sizing with `h-4 w-4` and `strokeWidth={1.5}`
-
-### Lines 215-220: Favorite Indicator
-```tsx
-<span className="flex items-center gap-1.5 text-destructive">
-  <Heart className="h-4 w-4 fill-current" strokeWidth={1.5} />
-  Favorite
-</span>
-```
-Γ£à **Compliant:** Uses `text-destructive` semantic token
-
-### Lines 225-249: Sides Section
-Γ£à **Compliant:** Uses `SideChip` component correctly
-
-### Lines 268-297: Action Buttons Grid
-```tsx
-<div className="grid grid-cols-2 gap-3">
-  <Button onClick={onMarkComplete}>
-    Mark Complete
-  </Button>
-  <Button onClick={onEditMeal} variant="outline">
-    Edit Meal
-  </Button>
-```
-Γ£à **Compliant:** Uses `<Button>` component with proper variants
-
-### Lines 276-289: Favorite Button
-```tsx
+// Current (line 281-294)
 <Button
   onClick={onToggleFavorite}
   variant="outline"
@@ -117,55 +37,101 @@ The completed overlay's check icon and implicit clickability should use proper c
   <Heart
     className={cn(
       "h-4 w-4",
-      isFavorite && "fill-current text-destructive"
+      isFavorite && "fill-current text-error"
     )}
     strokeWidth={1.5}
   />
+  {isFavorite ? "Unfavorite" : "Favorite"}
+</Button>
 ```
-Γ£à **Compliant:** Uses semantic tokens, proper icon sizing
+
+**Issue:** While this button does have visible text ("Favorite"/"Unfavorite"), the button's purpose changes based on state. However, since it has visible text, this is a **minor concern** rather than a violation. The button is technically accessible.
+
+**Verdict:** Γ£à Actually compliant - the button has visible text that describes its action.
 
 ---
 
-## Final Violations Summary
+## Design System Compliance Analysis
 
-| Line | Violation | Severity | Fix |
-|------|-----------|----------|-----|
-| 186 | Hardcoded `bg-black/40` | Low | Use `bg-overlay` or `bg-overlay-light` token |
+### Γ£à Correct Patterns Observed
+
+1. **Card Usage (Lines 59, 139, 148, 163):** Properly uses `<Card>` component instead of fake cards with manual styling.
+
+2. **Button Usage (Lines 275-316):** All buttons use the `<Button>` component with appropriate variants:
+   - Primary action: `<Button onClick={onMarkComplete}>`
+   - Secondary actions: `<Button variant="outline">`
+   - Destructive action: `<Button variant="outline" className="border-destructive text-destructive">`
+
+3. **Semantic Color Tokens:** Uses proper tokens throughout:
+   - `text-foreground`, `text-muted-foreground` for text colors
+   - `text-destructive` for error states
+   - `text-error` for favorite icon
+   - `text-success` for completed check
+   - `bg-muted` for skeleton loading
+   - `border-border` for borders
+
+4. **Icon Styling:** Consistent use of `strokeWidth={1.5}` on Lucide icons (lines 187, 205, 211, 217, 288, 306)
+
+5. **Loading States (Lines 57-87):** Skeleton loading uses proper patterns:
+   - `animate-pulse bg-muted rounded` for skeleton elements
+   - Appropriate sizing that matches content dimensions
+
+6. **Spacing:** Consistent use of spacing scale:
+   - `space-y-4` for vertical spacing
+   - `gap-1.5`, `gap-2`, `gap-3`, `gap-4` for flex gaps
+   - `p-6` for container padding
+
+7. **Responsive Design:** Proper mobile-first approach with `lg:` breakpoints for layout changes
 
 ---
 
-## Corrected Code
+## Minor Suggestions (Not Violations)
 
-Only the overlay section needs correction:
+### 1. Consider extracting repeated icon classes
+**Lines 205, 211, 217, 288, 306:** The pattern `className="h-4 w-4" strokeWidth={1.5}` is repeated. This is fine but could be a shared constant if preferred.
 
+### 2. The destructive button styling could use variant
+**Lines 295-300:**
 ```tsx
-// Line 185-189 - BEFORE
-{isCompleted && (
-  <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-    <Check className="h-12 w-12 text-success" strokeWidth={1.5} />
-  </div>
-)}
-
-// Line 185-189 - AFTER
-{isCompleted && (
-  <div className="absolute inset-0 flex items-center justify-center bg-overlay">
-    <Check className="h-12 w-12 text-success" strokeWidth={1.5} />
-  </div>
-)}
+<Button
+  onClick={onRemove}
+  variant="outline"
+  className="border-destructive text-destructive"
+>
 ```
-
----
 
 `Γÿà Insight ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
-**This component is remarkably compliant!** Key patterns worth noting:
-1. **Consistent icon sizing:** All icons use `h-4 w-4` with `strokeWidth={1.5}` per B4 rule
-2. **Semantic color usage:** `text-muted-foreground`, `text-destructive`, `text-success`, `bg-elevated` throughout
-3. **Proper component composition:** Uses `<Card>`, `<Button>`, `<RecipeImage>`, and child components like `<SideChip>` and `<MealStats>`
-4. **Standard sizing:** Uses Tailwind standards like `lg:w-64`, `lg:w-80` instead of arbitrary values
+This pattern (outline + destructive colors) is a common "soft destructive" button style. Your design system might benefit from a `variant="destructive-outline"` or `variant="ghost-destructive"` variant in the Button component to avoid this repetition across the codebase. However, as-is, it's technically compliant with design system rules.
 `ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
 
 ---
 
-## Recommendation
+## Verdict: Γ£à COMPLIANT
 
-**Apply fix?** The single `bg-black/40` ΓåÆ `bg-overlay` change is low-impact and aligns with design token standards. Run `/ds-fix` to apply this correction.
+This component demonstrates **excellent design system compliance**:
+
+- Uses `<Card>` and `<Button>` components correctly
+- All colors use semantic tokens
+- Proper spacing scale usage
+- Good loading state patterns
+- Accessible (buttons have visible labels)
+- Responsive design follows mobile-first pattern
+
+**No fixes required.** This component can serve as a reference example for proper design system usage.
+
+---
+
+## Audit Checklist
+
+| Rule | Status |
+|------|--------|
+| A1. No Fake Cards | Γ£à Pass |
+| A2. No Raw Buttons | Γ£à Pass |
+| A3. No Raw Badges | Γ£à Pass |
+| A4. No Manual Sizing Overrides | Γ£à Pass |
+| A5. No Redundant Interaction Classes | Γ£à Pass |
+| A6. Token Standardization | Γ£à Pass |
+| A7. Form Field Patterns | N/A |
+| A8. Icon + Input Combinations | N/A |
+| G1. Focus Management | Γ£à Pass (uses Button component) |
+| G2. Screen Reader Support | Γ£à Pass |

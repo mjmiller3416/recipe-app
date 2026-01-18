@@ -1,13 +1,11 @@
 // components/RecipeImage.tsx
 // A unified recipe image component with error handling and placeholder fallback
-// This is the foundation component - use directly or via convenience wrappers
 
 "use client";
 
 import { useState } from "react";
 import { ChefHat } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getHeroBannerUrl } from "@/lib/imageUtils";
 
 // ============================================================================
 // TYPES
@@ -26,13 +24,6 @@ interface RecipeImageProps {
    * @default true
    */
   showLoadingState?: boolean;
-}
-
-interface RecipeHeroImageProps {
-  src: string | null | undefined;
-  alt: string;
-  className?: string;
-  children?: React.ReactNode;
 }
 
 // ============================================================================
@@ -99,9 +90,8 @@ function ImagePlaceholder({
  * - Consistent placeholder styling across the app
  *
  * Usage:
- * - Direct: <RecipeImage src={url} alt="..." /> for custom components
- * - Via RecipeCardImage: optimized for card grids (no loading animation)
- * - Via RecipeHeroImage: for detail page heroes (with gradient overlay)
+ * - Direct: <RecipeImage src={url} alt="..." /> for most components
+ * - For grids/lists: use showLoadingState={false} for better performance
  */
 export function RecipeImage({
   src,
@@ -167,87 +157,5 @@ export function RecipeImage({
         onError={() => setHasError(true)}
       />
     </>
-  );
-}
-
-// ============================================================================
-// RECIPE CARD IMAGE - Convenience Wrapper for Cards
-// ============================================================================
-
-/**
- * RecipeCardImage - Optimized for recipe cards in lists/grids
- *
- * This is a thin wrapper around RecipeImage with:
- * - Loading animation disabled (better performance for many images)
- * - Simplified props (no placeholderClassName needed)
- *
- * Use this in RecipeCard components (small, medium, large variants)
- */
-export function RecipeCardImage({
-  src,
-  alt,
-  className,
-  iconSize = "lg",
-}: Omit<RecipeImageProps, "placeholderClassName" | "fill" | "showLoadingState">) {
-  return (
-    <RecipeImage
-      src={src}
-      alt={alt}
-      className={className}
-      iconSize={iconSize}
-      showLoadingState={false}
-    />
-  );
-}
-
-// ============================================================================
-// RECIPE HERO IMAGE - Convenience Wrapper for Detail Pages
-// ============================================================================
-
-/**
- * RecipeHeroImage - Hero image for recipe detail pages
- *
- * This wraps RecipeImage with:
- * - Fixed responsive height (300px mobile, 400px desktop)
- * - Gradient overlay for text readability
- * - Children slot for overlay elements (back button, favorite button, etc.)
- * - Smart crop for Cloudinary images (uses g_auto to detect subject)
- *
- * Use this at the top of recipe detail pages
- */
-export function RecipeHeroImage({
-  src,
-  alt,
-  className,
-  children,
-}: RecipeHeroImageProps) {
-  // Transform Cloudinary URLs to use smart crop for banner dimensions
-  // This applies AI-powered subject detection to avoid cropping out the dish
-  const bannerSrc = getHeroBannerUrl(src);
-
-  return (
-    <div
-      className={cn(
-        "relative h-[300px] md:h-[400px] bg-elevated overflow-hidden",
-        className
-      )}
-    >
-      <RecipeImage
-        src={bannerSrc}
-        alt={alt}
-        fill
-        iconSize="xl"
-        showLoadingState={false}
-        className="w-full h-full object-cover"
-      />
-
-      {/* Gradient overlay - only shown when image is present */}
-      {src && (
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-      )}
-
-      {/* Overlay content (back button, favorite, etc.) */}
-      {children}
-    </div>
   );
 }

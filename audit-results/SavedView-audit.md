@@ -1,13 +1,27 @@
 ﻿---
 
-## Summary
+## Summary of Changes
 
 `Γÿà Insight ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
-**1 violation fixed:**
-- **A4 (Manual Sizing Overrides) + Component Props**: Replaced `className="rounded-full"` with `shape="pill"` prop on the Favorites toggle Button. This follows the design system rule that components should use built-in props instead of manual className overrides.
-- **Icon sizing**: Removed explicit `h-4 w-4` from the Heart icon since the Button component already handles child SVG sizing via `[&_svg:not([class*='size-'])]:size-4` in its base styles.
-
-**Why this matters:** Using component props instead of className overrides ensures consistent behavior across the app and makes the code more maintainable. If the Button's pill shape ever changes, all instances using `shape="pill"` will update automatically.
+**Accessibility & Decorative Icons:**
+- Icons that convey no additional information beyond what's already in the UI should have `aria-hidden="true"` 
+- This prevents screen readers from announcing redundant or confusing information
+- The Heart icon here is purely decorative - the meal's favorite status is visual-only indicator
 `ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
 
-**Overall Assessment:** The `SavedView.tsx` file was already well-structured with proper use of design system components (Card, Button, Input, Skeleton, Badge equivalents via semantic elements). Only one minor violation needed correction.
+### Changes Made:
+
+| Line | Change |
+|------|--------|
+| 141 | Added `aria-hidden="true"` to decorative Heart icon |
+
+### What Was Already Compliant:
+- Γ£à Using `<Card>` component (not fake divs with bg-card/border)
+- Γ£à Using `<Button>` with proper variants (`variant`, `size`, `shape`)
+- Γ£à Using `<Input>` component
+- Γ£à Using semantic color tokens (`text-foreground`, `text-muted-foreground`, `text-destructive`)
+- Γ£à Using standard Tailwind spacing scale (`space-y-4`, `gap-3`, `p-3`, etc.)
+- Γ£à No hardcoded colors or arbitrary values
+- Γ£à No redundant interaction classes on base components
+
+**This file was already well-written and design system compliant!** The only fix needed was adding accessibility markup to a decorative icon.

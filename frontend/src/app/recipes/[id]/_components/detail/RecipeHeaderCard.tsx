@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/tooltip";
 import { RecipeBadge, RecipeBadgeGroup } from "@/components/recipe/RecipeBadge";
 import type { RecipeResponseDTO } from "@/types";
-import { formatTime } from "./recipe-utils";
+import { formatTime } from "../recipe-utils";
 
 interface RecipeHeaderCardProps {
   recipe: RecipeResponseDTO;

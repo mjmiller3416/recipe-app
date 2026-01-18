@@ -1,3 +1,58 @@
+﻿# Design System Audit Report: RecipeRouletteWidget.tsx
+
+**File Location:** `frontend/src/app/dashboard/_components/RecipeRouletteWidget.tsx`  
+**Rules Applied:** Part A (Component Usage Rules) - This file is in `app/` directory
+
+---
+
+## Violations Found
+
+| Line | Rule | Violation | Severity |
+|------|------|-----------|----------|
+| 161 | A6 | Non-standard icon size `h-5 w-5` (should use `size-4` or `size-5`) | Minor |
+| 183 | A6 | Non-standard icon size `h-3.5 w-3.5` (arbitrary value) | Minor |
+| 219 | A6 | Non-standard icon size `h-12 w-12` (should use `size-12`) | Minor |
+| 257, 262 | A6 | Non-standard icon size `h-3 w-3` (should use `size-3`) | Minor |
+| 310 | A6 | Non-standard icon size `h-10 w-10` (should use `size-10`) | Minor |
+| 206, 295, 301 | B3 | Using `rounded-lg` is acceptable - no violation | Γ£à OK |
+| 155, 250 | C1 | Inconsistent spacing: `mb-3` mixed with other margin classes | Minor |
+| 238 | C1 | Inconsistent spacing: `mb-2` mixed with `mb-3` usage | Minor |
+| 206, 238 | A5 | Redundant `transition-colors` on raw elements (acceptable for raw divs/elements, not base components) | Γ£à OK |
+| 312 | C1 | Inconsistent spacing: `mt-1` could align with `space-y-*` pattern | Minor |
+
+---
+
+## Detailed Analysis
+
+### 1. Icon Sizing (Rule A6 - Token Standardization)
+
+The codebase uses `h-X w-X` pattern for icons instead of the more concise `size-X` pattern. While this is functionally equivalent, the design system recommends using the standard Tailwind classes. The `h-3.5 w-3.5` on line 183 uses an arbitrary value which violates the "no arbitrary values" rule.
+
+**Lines affected:** 161, 183, 219, 257, 262, 310
+
+### 2. Spacing Inconsistency (Rule C1 - Spacing Scale)
+
+The component uses `mb-2`, `mb-3`, and `mt-1` inconsistently. The design system recommends using consistent spacing:
+- `space-y-2` (8px) for related elements
+- `space-y-3` (12px) for list items
+- `space-y-4` (16px) for form fields/card sections
+
+**Lines affected:** 155, 238, 250, 312
+
+### 3. What's Compliant Γ£à
+
+- **Line 7-9:** Correctly uses `<Button>` and `<Card>` components (Rules A1, A2)
+- **Line 167-186:** Button has proper variant, size, and `aria-label` (Rule G2)
+- **Line 153:** Card component used correctly
+- **Line 275-282:** Button with proper variant and size
+- **Colors:** Uses semantic tokens (`text-chart-4`, `text-foreground`, `text-muted-foreground`, `bg-border`, `text-primary`)
+- **Motion:** Framer Motion used appropriately for enter/exit animations (Rule E1)
+
+---
+
+## Corrected Code
+
+```tsx
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -152,13 +207,13 @@ export function RecipeRouletteWidget() {
   return (
     <Card className="h-full flex flex-col p-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3 shrink-0">
+      <div className="flex items-center justify-between mb-4 shrink-0">
         <div className="flex items-center gap-3">
           <motion.div
             animate={isSpinning ? { rotate: [0, 15, -15, 10, -10, 0] } : {}}
             transition={{ duration: 0.5, ease: "easeInOut" }}
           >
-            <Dices className="h-5 w-5 text-chart-4" />
+            <Dices className="size-5 text-chart-4" />
           </motion.div>
           <h2 className="text-lg font-semibold text-foreground">
             Recipe Roulette
@@ -180,7 +235,7 @@ export function RecipeRouletteWidget() {
               ease: "linear",
             }}
           >
-            <RefreshCw className="h-3.5 w-3.5" />
+            <RefreshCw className="size-4" />
           </motion.div>
           <span className="text-xs ml-1">Spin</span>
         </Button>
@@ -203,7 +258,7 @@ export function RecipeRouletteWidget() {
           >
             {/* Recipe Image - flexible height */}
             <div
-              className="relative flex-1 min-h-24 rounded-lg overflow-hidden bg-background mb-3 cursor-pointer group"
+              className="relative flex-1 min-h-24 rounded-lg overflow-hidden bg-background mb-4 cursor-pointer group"
               onClick={handleViewRecipe}
             >
               {currentRecipe.reference_image_path ? (
@@ -216,7 +271,7 @@ export function RecipeRouletteWidget() {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <ChefHat className="h-12 w-12 text-muted-foreground" />
+                  <ChefHat className="size-12 text-muted-foreground" />
                 </div>
               )}
               {/* Hover overlay */}
@@ -247,19 +302,19 @@ export function RecipeRouletteWidget() {
 
             {/* Metadata */}
             <motion.div
-              className="shrink-0 flex items-center gap-3 text-xs text-muted-foreground mb-3"
+              className="shrink-0 flex items-center gap-3 text-xs text-muted-foreground mb-4"
               variants={metadataVariants}
               custom={1}
               initial="initial"
               animate="animate"
             >
               <div className="flex items-center gap-1">
-                <Users className="h-3 w-3" />
+                <Users className="size-3" />
                 <span>{currentRecipe.servings ?? "N/A"}</span>
               </div>
               <div className="h-3 w-px bg-border" />
               <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
+                <Clock className="size-3" />
                 <span>{formatTime(currentRecipe.total_time)}</span>
               </div>
             </motion.div>
@@ -291,7 +346,7 @@ export function RecipeRouletteWidget() {
 // Skeleton for loading state
 function RouletteWidgetSkeleton() {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <Skeleton className="aspect-video w-full rounded-lg" />
       <Skeleton className="h-4 w-3/4" />
       <div className="flex gap-3">
@@ -306,12 +361,31 @@ function RouletteWidgetSkeleton() {
 // Empty state when no recipes exist
 function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-6 text-center">
-      <ChefHat className="h-10 w-10 text-muted-foreground mb-2" />
+    <div className="flex flex-col items-center justify-center py-6 text-center space-y-2">
+      <ChefHat className="size-10 text-muted-foreground" />
       <p className="text-sm text-muted-foreground">No recipes yet</p>
-      <p className="text-xs text-muted-foreground mt-1">
+      <p className="text-xs text-muted-foreground">
         Add some recipes to spin the wheel!
       </p>
     </div>
   );
 }
+```
+
+---
+
+## Summary of Changes
+
+| Change | Lines | Description |
+|--------|-------|-------------|
+| Icon sizes | 161, 183, 219, 257, 262, 310 | Changed `h-X w-X` to `size-X` pattern; fixed arbitrary `h-3.5 w-3.5` to standard `size-4` |
+| Spacing consistency | 155, 206, 250, 294, 309 | Normalized margins to use `mb-4` consistently; converted EmptyState to use `space-y-2` |
+| Skeleton spacing | 294 | Changed `space-y-3` to `space-y-4` for consistency with card section spacing |
+
+---
+
+`Γÿà Insight ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
+1. **Icon sizing convention:** Using `size-X` instead of `h-X w-X` is cleaner and ensures square dimensions automatically. Lucide icons already default to `size-4` (16px) when no size is specified.
+2. **Spacing rhythm:** The design system establishes a 4px/8px/12px/16px rhythm. Using `mb-4` (16px) between card sections creates consistent visual hierarchy. Mixing `mb-2`, `mb-3`, `mb-4` creates subtle but noticeable inconsistencies.
+3. **Arbitrary values:** `h-3.5` equals 14px which doesn't exist in the Tailwind spacing scale. Using `size-4` (16px) maintains the design system's integrity.
+`ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`

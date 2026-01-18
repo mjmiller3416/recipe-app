@@ -2,22 +2,18 @@
 
 ## Summary of Changes
 
-| Line | Before | After |
-|------|--------|-------|
-| 5 | - | Added `Button` import |
-| 141 | `<button>` | `<Button variant="ghost" size="icon-sm">` |
-| 146 | `p-1 rounded-full` | `size-6` (explicit size override for smaller clear button) |
-| 147-150 | Manual focus-visible styling | Removed (Button handles focus states) |
-| 153 | `h-3 w-3` | `size-3` (standard sizing syntax) |
+| Line | Before | After | Rule |
+|------|--------|-------|------|
+| 69-82 | Card without `interactive` prop + manual `transition-all duration-200 ease-in-out` + manual focus-visible classes | Card with `interactive` prop, removed redundant transition and focus classes | A5 |
+| 118-130 | Card without `interactive` prop + manual `transition-all duration-200 ease-in-out` + manual focus-visible classes | Card with `interactive` prop, removed redundant transition and focus classes | A5 |
+| 146 | `opacity-0 group-hover:opacity-100 transition-opacity` | `opacity-0 group-hover:opacity-100` | A5 |
 
 ---
 
 `Γÿà Insight ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
-**Key changes explained:**
-1. **Button component usage** - The `<Button>` provides consistent focus rings, disabled states, and base transitions automatically
-2. **Custom hover overrides retained** - We kept the destructive hover colors since this is a deliberate UX pattern (red on hover to indicate deletion)
-3. **Size override with `size-6`** - The clear button needs to be smaller than the standard `icon-sm` (32px), so we override to 24px to keep it unobtrusive
-`ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`
+1. **Card's `interactive` prop** - The Card component has a built-in `interactive={true}` variant that automatically adds `cursor-pointer`, `hover:border-border-strong`, `hover:shadow-elevated`, focus ring styles, and `active:scale-[0.99]`. Using this prop instead of manually adding these classes ensures consistency and reduces code duplication.
 
-**Violations Fixed:** 2
-**Files Modified:** 1
+2. **Button handles its own transitions** - The Button component (via `buttonVariants`) already includes `transition-all duration-150 ease-physical` for hover/active states. Adding `transition-opacity` was redundant since the ghost variant already smoothly transitions colors.
+
+3. **Focus-visible is inherited** - When using the `interactive` prop on Card, focus-visible ring styles are automatically applied, eliminating the need for manual `focus-visible:outline-none focus-visible:ring-2...` classes.
+`ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ`

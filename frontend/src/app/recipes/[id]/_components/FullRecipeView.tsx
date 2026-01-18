@@ -7,16 +7,12 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FavoriteButton } from "@/components/common/FavoriteButton";
-import { RecipeHeroImage } from "@/components/recipe/RecipeImage";
 import type { RecipeResponseDTO } from "@/types";
 
 import { sortCategoryEntries } from "./recipe-utils";
 import { useRecipeView } from "./useRecipeView";
-import { RecipeSkeleton } from "./RecipeSkeleton";
-import { RecipeNotFound } from "./RecipeNotFound";
-import { RecipeHeaderCard } from "./RecipeHeaderCard";
-import { IngredientItem } from "./IngredientItem";
-import { DirectionStep } from "./DirectionStep";
+import { RecipeHeroImage, RecipeSkeleton, RecipeNotFound, RecipeHeaderCard } from "./detail";
+import { IngredientItem, DirectionStep } from "./ingredients-directions";
 import { AddToMealPlanDialog } from "./AddToMealPlanDialog";
 import { PrintPreviewDialog, RecipePrintLayout, usePrintRecipe } from "./print";
 

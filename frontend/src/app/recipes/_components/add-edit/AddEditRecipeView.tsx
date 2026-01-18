@@ -20,13 +20,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PageLayout } from "@/components/layout/PageLayout";
-import {
-  useRecipeForm,
-  RecipeInfoCard,
-  IngredientsCard,
-  DirectionsNotesCard,
-  ImageUploadCard,
-} from "./add-edit";
+import { useRecipeForm } from "./useRecipeForm";
+import { RecipeInfoCard } from "./RecipeInfoCard";
+import { IngredientsCard } from "./IngredientsCard";
+import { DirectionsNotesCard } from "./DirectionsNotesCard";
+import { ImageUploadCard } from "./ImageUploadCard";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 
 // ============================================================================

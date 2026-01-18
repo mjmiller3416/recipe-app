@@ -2,8 +2,10 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, ChefHat, CheckCircle2, Circle } from "lucide-react";
+import { GripVertical, CheckCircle2, Circle } from "lucide-react";
+import { RecipeImage } from "@/components/recipe/RecipeImage";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import type { PlannerEntryResponseDTO } from "@/types";
 
 interface MealQueueItemProps {
@@ -50,27 +52,27 @@ export function MealQueueItem({
       )}
     >
       {/* Drag Handle */}
-      <button
-        type="button"
-        className="p-1 text-muted-foreground hover:text-foreground transition-colors duration-150 cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        className="cursor-grab active:cursor-grabbing flex-shrink-0 touch-none text-muted-foreground hover:text-foreground"
         aria-label="Drag to reorder"
         {...attributes}
         {...listeners}
       >
         <GripVertical className="h-5 w-5" />
-      </button>
+      </Button>
 
       {/* Thumbnail */}
-      <div className="relative w-12 h-12 rounded-lg bg-elevated flex-shrink-0 overflow-hidden flex items-center justify-center">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={entry.meal_name || "Meal"}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <ChefHat className="h-6 w-6 text-muted-foreground" />
-        )}
+      <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+        <RecipeImage
+          src={imageUrl}
+          alt={entry.meal_name || "Meal"}
+          fill
+          iconSize="sm"
+          showLoadingState={false}
+          className="object-cover"
+        />
       </div>
 
       {/* Content */}
@@ -86,12 +88,14 @@ export function MealQueueItem({
       </div>
 
       {/* Cooked Toggle Icon */}
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        shape="pill"
         onClick={() => onComplete(entry.id)}
         disabled={isCompleting}
         className={cn(
-          "flex-shrink-0 p-1.5 rounded-full transition-colors interactive-subtle",
+          "flex-shrink-0",
           isCompleting
             ? "text-success"
             : "text-muted-foreground hover:text-success"
@@ -103,7 +107,7 @@ export function MealQueueItem({
         ) : (
           <Circle className="h-5 w-5" />
         )}
-      </button>
+      </Button>
     </div>
   );
 }

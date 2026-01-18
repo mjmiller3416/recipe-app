@@ -343,7 +343,7 @@ The app uses **RecipeImage.tsx** as the unified image component providing:
 - **Error handling** - Shows ChefHat placeholder when images fail to load (404, network errors)
 - **Empty state** - Graceful fallback when `src` is null/undefined
 - **Loading animation** - Optional fade-in transition with animated placeholder
-- **Three variants** - `RecipeImage` (base), `RecipeCardImage` (grids), `RecipeHeroImage` (detail pages)
+- **Single component** - `RecipeImage` handles all recipe image display with configurable options
 
 ### RecipeImage Component
 
@@ -388,24 +388,22 @@ The `showLoadingState` prop controls animated loading transitions:
   - Image renders immediately without wrapper
   - `onError` still triggers placeholder fallback
 
-**Convenience Wrappers:**
-- `RecipeCardImage` sets `showLoadingState=false` (optimized for grids)
-- `RecipeHeroImage` sets `showLoadingState=false` (hero already has gradient overlay)
+**Note:** `RecipeHeroImage` is a local component in `frontend/src/app/recipes/[id]/_components/detail/` that wraps `RecipeImage` with hero-specific styling (fixed height, gradient overlay, Cloudinary smart cropping). It's colocated with other detail page UI components since `FullRecipeView` is its only consumer.
 
 ### Display Locations
 
 | Component | File Location | Aspect Ratio | CSS/Tailwind |
 |-----------|---------------|--------------|--------------|
-| RecipeCard (Small) | RecipeCard.tsx:159 | 1:1 (square) | `w-16 h-16` |
-| RecipeCard (Medium) | RecipeCard.tsx:236 | 4:3 | `aspect-[4/3]` |
-| RecipeCard (Large) | RecipeCard.tsx:344 | 1:1 mobile / auto desktop | `aspect-square md:aspect-auto` |
+| RecipeCard (Small) | RecipeCard.tsx:157 | 1:1 (square) | `w-16 h-16` |
+| RecipeCard (Medium) | RecipeCard.tsx:230 | 4:3 | `aspect-[4/3]` |
+| RecipeCard (Large) | RecipeCard.tsx:337 | 1:1 mobile / auto desktop | `aspect-square md:aspect-auto` |
 | ImageUploadCard | ImageUploadCard.tsx:161 | 1:1 (square) | `aspect-square` |
 | CircularImage | CircularImage.tsx:87 | 1:1 (circle) | `rounded-full` + fixed sizes |
 | MealSlot | MealSlot.tsx:160 | 1:1 (circular) | Uses CircularImage xl |
-| MealQueueItem | MealQueueItem.tsx:64 | 1:1 (square) | `w-12 h-12` |
+| MealQueueItem | MealQueueItem.tsx:67 | 1:1 (square) | `w-12 h-12` (uses RecipeImage fill) |
 | MealGridCard | MealGridCard.tsx:107 | ~16:9 | `w-full h-28` |
 | RecipeRouletteWidget | RecipeRouletteWidget.tsx:203 | ~16:9 | `flex-1 min-h-24` |
-| RecipeHeroImage | RecipeImage.tsx:231 | Fixed height | `h-[300px] md:h-[400px]` |
+| RecipeHeroImage | recipes/[id]/_components/detail/RecipeHeroImage.tsx | Fixed height | `h-[300px] md:h-[400px]` |
 | FullRecipeView | FullRecipeView.tsx:86 | Uses RecipeHeroImage | (inherits hero sizing) |
 | SelectedMealCard | SelectedMealCard.tsx:166 | Responsive | `w-full lg:w-64 h-48` |
 | RecipePrintLayout | RecipePrintLayout.tsx:54 | Flexible | `max-h-48` |
@@ -415,8 +413,8 @@ The `showLoadingState` prop controls animated loading transitions:
 
 | Status | Components | Count |
 |--------|-----------|-------|
-| ✅ Using RecipeImage | RecipeCard, MealGridCard, SelectedMealCard, FullRecipeView, CompletedDropdown | 5 |
-| ⚠️ Missing error handling | MealQueueItem, RecipeRouletteWidget | 2 |
+| ✅ Using RecipeImage | RecipeCard, MealGridCard, SelectedMealCard, FullRecipeView, CompletedDropdown, MealQueueItem | 6 |
+| ⚠️ Missing error handling | RecipeRouletteWidget | 1 |
 | ⚠️ Separate component | CircularImage (used by MealSlot, SavedView) | 1 |
 | ✅ Excluded (different purpose) | ImageUploadCard, RecipePrintLayout | 2 |
 
@@ -650,13 +648,15 @@ cloudinary>=1.36.0
 
 ## Known Issues
 
-### Missing Error Handling (2 Components)
+### Missing Error Handling (1 Component)
 
-**Issue:** `MealQueueItem.tsx:64-74` and `RecipeRouletteWidget.tsx:208-220` check if `imageUrl` exists but have no `onError` handler.
+**Issue:** `RecipeRouletteWidget.tsx:208-220` checks if `imageUrl` exists but has no `onError` handler.
 
 **Impact:** If an image URL is present but the file is missing (404), users see the browser's broken image icon instead of the ChefHat placeholder.
 
-**Recommended Fix:** Migrate these components to use the `RecipeImage` component which handles errors automatically.
+**Recommended Fix:** Migrate to use the `RecipeImage` component which handles errors automatically.
+
+> ✅ **Resolved:** `MealQueueItem.tsx` was migrated to use `RecipeImage` with `fill` mode (2026-01-18).
 
 ### CircularImage Duplication
 
