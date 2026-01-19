@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { recipeApi } from "@/lib/api";
-import { getRecipeCardUrl } from "@/lib/imageUtils";
+import { RecipeBannerImage } from "@/components/recipe/RecipeBannerImage";
 import type { RecipeCardDTO } from "@/types";
 
 // Animation variants
@@ -203,29 +203,27 @@ export function RecipeRouletteWidget() {
           >
             {/* Recipe Image - flexible height */}
             <div
-              className="relative flex-1 min-h-24 rounded-lg overflow-hidden bg-background mb-3 cursor-pointer group"
+              className="relative rounded-lg overflow-hidden bg-background mb-3 cursor-pointer group"
               onClick={handleViewRecipe}
             >
-              {currentRecipe.reference_image_path ? (
-                <motion.img
-                  src={getRecipeCardUrl(currentRecipe.reference_image_path, 400, 300) || currentRecipe.reference_image_path}
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.3 }}
+              >
+                <RecipeBannerImage
+                  bannerSrc={currentRecipe.banner_image_path}
+                  fallbackSrc={currentRecipe.reference_image_path}
                   alt={currentRecipe.recipe_name}
-                  className="w-full h-full object-cover"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.3 }}
+                  aspectRatio="16/9"
                 />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <ChefHat className="h-12 w-12 text-muted-foreground" />
-                </div>
-              )}
+              </motion.div>
               {/* Hover overlay */}
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 pointer-events-none" />
 
               {/* Shimmer effect on landing */}
               {!isSpinning && (
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none"
                   initial={{ x: "-100%" }}
                   animate={{ x: "100%" }}
                   transition={{ duration: 0.6, ease: "easeOut" }}

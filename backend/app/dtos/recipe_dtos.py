@@ -68,6 +68,7 @@ class RecipeCardDTO(BaseModel):
     recipe_name: str
     is_favorite: bool = False
     reference_image_path: Optional[str] = None
+    banner_image_path: Optional[str] = None
     servings: Optional[int] = None
     total_time: Optional[int] = None
     # Optional metadata for badge display
@@ -85,6 +86,7 @@ class RecipeCardDTO(BaseModel):
             recipe_name=recipe.recipe_name,
             is_favorite=recipe.is_favorite,
             reference_image_path=recipe.reference_image_path,
+            banner_image_path=recipe.banner_image_path,
             servings=recipe.servings,
             total_time=recipe.total_time,
             recipe_category=recipe.recipe_category,

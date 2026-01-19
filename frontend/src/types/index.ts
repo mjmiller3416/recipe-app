@@ -71,6 +71,7 @@ export interface RecipeCardDTO {
   recipe_name: string;
   is_favorite: boolean;
   reference_image_path: string | null;
+  banner_image_path: string | null;
   servings: number | null;
   total_time: number | null;
   // Optional metadata for badge display

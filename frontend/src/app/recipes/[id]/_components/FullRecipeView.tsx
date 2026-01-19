@@ -80,7 +80,8 @@ export function FullRecipeView() {
         {/* Hero Image Section - Hidden for Print */}
         <div className="print:hidden">
           <RecipeHeroImage
-            src={recipe.reference_image_path}
+            bannerSrc={recipe.banner_image_path}
+            fallbackSrc={recipe.reference_image_path}
             alt={recipe.recipe_name}
           >
             {/* Back Button - Fixed Position */}

@@ -131,7 +131,7 @@ export function AISuggestions({
   };
 
   return (
-    <Card className={cn("p-4 bg-primary/10 border-primary/20", className)}>
+    <Card className={cn("p-4 bg-primary/10 border-primary/20 min-h-[120px]", className)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">

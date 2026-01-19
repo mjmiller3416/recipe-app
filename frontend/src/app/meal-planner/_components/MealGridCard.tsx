@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { RecipeImage } from "@/components/recipe/RecipeImage";
+import { RecipeBannerImage } from "@/components/recipe/RecipeBannerImage";
 import { ShoppingCart, Users, Clock, Heart } from "lucide-react";
 import { ShoppingMode } from "@/types";
 
@@ -16,6 +16,7 @@ export interface MealGridItem {
   id: number;
   name: string;
   imageUrl: string | null;
+  bannerImageUrl?: string | null;
   servings?: number | null;
   totalTime?: number | null;
   isFavorite?: boolean;
@@ -104,14 +105,13 @@ export function MealGridCard({
       )}
     >
       {/* Image Section */}
-      <div className="relative w-full h-28 overflow-hidden bg-elevated">
-        <RecipeImage
-          src={item.imageUrl}
+      <div className="relative w-full overflow-hidden">
+        <RecipeBannerImage
+          bannerSrc={item.bannerImageUrl}
+          fallbackSrc={item.imageUrl}
           alt={item.name}
-          fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-          iconSize="md"
-          showLoadingState={false}
+          aspectRatio="16/9"
+          className="transition-transform duration-300 group-hover:scale-105"
         />
 
         {/* Status Icons - Top Right */}

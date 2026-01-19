@@ -77,6 +77,7 @@ export function MealPlannerPage() {
     id: entry.id,
     name: entry.meal_name ?? "Untitled Meal",
     imageUrl: entry.main_recipe?.reference_image_path ?? null,
+    bannerImageUrl: entry.main_recipe?.banner_image_path ?? null,
     servings: entry.main_recipe?.servings ?? null,
     totalTime: entry.main_recipe?.total_time ?? null,
     isFavorite: entry.meal_is_favorite ?? false,

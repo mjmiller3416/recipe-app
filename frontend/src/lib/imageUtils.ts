@@ -171,12 +171,11 @@ export function getHeroBannerUrl(url: string | null | undefined): string | undef
 
   // Only apply transformations to Cloudinary URLs
   if (isCloudinaryUrl(url)) {
-    // w_1200: width 1200px (good for most screens)
-    // h_400: height 400px (matches our hero container)
-    // c_fill: fill the dimensions, cropping as needed
-    // g_auto: AI-powered gravity - finds the subject automatically
+    // w_1600,h_686: 21:9 aspect ratio (1600 * 9/21 ≈ 686)
+    // c_fill: fill dimensions, ensuring full width coverage
+    // g_auto: AI-powered gravity for smart cropping if needed
     // q_auto: automatic quality optimization
-    return applyCloudinaryTransformation(url, "w_1200,h_400,c_fill,g_auto/q_auto");
+    return applyCloudinaryTransformation(url, "w_1600,h_686,c_fill,g_auto/q_auto");
   }
 
   // Non-Cloudinary URLs pass through unchanged
@@ -207,6 +206,36 @@ export function getRecipeCardUrl(
     // c_fill: fill dimensions, cropping as needed
     // g_auto: AI-powered smart cropping (finds subject automatically)
     return applyCloudinaryTransformation(url, `w_${width},h_${height},c_fill,g_auto`);
+  }
+
+  return url;
+}
+
+/**
+ * Transform a banner image URL for wide display contexts.
+ *
+ * Similar to getRecipeCardUrl but includes q_auto for quality optimization.
+ * Use this for banner/landscape images in wide containers (16:9, 21:9 aspect ratios).
+ *
+ * @param url - The original image URL
+ * @param width - Target width (default: 1200)
+ * @param height - Target height (default: 400)
+ * @returns URL optimized for banner display with quality optimization
+ */
+export function getBannerUrl(
+  url: string | null | undefined,
+  width = 1200,
+  height = 400
+): string | undefined {
+  if (!url) {
+    return undefined;
+  }
+
+  if (isCloudinaryUrl(url)) {
+    // c_fill: fill dimensions, cropping as needed
+    // g_auto: AI-powered smart cropping (finds subject automatically)
+    // q_auto: automatic quality optimization (WebP/AVIF when supported)
+    return applyCloudinaryTransformation(url, `w_${width},h_${height},c_fill,g_auto/q_auto`);
   }
 
   return url;
