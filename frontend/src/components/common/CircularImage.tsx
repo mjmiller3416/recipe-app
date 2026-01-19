@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ChefHat } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RecipeImage } from "@/components/recipe/RecipeImage";
 
 // ============================================================================
 // TYPES
@@ -46,11 +45,11 @@ const ICON_SIZE_MAP = {
 // ============================================================================
 
 /**
- * CircularImage - A reusable circular image component with error handling
+ * CircularImage - A circular image wrapper using RecipeImage for error handling
  *
  * Features:
  * - Circular clipping with overflow-hidden
- * - Placeholder with ChefHat icon when no image or load error
+ * - Delegates error handling to RecipeImage (ChefHat placeholder)
  * - Multiple size variants (sm, md, lg, xl)
  * - Consistent styling with the design system
  *
@@ -65,10 +64,6 @@ export function CircularImage({
   className,
   imageClassName,
 }: CircularImageProps) {
-  const [hasError, setHasError] = useState(false);
-
-  const showPlaceholder = !src || hasError;
-
   return (
     <div
       className={cn(
@@ -77,21 +72,19 @@ export function CircularImage({
         className
       )}
     >
-      {showPlaceholder ? (
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-elevated via-hover to-elevated">
-          <ChefHat
-            className={cn(ICON_SIZE_MAP[size], "text-muted-foreground opacity-40")}
-          />
-        </div>
-      ) : (
-        <img
+      <div
+        className="w-full h-full"
+        style={zoom !== 1 ? { transform: `scale(${zoom})` } : undefined}
+      >
+        <RecipeImage
           src={src}
           alt={alt}
-          className={cn("w-full h-full object-cover transition-opacity duration-300", imageClassName)}
-          style={zoom !== 1 ? { transform: `scale(${zoom})` } : undefined}
-          onError={() => setHasError(true)}
+          fill
+          iconClassName={ICON_SIZE_MAP[size]}
+          showLoadingState={false}
+          className={cn("transition-opacity duration-300", imageClassName)}
         />
-      )}
+      </div>
     </div>
   );
 }

@@ -17,6 +17,8 @@ interface RecipeImageProps {
   className?: string;
   placeholderClassName?: string;
   iconSize?: "sm" | "md" | "lg" | "xl";
+  /** Custom icon class to override default icon sizing (e.g., "h-4 w-4") */
+  iconClassName?: string;
   fill?: boolean;
   /**
    * Show animated loading state while image loads.
@@ -47,11 +49,13 @@ const ICON_SIZES = {
  */
 function ImagePlaceholder({
   iconSize = "lg",
+  iconClassName,
   animate = false,
   fill = false,
   className,
 }: {
   iconSize?: "sm" | "md" | "lg" | "xl";
+  iconClassName?: string;
   animate?: boolean;
   fill?: boolean;
   className?: string;
@@ -69,7 +73,8 @@ function ImagePlaceholder({
         className={cn(
           ICON_SIZES[iconSize],
           "text-muted-foreground opacity-40",
-          animate && "animate-pulse"
+          animate && "animate-pulse",
+          iconClassName
         )}
       />
     </div>
@@ -99,6 +104,7 @@ export function RecipeImage({
   className,
   placeholderClassName,
   iconSize = "lg",
+  iconClassName,
   fill = false,
   showLoadingState = true,
 }: RecipeImageProps) {
@@ -116,6 +122,7 @@ export function RecipeImage({
     return (
       <ImagePlaceholder
         iconSize={iconSize}
+        iconClassName={iconClassName}
         fill={fill}
         className={placeholderClassName}
       />
@@ -139,7 +146,7 @@ export function RecipeImage({
     <>
       {!isLoaded && (
         <div className={cn("absolute inset-0", placeholderClassName)}>
-          <ImagePlaceholder iconSize={iconSize} animate />
+          <ImagePlaceholder iconSize={iconSize} iconClassName={iconClassName} animate />
         </div>
       )}
 

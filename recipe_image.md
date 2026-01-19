@@ -23,6 +23,7 @@ This document provides a comprehensive overview of recipe image functionality in
 8. [Data Flow Diagrams](#data-flow-diagrams)
 9. [Configuration](#configuration)
 10. [Known Issues](#known-issues)
+11. [Implementation Notes](#implementation-notes)
 
 ---
 
@@ -80,15 +81,20 @@ All images are stored on **Cloudinary CDN** with automatic optimization.
 
 | Layer | File | Purpose |
 |-------|------|---------|
-| Backend | `image_generation_service.py` | Core Gemini AI integration |
-| Backend | `image_generation_config.py` | Prompt templates & settings |
-| Backend | `image_generation.py` | REST endpoint for generation |
-| Backend | `upload.py` | Cloudinary upload endpoints |
+| Backend | `app/ai/services/image_generation_service.py` | Core Gemini AI integration |
+| Backend | `app/ai/config/image_generation_config.py` | Prompt templates & settings |
+| Backend | `app/api/ai/image_generation.py` | REST endpoint for generation |
+| Backend | `app/api/upload.py` | Cloudinary upload endpoints |
+| Backend | `app/api/ai/meal_genie.py` | Recipe generation endpoint with image integration |
+| Backend | `app/ai/services/meal_genie_service.py` | Orchestrates recipe + image generation |
+| Backend | `app/services/recipe_service.py` | Database methods for updating image paths |
+| Backend | `app/services/data_management_service.py` | Cloudinary cleanup on recipe deletion |
 | Frontend | `ImageUploadCard.tsx` | UI for generation/upload |
 | Frontend | `RecipeImage.tsx` | Unified display component |
 | Frontend | `useRecipeForm.ts` | Form state management |
 | Frontend | `imageUtils.ts` | URL processing & transformations |
 | Frontend | `api.ts` | API client functions |
+| Frontend | `recipeCardMapper.ts` | Maps DTO image paths to UI-ready URLs |
 
 ---
 
@@ -121,7 +127,7 @@ Generates professional food photography using Google Gemini AI (`gemini-2.5-flas
 #### Service Methods
 
 ```python
-# image_generation_service.py
+# app/ai/services/image_generation_service.py
 
 # Generate a single image with specific aspect ratio
 generate_recipe_image(recipe_name, prompt_template, aspect_ratio)
@@ -130,9 +136,13 @@ generate_recipe_image(recipe_name, prompt_template, aspect_ratio)
 generate_dual_recipe_images(recipe_name, custom_prompt)
 ```
 
-#### Default Prompt Template
+#### Default Prompt Template (Reference Images - 1:1)
 
-> "A professional food photograph of {recipe_name} captured at a 45-degree angle. The dish is placed on a rustic wooden table with cutting board, shallow depth of field, steam rising, scattered herbs and seasonings..."
+> "A professional food photograph of {recipe_name} captured at a 45-degree angle. The dish is placed on a rustic wooden table with cutting board, shallow depth of field, steam rising, scattered herbs and seasonings, complementary ingredients as props in soft-focus background, cozy home kitchen atmosphere, appetizing, high detail, no people, no hands, square format"
+
+#### Banner Prompt Template (21:9)
+
+> "A professional food photograph of {recipe_name} in wide panoramic format. The dish is placed on a rustic wooden table with cutting board, shallow depth of field, steam rising, scattered herbs and seasonings, complementary ingredients arranged horizontally as props in soft-focus background, cozy home kitchen atmosphere, appetizing, high detail, no people, no hands, ultrawide cinematic composition"
 
 ---
 
@@ -172,12 +182,53 @@ async def delete_recipe_image(public_id: str)
 
 ---
 
+### Recipe Generation with Images API
+
+**Endpoint:** `POST /api/ai/meal-genie/generate-recipe`
+
+Generates a complete recipe with optional AI images via the Meal Genie conversational interface.
+
+#### Request
+```json
+{
+  "message": "Create a pasta recipe with sun-dried tomatoes",
+  "conversation_history": [],
+  "generate_image": true
+}
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "recipe": {
+    "recipe_name": "Sun-Dried Tomato Pasta",
+    "recipe_category": "Pasta",
+    "meal_type": "Dinner",
+    "ingredients": [...]
+  },
+  "reference_image_data": "base64-encoded PNG (1:1 square)",
+  "banner_image_data": "base64-encoded PNG (21:9 ultrawide)",
+  "ai_message": "Here's a delicious pasta recipe...",
+  "needs_more_info": false,
+  "error": null
+}
+```
+
+#### Service Integration
+The endpoint orchestrates both recipe and image generation:
+1. `MealGenieService` generates the recipe JSON
+2. If `generate_image: true`, calls `ImageGenerationService.generate_dual_recipe_images()`
+3. Image generation failures are graceful—recipe still returns with logged warning
+
+---
+
 ## Cloud Storage (Cloudinary)
 
 ### Configuration
 
 ```python
-# Backend: upload.py
+# Backend: app/api/upload.py
 cloudinary.config(
     cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
     api_key=os.getenv("CLOUDINARY_API_KEY"),
@@ -356,6 +407,7 @@ interface RecipeImageProps {
   className?: string;
   placeholderClassName?: string;
   iconSize?: "sm" | "md" | "lg" | "xl";
+  iconClassName?: string;  // Custom icon class to override default sizing
   fill?: boolean;
   showLoadingState?: boolean;  // default: true
 }
@@ -369,6 +421,19 @@ interface RecipeImageProps {
 | lg | `h-24 w-24` |
 | xl | `h-32 w-32` |
 
+#### CircularImage Sizes
+
+`CircularImage` wraps `RecipeImage` and uses smaller icon sizes for its compact circular containers:
+
+| Size | Container | Icon (placeholder) |
+|------|-----------|-------------------|
+| sm | `w-10 h-10` | `h-4 w-4` |
+| md | `w-14 h-14` | `h-6 w-6` |
+| lg | `w-16 h-16` | `h-8 w-8` |
+| xl | `w-20 h-20` | `h-10 w-10` |
+
+The smaller icons are passed via the `iconClassName` prop to override RecipeImage's default sizing.
+
 #### Loading State Behavior
 
 The `showLoadingState` prop controls animated loading transitions:
@@ -376,7 +441,7 @@ The `showLoadingState` prop controls animated loading transitions:
 | Value | Behavior | Use Case |
 |-------|----------|----------|
 | `true` (default) | Shows animated ChefHat placeholder while loading, then fades in image over 300ms | Single images, hero banners, detail pages |
-| `false` | No animation, instant render | Lists/grids with many images (better performance) |
+| `false` | No animation, instant render | Lists/grids with many images (reduced render overhead) |
 
 **Implementation Details:**
 - When `showLoadingState=true`:
@@ -388,35 +453,50 @@ The `showLoadingState` prop controls animated loading transitions:
   - Image renders immediately without wrapper
   - `onError` still triggers placeholder fallback
 
-**Note:** `RecipeHeroImage` is a local component in `frontend/src/app/recipes/[id]/_components/detail/` that wraps `RecipeImage` with hero-specific styling (fixed height, gradient overlay, Cloudinary smart cropping). It's colocated with other detail page UI components since `FullRecipeView` is its only consumer.
+**Note:** `RecipeHeroImage` is a component in `frontend/src/app/recipes/[id]/_components/detail/` that wraps `RecipeImage` with hero-specific styling (fixed height, gradient overlay, Cloudinary smart cropping). `FullRecipeView` (located at `frontend/src/app/recipes/[id]/_components/FullRecipeView.tsx`) is its only consumer.
 
 ### Display Locations
 
 | Component | File Location | Aspect Ratio | CSS/Tailwind |
 |-----------|---------------|--------------|--------------|
-| RecipeCard (Small) | RecipeCard.tsx:157 | 1:1 (square) | `w-16 h-16` |
-| RecipeCard (Medium) | RecipeCard.tsx:230 | 4:3 | `aspect-[4/3]` |
-| RecipeCard (Large) | RecipeCard.tsx:337 | 1:1 mobile / auto desktop | `aspect-square md:aspect-auto` |
-| ImageUploadCard | ImageUploadCard.tsx:161 | 1:1 (square) | `aspect-square` |
-| CircularImage | CircularImage.tsx:87 | 1:1 (circle) | `rounded-full` + fixed sizes |
-| MealSlot | MealSlot.tsx:160 | 1:1 (circular) | Uses CircularImage xl |
-| MealQueueItem | MealQueueItem.tsx:67 | 1:1 (square) | `w-12 h-12` (uses RecipeImage fill) |
-| MealGridCard | MealGridCard.tsx:107 | ~16:9 | `w-full h-28` |
-| RecipeRouletteWidget | RecipeRouletteWidget.tsx:203 | ~16:9 | `flex-1 min-h-24` |
-| RecipeHeroImage | recipes/[id]/_components/detail/RecipeHeroImage.tsx | Fixed height | `h-[300px] md:h-[400px]` |
-| FullRecipeView | FullRecipeView.tsx:86 | Uses RecipeHeroImage | (inherits hero sizing) |
-| SelectedMealCard | SelectedMealCard.tsx:166 | Responsive | `w-full lg:w-64 h-48` |
-| RecipePrintLayout | RecipePrintLayout.tsx:54 | Flexible | `max-h-48` |
-| SavedView | SavedView.tsx:124 | 1:1 (circular) | Uses CircularImage xl |
+| RecipeCard (Small) | `RecipeCard` with `size="small"` | 1:1 (square) | `w-16 h-16` |
+| RecipeCard (Medium) | `RecipeCard` with `size="medium"` | 4:3 | `aspect-[4/3]` |
+| RecipeCard (Large) | `RecipeCard` with `size="large"` | 1:1 mobile / auto desktop | `aspect-square md:aspect-auto` |
+| ImageUploadCard | `ImageUploadCard` component | 1:1 (square) | `aspect-square` |
+| CircularImage | `CircularImage` component | 1:1 (circle) | `rounded-full` + fixed sizes (wraps RecipeImage) |
+| MealSlot | `MealSlot` component | 1:1 (circular) | Uses CircularImage xl |
+| MealQueueItem | `MealQueueItem` component | 1:1 (square) | `w-12 h-12` (uses RecipeImage fill) |
+| MealGridCard | `MealGridCard` component | ~16:9 | `w-full h-28` |
+| RecipeRouletteWidget | `RecipeRouletteWidget` component | ~16:9 | `flex-1 min-h-24` |
+| RecipeHeroImage | `RecipeHeroImage` component | Fixed height | `h-[300px] md:h-[400px]` |
+| FullRecipeView | `FullRecipeView` → uses `RecipeHeroImage` | Uses RecipeHeroImage | (inherits hero sizing) |
+| SelectedMealCard | `SelectedMealCard` component | Responsive | `w-full lg:w-64 h-48` |
+| RecipePrintLayout | `RecipePrintLayout` component | Flexible | `max-h-48` |
+| SavedView | `SavedView` component | 1:1 (circular) | Uses CircularImage lg |
+| CompletedDropdown | `CompletedDropdown` component | 1:1 (square) | `w-10 h-10` grayscale opacity-60 |
 
-### Component Adoption Status
+**File Locations Reference:**
+- `RecipeCard`: `components/recipe/RecipeCard.tsx`
+- `ImageUploadCard`: `app/recipes/_components/add-edit/ImageUploadCard.tsx`
+- `CircularImage`: `components/common/CircularImage.tsx`
+- `MealSlot`: `app/meal-planner/_components/meal-dialog/components/MealSlot.tsx`
+- `MealQueueItem`: `app/dashboard/_components/MealQueueItem.tsx`
+- `MealGridCard`: `app/meal-planner/_components/MealGridCard.tsx`
+- `RecipeRouletteWidget`: `app/dashboard/_components/RecipeRouletteWidget.tsx`
+- `RecipeHeroImage`: `app/recipes/[id]/_components/detail/RecipeHeroImage.tsx`
+- `FullRecipeView`: `app/recipes/[id]/_components/FullRecipeView.tsx`
+- `SelectedMealCard`: `app/meal-planner/_components/meal-display/SelectedMealCard.tsx`
+- `RecipePrintLayout`: `app/recipes/[id]/_components/print/RecipePrintLayout.tsx`
+- `SavedView`: `app/meal-planner/_components/meal-dialog/views/SavedView.tsx`
+- `CompletedDropdown`: `app/meal-planner/_components/CompletedDropdown.tsx`
 
-| Status | Components | Count |
-|--------|-----------|-------|
-| ✅ Using RecipeImage | RecipeCard, MealGridCard, SelectedMealCard, FullRecipeView, CompletedDropdown, MealQueueItem | 6 |
-| ⚠️ Missing error handling | RecipeRouletteWidget | 1 |
-| ⚠️ Separate component | CircularImage (used by MealSlot, SavedView) | 1 |
-| ✅ Excluded (different purpose) | ImageUploadCard, RecipePrintLayout | 2 |
+### Component RecipeImage Usage
+
+| Usage | Components | Count |
+|-------|-----------|-------|
+| Uses RecipeImage | RecipeCard, MealGridCard, SelectedMealCard, FullRecipeView, CompletedDropdown, MealQueueItem, CircularImage | 7 |
+| Uses native `<img>` | RecipeRouletteWidget | 1 |
+| Not applicable | ImageUploadCard (upload UI), RecipePrintLayout (print-only) | 2 |
 
 ---
 
@@ -591,7 +671,7 @@ https://res.cloudinary.com/.../upload/w_1200,h_400,c_fill,g_auto/q_auto/v123/mea
 │                        │                                                 │
 │                        ▼                                                 │
 │  ┌─────────────────────────────────────────────────┐                    │
-│  │          Backend upload.py                       │                    │
+│  │          Backend app/api/upload.py               │                    │
 │  │  • Validate image type                           │                    │
 │  │  • cloudinary.uploader.upload()                  │                    │
 │  │    - folder: meal-genie/recipes/{id}             │                    │
@@ -614,6 +694,40 @@ https://res.cloudinary.com/.../upload/w_1200,h_400,c_fill,g_auto/q_auto/v123/mea
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
+
+### Image Cleanup Flow (Data Clear)
+
+When `clear_all_data()` is called, Cloudinary images are deleted before database records:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      IMAGE CLEANUP FLOW                                  │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  1. DataManagementService.clear_all_data() triggered                    │
+│                              ↓                                          │
+│  2. Query all recipes with image paths                                  │
+│     SELECT * FROM recipes WHERE reference_image_path IS NOT NULL        │
+│                    OR banner_image_path IS NOT NULL                     │
+│                              ↓                                          │
+│  3. For each recipe, extract Cloudinary public_id via regex:            │
+│     /upload/(?:v\d+/)?(.+)\.\w+$                                        │
+│                              ↓                                          │
+│  4. Call cloudinary.uploader.destroy(public_id) for each image          │
+│     - reference_image_path → delete                                     │
+│     - banner_image_path → delete                                        │
+│                              ↓                                          │
+│  5. Log count of deleted images                                         │
+│                              ↓                                          │
+│  6. Proceed with database record deletion                               │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Key Methods** (in `app/services/data_management_service.py`):
+- `_extract_cloudinary_public_id()` - Extracts public ID from Cloudinary URL using regex
+- `_delete_cloudinary_images()` - Iterates recipes and deletes images via Cloudinary API
+- `clear_all_data()` - Orchestrates cleanup, calls `_delete_cloudinary_images()` before DB deletion
 
 ---
 
@@ -650,38 +764,33 @@ cloudinary>=1.36.0
 
 ### Missing Error Handling (1 Component)
 
-**Issue:** `RecipeRouletteWidget.tsx:208-220` checks if `imageUrl` exists but has no `onError` handler.
+**Component:** `RecipeRouletteWidget` — image rendering section (search for `imageUrl &&`)
 
-**Impact:** If an image URL is present but the file is missing (404), users see the browser's broken image icon instead of the ChefHat placeholder.
+**Current behavior:** Checks if `imageUrl` exists but has no `onError` handler. If an image URL is present but the file is missing (404), the browser's broken image icon is displayed instead of the ChefHat placeholder.
 
-**Recommended Fix:** Migrate to use the `RecipeImage` component which handles errors automatically.
+**Note:** `RecipeImage` component provides `onError` handling. This component uses a native `<img>` tag instead.
 
-> ✅ **Resolved:** `MealQueueItem.tsx` was migrated to use `RecipeImage` with `fill` mode (2026-01-18).
+### Resolved Issues
 
-### CircularImage Duplication
-
-**Issue:** `CircularImage.tsx` is a separate component that duplicates some functionality provided by `RecipeImage`.
-
-**Impact:** Maintenance overhead; error handling may differ between components.
-
-**Components Affected:** MealSlot, SavedView
+| Date | Component | Change |
+|------|-----------|--------|
+| 2026-01-18 | `MealQueueItem.tsx` | Now uses `RecipeImage` with `fill` mode |
+| 2026-01-18 | `CircularImage.tsx` | Now wraps `RecipeImage` internally, uses `iconClassName` prop for custom icon sizing |
 
 ---
 
-## Key Design Insights
+## Implementation Notes
 
-1. **Dual-image strategy** - Generating both square (1:1) and ultrawide (21:9) images in a single API call is efficient, as Gemini can batch these requests while maintaining visual consistency.
+1. **Dual-image generation** - Both square (1:1) and ultrawide (21:9) images are generated in a single API call. Gemini batches these requests.
 
-2. **Graceful degradation** - Image generation failures don't block recipe creation. If images fail, the recipe still saves with warnings shown to the user.
+2. **Failure handling** - Image generation failures do not block recipe creation. If images fail, the recipe saves and warnings are shown to the user.
 
-3. **Base64 → File conversion** - Generated images arrive as base64 strings but are converted to File objects before upload, allowing the same Cloudinary upload pipeline for both AI-generated and user-uploaded images.
+3. **Base64 → File conversion** - Generated images arrive as base64 strings and are converted to File objects before upload. This allows the same Cloudinary upload pipeline for both AI-generated and user-uploaded images.
 
-4. **g_auto is essential** - Cloudinary's AI-powered gravity automatically detects the food subject and ensures it's centered when cropping. Critical for food photography where you don't want the dish cut off.
+4. **g_auto parameter** - Cloudinary's `g_auto` (gravity auto) uses AI-powered subject detection to center the primary subject when cropping.
 
-5. **Dual transformation strategy** - Transformations are applied at two points:
-   - **Upload-time:** quality/format optimization for storage
+5. **Dual transformation points** - Transformations are applied at two points:
+   - **Upload-time:** quality/format adjustments for storage
    - **Display-time:** resize/crop for specific contexts
 
-   This gives optimized originals while serving context-appropriate derivatives.
-
-6. **URL manipulation over SDK** - For display transformations, the frontend modifies URLs directly by inserting transformation strings after `/upload/`. This is more efficient than making API calls since Cloudinary generates derivatives on-the-fly from the URL structure.
+6. **URL-based transformations** - For display transformations, the frontend modifies URLs directly by inserting transformation strings after `/upload/`. Cloudinary generates derivatives on-the-fly from the URL structure (no separate API call required).
