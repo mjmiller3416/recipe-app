@@ -18,3 +18,18 @@ class ImageGenerationResponseDTO(BaseModel):
     reference_image_data: Optional[str] = None  # Base64 encoded (1:1 square)
     banner_image_data: Optional[str] = None  # Base64 encoded (21:9 ultrawide)
     error: Optional[str] = None
+
+
+class BannerGenerationRequestDTO(BaseModel):
+    """Request DTO for generating banner from reference image."""
+
+    recipe_name: str
+    reference_image_data: str  # Base64 encoded reference image
+
+
+class BannerGenerationResponseDTO(BaseModel):
+    """Response DTO for banner generation."""
+
+    success: bool
+    banner_image_data: Optional[str] = None  # Base64 encoded (21:9 ultrawide)
+    error: Optional[str] = None

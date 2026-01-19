@@ -17,6 +17,7 @@ import type {
   DuplicateResolutionDTO,
   ExportFilterDTO,
   ImageGenerationResponseDTO,
+  BannerGenerationResponseDTO,
   CookingTipResponseDTO,
   CookingStreakDTO,
   DashboardStatsDTO,
@@ -732,6 +733,24 @@ export const imageGenerationApi = {
       body: JSON.stringify({
         recipe_name: recipeName,
         ...(customPrompt && { custom_prompt: customPrompt }),
+      }),
+    }),
+
+  /**
+   * Generate a banner image from a reference image
+   * @param recipeName - The name of the recipe
+   * @param referenceImageData - Base64 encoded reference image
+   * @returns Response with base64 encoded banner image data on success
+   */
+  generateBanner: (
+    recipeName: string,
+    referenceImageData: string
+  ): Promise<BannerGenerationResponseDTO> =>
+    fetchApi<BannerGenerationResponseDTO>("/api/ai/image-generation/banner", {
+      method: "POST",
+      body: JSON.stringify({
+        recipe_name: recipeName,
+        reference_image_data: referenceImageData,
       }),
     }),
 };

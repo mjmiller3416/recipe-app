@@ -415,6 +415,12 @@ export interface ImageGenerationResponseDTO {
   error?: string;
 }
 
+export interface BannerGenerationResponseDTO {
+  success: boolean;
+  banner_image_data?: string; // Base64 encoded (21:9 ultrawide)
+  error?: string;
+}
+
 // ============================================================================
 // Cooking Tip Types
 // ============================================================================

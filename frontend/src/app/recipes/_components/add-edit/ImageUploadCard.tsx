@@ -55,6 +55,7 @@ export function ImageUploadCard({
   };
 
   const [imageState, setImageState] = useState<ImageState>(getInitialState);
+  const [generationStep, setGenerationStep] = useState<"idle" | "reference" | "banner">("idle");
   const [generatingError, setGeneratingError] = useState<string | null>(null);
   const [pendingGeneratedImage, setPendingGeneratedImage] = useState<{
     base64: string;
@@ -78,32 +79,44 @@ export function ImageUploadCard({
     }
 
     setImageState("generating");
+    setGenerationStep("reference");
     setGeneratingError(null);
     setPendingGeneratedImage(null);
 
     try {
-      const result = await imageGenerationApi.generate(
+      // Step 1: Generate reference image
+      const refResult = await imageGenerationApi.generate(
         recipeName,
         settings.aiFeatures.imageGenerationPrompt
       );
-      if (result.success && result.reference_image_data) {
-        const dataUrl = `data:image/png;base64,${result.reference_image_data}`;
-        // Auto-accept the generated images (reference + banner)
-        onGeneratedImageAccept(
-          result.reference_image_data,
-          dataUrl,
-          result.banner_image_data
-        );
-        onAiGeneratedChange?.(true);
-        setImageState("generated");
-      } else {
-        throw new Error(result.error || "Failed to generate image");
+
+      if (!refResult.success || !refResult.reference_image_data) {
+        throw new Error(refResult.error || "Failed to generate reference image");
       }
+
+      // Step 2: Generate banner image from reference
+      setGenerationStep("banner");
+      const bannerResult = await imageGenerationApi.generateBanner(
+        recipeName,
+        refResult.reference_image_data
+      );
+
+      // Complete - display both images
+      const dataUrl = `data:image/png;base64,${refResult.reference_image_data}`;
+      onGeneratedImageAccept(
+        refResult.reference_image_data,
+        dataUrl,
+        bannerResult.success ? bannerResult.banner_image_data : undefined
+      );
+      onAiGeneratedChange?.(true);
+      setImageState("generated");
     } catch (error) {
       setGeneratingError(
         error instanceof Error ? error.message : "Image generation failed"
       );
       setImageState("error");
+    } finally {
+      setGenerationStep("idle");
     }
   };
 
@@ -177,7 +190,9 @@ export function ImageUploadCard({
                 <Sparkles className="h-12 w-12 text-primary animate-pulse" />
               </div>
               <p className="text-sm font-medium text-primary">
-                Generating image...
+                {generationStep === "reference"
+                  ? "Generating reference image (1 of 2)..."
+                  : "Generating banner image (2 of 2)..."}
               </p>
               <p className="text-xs mt-1 text-muted-foreground">This may take a moment</p>
             </div>
