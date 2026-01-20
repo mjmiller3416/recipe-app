@@ -61,6 +61,7 @@ export function ImageUploadCard({
     base64: string;
     dataUrl: string;
   } | null>(null);
+  const [progress, setProgress] = useState(0);
 
   // Update state when imagePreview changes externally
   useEffect(() => {
@@ -70,6 +71,38 @@ export function ImageUploadCard({
       setImageState("empty");
     }
   }, [imagePreview, isAiGenerated]);
+
+  // Animate progress bar during generation
+  useEffect(() => {
+    if (generationStep === "idle") {
+      setProgress(0);
+      return;
+    }
+
+    // Target: 0-50% for reference, 50-100% for banner
+    // Duration: ~15 seconds per step
+    const startProgress = generationStep === "reference" ? 0 : 50;
+    const targetProgress = generationStep === "reference" ? 50 : 100;
+    const duration = 15000; // 15 seconds
+    const intervalMs = 100; // Update every 100ms
+    const increment = ((targetProgress - startProgress) / duration) * intervalMs;
+
+    // Set starting point immediately
+    setProgress(startProgress);
+
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        const next = prev + increment;
+        // Stop slightly before target to leave room for completion snap
+        if (next >= targetProgress - 2) {
+          return targetProgress - 2;
+        }
+        return next;
+      });
+    }, intervalMs);
+
+    return () => clearInterval(interval);
+  }, [generationStep]);
 
   const handleGenerate = async () => {
     if (!recipeName.trim()) {
@@ -95,6 +128,7 @@ export function ImageUploadCard({
       }
 
       // Step 2: Generate banner image from reference
+      setProgress(50); // Snap to 50% when reference completes
       setGenerationStep("banner");
       const bannerResult = await imageGenerationApi.generateBanner(
         recipeName,
@@ -102,6 +136,7 @@ export function ImageUploadCard({
       );
 
       // Complete - display both images
+      setProgress(100); // Snap to 100% when complete
       const dataUrl = `data:image/png;base64,${refResult.reference_image_data}`;
       onGeneratedImageAccept(
         refResult.reference_image_data,
@@ -185,7 +220,7 @@ export function ImageUploadCard({
 
           {/* Generating State */}
           {imageState === "generating" && (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground px-6">
               <div className="p-4 bg-primary-surface rounded-full mb-4">
                 <Sparkles className="h-12 w-12 text-primary animate-pulse" />
               </div>
@@ -194,7 +229,18 @@ export function ImageUploadCard({
                   ? "Generating reference image (1 of 2)..."
                   : "Generating banner image (2 of 2)..."}
               </p>
-              <p className="text-xs mt-1 text-muted-foreground">This may take a moment</p>
+              {/* Progress Bar */}
+              <div className="w-full max-w-[200px] mt-4">
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all duration-200 ease-out"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <p className="text-xs mt-2 text-center text-muted-foreground">
+                  {Math.round(progress)}%
+                </p>
+              </div>
             </div>
           )}
 
