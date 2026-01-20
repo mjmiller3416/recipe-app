@@ -421,6 +421,25 @@ class PlannerRepo:
         )
         return self.session.execute(stmt).scalar() or 0
 
+    def count_active_entries_for_meal(self, meal_id: int) -> int:
+        """
+        Count active (non-cleared) planner entries for a specific meal.
+        Used for transient meal cleanup logic.
+
+        Args:
+            meal_id: ID of the meal
+
+        Returns:
+            Count of active entries referencing this meal
+        """
+        stmt = (
+            select(func.count())
+            .select_from(PlannerEntry)
+            .where(PlannerEntry.meal_id == meal_id)
+            .where(PlannerEntry.is_cleared == False)
+        )
+        return self.session.execute(stmt).scalar() or 0
+
     def get_completion_stats_for_meal(self, meal_id: int) -> dict:
         """
         Get completion statistics for a specific meal.

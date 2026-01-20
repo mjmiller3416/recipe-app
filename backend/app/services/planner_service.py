@@ -486,11 +486,28 @@ class PlannerService:
             self.session.rollback()
             return None
 
+    # -- Transient Meal Cleanup ------------------------------------------------------------------
+    def _cleanup_transient_meal(self, meal_id: int) -> None:
+        """
+        Delete a meal if it's transient and has no remaining planner references.
+
+        Called after removing or clearing planner entries to clean up
+        transient meals that are no longer in use.
+
+        Args:
+            meal_id: ID of the meal to potentially clean up
+        """
+        meal = self.meal_repo.get_by_id(meal_id)
+        if meal and not meal.is_saved:
+            remaining = self.repo.count_active_entries_for_meal(meal_id)
+            if remaining == 0:
+                self.meal_repo.delete(meal_id)
+
     # -- Remove Operations -----------------------------------------------------------------------
     def remove_entry(self, entry_id: int) -> bool:
         """
         Remove a planner entry.
-        Note: This does NOT delete the underlying meal.
+        Transient meals are deleted if this was their last reference.
 
         Args:
             entry_id: ID of the entry
@@ -499,7 +516,18 @@ class PlannerService:
             True if removed, False if not found
         """
         try:
+            # Get entry first to capture meal_id before deletion
+            entry = self.repo.get_by_id(entry_id)
+            if not entry:
+                return False
+
+            meal_id = entry.meal_id
             result = self.repo.remove_entry(entry_id)
+
+            if result:
+                # Clean up transient meal if no longer referenced
+                self._cleanup_transient_meal(meal_id)
+
             self.session.commit()
             return result
         except SQLAlchemyError:
@@ -527,12 +555,22 @@ class PlannerService:
     def clear_planner(self) -> int:
         """
         Clear all entries from the planner.
+        Transient meals are deleted when their entries are cleared.
 
         Returns:
             Number of entries cleared
         """
         try:
+            # Get all meal IDs before clearing
+            entries = self.repo.get_all()
+            meal_ids = list(set(e.meal_id for e in entries))
+
             count = self.repo.clear_all()
+
+            # Clean up transient meals
+            for meal_id in meal_ids:
+                self._cleanup_transient_meal(meal_id)
+
             self.session.commit()
             return count
         except SQLAlchemyError:
@@ -542,12 +580,22 @@ class PlannerService:
     def clear_completed(self) -> int:
         """
         Clear all completed entries from the planner.
+        Transient meals are deleted if they have no remaining active entries.
 
         Returns:
             Number of entries cleared
         """
         try:
+            # Get meal IDs from completed entries before clearing
+            completed_entries = self.repo.get_completed_entries()
+            meal_ids = list(set(e.meal_id for e in completed_entries))
+
             count = self.repo.clear_completed()
+
+            # Clean up transient meals
+            for meal_id in meal_ids:
+                self._cleanup_transient_meal(meal_id)
+
             self.session.commit()
             return count
         except SQLAlchemyError:

@@ -142,6 +142,7 @@ class MealRepo:
         name_pattern: Optional[str] = None,
         tags: Optional[List[str]] = None,
         favorites_only: bool = False,
+        saved_only: Optional[bool] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None
     ) -> List[Meal]:
@@ -152,6 +153,7 @@ class MealRepo:
             name_pattern: Optional name search pattern
             tags: Optional list of tags to filter by (AND logic)
             favorites_only: If True, only return favorites
+            saved_only: If True, only saved meals; if False, only transient; if None, all
             limit: Maximum number of results
             offset: Number of results to skip
 
@@ -165,6 +167,9 @@ class MealRepo:
 
         if favorites_only:
             stmt = stmt.where(Meal.is_favorite == True)
+
+        if saved_only is not None:
+            stmt = stmt.where(Meal.is_saved == saved_only)
 
         # Order by creation date (newest first)
         stmt = stmt.order_by(Meal.created_at.desc())

@@ -30,6 +30,7 @@ def list_meals(
     name_pattern: Optional[str] = Query(None, description="Search by meal name"),
     tags: Optional[str] = Query(None, description="Comma-separated list of tags"),
     favorites_only: bool = Query(False, description="Filter to favorites only"),
+    saved: Optional[bool] = Query(None, description="Filter by saved status (true=saved, false=transient, omit=all)"),
     limit: Optional[int] = Query(None, ge=1, le=100),
     offset: Optional[int] = Query(None, ge=0),
     session: Session = Depends(get_session),
@@ -41,6 +42,7 @@ def list_meals(
     - name_pattern: Case-insensitive name search
     - tags: Comma-separated, meals must have ALL specified tags
     - favorites_only: Filter to favorites
+    - saved: Filter by saved status (true=saved only, false=transient only)
     """
     # Parse tags if provided
     tag_list = None
@@ -51,6 +53,7 @@ def list_meals(
         name_pattern=name_pattern,
         tags=tag_list,
         favorites_only=favorites_only,
+        saved_only=saved,
         limit=limit,
         offset=offset,
     )
@@ -143,6 +146,21 @@ def toggle_favorite(meal_id: int, session: Session = Depends(get_session)):
     """Toggle the favorite status of a meal."""
     service = MealService(session)
     meal = service.toggle_favorite(meal_id)
+    if not meal:
+        raise HTTPException(status_code=404, detail="Meal not found")
+    return meal
+
+
+@router.post("/{meal_id}/save", response_model=MealResponseDTO)
+def toggle_save(meal_id: int, session: Session = Depends(get_session)):
+    """
+    Toggle the saved status of a meal.
+
+    Saved meals persist permanently.
+    Unsaved (transient) meals are deleted when they leave the planner.
+    """
+    service = MealService(session)
+    meal = service.toggle_save(meal_id)
     if not meal:
         raise HTTPException(status_code=404, detail="Meal not found")
     return meal

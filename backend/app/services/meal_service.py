@@ -102,6 +102,7 @@ class MealService:
                 meal_name=create_dto.meal_name,
                 main_recipe_id=create_dto.main_recipe_id,
                 is_favorite=create_dto.is_favorite or False,
+                is_saved=create_dto.is_saved or False,
             )
             meal.side_recipe_ids = side_ids
             meal.tags = create_dto.tags or []
@@ -165,6 +166,7 @@ class MealService:
                 name_pattern=filter_dto.name_pattern,
                 tags=filter_dto.tags,
                 favorites_only=filter_dto.favorites_only,
+                saved_only=filter_dto.saved_only,
                 limit=filter_dto.limit,
                 offset=filter_dto.offset
             )
@@ -312,6 +314,33 @@ class MealService:
                 return None
 
             meal.is_favorite = not meal.is_favorite
+            self.repo.update(meal)
+            self.session.commit()
+
+            return self._meal_to_response_dto(meal)
+        except SQLAlchemyError:
+            self.session.rollback()
+            return None
+
+    def toggle_save(self, meal_id: int) -> Optional[MealResponseDTO]:
+        """
+        Toggle the saved status of a meal.
+
+        When unsaved, the meal becomes transient and will be deleted
+        when it leaves the planner.
+
+        Args:
+            meal_id: ID of the meal
+
+        Returns:
+            Updated meal as DTO or None if not found
+        """
+        try:
+            meal = self.repo.get_by_id(meal_id)
+            if not meal:
+                return None
+
+            meal.is_saved = not meal.is_saved
             self.repo.update(meal)
             self.session.commit()
 
@@ -582,6 +611,7 @@ class MealService:
             main_recipe_id=meal.main_recipe_id,
             side_recipe_ids=meal.side_recipe_ids,
             is_favorite=meal.is_favorite,
+            is_saved=meal.is_saved,
             tags=meal.tags,
             created_at=meal.created_at.isoformat() if meal.created_at else None,
             main_recipe=RecipeCardDTO.from_recipe(meal.main_recipe),
