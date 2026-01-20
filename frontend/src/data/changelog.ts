@@ -2,10 +2,17 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
-# 2026-01-17 - Bug Fixes
+## 2026-01-19 - Improvements
+- Meal Genie now provides 6-10 creative recipe ideas immediately when you ask for suggestions, instead of asking questions first
+- Improved chat experience with smooth animations and scroll indicators
+
+## 2026-01-18 - Improvements
+- Recipe pages now display beautiful banner images at the top for a more immersive cooking experience
+
+## 2026-01-17 - Bug Fixes
 - Fixed issue with printing recipes. Content now stays together on the same page.
 
-# 2026-01-14 - New Features
+## 2026-01-14 - New Features
 - Add recipe specific AI suggestions to the Meal Planner
 - Quick Add feature for adding shopping list items directly from the Dashboard
 
@@ -40,7 +47,7 @@ const CHANGELOG_MD = `
 -     improved response times
 -     diplay chat in popup window
 
-# 2026-01-02 - New Features
+## 2026-01-02 - New Features
 - Recipe Roulette: Randomly suggests recipes based existing recipes in your meal planner or favorites
 
 ## 2026-01-01 - Bug Fixes

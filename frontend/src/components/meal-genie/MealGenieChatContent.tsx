@@ -1,156 +1,99 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Sparkles, Send, ChefHat, Lightbulb, Calendar, Minus, Trash2, Plus, ExternalLink, X } from "lucide-react";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
+import { Sparkles, Send, X, ChefHat, Lightbulb, Calendar, Minimize2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { mealGenieApi } from "@/lib/api";
 import { useChatHistory } from "@/hooks";
-import type { GeneratedRecipeDTO } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 const SUGGESTIONS = [
-  { icon: ChefHat, text: "What can I make with chicken?" },
-  { icon: Lightbulb, text: "Quick weeknight dinner ideas" },
-  { icon: Calendar, text: "Help me plan meals for the week" },
-  { icon: Plus, text: "Create a new pasta recipe" },
+  { icon: ChefHat, text: "What can I make with chicken?", color: "text-primary" },
+  { icon: Lightbulb, text: "Quick weeknight dinner ideas", color: "text-secondary" },
+  { icon: Calendar, text: "Help me plan meals for the week", color: "text-success" },
 ];
-
-// Patterns that indicate user wants to create a new recipe
-const RECIPE_CREATE_PATTERNS = [
-  /\bcreate\b.*\brecipe\b/i,         // "create a recipe"
-  /\bmake\b.*\brecipe\b/i,           // "make me a recipe"
-  /\bgenerate\b.*\brecipe\b/i,       // "generate a recipe"
-  /\bnew\s+recipe\b/i,               // "new recipe"
-  /\binvent\b.*\brecipe\b/i,         // "invent a recipe"
-  /\bcome up with\b.*\brecipe\b/i,   // "come up with a recipe"
-  /\bgive me a recipe\b/i,           // "give me a recipe"
-  /\bi want a recipe\b/i,            // "I want a recipe"
-  /\bi need a recipe\b/i,            // "I need a recipe"
-  /\bdesign\b.*\brecipe\b/i,         // "design a recipe"
-  /\bthink of\b.*\brecipe\b/i,       // "think of a recipe"
-  /\brecipe for\b/i,                 // "recipe for pasta", "give me a recipe for..."
-];
-
-// Session storage key for AI-generated recipe
-const AI_RECIPE_STORAGE_KEY = "meal-genie-generated-recipe";
-
-function isRecipeCreationRequest(text: string): boolean {
-  return RECIPE_CREATE_PATTERNS.some(pattern => pattern.test(text));
-}
 
 interface MealGenieChatContentProps {
-  onClose?: () => void;
+  onClose: () => void;
   isMinimized?: boolean;
   onMinimize?: () => void;
   onExpand?: () => void;
+  isMobile?: boolean;
 }
 
-export function MealGenieChatContent({ onClose, isMinimized, onMinimize, onExpand }: MealGenieChatContentProps) {
-  const router = useRouter();
+export function MealGenieChatContent({
+  onClose,
+  isMinimized = false,
+  onMinimize,
+  onExpand,
+  isMobile = false,
+}: MealGenieChatContentProps) {
   const [input, setInput] = useState("");
   const { messages, addMessage, clearHistory } = useChatHistory();
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // Recipe creation state
-  const [isRecipeMode, setIsRecipeMode] = useState(false);
-  const [pendingRecipe, setPendingRecipe] = useState<GeneratedRecipeDTO | null>(null);
-  const [pendingReferenceImageData, setPendingReferenceImageData] = useState<string | null>(null);
-  const [pendingBannerImageData, setPendingBannerImageData] = useState<string | null>(null);
+  const [showTopFade, setShowTopFade] = useState(false);
+  const [showBottomFade, setShowBottomFade] = useState(false);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading, pendingRecipe]);
+  }, [messages, isLoading]);
 
-  // Focus input on mount
+  // Track scroll position for fade indicators
   useEffect(() => {
-    const timer = setTimeout(() => {
-      inputRef.current?.focus();
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
+    const container = scrollContainerRef.current;
+    if (!container) return;
 
-  // Handle navigating to Add Recipe page with pre-filled data
-  const handlePreviewRecipe = useCallback(() => {
-    if (!pendingRecipe) return;
-
-    // Store recipe data in sessionStorage (both images)
-    const recipeData = {
-      recipe: pendingRecipe,
-      referenceImageData: pendingReferenceImageData,
-      bannerImageData: pendingBannerImageData,
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      setShowTopFade(scrollTop > 8);
+      setShowBottomFade(scrollTop + clientHeight < scrollHeight - 8);
     };
-    sessionStorage.setItem(AI_RECIPE_STORAGE_KEY, JSON.stringify(recipeData));
 
-    // Clear pending state
-    setPendingRecipe(null);
-    setPendingReferenceImageData(null);
-    setPendingBannerImageData(null);
-    setIsRecipeMode(false);
+    handleScroll();
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [messages]);
 
-    // Navigate to Add Recipe page
-    router.push("/recipes/add?from=ai");
-  }, [pendingRecipe, pendingReferenceImageData, pendingBannerImageData, router]);
+  // Focus input when expanded
+  useEffect(() => {
+    if (!isMinimized && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isMinimized]);
 
   const handleSubmit = useCallback(async (messageText?: string) => {
     const textToSend = messageText || input.trim();
     if (!textToSend || isLoading) return;
 
+    // Expand if minimized when submitting
+    if (isMinimized && onExpand) {
+      onExpand();
+    }
+
     setInput("");
     addMessage({ role: "user", content: textToSend });
     setIsLoading(true);
 
-    // Check if this is a recipe creation request or we're in recipe mode
-    const shouldUseRecipeMode = isRecipeMode || isRecipeCreationRequest(textToSend);
-
     try {
-      if (shouldUseRecipeMode) {
-        // Use recipe generation API
-        setIsRecipeMode(true);
-        const response = await mealGenieApi.generateRecipe(textToSend, messages);
-
-        if (!response.success) {
-          throw new Error(response.error || "Failed to generate recipe");
-        }
-
-        if (response.needs_more_info) {
-          // AI is asking follow-up questions
-          addMessage({
-            role: "assistant",
-            content: response.ai_message || "Could you tell me more about what you'd like?",
-          });
-        } else if (response.recipe) {
-          // We have a complete recipe - store it and show preview button
-          setPendingRecipe(response.recipe);
-          setPendingReferenceImageData(response.reference_image_data || null);
-          setPendingBannerImageData(response.banner_image_data || null);
-          addMessage({
-            role: "assistant",
-            content: `Your recipe "${response.recipe.recipe_name}" is ready! Click the button below to preview and edit it before saving.`,
-          });
-        }
+      const response = await mealGenieApi.ask(textToSend, messages);
+      if (response.success && response.response) {
+        addMessage({ role: "assistant", content: response.response });
       } else {
-        // Regular chat mode
-        const response = await mealGenieApi.ask(textToSend, messages);
-        if (response.success && response.response) {
-          addMessage({ role: "assistant", content: response.response });
-        } else {
-          throw new Error(response.error || "Failed to get response");
-        }
+        throw new Error(response.error || "Failed to get response");
       }
     } catch (error) {
       console.error("Failed to get response:", error);
-      addMessage({
-        role: "assistant",
-        content: "Sorry, something went wrong. Please try again.",
-      });
+      addMessage({ role: "assistant", content: "Sorry, something went wrong. Please try again." });
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, messages, addMessage, isRecipeMode]);
+  }, [input, isLoading, messages, addMessage, isMinimized, onExpand]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -159,193 +102,211 @@ export function MealGenieChatContent({ onClose, isMinimized, onMinimize, onExpan
     }
   };
 
-  const handleClearHistory = useCallback(() => {
-    clearHistory();
-    setPendingRecipe(null);
-    setPendingReferenceImageData(null);
-    setPendingBannerImageData(null);
-    setIsRecipeMode(false);
-  }, [clearHistory]);
-
   const hasMessages = messages.length > 0;
+
+  // Minimized state - just show header bar (desktop only)
+  if (isMinimized && !isMobile) {
+    return (
+      <Button
+        variant="ghost"
+        onClick={onExpand}
+        className="w-full h-full rounded-full"
+        aria-label="Expand Meal Genie"
+      >
+        <Sparkles className="size-7 text-primary" />
+      </Button>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div
-        className={`flex items-center justify-between border-b border-border ${isMinimized ? 'px-3 py-2 cursor-pointer' : 'p-4'}`}
-        onClick={isMinimized ? onExpand : undefined}
-      >
-        <div className="flex items-center gap-3">
-          <Sparkles className="h-5 w-5 text-secondary" />
-          <h2 className="text-lg font-semibold text-foreground">Ask Meal Genie</h2>
+      {/* Mobile drag handle */}
+      {isMobile && (
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-border" />
         </div>
-        <div className="flex items-center gap-1">
-          {hasMessages && !isMinimized && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={handleClearHistory}
-                  className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-hover transition-colors"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Clear chat</TooltipContent>
-            </Tooltip>
-          )}
-          {onMinimize && !isMinimized && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onMinimize(); }}
-                  className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-hover transition-colors"
-                >
-                  <Minus className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Minimize</TooltipContent>
-            </Tooltip>
-          )}
-          {onClose && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onClose(); }}
-                  className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-hover transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top">Close</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-      </div>
-
-      {/* Messages / Empty State Area - Hidden when minimized */}
-      {!isMinimized && (
-      <div className="flex-1 overflow-y-auto">
-        {hasMessages ? (
-          <div className="px-4 py-3 space-y-3">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`
-                    max-w-[85%] px-3 py-2 text-sm leading-relaxed
-                    ${message.role === "user"
-                      ? "bg-secondary text-secondary-foreground rounded-2xl rounded-br-md"
-                      : "bg-hover text-foreground rounded-2xl rounded-bl-md"
-                    }
-                  `}
-                >
-                  {message.content}
-                </div>
-              </div>
-            ))}
-
-            {/* Preview Recipe Button - shown when recipe is ready */}
-            {pendingRecipe && !isLoading && (
-              <div className="flex justify-start">
-                <Button
-                  onClick={handlePreviewRecipe}
-                  className="gap-2"
-                  size="sm"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  Preview & Edit Recipe
-                </Button>
-              </div>
-            )}
-
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-hover rounded-2xl rounded-bl-md px-4 py-3">
-                  <div className="flex items-center gap-1">
-                    <span className="h-2 w-2 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                    <span className="h-2 w-2 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                    <span className="h-2 w-2 bg-muted-foreground/60 rounded-full animate-bounce" />
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        ) : (
-          /* Empty State with Suggestions */
-          <div className="h-full flex flex-col items-center justify-center px-4 py-6">
-            <p className="text-xs text-muted-foreground mb-3">Try asking:</p>
-            <div className="space-y-2 w-full max-w-[280px]">
-              {SUGGESTIONS.map((suggestion, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleSubmit(suggestion.text)}
-                  disabled={isLoading}
-                  className="
-                    w-full flex items-center gap-2.5 px-3 py-2.5
-                    text-sm text-left text-muted-foreground
-                    bg-background/60 hover:bg-background
-                    border border-border hover:border-border-strong
-                    rounded-lg
-                    button-weighted
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                    group
-                  "
-                >
-                  <suggestion.icon className="h-4 w-4 text-secondary/70 group-hover:text-secondary transition-colors duration-150" />
-                  <span className="group-hover:text-foreground transition-colors duration-150">
-                    {suggestion.text}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
       )}
 
-      {/* Input Area - Hidden when minimized */}
-      {!isMinimized && (
-      <div className="p-3 border-t border-border">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 rounded-lg bg-primary-surface">
+            <Sparkles className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="text-base font-semibold text-foreground">Meal Genie</h2>
+        </div>
+        <div className="flex items-center gap-1">
+          <AnimatePresence>
+            {hasMessages && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.15 }}
+              >
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearHistory}
+                  className="text-xs h-7 text-muted-foreground hover:text-foreground"
+                >
+                  Clear
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          {!isMobile && onMinimize && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onMinimize}
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            >
+              <Minimize2 className="h-4 w-4" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Messages / Empty State Area */}
+      <div className="relative flex-1 min-h-0">
+        {/* Scroll fade indicators */}
+        <div 
+          className={cn(
+            "absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-elevated to-transparent pointer-events-none z-10 transition-opacity duration-200",
+            showTopFade ? "opacity-100" : "opacity-0"
+          )}
+        />
+        <div 
+          className={cn(
+            "absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-elevated to-transparent pointer-events-none z-10 transition-opacity duration-200",
+            showBottomFade ? "opacity-100" : "opacity-0"
+          )}
+        />
+
+        <div ref={scrollContainerRef} className="h-full overflow-y-auto">
+          {hasMessages ? (
+            <div className="px-4 py-3 space-y-3">
+              <AnimatePresence initial={false}>
+                {messages.map((message, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className={cn(
+                      "flex",
+                      message.role === "user" ? "justify-end" : "justify-start"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "max-w-[85%] px-3.5 py-2.5 text-sm leading-relaxed",
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground rounded-2xl rounded-br-sm"
+                          : "bg-gradient-to-br from-muted to-muted/80 border border-border/30 text-foreground rounded-2xl rounded-bl-sm"
+                      )}
+                    >
+                      {message.content}
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+
+              {/* Loading indicator */}
+              <AnimatePresence>
+                {isLoading && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex justify-start"
+                  >
+                    <div className="bg-gradient-to-br from-muted to-muted/80 border border-border/30 rounded-2xl rounded-bl-sm px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                        <span className="text-xs text-muted-foreground">Thinking...</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <div ref={messagesEndRef} />
+            </div>
+          ) : (
+            /* Empty State with Suggestions */
+            <div className="h-full flex flex-col items-center justify-center px-4 py-6">
+              <div className="p-3 rounded-full bg-primary-surface mb-4">
+                <Sparkles className="h-7 w-7 text-primary" />
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">Ask me anything about cooking!</p>
+              <div className="space-y-2 w-full max-w-xs">
+                {SUGGESTIONS.map((suggestion, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1, duration: 0.2 }}
+                  >
+                    <Button
+                      variant="outline"
+                      onClick={() => handleSubmit(suggestion.text)}
+                      disabled={isLoading}
+                      className="w-full h-auto p-3 justify-start text-left group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-muted/50 group-hover:bg-muted">
+                          <suggestion.icon className={cn("h-4 w-4", suggestion.color)} />
+                        </div>
+                        <span className="text-sm text-muted-foreground group-hover:text-foreground">
+                          {suggestion.text}
+                        </span>
+                      </div>
+                    </Button>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Input Area */}
+      <div className="p-3 border-t border-border/50 bg-card/30">
         <div className="flex items-center gap-2">
-          <input
+          <Input
             ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={isRecipeMode ? "Describe your preferences..." : "Ask about recipes, cooking tips..."}
-            className="
-              flex-1 px-3 py-2 text-sm
-              bg-background border border-border rounded-lg
-              placeholder:text-muted-foreground
-              focus:outline-none focus:ring-2 focus:ring-secondary/40 focus:border-secondary
-              transition-shadow duration-150
-            "
+            placeholder="Ask about recipes, cooking tips..."
+            className={cn(
+              "flex-1 bg-background/50",
+              "focus-visible:ring-ring/30 focus-visible:ring-offset-0 focus-visible:border-ring/50",
+              "placeholder:text-muted-foreground/60"
+            )}
           />
-          <button
+          <Button
+            size="icon"
             onClick={() => handleSubmit()}
             disabled={!input.trim() || isLoading}
-            className="
-              p-2 rounded-lg
-              bg-secondary text-secondary-foreground
-              hover:bg-secondary-hover
-              button-weighted
-              disabled:opacity-40 disabled:cursor-not-allowed
-              disabled:transform-none disabled:shadow-none
-            "
+            aria-label="Send message"
+            className="bg-primary hover:bg-primary-hover text-primary-foreground shadow-sm disabled:bg-muted disabled:text-muted-foreground"
           >
             <Send className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
       </div>
-      )}
     </div>
   );
 }
-
-// Export the storage key so useRecipeForm can use it
-export { AI_RECIPE_STORAGE_KEY };
