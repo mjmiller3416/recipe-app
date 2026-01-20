@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RecipeBannerImage } from "@/components/recipe/RecipeBannerImage";
-import { ShoppingCart, Users, Clock, Heart } from "lucide-react";
+import { ShoppingCart, Users, Clock, Heart, Bookmark } from "lucide-react";
 import { ShoppingMode } from "@/types";
 
 // ============================================================================
@@ -20,6 +20,7 @@ export interface MealGridItem {
   servings?: number | null;
   totalTime?: number | null;
   isFavorite?: boolean;
+  isSaved?: boolean;
   shoppingMode?: ShoppingMode;
 }
 
@@ -150,6 +151,16 @@ export function MealGridCard({
               {getShoppingModeTooltip(shoppingMode)}
             </TooltipContent>
           </Tooltip>
+
+          {/* Saved Indicator */}
+          {item.isSaved && (
+            <div className="size-6 rounded-full bg-overlay-strong flex items-center justify-center">
+              <Bookmark
+                className="size-3.5 text-primary fill-current"
+                strokeWidth={1.5}
+              />
+            </div>
+          )}
 
           {/* Favorite Indicator */}
           {item.isFavorite && (

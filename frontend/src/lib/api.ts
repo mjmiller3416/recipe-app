@@ -186,10 +186,12 @@ export const recipeApi = {
 
 export const plannerApi = {
   /**
-   * Get all meals
+   * Get all meals, optionally filtered by saved status
    */
-  getMeals: (): Promise<MealSelectionResponseDTO[]> =>
-    fetchApi<MealSelectionResponseDTO[]>("/api/meals"),
+  getMeals: (filters?: { saved?: boolean }): Promise<MealSelectionResponseDTO[]> => {
+    const query = filters?.saved !== undefined ? `?saved=${filters.saved}` : "";
+    return fetchApi<MealSelectionResponseDTO[]>(`/api/meals${query}`);
+  },
 
   /**
    * Get planner summary
@@ -235,6 +237,14 @@ export const plannerApi = {
    */
   toggleFavorite: (id: number): Promise<MealSelectionResponseDTO> =>
     fetchApi<MealSelectionResponseDTO>(`/api/meals/${id}/favorite`, {
+      method: "POST",
+    }),
+
+  /**
+   * Toggle meal saved status (saved meals persist after leaving planner)
+   */
+  toggleSave: (id: number): Promise<MealSelectionResponseDTO> =>
+    fetchApi<MealSelectionResponseDTO>(`/api/meals/${id}/save`, {
       method: "POST",
     }),
 

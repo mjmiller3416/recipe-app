@@ -107,6 +107,7 @@ export interface MealSelectionBaseDTO {
   main_recipe_id: number;
   side_recipe_ids: number[];
   is_favorite: boolean;
+  is_saved: boolean;
   tags: string[];
 }
 
@@ -137,6 +138,7 @@ export interface PlannerEntryResponseDTO {
   // Hydrated meal data
   meal_name: string | null;
   meal_is_favorite?: boolean;
+  meal_is_saved?: boolean;
   main_recipe_id: number | null;
   side_recipe_ids: number[];
   main_recipe: RecipeCardDTO | null;
@@ -258,6 +260,7 @@ export interface MealSelectionCreateDTO {
   main_recipe_id: number;
   side_recipe_ids?: number[];
   is_favorite?: boolean;
+  is_saved?: boolean;
   tags?: string[];
 }
 
@@ -266,6 +269,7 @@ export interface MealSelectionUpdateDTO {
   main_recipe_id?: number;
   side_recipe_ids?: number[];
   is_favorite?: boolean;
+  is_saved?: boolean;
   tags?: string[];
 }
 

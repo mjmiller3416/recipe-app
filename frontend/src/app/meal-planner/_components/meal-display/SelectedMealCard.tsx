@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, Clock, Heart, Plus, Check } from "lucide-react";
+import { Users, Clock, Heart, Plus, Check, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,12 +24,16 @@ interface SelectedMealCardProps {
   isCompleted?: boolean;
   /** Whether this meal is favorited */
   isFavorite?: boolean;
+  /** Whether this meal is saved (persists after leaving planner) */
+  isSaved?: boolean;
   /** Called when Mark Complete is clicked */
   onMarkComplete?: () => void;
   /** Called when Edit Meal is clicked */
   onEditMeal?: () => void;
   /** Called when Favorite is toggled */
   onToggleFavorite?: () => void;
+  /** Called when Save is toggled */
+  onToggleSave?: () => void;
   /** Called when Remove is clicked */
   onRemove?: () => void;
   /** Called when Add Side is clicked */
@@ -94,9 +98,11 @@ export function SelectedMealCard({
   mealId,
   isCompleted = false,
   isFavorite = false,
+  isSaved = false,
   onMarkComplete,
   onEditMeal,
   onToggleFavorite,
+  onToggleSave,
   onRemove,
   onAddSide,
   className,
@@ -279,6 +285,20 @@ export function SelectedMealCard({
                   Edit Meal
                 </Button>
                 <Button
+                  onClick={onToggleSave}
+                  variant="outline"
+                  className="gap-1.5"
+                >
+                  <Bookmark
+                    className={cn(
+                      "h-4 w-4",
+                      isSaved && "fill-current text-primary"
+                    )}
+                    strokeWidth={1.5}
+                  />
+                  {isSaved ? "Saved" : "Save"}
+                </Button>
+                <Button
                   onClick={onToggleFavorite}
                   variant="outline"
                   className="gap-1.5"
@@ -295,7 +315,7 @@ export function SelectedMealCard({
                 <Button
                   onClick={onRemove}
                   variant="outline"
-                  className="border-destructive text-destructive"
+                  className="col-span-2 border-destructive text-destructive"
                 >
                   Remove
                 </Button>

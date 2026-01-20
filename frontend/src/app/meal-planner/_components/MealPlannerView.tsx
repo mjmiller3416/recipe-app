@@ -81,6 +81,7 @@ export function MealPlannerPage() {
     servings: entry.main_recipe?.servings ?? null,
     totalTime: entry.main_recipe?.total_time ?? null,
     isFavorite: entry.meal_is_favorite ?? false,
+    isSaved: entry.meal_is_saved ?? false,
     shoppingMode: entry.shopping_mode ?? "all",
   }));
 
@@ -243,6 +244,30 @@ export function MealPlannerPage() {
     }
   };
 
+  // Handle toggling saved status for the selected meal
+  const handleToggleSave = async () => {
+    if (!selectedMealId || selectedEntryId === null) return;
+
+    const previousEntries = entries;
+
+    // Optimistic UI update
+    setEntries((prev) =>
+      prev.map((entry) =>
+        entry.id === selectedEntryId
+          ? { ...entry, meal_is_saved: !entry.meal_is_saved }
+          : entry
+      )
+    );
+
+    try {
+      await plannerApi.toggleSave(selectedMealId);
+    } catch (err) {
+      // Rollback on error
+      setEntries(previousEntries);
+      setError(err instanceof Error ? err.message : "Failed to update saved status");
+    }
+  };
+
   // Handle cycling shopping mode for a meal: all -> produce_only -> none -> all
   const handleCycleShoppingMode = async (item: MealGridItem) => {
     const previousEntries = entries;
@@ -343,9 +368,11 @@ export function MealPlannerPage() {
             mealId={selectedMealId}
             isCompleted={selectedEntry?.is_completed}
             isFavorite={selectedEntry?.meal_is_favorite}
+            isSaved={selectedEntry?.meal_is_saved}
             onMarkComplete={handleMarkComplete}
             onEditMeal={handleEditMeal}
             onToggleFavorite={handleToggleFavorite}
+            onToggleSave={handleToggleSave}
             onRemove={handleRemoveFromMenu}
             onAddSide={handleAddSide}
           />

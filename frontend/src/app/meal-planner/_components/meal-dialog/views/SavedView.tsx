@@ -73,10 +73,10 @@ function EmptyNoMeals() {
         No Saved Meals
       </h3>
       <p className="text-muted-foreground mt-1">
-        Create a meal to see it here.
+        No saved meals yet.
       </p>
       <p className="text-sm text-muted-foreground mt-2 max-w-xs">
-        Switch to the &quot;Create Meal&quot; tab to build your first meal combination.
+        Save a meal from your planner to reuse it later.
       </p>
     </div>
   );
@@ -174,7 +174,7 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
     const fetchMeals = async () => {
       setIsLoading(true);
       try {
-        const data = await plannerApi.getMeals();
+        const data = await plannerApi.getMeals({ saved: true });
         setMeals(data);
       } catch (error) {
         console.error("Failed to fetch meals:", error);
