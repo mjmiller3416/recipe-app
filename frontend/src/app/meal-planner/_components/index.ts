@@ -3,6 +3,8 @@
 
 export { MealPlannerPage } from "./MealPlannerView";
 export { MealDialog } from "./meal-dialog/MealDialog";
+export { RecipePickerDialog } from "./RecipePickerDialog";
+export { MealPreviewDialog } from "./MealPreviewDialog";
 
 // New Components (Redesign)
 export { MealGrid } from "./MealGrid";

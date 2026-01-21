@@ -11,7 +11,10 @@ import { MealGrid } from "./MealGrid";
 import { MealGridItem } from "./MealGridCard";
 import { CompletedDropdown, CompletedMealItem } from "./CompletedDropdown";
 import { SelectedMealCard } from "./meal-display/SelectedMealCard";
+import { RecipePickerDialog } from "./RecipePickerDialog";
+import { MealPreviewDialog } from "./MealPreviewDialog";
 import { ChefHat } from "lucide-react";
+import type { RecipeCardData } from "@/types";
 
 // ============================================================================
 // MEAL PLANNER PAGE COMPONENT
@@ -28,6 +31,14 @@ export function MealPlannerPage() {
   const [error, setError] = useState<string | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [mealRefreshKey, setMealRefreshKey] = useState(0);
+
+  // Dialog orchestration state for meal creation flow
+  const [showRecipePicker, setShowRecipePicker] = useState(false);
+  const [showMealPreview, setShowMealPreview] = useState(false);
+  const [pickerMode, setPickerMode] = useState<"main" | "side">("main");
+  const [pendingMain, setPendingMain] = useState<RecipeCardData | null>(null);
+  const [pendingSides, setPendingSides] = useState<RecipeCardData[]>([]);
+  const [isCreatingMeal, setIsCreatingMeal] = useState(false);
 
   // Check for create=true URL parameter and redirect to create page
   useEffect(() => {
@@ -99,14 +110,130 @@ export function MealPlannerPage() {
     setSelectedEntryId(item.id);
   };
 
-  // Handle Add Meal button click - navigates to create meal page
+  // Handle Add Meal button click - opens the meal preview dialog first
   const handleAddMealClick = () => {
-    router.push("/meal-planner/create");
+    // Reset state for new meal creation
+    setPendingMain(null);
+    setPendingSides([]);
+    setPickerMode("main");
+    setShowMealPreview(true);
   };
 
-  // Handle Create Meal button click - navigates to create meal page
+  // Handle Create Meal button click - opens the meal preview dialog first
   const handleCreateMealClick = () => {
-    router.push("/meal-planner/create");
+    // Reset state for new meal creation
+    setPendingMain(null);
+    setPendingSides([]);
+    setPickerMode("main");
+    setShowMealPreview(true);
+  };
+
+  // Handle selecting a main dish from the preview dialog
+  const handleSelectMainFromPreview = () => {
+    setPickerMode("main");
+    setShowMealPreview(false);
+    setShowRecipePicker(true);
+  };
+
+  // Handle recipe selection in the picker dialog
+  const handleRecipeSelect = (recipe: RecipeCardData) => {
+    if (pickerMode === "main") {
+      // Selected a main dish - go to preview
+      setPendingMain(recipe);
+      setShowRecipePicker(false);
+      setShowMealPreview(true);
+    } else {
+      // Selecting sides - toggle in the array (can select multiple)
+      setPendingSides((prev) => {
+        const isSelected = prev.some((s) => s.id === recipe.id);
+        if (isSelected) {
+          // Remove if already selected
+          return prev.filter((s) => s.id !== recipe.id);
+        }
+        // Add if not at max (3 sides)
+        if (prev.length >= 3) return prev;
+        return [...prev, recipe];
+      });
+    }
+  };
+
+  // Handle "Add Sides" button click from preview dialog
+  const handleAddSidesClick = () => {
+    setPickerMode("side");
+    setShowMealPreview(false);
+    setShowRecipePicker(true);
+  };
+
+  // Handle "Done" button click when finished selecting sides
+  const handleSidesDone = () => {
+    setShowRecipePicker(false);
+    setShowMealPreview(true);
+  };
+
+  // Handle picker dialog close - always return to preview dialog
+  const handlePickerClose = (open: boolean) => {
+    if (!open) {
+      setShowRecipePicker(false);
+      // Always go back to preview dialog (user can close from there)
+      setShowMealPreview(true);
+    }
+  };
+
+  // Handle removing main dish from preview
+  const handleRemovePendingMain = () => {
+    setPendingMain(null);
+    setPendingSides([]);
+    // Close preview and reopen picker for main selection
+    setShowMealPreview(false);
+    setPickerMode("main");
+    setShowRecipePicker(true);
+  };
+
+  // Handle removing a side dish from preview
+  const handleRemovePendingSide = (recipeId: number) => {
+    setPendingSides((prev) => prev.filter((s) => Number(s.id) !== recipeId));
+  };
+
+  // Handle confirming meal creation
+  const handleConfirmMeal = async () => {
+    if (!pendingMain) return;
+
+    setIsCreatingMeal(true);
+    try {
+      const sideRecipeIds = pendingSides.map((r) => Number(r.id));
+
+      // Create the meal
+      const meal = await plannerApi.createMeal({
+        meal_name: pendingMain.name,
+        main_recipe_id: Number(pendingMain.id),
+        side_recipe_ids: sideRecipeIds,
+      });
+
+      // Add to planner
+      await plannerApi.addToPlanner(meal.id);
+
+      // Refresh entries
+      const data = await plannerApi.getEntries();
+      setEntries(data);
+
+      // Select the new entry
+      const newEntry = data.find((e) => e.meal_id === meal.id);
+      if (newEntry) {
+        setSelectedEntryId(newEntry.id);
+      }
+
+      // Close dialogs and reset state
+      setShowMealPreview(false);
+      setPendingMain(null);
+      setPendingSides([]);
+
+      window.dispatchEvent(new Event("planner-updated"));
+    } catch (err) {
+      console.error("Failed to create meal:", err);
+      setError(err instanceof Error ? err.message : "Failed to create meal");
+    } finally {
+      setIsCreatingMeal(false);
+    }
   };
 
   // Handle marking a meal as complete/incomplete (toggle)
@@ -367,6 +494,44 @@ export function MealPlannerPage() {
         mealId={selectedMealId}
         onMealUpdated={handleMealUpdated}
       />
+
+      {/* Recipe Picker Dialog - for selecting main dish or sides */}
+      <RecipePickerDialog
+        open={showRecipePicker}
+        onOpenChange={handlePickerClose}
+        onSelect={handleRecipeSelect}
+        selectedIds={
+          pickerMode === "side"
+            ? new Set(pendingSides.map((s) => s.id))
+            : pendingMain
+              ? new Set([pendingMain.id])
+              : new Set()
+        }
+        filterMealType={pickerMode === "side" ? "side" : null}
+        title={pickerMode === "side" ? "Add Side Dishes" : "Select Main Dish"}
+        description={
+          pickerMode === "side"
+            ? "Choose up to 3 side dishes for your meal"
+            : "Choose the main dish for your meal"
+        }
+        showDoneButton={pickerMode === "side"}
+        onDone={handleSidesDone}
+      />
+
+      {/* Meal Preview Dialog - overlay for building a new meal */}
+      <MealPreviewDialog
+        open={showMealPreview}
+        onOpenChange={setShowMealPreview}
+        mainDish={pendingMain}
+        sides={pendingSides}
+        onSelectMain={handleSelectMainFromPreview}
+        onRemoveMain={handleRemovePendingMain}
+        onRemoveSide={handleRemovePendingSide}
+        onAddSides={handleAddSidesClick}
+        onConfirm={handleConfirmMeal}
+        isSubmitting={isCreatingMeal}
+      />
+
     </PageLayout>
   );
 }

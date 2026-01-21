@@ -132,15 +132,12 @@ export function ChangelogDialog({
                     {entries.map((entry) => {
                       const Icon = getTitleIcon(entry.title);
                       const colorClass = getTitleColor(entry.title);
-                      const entryGlobalIdx = CHANGELOG_ENTRIES.findIndex(
-                        (e) =>
-                          e.version === entry.version && e.title === entry.title
-                      );
+                      const entryGlobalIdx = CHANGELOG_ENTRIES.indexOf(entry);
                       const itemsBefore = getItemCountBeforeEntry(entryGlobalIdx);
 
                       return (
                         <div
-                          key={`${entry.version}-${entry.title}`}
+                          key={entryGlobalIdx}
                           className="rounded-xl surface-raised p-3 space-y-2"
                         >
                           <div className="flex items-center gap-2">

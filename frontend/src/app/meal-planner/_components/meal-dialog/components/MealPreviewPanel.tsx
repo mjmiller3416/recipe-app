@@ -26,6 +26,9 @@ export interface MealPreviewPanelProps {
   /** Currently selected side dishes (max 3) */
   sides: RecipeCardData[];
 
+  /** Called when the empty main dish slot is clicked */
+  onSelectMain?: () => void;
+
   /** Called when the main dish remove button is clicked */
   onRemoveMain?: () => void;
 
@@ -61,6 +64,7 @@ export interface MealPreviewPanelProps {
 export function MealPreviewPanel({
   mainDish,
   sides,
+  onSelectMain,
   onRemoveMain,
   onRemoveSide,
   onAddToQueue,
@@ -141,12 +145,15 @@ export function MealPreviewPanel({
             </Card>
           </div>
         ) : (
-          <div className="border-2 border-dashed border-border rounded-2xl p-6 text-center animate-pulse-soft">
+          <button
+            onClick={onSelectMain}
+            className="w-full border-2 border-dashed border-border rounded-2xl p-6 text-center animate-pulse-soft hover:border-primary hover:bg-primary-surface/50 transition-colors cursor-pointer"
+          >
             <ChefHat className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
             <p className="text-sm text-muted-foreground/60">
-              Select a main dish to get started
+              Click to select a main dish
             </p>
-          </div>
+          </button>
         )}
       </div>
 

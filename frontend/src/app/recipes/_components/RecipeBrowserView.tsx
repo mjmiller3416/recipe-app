@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { RecipeCard, RecipeCardGrid } from "@/components/recipe/RecipeCard";
+import { RecipeSelectCard } from "@/components/recipe/RecipeSelectCard";
 import { FilterBar } from "@/components/common/FilterBar";
 import { FilterSidebar } from "@/components/common/FilterSidebar";
 import { recipeApi } from "@/lib/api";
@@ -341,10 +342,32 @@ function StickyHeaderBar({
 }
 
 // ============================================================================
+// Props Interface
+// ============================================================================
+
+export type RecipeBrowserMode = "browse" | "select";
+
+export interface RecipeBrowserViewProps {
+  /** Mode of operation - 'browse' for normal viewing, 'select' for picker */
+  mode?: RecipeBrowserMode;
+  /** Called when a recipe is selected (only in select mode) */
+  onSelect?: (recipe: RecipeCardData) => void;
+  /** Currently selected recipe IDs - controls which cards show selection state */
+  selectedIds?: Set<string | number>;
+  /** Filter to only show main dishes or side dishes */
+  filterMealType?: "main" | "side" | null;
+}
+
+// ============================================================================
 // Main Component
 // ============================================================================
 
-export function RecipeBrowserView() {
+export function RecipeBrowserView({
+  mode = "browse",
+  onSelect,
+  selectedIds = new Set(),
+  filterMealType = null,
+}: RecipeBrowserViewProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { settings } = useSettings();
@@ -394,7 +417,10 @@ export function RecipeBrowserView() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Sync filters with URL params (handles navigation to ?favoritesOnly=true)
+  // Skip in select mode - we don't want URL sync in dialogs
   useEffect(() => {
+    if (mode === "select") return;
+
     const urlFavoritesOnly = searchParams.get("favoritesOnly") === "true";
     if (urlFavoritesOnly !== filters.favoritesOnly) {
       setFilters((prev) => ({ ...prev, favoritesOnly: urlFavoritesOnly }));
@@ -409,7 +435,7 @@ export function RecipeBrowserView() {
         return next;
       });
     }
-  }, [searchParams, filters.favoritesOnly]);
+  }, [mode, searchParams, filters.favoritesOnly]);
 
   // Fetch recipes on mount
   useEffect(() => {
@@ -473,13 +499,15 @@ export function RecipeBrowserView() {
         ...f,
         favoritesOnly: !isActive,
       }));
-      // Update URL to keep in sync with useEffect that watches URL params
-      if (isActive) {
-        // Toggling OFF - remove the URL param
-        router.replace("/recipes", { scroll: false });
-      } else {
-        // Toggling ON - add the URL param
-        router.replace("/recipes?favoritesOnly=true", { scroll: false });
+      // Update URL to keep in sync with useEffect that watches URL params (skip in select mode)
+      if (mode === "browse") {
+        if (isActive) {
+          // Toggling OFF - remove the URL param
+          router.replace("/recipes", { scroll: false });
+        } else {
+          // Toggling ON - add the URL param
+          router.replace("/recipes?favoritesOnly=true", { scroll: false });
+        }
       }
     } else if (filter.type === "time") {
       setFilters((f) => ({
@@ -562,6 +590,18 @@ export function RecipeBrowserView() {
       newDays: filters.newDays,
     });
 
+    // Apply filterMealType prop (for select mode picker)
+    if (filterMealType) {
+      result = result.filter((recipe) => {
+        if (filterMealType === "side") {
+          return recipe.mealType === "side";
+        } else {
+          // "main" means anything that's not a side
+          return recipe.mealType !== "side";
+        }
+      });
+    }
+
     // Sorting (not part of shared filter utils - view-specific)
     result = [...result].sort((a, b) => {
       let comparison = 0;
@@ -583,10 +623,12 @@ export function RecipeBrowserView() {
     });
 
     return result;
-  }, [recipes, searchTerm, filters, sortBy, sortDirection]);
+  }, [recipes, searchTerm, filters, sortBy, sortDirection, filterMealType]);
 
-  // Restore scroll position after recipes load
+  // Restore scroll position after recipes load (skip in select mode)
   useEffect(() => {
+    if (mode === "select") return;
+
     if (!isLoading && recipes.length > 0) {
       const savedPosition = sessionStorage.getItem(SCROLL_POSITION_KEY);
       if (savedPosition) {
@@ -597,13 +639,18 @@ export function RecipeBrowserView() {
         });
       }
     }
-  }, [isLoading, recipes.length]);
+  }, [mode, isLoading, recipes.length]);
 
   // Handlers
   const handleRecipeClick = (recipe: RecipeCardData) => {
-    // Save scroll position before navigating
-    sessionStorage.setItem(SCROLL_POSITION_KEY, String(window.scrollY));
-    router.push(`/recipes/${recipe.id}`);
+    if (mode === "select") {
+      // In select mode, call the onSelect callback instead of navigating
+      onSelect?.(recipe);
+    } else {
+      // Save scroll position before navigating
+      sessionStorage.setItem(SCROLL_POSITION_KEY, String(window.scrollY));
+      router.push(`/recipes/${recipe.id}`);
+    }
   };
 
   const handleFavoriteToggle = async (recipe: RecipeCardData) => {
@@ -716,8 +763,8 @@ export function RecipeBrowserView() {
           next.delete("favorites");
           return next;
         });
-        // Clear URL param
-        if (searchParams.get("favoritesOnly")) {
+        // Clear URL param (skip in select mode)
+        if (mode === "browse" && searchParams.get("favoritesOnly")) {
           router.replace("/recipes", { scroll: false });
         }
         scrollToResults();
@@ -754,18 +801,23 @@ export function RecipeBrowserView() {
     });
     setSearchTerm("");
     setActiveQuickFilters(new Set());
-    // Clear URL param if present
-    if (searchParams.get("favoritesOnly")) {
+    // Clear URL param if present (skip in select mode)
+    if (mode === "browse" && searchParams.get("favoritesOnly")) {
       router.replace("/recipes", { scroll: false });
     }
   };
 
   const handleFavoritesFilterChange = (checked: boolean) => {
-    // Update URL to stay in sync with the useEffect that watches searchParams
-    if (checked) {
-      router.replace("/recipes?favoritesOnly=true", { scroll: false });
+    // Update URL to stay in sync with the useEffect that watches searchParams (skip in select mode)
+    if (mode === "browse") {
+      if (checked) {
+        router.replace("/recipes?favoritesOnly=true", { scroll: false });
+      } else {
+        router.replace("/recipes", { scroll: false });
+      }
     } else {
-      router.replace("/recipes", { scroll: false });
+      // In select mode, just update the filter state directly
+      setFilters((prev) => ({ ...prev, favoritesOnly: checked }));
     }
   };
 
@@ -803,19 +855,28 @@ export function RecipeBrowserView() {
     );
   }
 
+  // Determine title based on mode and filterMealType
+  const pageTitle = mode === "select"
+    ? filterMealType === "side"
+      ? "Select Side Dishes"
+      : "Select a Recipe"
+    : "Recipes";
+
   return (
     <PageLayout
-      title="Recipes"
+      title={pageTitle}
       hero={
-        <HeroSection
-          recipeCount={recipes.length}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          onSearch={() => {}}
-          activeQuickFilters={activeQuickFilters}
-          onQuickFilterToggle={handleQuickFilterToggle}
-          quickFilterOptions={visibleQuickFilters}
-        />
+        mode === "browse" ? (
+          <HeroSection
+            recipeCount={recipes.length}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            onSearch={() => {}}
+            activeQuickFilters={activeQuickFilters}
+            onQuickFilterToggle={handleQuickFilterToggle}
+            quickFilterOptions={visibleQuickFilters}
+          />
+        ) : null
       }
       stickyHeader={
         <StickyHeaderBar
@@ -861,15 +922,25 @@ export function RecipeBrowserView() {
           {/* Results */}
           {filteredRecipes.length > 0 ? (
             <RecipeCardGrid size="medium">
-              {filteredRecipes.map((recipe) => (
-                <RecipeCard
-                  key={recipe.id}
-                  recipe={recipe}
-                  size="medium"
-                  onClick={handleRecipeClick}
-                  onFavoriteToggle={handleFavoriteToggle}
-                />
-              ))}
+              {filteredRecipes.map((recipe) =>
+                mode === "select" ? (
+                  <RecipeSelectCard
+                    key={recipe.id}
+                    recipe={recipe}
+                    isSelected={selectedIds.has(recipe.id)}
+                    onSelect={handleRecipeClick}
+                    selectionType={recipe.mealType === "side" ? "side" : "main"}
+                  />
+                ) : (
+                  <RecipeCard
+                    key={recipe.id}
+                    recipe={recipe}
+                    size="medium"
+                    onClick={handleRecipeClick}
+                    onFavoriteToggle={handleFavoriteToggle}
+                  />
+                )
+              )}
             </RecipeCardGrid>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
