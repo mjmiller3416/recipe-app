@@ -32,7 +32,7 @@ function AddMealCard({ onClick }: AddMealCardProps) {
       variant="dashed"
       onClick={onClick}
       aria-label="Add a new meal"
-      className="h-44 flex-col gap-2"
+      className="h-full flex-col gap-2"
     >
       <Plus className="size-6" strokeWidth={1.5} />
       <span>Add Meal</span>

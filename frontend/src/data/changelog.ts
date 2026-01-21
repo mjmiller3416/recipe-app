@@ -2,6 +2,10 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-01-20 - Improvements
+- AI image generation now shows a progress bar so you can see each step as your recipe image is created
+- Meals in the planner are now automatically saved when you add them — no extra steps needed
+
 ## 2026-01-19 - Improvements
 - Meal Genie now provides 6-10 creative recipe ideas immediately when you ask for suggestions, instead of asking questions first
 - Improved chat experience with smooth animations and scroll indicators
