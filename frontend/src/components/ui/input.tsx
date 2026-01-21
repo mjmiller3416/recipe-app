@@ -1,5 +1,6 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
+import { type LucideIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -38,9 +39,26 @@ const inputVariants = cva(
 
 export interface InputProps
   extends Omit<React.ComponentProps<"input">, "size">,
-    VariantProps<typeof inputVariants> {}
+    VariantProps<typeof inputVariants> {
+  /** Optional icon to display on the left side of the input */
+  icon?: LucideIcon;
+}
 
-function Input({ className, type, size, ...props }: InputProps) {
+function Input({ className, type, size, icon: Icon, ...props }: InputProps) {
+  if (Icon) {
+    return (
+      <div className="relative">
+        <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+        <input
+          type={type}
+          data-slot="input"
+          className={cn(inputVariants({ size }), "pl-10", className)}
+          {...props}
+        />
+      </div>
+    )
+  }
+
   return (
     <input
       type={type}

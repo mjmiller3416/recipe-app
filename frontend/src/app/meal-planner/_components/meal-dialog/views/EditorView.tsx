@@ -1,11 +1,17 @@
 "use client";
 
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { MealSlot } from "../components/MealSlot";
-import { FilterBar } from "../components/FilterBar";
+import { FilterBar } from "@/components/common/FilterBar";
 import { RecipeGrid } from "../components/RecipeGrid";
+import { QUICK_FILTERS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { RecipeCardData } from "@/types";
+
+// Filter pills shown in Create Meal dialog (meal types + new)
+const DIALOG_FILTER_IDS = ["breakfast", "lunch", "dinner", "dessert", "sides", "sauce", "new"];
+const DIALOG_FILTERS = QUICK_FILTERS.filter((f) => DIALOG_FILTER_IDS.includes(f.id));
 
 // ============================================================================
 // TYPES
@@ -109,12 +115,28 @@ export function EditorView({
       </div>
 
       {/* Search and Filter Bar */}
-      <FilterBar
-        searchTerm={searchTerm}
-        onSearchChange={onSearchChange}
-        activeFilters={activeFilters}
-        onFilterToggle={onFilterToggle}
-      />
+      <div className="space-y-3">
+        {/* Search Input */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search recipes by name"
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        {/* Filter Pills */}
+        <FilterBar
+          options={DIALOG_FILTERS}
+          activeIds={activeFilters}
+          onToggle={onFilterToggle}
+          variant="default"
+          align="start"
+        />
+      </div>
 
       {/* Recipe Grid */}
       <RecipeGrid

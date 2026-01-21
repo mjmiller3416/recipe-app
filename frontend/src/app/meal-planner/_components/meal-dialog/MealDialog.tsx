@@ -14,7 +14,11 @@ import { EditorView } from "./views/EditorView";
 import { SavedView } from "./views/SavedView";
 import { recipeApi, plannerApi } from "@/lib/api";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
-import { QUICK_FILTERS } from "@/lib/constants";
+import {
+  applyFilters,
+  quickFiltersToRecipeFilters,
+  DEFAULT_FILTERS,
+} from "@/lib/filterUtils";
 import type {
   RecipeCardData,
   RecipeCardDTO,
@@ -233,54 +237,15 @@ export function MealDialog({
   };
 
   // --------------------------------------------------------------------------
-  // Filtering Logic
+  // Filtering Logic (using shared filter utils)
   // --------------------------------------------------------------------------
 
   const filteredRecipes = useMemo(() => {
-    return recipes.filter((recipe) => {
-      // Search filter - match by name
-      if (
-        searchTerm &&
-        !recipe.name.toLowerCase().includes(searchTerm.toLowerCase())
-      ) {
-        return false;
-      }
-
-      // Quick filters
-      for (const filterId of activeFilters) {
-        const filter = QUICK_FILTERS.find((f) => f.id === filterId);
-        if (!filter) continue;
-
-        switch (filter.type) {
-          case "mealType":
-            if (recipe.mealType?.toLowerCase() !== filter.value) return false;
-            break;
-          case "dietary":
-            if (recipe.dietaryPreference?.toLowerCase() !== filter.value)
-              return false;
-            break;
-          case "time":
-            if (typeof filter.value === "number" && recipe.totalTime > filter.value)
-              return false;
-            break;
-          case "favorite":
-            if (!recipe.isFavorite) return false;
-            break;
-          case "new":
-            // Filter to recipes created within the last N days (value = days)
-            if (typeof filter.value === "number" && recipe.createdAt) {
-              const createdDate = new Date(recipe.createdAt);
-              const cutoffDate = new Date();
-              cutoffDate.setDate(cutoffDate.getDate() - filter.value);
-              if (createdDate < cutoffDate) return false;
-            } else if (!recipe.createdAt) {
-              return false; // No createdAt means we can't determine if it's "new"
-            }
-            break;
-        }
-      }
-
-      return true;
+    const partialFilters = quickFiltersToRecipeFilters(activeFilters);
+    return applyFilters(recipes, {
+      ...DEFAULT_FILTERS,
+      ...partialFilters,
+      searchTerm,
     });
   }, [recipes, searchTerm, activeFilters]);
 

@@ -26,17 +26,13 @@ export function MealPlannerPage() {
   const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
-  const [createDialogDefaultTab, setCreateDialogDefaultTab] = useState<"saved" | "create">("saved");
   const [mealRefreshKey, setMealRefreshKey] = useState(0);
 
-  // Check for create=true URL parameter to auto-open dialog
+  // Check for create=true URL parameter and redirect to create page
   useEffect(() => {
     if (searchParams.get("create") === "true") {
-      setShowCreateDialog(true);
-      // Clear the URL parameter without triggering a reload
-      router.replace("/meal-planner", { scroll: false });
+      router.replace("/meal-planner/create");
     }
   }, [searchParams, router]);
 
@@ -103,23 +99,14 @@ export function MealPlannerPage() {
     setSelectedEntryId(item.id);
   };
 
-  // Handle Add Meal button click - opens the dialog with Saved Meals tab
+  // Handle Add Meal button click - navigates to create meal page
   const handleAddMealClick = () => {
-    setCreateDialogDefaultTab("saved");
-    setShowCreateDialog(true);
+    router.push("/meal-planner/create");
   };
 
-  // Handle Create Meal button click - opens the dialog with Create Meal tab
+  // Handle Create Meal button click - navigates to create meal page
   const handleCreateMealClick = () => {
-    setCreateDialogDefaultTab("create");
-    setShowCreateDialog(true);
-  };
-
-  // Handle entry created - add to entries list and select it
-  const handleEntryCreated = (entry: PlannerEntryResponseDTO) => {
-    setEntries((prev) => [...prev, entry]);
-    setSelectedEntryId(entry.id);
-    window.dispatchEvent(new Event("planner-updated"));
+    router.push("/meal-planner/create");
   };
 
   // Handle marking a meal as complete/incomplete (toggle)
@@ -368,19 +355,16 @@ export function MealPlannerPage() {
         )}
       </div>
 
-      {/* Meal Dialog - unified create/edit */}
+      {/* Meal Dialog - for editing existing meals */}
       <MealDialog
-        open={showCreateDialog || showEditDialog}
+        open={showEditDialog}
         onOpenChange={(open) => {
           if (!open) {
-            setShowCreateDialog(false);
             setShowEditDialog(false);
           }
         }}
-        mode={showEditDialog ? "edit" : "create"}
+        mode="edit"
         mealId={selectedMealId}
-        defaultTab={createDialogDefaultTab}
-        onEntryCreated={handleEntryCreated}
         onMealUpdated={handleMealUpdated}
       />
     </PageLayout>

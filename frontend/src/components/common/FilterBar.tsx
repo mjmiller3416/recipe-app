@@ -12,14 +12,7 @@ export interface FilterPillOption {
   label: string;
 }
 
-interface FilterPillProps {
-  option: FilterPillOption;
-  isActive: boolean;
-  onToggle: (id: string) => void;
-  variant?: "default" | "glass";
-}
-
-export interface FilterPillGroupProps {
+export interface FilterBarProps {
   /** Array of filter options to display (can include extra properties beyond id/label) */
   options: readonly FilterPillOption[] | FilterPillOption[];
   /** Set or array of active filter IDs */
@@ -35,49 +28,11 @@ export interface FilterPillGroupProps {
 }
 
 // ============================================================================
-// FilterPill Component
+// FilterBar Component
 // ============================================================================
 
 /**
- * FilterPill - Individual toggle pill button
- */
-function FilterPill({ option, isActive, onToggle, variant = "default" }: FilterPillProps) {
-  // Variant-specific styles for inactive state
-  const inactiveStyles = {
-    default: "bg-elevated text-foreground border-border hover:bg-hover hover:border-border",
-    glass: "bg-elevated/80 text-foreground border-border/50 hover:bg-elevated hover:border-border",
-  };
-
-  return (
-    <button
-      onClick={() => onToggle(option.id)}
-      className={cn(
-        // Base styles
-        "px-4 py-2 rounded-full text-sm font-medium",
-        "border",
-        // Pressable utility for tactile click feedback
-        "pressable",
-
-        // Glass variant gets backdrop blur
-        variant === "glass" && "backdrop-blur-sm",
-
-        // Active vs inactive states
-        isActive
-          ? "bg-primary text-primary-foreground border-primary shadow-raised"
-          : inactiveStyles[variant]
-      )}
-    >
-      {option.label}
-    </button>
-  );
-}
-
-// ============================================================================
-// FilterPillGroup Component
-// ============================================================================
-
-/**
- * FilterPillGroup - Reusable group of toggle filter pills
+ * FilterBar - Reusable row of toggle filter pills
  *
  * @example
  * // Basic usage with Set
@@ -95,7 +50,7 @@ function FilterPill({ option, isActive, onToggle, variant = "default" }: FilterP
  *   });
  * };
  *
- * <FilterPillGroup
+ * <FilterBar
  *   options={[
  *     { id: "breakfast", label: "Breakfast" },
  *     { id: "lunch", label: "Lunch" },
@@ -107,7 +62,7 @@ function FilterPill({ option, isActive, onToggle, variant = "default" }: FilterP
  *
  * @example
  * // Glass variant for use over images
- * <FilterPillGroup
+ * <FilterBar
  *   options={filterOptions}
  *   activeIds={activeIds}
  *   onToggle={handleToggle}
@@ -115,17 +70,17 @@ function FilterPill({ option, isActive, onToggle, variant = "default" }: FilterP
  *   align="center"
  * />
  */
-export function FilterPillGroup({
+export function FilterBar({
   options,
   activeIds,
   onToggle,
   variant = "default",
   align = "start",
   className,
-}: FilterPillGroupProps) {
-  
+}: FilterBarProps) {
+
   // Helper to check active state
-  const isActive = (id: string) => 
+  const isActive = (id: string) =>
     activeIds instanceof Set ? activeIds.has(id) : activeIds.includes(id);
 
   const alignClasses = {
@@ -138,22 +93,20 @@ export function FilterPillGroup({
     <div className={cn("flex flex-wrap gap-2", alignClasses[align], className)}>
       {options.map((option) => {
         const active = isActive(option.id);
-        
+
         return (
           <Button
             key={option.id}
             onClick={() => onToggle(option.id)}
-            // 1. Use the new "pill" shape
-            shape="pill" 
-            // 2. Swap variants based on active state
-            variant={active ? "default" : "outline"} 
-            // 3. Handle the specific "glass" look via utility override if needed
+            variant={active ? "default" : "ghost"}
             className={cn(
-              "font-medium transition-all",
-              variant === "glass" && !active && "bg-elevated/80 backdrop-blur-sm border-border/50"
+              "font-medium transition-all rounded-xl",
+              // Inactive state: dark solid background with subtle border, muted text
+              !active && variant !== "glass" && "bg-elevated border border-border-subtle text-muted-foreground hover:bg-hover hover:border-border hover:text-foreground",
+              // Glass variant for overlays
+              variant === "glass" && !active && "bg-elevated/80 backdrop-blur-sm border border-border/50 text-muted-foreground hover:text-foreground"
             )}
-            // 4. Adjust size for pills (usually smaller)
-            size="sm" 
+            size="sm"
           >
             {option.label}
           </Button>
@@ -162,3 +115,7 @@ export function FilterPillGroup({
     </div>
   );
 }
+
+// Backward compatibility alias
+export const FilterPillGroup = FilterBar;
+export type FilterPillGroupProps = FilterBarProps;

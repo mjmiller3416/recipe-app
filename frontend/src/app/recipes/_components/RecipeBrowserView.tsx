@@ -12,16 +12,12 @@ import {
   Clock,
   Calendar,
   SortAsc,
-  Heart,
-  BookOpen,
-  ChevronDown,
   Loader2,
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Sheet,
   SheetContent,
@@ -37,8 +33,10 @@ import {
 } from "@/components/ui/select";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { RecipeCard, RecipeCardGrid } from "@/components/recipe/RecipeCard";
-import { FilterPillGroup } from "@/components/common/FilterPillGroup";
+import { FilterBar } from "@/components/common/FilterBar";
+import { FilterSidebar } from "@/components/common/FilterSidebar";
 import { recipeApi } from "@/lib/api";
+import { applyFilters } from "@/lib/filterUtils";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
 import { RECIPE_CATEGORY_OPTIONS, MEAL_TYPE_OPTIONS, DIETARY_PREFERENCES, QUICK_FILTERS, type QuickFilter } from "@/lib/constants";
 import { useSettings } from "@/hooks/useSettings";
@@ -156,7 +154,7 @@ function HeroSection({
 
         {/* Quick Filter Pills */}
         <div className="max-w-2xl mx-auto">
-          <FilterPillGroup
+          <FilterBar
             options={quickFilterOptions}
             activeIds={activeQuickFilters}
             onToggle={onQuickFilterToggle}
@@ -169,169 +167,6 @@ function HeroSection({
   );
 }
 
-// ============================================================================
-// Filter Section Component
-// ============================================================================
-
-interface FilterOption {
-  value: string;
-  label: string;
-}
-
-interface FilterSectionProps {
-  title: string;
-  icon: React.ElementType;
-  options: FilterOption[];
-  selected: string[];
-  onChange: (value: string, checked: boolean) => void;
-  defaultOpen?: boolean;
-}
-
-function FilterSection({
-  title,
-  icon: Icon,
-  options,
-  selected,
-  onChange,
-  defaultOpen = true,
-}: FilterSectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  return (
-    <div className="py-2">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full py-2 text-sm font-medium text-foreground hover:text-primary transition-colors pressable"
-      >
-        <span className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-muted-foreground" />
-          {title}
-          {selected.length > 0 && (
-            <span className="ml-1 px-2 py-1 bg-primary/20 text-primary text-xs rounded-full">
-              {selected.length}
-            </span>
-          )}
-        </span>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 text-muted-foreground transition-transform duration-200",
-            isOpen && "rotate-180"
-          )}
-        />
-      </button>
-      {isOpen && (
-        <div className="pt-2 pb-4 space-y-1">
-          {options.map((option) => (
-            <label
-              key={option.value}
-              className="flex items-center gap-3 py-2 px-2 rounded-md cursor-pointer hover:bg-hover transition-colors"
-            >
-              <Checkbox
-                checked={selected.includes(option.value)}
-                onCheckedChange={(checked) => onChange(option.value, checked as boolean)}
-              />
-              <span className="text-sm text-foreground">{option.label}</span>
-            </label>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ============================================================================
-// Filter Sidebar Content (shared between desktop sidebar and mobile sheet)
-// ============================================================================
-
-interface FilterSidebarContentProps {
-  filters: FilterState;
-  hasActiveFilters: boolean;
-  onClearAllFilters: () => void;
-  onFavoritesChange: (checked: boolean) => void;
-  categoryOptions: FilterOption[];
-  mealTypeOptions: FilterOption[];
-  dietaryOptions: FilterOption[];
-  onCategoryChange: (value: string, checked: boolean) => void;
-  onMealTypeChange: (value: string, checked: boolean) => void;
-  onDietaryChange: (value: string, checked: boolean) => void;
-}
-
-function FilterSidebarContent({
-  filters,
-  hasActiveFilters,
-  onClearAllFilters,
-  onFavoritesChange,
-  categoryOptions,
-  mealTypeOptions,
-  dietaryOptions,
-  onCategoryChange,
-  onMealTypeChange,
-  onDietaryChange,
-}: FilterSidebarContentProps) {
-  return (
-    <>
-      {/* Sidebar Header */}
-      <div className="flex items-center justify-between mb-4 pb-4 border-b border-border">
-        <div className="flex items-center gap-2">
-          <SlidersHorizontal className="h-4 w-4 text-primary" />
-          <span className="font-medium text-foreground">Refine Results</span>
-        </div>
-        {hasActiveFilters && (
-          <Button
-            variant="link"
-            size="sm"
-            onClick={onClearAllFilters}
-            className="h-auto p-0 text-xs"
-          >
-            Reset
-          </Button>
-        )}
-      </div>
-
-      {/* Favorites Toggle */}
-      <label className="flex items-center gap-3 py-3 px-2 mb-2 rounded-md cursor-pointer hover:bg-hover transition-colors">
-        <Checkbox
-          checked={filters.favoritesOnly}
-          onCheckedChange={(checked) => onFavoritesChange(checked as boolean)}
-        />
-        <Heart
-          className={cn(
-            "h-4 w-4 transition-colors",
-            filters.favoritesOnly ? "text-destructive fill-current" : "text-muted-foreground"
-          )}
-        />
-        <span className="text-sm text-foreground">Favorites Only</span>
-      </label>
-
-      {/* Filter Sections */}
-      <div className="space-y-2 divide-y divide-border">
-        <FilterSection
-          title="Category"
-          icon={ChefHat}
-          options={categoryOptions}
-          selected={filters.categories}
-          onChange={onCategoryChange}
-        />
-        <FilterSection
-          title="Meal Type"
-          icon={Clock}
-          options={mealTypeOptions}
-          selected={filters.mealTypes}
-          onChange={onMealTypeChange}
-        />
-        {dietaryOptions.length > 0 && (
-          <FilterSection
-            title="Dietary Preference"
-            icon={BookOpen}
-            options={dietaryOptions}
-            selected={filters.dietaryPreferences}
-            onChange={onDietaryChange}
-          />
-        )}
-      </div>
-    </>
-  );
-}
 
 // ============================================================================
 // Active Filter Chip Component
@@ -345,7 +180,7 @@ interface FilterChipProps {
 
 function FilterChip({ label, type, onRemove }: FilterChipProps) {
   const typeColors: Record<string, string> = {
-    category: "bg-primary/20 text-primary border-primary/30",
+    category: "bg-primary/20 text-primary-on-surface border-primary/30",
     mealType: "bg-secondary/20 text-secondary border-secondary/30",
     dietary: "bg-accent/50 text-foreground border-accent",
     favorite: "bg-destructive/20 text-destructive border-destructive/30",
@@ -714,70 +549,21 @@ export function RecipeBrowserView() {
     return active;
   }, [filters, categoryOptions, mealTypeOptions, dietaryOptions]);
 
-  // Filter and sort recipes
+  // Filter and sort recipes (using shared filter utils)
   const filteredRecipes = useMemo(() => {
-    let result = [...recipes];
+    // Apply filters using shared utility
+    let result = applyFilters(recipes, {
+      searchTerm,
+      categories: filters.categories,
+      mealTypes: filters.mealTypes,
+      dietaryPreferences: filters.dietaryPreferences,
+      favoritesOnly: filters.favoritesOnly,
+      maxCookTime: filters.maxCookTime,
+      newDays: filters.newDays,
+    });
 
-    // Search filter
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(
-        (recipe) =>
-          recipe.name.toLowerCase().includes(term) ||
-          recipe.category?.toLowerCase().includes(term) ||
-          recipe.mealType?.toLowerCase().includes(term) ||
-          recipe.dietaryPreference?.toLowerCase().includes(term)
-      );
-    }
-
-    // Category filter
-    if (filters.categories.length > 0) {
-      result = result.filter(
-        (recipe) => recipe.category && filters.categories.includes(recipe.category)
-      );
-    }
-
-    // Meal type filter
-    if (filters.mealTypes.length > 0) {
-      result = result.filter(
-        (recipe) => recipe.mealType && filters.mealTypes.includes(recipe.mealType)
-      );
-    }
-
-    // Dietary preference filter
-    if (filters.dietaryPreferences.length > 0) {
-      result = result.filter(
-        (recipe) =>
-          recipe.dietaryPreference &&
-          filters.dietaryPreferences.includes(recipe.dietaryPreference)
-      );
-    }
-
-    // Favorites filter
-    if (filters.favoritesOnly) {
-      result = result.filter((recipe) => recipe.isFavorite);
-    }
-
-    // Cook time filter
-    if (filters.maxCookTime) {
-      result = result.filter(
-        (recipe) => recipe.totalTime && recipe.totalTime <= filters.maxCookTime!
-      );
-    }
-
-    // New recipes filter (created within last N days)
-    if (filters.newDays) {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - filters.newDays);
-      result = result.filter((recipe) => {
-        if (!recipe.createdAt) return false;
-        const createdDate = new Date(recipe.createdAt);
-        return createdDate >= cutoffDate;
-      });
-    }
-
-    // Sorting
-    result.sort((a, b) => {
+    // Sorting (not part of shared filter utils - view-specific)
+    result = [...result].sort((a, b) => {
       let comparison = 0;
 
       switch (sortBy) {
@@ -1054,17 +840,16 @@ export function RecipeBrowserView() {
           <aside className="hidden md:block w-64 flex-shrink-0">
             <Card>
               <CardContent className="pt-6">
-                <FilterSidebarContent
+                <FilterSidebar
                   filters={filters}
-                  hasActiveFilters={hasActiveFilters}
-                  onClearAllFilters={handleClearAllFilters}
-                  onFavoritesChange={handleFavoritesFilterChange}
-                  categoryOptions={categoryOptions}
-                  mealTypeOptions={mealTypeOptions}
-                  dietaryOptions={dietaryOptions}
                   onCategoryChange={handleCategoryChange}
                   onMealTypeChange={handleMealTypeChange}
                   onDietaryChange={handleDietaryChange}
+                  onFavoritesChange={handleFavoritesFilterChange}
+                  onClearAll={handleClearAllFilters}
+                  categoryOptions={categoryOptions}
+                  mealTypeOptions={mealTypeOptions}
+                  dietaryOptions={dietaryOptions}
                 />
               </CardContent>
             </Card>
@@ -1117,17 +902,16 @@ export function RecipeBrowserView() {
             </SheetTitle>
           </SheetHeader>
           <div className="py-4">
-            <FilterSidebarContent
+            <FilterSidebar
               filters={filters}
-              hasActiveFilters={hasActiveFilters}
-              onClearAllFilters={handleClearAllFilters}
-              onFavoritesChange={handleFavoritesFilterChange}
-              categoryOptions={categoryOptions}
-              mealTypeOptions={mealTypeOptions}
-              dietaryOptions={dietaryOptions}
               onCategoryChange={handleCategoryChange}
               onMealTypeChange={handleMealTypeChange}
               onDietaryChange={handleDietaryChange}
+              onFavoritesChange={handleFavoritesFilterChange}
+              onClearAll={handleClearAllFilters}
+              categoryOptions={categoryOptions}
+              mealTypeOptions={mealTypeOptions}
+              dietaryOptions={dietaryOptions}
             />
           </div>
         </SheetContent>

@@ -1125,3 +1125,37 @@ html body[data-scroll-locked="1"] {
   font-weight: var(--font-medium);
   letter-spacing: 0;
 }
+
+
+/* ============================================
+   SELECTION STATES
+   For selectable cards and list items
+   ============================================ */
+
+/* Selection indicator - checkmark circle overlay */
+@utility selection-indicator {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow-md);
+  animation: scale-in var(--duration-normal) var(--ease-bounce);
+}
+
+/* Image zoom on hover - wrapper for recipe images */
+@utility image-zoom-wrapper {
+  overflow: hidden;
+
+  & > * {
+    transition: transform var(--duration-normal) var(--ease-physical);
+  }
+
+  &:hover > * {
+    transform: scale(1.05);
+  }
+}

@@ -1,55 +1,68 @@
-# Meal Stats Implementation
+# Build MealDialog Components
 
-## Task
-Add computed statistics to meals: total cook time, average servings, times cooked, and last cooked date.
+## Overview
+Implement the three placeholder components based on the test page design. These will be used later when converting MealDialog to a full page layout.
 
-## Todo List
-- [x] Add stats fields to MealResponseDTO (backend DTO)
-- [x] Add get_completion_stats_for_meal() to PlannerRepo
-- [x] Update MealService._meal_to_response_dto() to compute and return stats
-- [x] Add stats fields to MealSelectionResponseDTO (frontend types)
-- [x] Add CSS variables for transparent teal surface
-- [x] Create MealStats.tsx component (not integrated)
+## Tasks
+
+- [x] **RecipeSelectCard** - Recipe card with selection state, checkmark overlay, favorite indicator, Main/Side badge
+- [x] **MealPreviewPanel** - Right sidebar with main dish slot, side slots, stats summary, add button
+- [x] **SavedMealCard** - Horizontal card with main dish image, meal name, sides preview, stats
+
+## Notes
+- Not integrating into MealDialog yet - user plans to convert to full page layout
+- Follow existing design tokens from globals.css
+- Reuse existing components (Card, Button, CircularImage, RecipeImage, etc.)
+- Keep implementations simple and focused
 
 ## Review
 
 ### Changes Made
 
-**Backend (3 files):**
-1. `backend/app/dtos/meal_dtos.py` - Added 4 optional stats fields to `MealResponseDTO`:
-   - `total_cook_time`: Sum of all recipe times in minutes
-   - `avg_servings`: Average servings rounded to nearest int
-   - `times_cooked`: Count of completed planner entries
-   - `last_cooked`: ISO datetime of most recent completion
+**1. RecipeSelectCard** (`frontend/src/components/recipe/RecipeSelectCard.tsx`)
+- Vertical card with recipe image section (h-32) and content section
+- Selection checkmark overlay (top-right, animated with `animate-scale-in`)
+- Favorite heart indicator (top-left, red filled heart)
+- Main/Side badge (bottom-left, uses Badge component with variant)
+- Selected state: `ring-2 ring-primary shadow-glow-primary` + `animate-bounce-subtle`
+- Hover zoom on image with gradient overlay
+- Uses: Card, Badge, RecipeImage, Lucide icons
 
-2. `backend/app/repositories/planner_repo.py` - Added `get_completion_stats_for_meal()` method that efficiently queries:
-   - Count of completed entries for a meal
-   - Most recent `completed_at` timestamp
+**2. MealPreviewPanel** (`frontend/src/app/meal-planner/_components/meal-dialog/components/MealPreviewPanel.tsx`)
+- Full vertical sidebar layout with flex-col h-full
+- Header with UtensilsCrossed icon and title/subtitle
+- Main dish section:
+  - Empty: dashed border with ChefHat and `animate-pulse-soft`
+  - Filled: Card with `bg-primary-surface`, CircularImage, remove button
+- Sides section:
+  - Filled slots: Card with `bg-secondary-surface`, compact layout
+  - Empty slots: dashed border with Plus icon placeholder
+  - Counter showing (X/3)
+- Stats summary: 2-column grid with Total Time and Avg Servings
+- Action button: "Add to Meal Queue" with `animate-glow` when ready
+- Uses: Card, Button, CircularImage, Lucide icons
 
-3. `backend/app/services/meal_service.py` - Updated `_meal_to_response_dto()` to:
-   - Import and inject `PlannerRepo`
-   - Compute total cook time by summing main + side recipe times
-   - Calculate average servings (rounded) from all recipes
-   - Query completion stats from planner
+**3. SavedMealCard** (`frontend/src/app/meal-planner/_components/meal-dialog/components/SavedMealCard.tsx`)
+- Horizontal card layout (image left, content right)
+- Main dish image (w-28 h-28) with hover zoom
+- Content section with:
+  - Meal name (truncate, hover color change)
+  - Main recipe name (muted text)
+  - Side dish emoji row using `getRecipeEmoji`
+  - Stats row: times cooked, last cooked (relative time)
+- Added local `formatRelativeTime` helper function
+- Uses: Card, RecipeImage, getRecipeEmoji, Lucide icons
 
-**Frontend (3 files):**
-1. `frontend/src/types/index.ts` - Added 4 stats fields to `MealSelectionResponseDTO`
+### Design Tokens Used
+- Colors: `bg-primary-surface`, `bg-secondary-surface`, `border-primary-muted`, `border-secondary-muted`
+- Animations: `animate-scale-in`, `animate-slide-up`, `animate-bounce-subtle`, `animate-pulse-soft`, `animate-glow`
+- Shadows: `shadow-glow-primary`
+- Typography: foreground, muted-foreground, muted-foreground/60
 
-2. `frontend/src/app/globals.css` - Added CSS variables:
-   - `--secondary-surface-alpha`: 8% opacity teal background
-   - `--secondary-border-alpha`: 20% opacity teal border
-   - Tailwind theme mappings for both
-
-3. `frontend/src/app/meal-planner/_components/MealStats.tsx` - NEW component:
-   - Matches "Quick Info" design from test mockup
-   - Displays all 5 stats with icons
-   - Formats cook time as "Xhr Ym"
-   - Formats dates as relative time ("2 weeks ago")
-   - Uses CSS variables for theming
-   - **NOT integrated** into app per user request
-
-### Design Notes
-- Stats are computed on-the-fly, not stored, to avoid stale data
-- Follows existing patterns: service layer computation, DTO extension, repo queries
-- No new API endpoints - stats returned with existing meal responses
-- Component ready for integration when needed
+### Components Reused
+- Card (with interactive prop)
+- Button (with variants)
+- Badge (default/secondary variants)
+- CircularImage
+- RecipeImage
+- getRecipeEmoji utility

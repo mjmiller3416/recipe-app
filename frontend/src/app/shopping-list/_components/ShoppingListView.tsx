@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { INGREDIENT_UNITS, INGREDIENT_CATEGORIES } from "@/lib/constants";
-import { RecipeFilterSidebar } from "./RecipeFilterSidebar";
+import { IngredientSourceSidebar } from "./IngredientSourceSidebar";
 import {
   useShoppingList,
   useToggleItem,
@@ -606,7 +606,7 @@ export function ShoppingListView() {
         {/* Recipe filter sidebar (desktop only) - sticky below header */}
         <div className="hidden lg:block">
           <div className="sticky top-[113px] transform-gpu">
-            <RecipeFilterSidebar
+            <IngredientSourceSidebar
               recipes={recipes}
               manualItemCount={manualItemCount}
               manualCollectedCount={manualCollectedCount}

@@ -9,3 +9,4 @@ export { useRecentRecipes, type RecentRecipe } from "./useRecentRecipes";
 export { useUnitConversionRules } from "./useUnitConversionRules";
 export { useChatHistory } from "./useChatHistory";
 export { useSortableDnd } from "./useSortableDnd";
+export { useRecipeFilters, type UseRecipeFiltersOptions, type UseRecipeFiltersReturn } from "./useRecipeFilters";

@@ -3,13 +3,10 @@
 import { useState, useEffect, useMemo } from "react";
 import { Search, Bookmark } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CircularImage } from "@/components/common/CircularImage";
 import { ScrollableCardList } from "@/components/common/ScrollableCardList";
+import { SavedMealCard } from "../components/SavedMealCard";
 import { plannerApi } from "@/lib/api";
-import { cn } from "@/lib/utils";
 import {
   MultiSelect,
   MultiSelectTrigger,
@@ -20,6 +17,7 @@ import {
   MultiSelectSeparator,
 } from "@/components/ui/multi-select";
 import { MEAL_TYPE_OPTIONS, RECIPE_CATEGORY_OPTIONS, DIETARY_PREFERENCES } from "@/lib/constants";
+import { prefixedFiltersToRecipeFilters } from "@/lib/filterUtils";
 import type { MealSelectionResponseDTO, PlannerEntryResponseDTO } from "@/types";
 
 // ============================================================================
@@ -37,22 +35,21 @@ interface SavedViewProps {
 
 function MealCardSkeleton() {
   return (
-    <Card className="p-0">
-      <div className="flex items-center gap-3 p-3">
-        <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
-        <div className="flex-1 space-y-2">
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-3 w-1/4" />
-        </div>
+    <div className="flex bg-elevated rounded-2xl border border-border overflow-hidden">
+      <Skeleton className="h-28 w-28 flex-shrink-0" />
+      <div className="flex-1 p-4 space-y-2">
+        <Skeleton className="h-5 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-4 w-1/4" />
       </div>
-    </Card>
+    </div>
   );
 }
 
 function SavedViewSkeleton() {
   return (
-    <div className="space-y-3">
-      {Array.from({ length: 5 }).map((_, i) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {Array.from({ length: 4 }).map((_, i) => (
         <MealCardSkeleton key={i} />
       ))}
     </div>
@@ -99,50 +96,6 @@ function EmptyNoResults() {
 }
 
 // ============================================================================
-// MEAL CARD
-// ============================================================================
-
-interface MealCardProps {
-  meal: MealSelectionResponseDTO;
-  isAdding: boolean;
-  onClick: () => void;
-}
-
-function MealCard({ meal, isAdding, onClick }: MealCardProps) {
-  const sideCount = meal.side_recipes?.length ?? 0;
-
-  return (
-    <Card
-      className={cn(
-        "cursor-pointer overflow-hidden interactive-subtle",
-        "p-0 gap-0",
-        isAdding && "opacity-50 pointer-events-none"
-      )}
-      onClick={onClick}
-    >
-      <div className="flex items-center gap-3 p-3">
-        <CircularImage
-          src={meal.main_recipe?.reference_image_path ?? undefined}
-          alt={meal.meal_name}
-          size="lg"
-          zoom={1.3}
-        />
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-foreground line-clamp-1">
-            {meal.meal_name}
-          </h3>
-          {sideCount > 0 && (
-            <p className="text-xs text-muted-foreground">
-              +{sideCount} side{sideCount !== 1 ? "s" : ""}
-            </p>
-          )}
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-// ============================================================================
 // SAVED VIEW COMPONENT
 // ============================================================================
 
@@ -183,20 +136,12 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
   }, []);
 
   // --------------------------------------------------------------------------
-  // Filtering
+  // Filtering (using shared filter utils for parsing)
   // --------------------------------------------------------------------------
 
   const filteredMeals = useMemo(() => {
-    // Extract filter values by prefix
-    const mealTypeFilters = selectedFilters
-      .filter((f) => f.startsWith("mealType:"))
-      .map((f) => f.replace("mealType:", ""));
-    const categoryFilters = selectedFilters
-      .filter((f) => f.startsWith("category:"))
-      .map((f) => f.replace("category:", ""));
-    const dietaryFilters = selectedFilters
-      .filter((f) => f.startsWith("dietary:"))
-      .map((f) => f.replace("dietary:", ""));
+    // Use shared utility to parse prefixed filter values
+    const filters = prefixedFiltersToRecipeFilters(selectedFilters);
 
     return meals.filter((meal) => {
       // Search filter
@@ -207,23 +152,24 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
         return false;
       }
       // Meal type filter (OR within group)
+      // Note: MealSelectionResponseDTO uses snake_case field names
       if (
-        mealTypeFilters.length > 0 &&
-        !mealTypeFilters.includes(meal.main_recipe?.meal_type ?? "")
+        filters.mealTypes && filters.mealTypes.length > 0 &&
+        !filters.mealTypes.includes(meal.main_recipe?.meal_type ?? "")
       ) {
         return false;
       }
       // Category filter (OR within group)
       if (
-        categoryFilters.length > 0 &&
-        !categoryFilters.includes(meal.main_recipe?.recipe_category ?? "")
+        filters.categories && filters.categories.length > 0 &&
+        !filters.categories.includes(meal.main_recipe?.recipe_category ?? "")
       ) {
         return false;
       }
       // Dietary filter (OR within group)
       if (
-        dietaryFilters.length > 0 &&
-        !dietaryFilters.includes(meal.main_recipe?.diet_pref ?? "")
+        filters.dietaryPreferences && filters.dietaryPreferences.length > 0 &&
+        !filters.dietaryPreferences.includes(meal.main_recipe?.diet_pref ?? "")
       ) {
         return false;
       }
@@ -332,14 +278,14 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
       ) : (
         <ScrollableCardList
           className="min-h-[40vh] max-h-[40vh]"
-          innerClassName="space-y-2"
+          innerClassName="grid grid-cols-1 md:grid-cols-2 gap-4"
         >
           {filteredMeals.map((meal) => (
-            <MealCard
+            <SavedMealCard
               key={meal.id}
               meal={meal}
               isAdding={addingMealId === meal.id}
-              onClick={() => handleMealClick(meal)}
+              onSelect={handleMealClick}
             />
           ))}
         </ScrollableCardList>

@@ -13,7 +13,7 @@ interface RecipeInfo {
   isFirstInMeal?: boolean; // True if this recipe starts a new meal grouping
 }
 
-interface RecipeFilterSidebarProps {
+interface IngredientSourceSidebarProps {
   recipes: RecipeInfo[];
   manualItemCount: number;
   manualCollectedCount: number;
@@ -22,7 +22,10 @@ interface RecipeFilterSidebarProps {
 }
 
 /**
- * RecipeFilterSidebar - Displays recipes contributing to the shopping list
+ * IngredientSourceSidebar - Filter shopping list items by their source
+ *
+ * Shows recipes contributing ingredients to the shopping list.
+ * Click to filter shopping list by recipe source.
  *
  * Features:
  * - Lists all recipes with item counts and progress
@@ -30,13 +33,13 @@ interface RecipeFilterSidebarProps {
  * - Manual items section at the bottom
  * - Sticky positioning for scroll behavior
  */
-export function RecipeFilterSidebar({
+export function IngredientSourceSidebar({
   recipes,
   manualItemCount,
   manualCollectedCount,
   activeFilter,
   onFilterChange,
-}: RecipeFilterSidebarProps) {
+}: IngredientSourceSidebarProps) {
   const handleRecipeClick = (recipeName: string) => {
     // Toggle filter off if clicking the same recipe
     onFilterChange(activeFilter === recipeName ? null : recipeName);
@@ -137,3 +140,6 @@ export function RecipeFilterSidebar({
     </Card>
   );
 }
+
+// Backward compatibility alias
+export const RecipeFilterSidebar = IngredientSourceSidebar;
