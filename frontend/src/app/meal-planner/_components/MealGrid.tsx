@@ -62,7 +62,7 @@ export function MealGrid({
       <h2 className="text-lg font-semibold text-foreground">This Week&apos;s Menu</h2>
 
       {/* Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-fr">
         {items.map((item) => (
           <MealGridCard
             key={item.id}
