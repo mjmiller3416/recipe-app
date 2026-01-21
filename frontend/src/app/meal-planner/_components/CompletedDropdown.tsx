@@ -4,7 +4,6 @@ import { Check, ChevronDown, Trash2, Users, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
-import { FavoriteButton } from "@/components/common/FavoriteButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +22,6 @@ export interface CompletedMealItem {
   imageUrl: string | null;
   servings?: number | null;
   totalTime?: number | null;
-  isFavorite?: boolean;
 }
 
 interface CompletedDropdownProps {
@@ -118,16 +116,6 @@ export function CompletedDropdown({
                   )}
                 </span>
               </div>
-
-              {/* Favorite Indicator */}
-              {item.isFavorite && (
-                <FavoriteButton
-                  isFavorite={true}
-                  onToggle={() => {}}
-                  readOnly
-                  size="sm"
-                />
-              )}
             </DropdownMenuItem>
           ))}
         </div>

@@ -150,16 +150,6 @@ def reorder_entries(
     )
 
 
-@router.post("/entries/{entry_id}/toggle", response_model=PlannerEntryResponseDTO)
-def toggle_completion(entry_id: int, session: Session = Depends(get_session)):
-    """Toggle the completion status of a planner entry."""
-    service = PlannerService(session)
-    entry = service.toggle_completion(entry_id)
-    if not entry:
-        raise HTTPException(status_code=404, detail="Planner entry not found")
-    return entry
-
-
 @router.post("/entries/{entry_id}/complete", response_model=PlannerEntryResponseDTO)
 def mark_completed(entry_id: int, session: Session = Depends(get_session)):
     """Mark a planner entry as completed."""

@@ -8,17 +8,17 @@ import { Card } from "@/components/ui/card";
 // TYPES
 // ============================================================================
 
-interface MealStatsProps {
-  /** Total cook time in minutes (sum of all recipes) */
-  totalCookTime: number | null;
-  /** Average servings across all recipes (rounded) */
-  avgServings: number | null;
-  /** Number of times this meal has been cooked */
+interface RecipeStatsProps {
+  /** Cook time in minutes */
+  cookTime: number | null;
+  /** Number of servings */
+  servings: number | null;
+  /** Number of times this recipe has been cooked */
   timesCooked: number | null;
-  /** ISO datetime string of when meal was last cooked */
+  /** ISO datetime string of when recipe was last cooked */
   lastCooked: string | null;
-  /** ISO datetime string of when meal was added */
-  addedAt: string | null;
+  /** ISO datetime string of when recipe was added to the system */
+  dateAdded: string | null;
   /** Optional className for custom styling */
   className?: string;
 }
@@ -53,6 +53,10 @@ function formatRelativeTime(isoDate: string): string {
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
+  // Handle edge cases (future dates or same day)
+  if (diffDays < 0) {
+    return "Today";
+  }
   if (diffDays === 0) {
     return "Today";
   }
@@ -99,28 +103,36 @@ function StatRow({ label, value, icon }: StatRowProps) {
 }
 
 // ============================================================================
-// MEAL STATS COMPONENT
+// RECIPE STATS COMPONENT
 // ============================================================================
 
-export function MealStats({
-  totalCookTime,
-  avgServings,
+export function RecipeStats({
+  cookTime,
+  servings,
   timesCooked,
   lastCooked,
-  addedAt,
+  dateAdded,
   className,
-}: MealStatsProps) {
+}: RecipeStatsProps) {
   // Check if there are any stats to display
   const hasStats =
-    totalCookTime !== null ||
-    avgServings !== null ||
-    timesCooked !== null ||
-    lastCooked !== null ||
-    addedAt !== null;
+    cookTime !== null ||
+    servings !== null ||
+    dateAdded !== null;
 
   if (!hasStats) {
     return null;
   }
+
+  // Format times cooked - show N/A if never cooked
+  const timesValue = timesCooked && timesCooked > 0
+    ? `${timesCooked} time${timesCooked !== 1 ? "s" : ""}`
+    : "N/A";
+
+  // Format last cooked - show N/A if never cooked
+  const lastCookedValue = lastCooked
+    ? formatRelativeTime(lastCooked)
+    : "N/A";
 
   return (
     <Card
@@ -133,48 +145,44 @@ export function MealStats({
       <div className="flex items-center gap-2 mb-3">
         <Info className="w-4 h-4 text-secondary" />
         <h4 className="text-sm font-medium text-secondary-on-surface">
-          Meal Stats
+          Recipe Stats
         </h4>
       </div>
 
       {/* Stats Grid */}
       <div className="space-y-2 text-sm">
-        {totalCookTime !== null && (
+        {cookTime !== null && (
           <StatRow
-            label="Total cook time"
-            value={formatCookTime(totalCookTime)}
+            label="Cook time"
+            value={formatCookTime(cookTime)}
             icon={<Clock className="w-3.5 h-3.5" />}
           />
         )}
 
-        {avgServings !== null && (
+        {servings !== null && (
           <StatRow
             label="Servings"
-            value={`${avgServings}`}
+            value={`${servings}`}
             icon={<Users className="w-3.5 h-3.5" />}
           />
         )}
 
-        {timesCooked !== null && (
-          <StatRow
-            label="Times cooked"
-            value={`${timesCooked} time${timesCooked !== 1 ? "s" : ""}`}
-            icon={<CheckCircle className="w-3.5 h-3.5" />}
-          />
-        )}
+        <StatRow
+          label="Times cooked"
+          value={timesValue}
+          icon={<CheckCircle className="w-3.5 h-3.5" />}
+        />
 
-        {lastCooked !== null && (
-          <StatRow
-            label="Last cooked"
-            value={formatRelativeTime(lastCooked)}
-            icon={<Calendar className="w-3.5 h-3.5" />}
-          />
-        )}
+        <StatRow
+          label="Last cooked"
+          value={lastCookedValue}
+          icon={<Calendar className="w-3.5 h-3.5" />}
+        />
 
-        {addedAt !== null && (
+        {dateAdded !== null && (
           <StatRow
             label="Added"
-            value={formatRelativeTime(addedAt)}
+            value={formatRelativeTime(dateAdded)}
             icon={<Plus className="w-3.5 h-3.5" />}
           />
         )}

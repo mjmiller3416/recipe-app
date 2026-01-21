@@ -53,9 +53,6 @@ class Meal(Base):
         default="[]"
     )
 
-    # Favorite flag for quick filtering
-    is_favorite: Mapped[bool] = mapped_column(Boolean, default=False)
-
     # Saved flag - transient meals are deleted when they leave the planner
     is_saved: Mapped[bool] = mapped_column(Boolean, default=False)
 

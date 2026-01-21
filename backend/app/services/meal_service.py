@@ -23,6 +23,7 @@ from ..models.meal import Meal
 from ..models.recipe import Recipe
 from ..repositories.meal_repo import MealRepo
 from ..repositories.planner_repo import PlannerRepo
+from ..repositories.recipe_repo import RecipeRepo
 
 
 # -- Exceptions ----------------------------------------------------------------------------------
@@ -58,6 +59,7 @@ class MealService:
         self.session = session
         self.repo = MealRepo(self.session)
         self.planner_repo = PlannerRepo(self.session)
+        self.recipe_repo = RecipeRepo(self.session)
 
     # -- Create Operations -----------------------------------------------------------------------
     def create_meal(self, create_dto: MealCreateDTO) -> MealResponseDTO:
@@ -101,7 +103,6 @@ class MealService:
             meal = Meal(
                 meal_name=create_dto.meal_name,
                 main_recipe_id=create_dto.main_recipe_id,
-                is_favorite=create_dto.is_favorite or False,
                 is_saved=create_dto.is_saved or False,
             )
             meal.side_recipe_ids = side_ids
@@ -165,7 +166,6 @@ class MealService:
             meals = self.repo.filter_meals(
                 name_pattern=filter_dto.name_pattern,
                 tags=filter_dto.tags,
-                favorites_only=filter_dto.favorites_only,
                 saved_only=filter_dto.saved_only,
                 limit=filter_dto.limit,
                 offset=filter_dto.offset
@@ -186,19 +186,6 @@ class MealService:
         """
         try:
             meals = self.repo.get_by_name_pattern(search_term)
-            return [self._meal_to_response_dto(m) for m in meals]
-        except SQLAlchemyError:
-            return []
-
-    def get_favorite_meals(self) -> List[MealResponseDTO]:
-        """
-        Get all favorite meals.
-
-        Returns:
-            List of favorite meals as DTOs
-        """
-        try:
-            meals = self.repo.get_favorites()
             return [self._meal_to_response_dto(m) for m in meals]
         except SQLAlchemyError:
             return []
@@ -276,10 +263,6 @@ class MealService:
                         )
                 meal.side_recipe_ids = side_ids
 
-            # Update favorite status if provided
-            if update_dto.is_favorite is not None:
-                meal.is_favorite = update_dto.is_favorite
-
             # Update tags if provided
             if update_dto.tags is not None:
                 meal.tags = update_dto.tags
@@ -297,30 +280,6 @@ class MealService:
         except SQLAlchemyError as e:
             self.session.rollback()
             raise MealSaveError(f"Failed to update meal: {e}") from e
-
-    def toggle_favorite(self, meal_id: int) -> Optional[MealResponseDTO]:
-        """
-        Toggle the favorite status of a meal.
-
-        Args:
-            meal_id: ID of the meal
-
-        Returns:
-            Updated meal as DTO or None if not found
-        """
-        try:
-            meal = self.repo.get_by_id(meal_id)
-            if not meal:
-                return None
-
-            meal.is_favorite = not meal.is_favorite
-            self.repo.update(meal)
-            self.session.commit()
-
-            return self._meal_to_response_dto(meal)
-        except SQLAlchemyError:
-            self.session.rollback()
-            return None
 
     def toggle_save(self, meal_id: int) -> Optional[MealResponseDTO]:
         """
@@ -579,46 +538,30 @@ class MealService:
                         RecipeCardDTO.from_recipe(recipe_lookup[recipe_id])
                     )
 
-        # Compute stats from recipe data
-        total_cook_time = 0
-        servings_list = []
+        # Get stats from main recipe only (recipe-level stats, not meal-level)
+        total_cook_time = meal.main_recipe.total_time if meal.main_recipe else None
+        servings = meal.main_recipe.servings if meal.main_recipe else None
 
-        # Add main recipe stats
-        if meal.main_recipe:
-            if meal.main_recipe.total_time:
-                total_cook_time += meal.main_recipe.total_time
-            if meal.main_recipe.servings:
-                servings_list.append(meal.main_recipe.servings)
-
-        # Add side recipe stats
-        for side_dto in side_recipes:
-            if side_dto.total_time:
-                total_cook_time += side_dto.total_time
-            if side_dto.servings:
-                servings_list.append(side_dto.servings)
-
-        # Calculate average servings (rounded)
-        avg_servings = round(sum(servings_list) / len(servings_list)) if servings_list else None
-
-        # Get completion stats from planner
-        completion_stats = self.planner_repo.get_completion_stats_for_meal(meal.id)
-        times_cooked = completion_stats['times_cooked']
-        last_cooked = completion_stats['last_cooked']
+        # Get cooking stats from main recipe history
+        times_cooked = 0
+        last_cooked = None
+        if meal.main_recipe_id:
+            times_cooked = self.recipe_repo.get_times_cooked(meal.main_recipe_id)
+            last_cooked = self.recipe_repo.get_last_cooked_date(meal.main_recipe_id)
 
         return MealResponseDTO(
             id=meal.id,
             meal_name=meal.meal_name,
             main_recipe_id=meal.main_recipe_id,
             side_recipe_ids=meal.side_recipe_ids,
-            is_favorite=meal.is_favorite,
             is_saved=meal.is_saved,
             tags=meal.tags,
             created_at=meal.created_at.isoformat() if meal.created_at else None,
             main_recipe=RecipeCardDTO.from_recipe(meal.main_recipe),
             side_recipes=side_recipes,
-            # Computed stats
-            total_cook_time=total_cook_time if total_cook_time > 0 else None,
-            avg_servings=avg_servings,
+            # Main recipe stats
+            total_cook_time=total_cook_time,
+            avg_servings=servings,
             times_cooked=times_cooked if times_cooked > 0 else None,
             last_cooked=last_cooked.isoformat() if last_cooked else None,
         )

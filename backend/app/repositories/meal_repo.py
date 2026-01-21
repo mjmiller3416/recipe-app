@@ -93,21 +93,6 @@ class MealRepo:
         result = self.session.execute(stmt)
         return result.scalars().unique().all()
 
-    def get_favorites(self) -> List[Meal]:
-        """
-        Get all favorite meals.
-
-        Returns:
-            List of favorite meals
-        """
-        stmt = (
-            select(Meal)
-            .where(Meal.is_favorite == True)
-            .options(joinedload(Meal.main_recipe))
-        )
-        result = self.session.execute(stmt)
-        return result.scalars().unique().all()
-
     def get_by_tags(self, tags: List[str], match_all: bool = True) -> List[Meal]:
         """
         Get meals that have the specified tags (case-insensitive).
@@ -141,7 +126,6 @@ class MealRepo:
         self,
         name_pattern: Optional[str] = None,
         tags: Optional[List[str]] = None,
-        favorites_only: bool = False,
         saved_only: Optional[bool] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None
@@ -152,7 +136,6 @@ class MealRepo:
         Args:
             name_pattern: Optional name search pattern
             tags: Optional list of tags to filter by (AND logic)
-            favorites_only: If True, only return favorites
             saved_only: If True, only saved meals; if False, only transient; if None, all
             limit: Maximum number of results
             offset: Number of results to skip
@@ -164,9 +147,6 @@ class MealRepo:
 
         if name_pattern:
             stmt = stmt.where(Meal.meal_name.ilike(f"%{name_pattern}%"))
-
-        if favorites_only:
-            stmt = stmt.where(Meal.is_favorite == True)
 
         if saved_only is not None:
             stmt = stmt.where(Meal.is_saved == saved_only)

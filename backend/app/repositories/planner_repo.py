@@ -289,24 +289,6 @@ class PlannerRepo:
         self.session.flush()
         return entry
 
-    def toggle_completion(self, entry_id: int) -> Optional[PlannerEntry]:
-        """
-        Toggle the completion status of a planner entry.
-
-        Args:
-            entry_id: ID of the entry
-
-        Returns:
-            Updated entry or None if not found
-        """
-        entry = self.get_by_id(entry_id)
-        if not entry:
-            return None
-
-        entry.toggle_completion()
-        self.session.flush()
-        return entry
-
     def cycle_shopping_mode(self, entry_id: int) -> Optional[PlannerEntry]:
         """
         Cycle the shopping mode of a planner entry: all -> produce_only -> none -> all.

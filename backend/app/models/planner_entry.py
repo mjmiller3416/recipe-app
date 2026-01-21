@@ -94,19 +94,6 @@ class PlannerEntry(Base):
         self.is_completed = False
         self.completed_at = None
 
-    def toggle_completion(self) -> bool:
-        """
-        Toggle the completion status.
-
-        Returns:
-            The new is_completed value
-        """
-        if self.is_completed:
-            self.mark_incomplete()
-        else:
-            self.mark_completed()
-        return self.is_completed
-
     def cycle_shopping_mode(self) -> str:
         """
         Cycle through shopping modes: all -> produce_only -> none -> all.

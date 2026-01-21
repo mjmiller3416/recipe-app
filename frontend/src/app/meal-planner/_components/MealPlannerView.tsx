@@ -80,7 +80,6 @@ export function MealPlannerPage() {
     bannerImageUrl: entry.main_recipe?.banner_image_path ?? null,
     servings: entry.main_recipe?.servings ?? null,
     totalTime: entry.main_recipe?.total_time ?? null,
-    isFavorite: entry.meal_is_favorite ?? false,
     isSaved: entry.meal_is_saved ?? false,
     shoppingMode: entry.shopping_mode ?? "all",
   }));
@@ -92,7 +91,6 @@ export function MealPlannerPage() {
     imageUrl: entry.main_recipe?.reference_image_path ?? null,
     servings: entry.main_recipe?.servings ?? null,
     totalTime: entry.main_recipe?.total_time ?? null,
-    isFavorite: entry.meal_is_favorite ?? false,
   }));
 
   // Handle grid item selection
@@ -142,7 +140,9 @@ export function MealPlannerPage() {
     );
 
     try {
-      const updatedEntry = await plannerApi.toggleCompletion(selectedEntryId);
+      const updatedEntry = currentEntry.is_completed
+        ? await plannerApi.markIncomplete(selectedEntryId)
+        : await plannerApi.markComplete(selectedEntryId);
       // Update with server response
       setEntries((prev) =>
         prev.map((entry) =>
@@ -151,6 +151,8 @@ export function MealPlannerPage() {
             : entry
         )
       );
+      // Refresh meal card to show updated recipe stats (times cooked, last cooked)
+      setMealRefreshKey((k) => k + 1);
       window.dispatchEvent(new Event("planner-updated"));
     } catch (err) {
       // Rollback on error
@@ -217,30 +219,6 @@ export function MealPlannerPage() {
       setEntries(previousEntries);
       setSelectedEntryId(entryToRemove);
       setError(err instanceof Error ? err.message : "Failed to remove from menu");
-    }
-  };
-
-  // Handle toggling favorite status for the selected meal
-  const handleToggleFavorite = async () => {
-    if (!selectedMealId || selectedEntryId === null) return;
-
-    const previousEntries = entries;
-
-    // Optimistic UI update
-    setEntries((prev) =>
-      prev.map((entry) =>
-        entry.id === selectedEntryId
-          ? { ...entry, meal_is_favorite: !entry.meal_is_favorite }
-          : entry
-      )
-    );
-
-    try {
-      await plannerApi.toggleFavorite(selectedMealId);
-    } catch (err) {
-      // Rollback on error
-      setEntries(previousEntries);
-      setError(err instanceof Error ? err.message : "Failed to update favorite status");
     }
   };
 
@@ -367,11 +345,9 @@ export function MealPlannerPage() {
             key={`meal-${selectedMealId}-${mealRefreshKey}`}
             mealId={selectedMealId}
             isCompleted={selectedEntry?.is_completed}
-            isFavorite={selectedEntry?.meal_is_favorite}
             isSaved={selectedEntry?.meal_is_saved}
             onMarkComplete={handleMarkComplete}
             onEditMeal={handleEditMeal}
-            onToggleFavorite={handleToggleFavorite}
             onToggleSave={handleToggleSave}
             onRemove={handleRemoveFromMenu}
             onAddSide={handleAddSide}

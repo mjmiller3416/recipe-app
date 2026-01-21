@@ -11,7 +11,7 @@ export { CompletedDropdown } from "./CompletedDropdown";
 export { SelectedMealCard } from "./meal-display/SelectedMealCard";
 export { SideChip } from "./meal-display/SideChip";
 export { AISuggestionsPlaceholder } from "./meal-display/AISuggestionsPlaceholder";
-export { MealStats } from "./meal-display/MealStats";
+export { RecipeStats } from "./meal-display/RecipeStats";
 
 // Types
 export type { MealGridItem } from "./MealGridCard";

@@ -103,6 +103,38 @@ class RecipeRepo:
         result = self.session.execute(stmt).scalar_one_or_none()
         return result
 
+    def record_cooked(self, recipe_id: int) -> RecipeHistory:
+        """
+        Record that a recipe was cooked by creating a RecipeHistory entry.
+
+        Args:
+            recipe_id (int): The ID of the recipe that was cooked.
+
+        Returns:
+            RecipeHistory: The created history record.
+        """
+        history = RecipeHistory(recipe_id=recipe_id)
+        self.session.add(history)
+        self.session.flush()
+        return history
+
+    def get_times_cooked(self, recipe_id: int) -> int:
+        """
+        Returns the number of times a recipe has been cooked.
+
+        Args:
+            recipe_id (int): The ID of the recipe to check.
+
+        Returns:
+            int: The count of cooking history records.
+        """
+        stmt = (
+            select(func.count())
+            .select_from(RecipeHistory)
+            .where(RecipeHistory.recipe_id == recipe_id)
+        )
+        return self.session.execute(stmt).scalar() or 0
+
     def update_recipe(self, recipe_id: int, update_dto: RecipeUpdateDTO) -> Optional[Recipe]:
         """
         Update a recipe's core fields and replace ingredient links.

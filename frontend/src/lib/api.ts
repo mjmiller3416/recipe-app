@@ -233,14 +233,6 @@ export const plannerApi = {
     fetchApi<void>(`/api/meals/${id}`, { method: "DELETE" }),
 
   /**
-   * Toggle meal favorite status
-   */
-  toggleFavorite: (id: number): Promise<MealSelectionResponseDTO> =>
-    fetchApi<MealSelectionResponseDTO>(`/api/meals/${id}/favorite`, {
-      method: "POST",
-    }),
-
-  /**
    * Toggle meal saved status (saved meals persist after leaving planner)
    */
   toggleSave: (id: number): Promise<MealSelectionResponseDTO> =>
@@ -297,10 +289,18 @@ export const plannerApi = {
     }),
 
   /**
-   * Toggle completion status of a planner entry
+   * Mark a planner entry as complete (records recipe history)
    */
-  toggleCompletion: (entryId: number): Promise<PlannerEntryResponseDTO> =>
-    fetchApi<PlannerEntryResponseDTO>(`/api/planner/entries/${entryId}/toggle`, {
+  markComplete: (entryId: number): Promise<PlannerEntryResponseDTO> =>
+    fetchApi<PlannerEntryResponseDTO>(`/api/planner/entries/${entryId}/complete`, {
+      method: "POST",
+    }),
+
+  /**
+   * Mark a planner entry as incomplete
+   */
+  markIncomplete: (entryId: number): Promise<PlannerEntryResponseDTO> =>
+    fetchApi<PlannerEntryResponseDTO>(`/api/planner/entries/${entryId}/incomplete`, {
       method: "POST",
     }),
 
@@ -570,7 +570,6 @@ export interface MealSelectionCreateDTO {
   meal_name: string;
   main_recipe_id: number;
   side_recipe_ids?: number[];
-  is_favorite?: boolean;
   tags?: string[];
 }
 
@@ -578,7 +577,6 @@ export interface MealSelectionUpdateDTO {
   meal_name?: string;
   main_recipe_id?: number;
   side_recipe_ids?: number[];
-  is_favorite?: boolean;
   tags?: string[];
 }
 

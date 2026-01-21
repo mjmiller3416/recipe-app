@@ -25,7 +25,6 @@ class MealBaseDTO(BaseModel):
     meal_name: str = Field(..., min_length=1, max_length=255)
     main_recipe_id: int = Field(..., ge=1)
     side_recipe_ids: List[int] = Field(default_factory=list, max_length=3)
-    is_favorite: bool = False
     is_saved: bool = False
     tags: List[str] = Field(default_factory=list)
 
@@ -61,7 +60,6 @@ class MealUpdateDTO(BaseModel):
     meal_name: Optional[str] = Field(None, min_length=1, max_length=255)
     main_recipe_id: Optional[int] = Field(None, ge=1)
     side_recipe_ids: Optional[List[int]] = Field(None, max_length=3)
-    is_favorite: Optional[bool] = None
     is_saved: Optional[bool] = None
     tags: Optional[List[str]] = None
 
@@ -106,7 +104,6 @@ class MealFilterDTO(BaseModel):
 
     name_pattern: Optional[str] = None
     tags: Optional[List[str]] = None
-    favorites_only: bool = False
     saved_only: Optional[bool] = None
     limit: Optional[int] = Field(None, ge=1, le=100)
     offset: Optional[int] = Field(None, ge=0)

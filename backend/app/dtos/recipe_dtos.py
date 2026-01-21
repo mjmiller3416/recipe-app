@@ -75,9 +75,18 @@ class RecipeCardDTO(BaseModel):
     recipe_category: Optional[str] = None
     meal_type: Optional[str] = None
     diet_pref: Optional[str] = None
+    # Cooking stats (populated when needed)
+    times_cooked: Optional[int] = None
+    last_cooked: Optional[str] = None  # ISO datetime string
+    created_at: Optional[str] = None  # ISO datetime string - when recipe was added
 
     @classmethod
-    def from_recipe(cls, recipe: Optional[Recipe]) -> Optional["RecipeCardDTO"]:
+    def from_recipe(
+        cls,
+        recipe: Optional[Recipe],
+        times_cooked: Optional[int] = None,
+        last_cooked: Optional[str] = None,
+    ) -> Optional["RecipeCardDTO"]:
         """Convert a Recipe model to RecipeCardDTO."""
         if recipe is None:
             return None
@@ -92,6 +101,9 @@ class RecipeCardDTO(BaseModel):
             recipe_category=recipe.recipe_category,
             meal_type=recipe.meal_type,
             diet_pref=recipe.diet_pref,
+            times_cooked=times_cooked,
+            last_cooked=last_cooked,
+            created_at=recipe.created_at.isoformat() if recipe.created_at else None,
         )
 
 # ── Create DTO ──────────────────────────────────────────────────────────────────────────────────────────────

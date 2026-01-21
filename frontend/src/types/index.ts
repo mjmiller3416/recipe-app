@@ -78,6 +78,10 @@ export interface RecipeCardDTO {
   recipe_category?: string | null;
   meal_type?: string | null;
   diet_pref?: string | null;
+  // Cooking stats (populated when available)
+  times_cooked?: number | null;
+  last_cooked?: string | null; // ISO datetime string
+  created_at?: string | null; // ISO datetime string - when recipe was added
 }
 
 // ============================================================================
@@ -106,7 +110,6 @@ export interface MealSelectionBaseDTO {
   meal_name: string;
   main_recipe_id: number;
   side_recipe_ids: number[];
-  is_favorite: boolean;
   is_saved: boolean;
   tags: string[];
 }
@@ -137,7 +140,6 @@ export interface PlannerEntryResponseDTO {
   shopping_mode?: ShoppingMode;
   // Hydrated meal data
   meal_name: string | null;
-  meal_is_favorite?: boolean;
   meal_is_saved?: boolean;
   main_recipe_id: number | null;
   side_recipe_ids: number[];
@@ -259,7 +261,6 @@ export interface MealSelectionCreateDTO {
   meal_name: string;
   main_recipe_id: number;
   side_recipe_ids?: number[];
-  is_favorite?: boolean;
   is_saved?: boolean;
   tags?: string[];
 }
@@ -268,7 +269,6 @@ export interface MealSelectionUpdateDTO {
   meal_name?: string;
   main_recipe_id?: number;
   side_recipe_ids?: number[];
-  is_favorite?: boolean;
   is_saved?: boolean;
   tags?: string[];
 }

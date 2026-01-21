@@ -51,7 +51,6 @@ class PlannerEntryResponseDTO(BaseModel):
 
     # Meal information (denormalized for convenience)
     meal_name: Optional[str] = None
-    meal_is_favorite: Optional[bool] = None
     meal_is_saved: Optional[bool] = None
     main_recipe_id: Optional[int] = None
     side_recipe_ids: List[int] = Field(default_factory=list)

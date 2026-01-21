@@ -100,7 +100,6 @@ export function AddToMealPlanDialog({
         meal_name: newMealName.trim(),
         main_recipe_id: recipe.id,
         side_recipe_ids: [],
-        is_favorite: false,
         tags: [],
       });
 

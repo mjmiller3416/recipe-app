@@ -24,6 +24,7 @@ from ..models.meal import Meal
 from ..models.planner_entry import PlannerEntry
 from ..repositories.meal_repo import MealRepo
 from ..repositories.planner_repo import MAX_PLANNER_ENTRIES, PlannerRepo
+from ..repositories.recipe_repo import RecipeRepo
 
 
 # -- Exceptions ----------------------------------------------------------------------------------
@@ -57,6 +58,7 @@ class PlannerService:
         self.session = session
         self.repo = PlannerRepo(self.session)
         self.meal_repo = MealRepo(self.session)
+        self.recipe_repo = RecipeRepo(self.session)
 
     # -- Add to Planner --------------------------------------------------------------------------
     def add_meal_to_planner(
@@ -398,28 +400,6 @@ class PlannerService:
             self.session.rollback()
             return False
 
-    def toggle_completion(self, entry_id: int) -> Optional[PlannerEntryResponseDTO]:
-        """
-        Toggle the completion status of a planner entry.
-
-        Args:
-            entry_id: ID of the entry
-
-        Returns:
-            Updated entry as DTO or None if not found
-        """
-        try:
-            entry = self.repo.toggle_completion(entry_id)
-            if not entry:
-                return None
-
-            self.session.commit()
-            entry = self.repo.get_by_id(entry.id)
-            return self._entry_to_response_dto(entry)
-        except SQLAlchemyError:
-            self.session.rollback()
-            return None
-
     def cycle_shopping_mode(self, entry_id: int) -> Optional[PlannerEntryResponseDTO]:
         """
         Cycle the shopping mode of a planner entry: all -> produce_only -> none -> all.
@@ -456,6 +436,10 @@ class PlannerService:
             entry = self.repo.mark_completed(entry_id)
             if not entry:
                 return None
+
+            # Record cooking history for the main recipe
+            if entry.meal and entry.meal.main_recipe_id:
+                self.recipe_repo.record_cooked(entry.meal.main_recipe_id)
 
             self.session.commit()
             entry = self.repo.get_by_id(entry.id)
@@ -623,7 +607,6 @@ class PlannerService:
             scheduled_date=entry.scheduled_date.isoformat() if entry.scheduled_date else None,
             shopping_mode=entry.shopping_mode,
             meal_name=meal.meal_name if meal else None,
-            meal_is_favorite=meal.is_favorite if meal else None,
             meal_is_saved=meal.is_saved if meal else None,
             main_recipe_id=meal.main_recipe_id if meal else None,
             side_recipe_ids=meal.side_recipe_ids if meal else [],

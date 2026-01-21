@@ -117,7 +117,7 @@ export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProp
       setCompletingId(entryId);
 
       try {
-        await plannerApi.toggleCompletion(entryId);
+        await plannerApi.markComplete(entryId);
 
         // Notify other components (Sidebar, CookingStreakWidget, etc.)
         window.dispatchEvent(new Event("planner-updated"));

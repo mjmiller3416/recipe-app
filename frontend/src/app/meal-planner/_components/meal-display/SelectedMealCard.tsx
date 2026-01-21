@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, Clock, Heart, Plus, Check, Bookmark } from "lucide-react";
+import { Users, Clock, Plus, Check, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { RecipeImage } from "@/components/recipe/RecipeImage";
 import { plannerApi } from "@/lib/api";
 import { SideChip } from "./SideChip";
 import { AISuggestions } from "./AISuggestions";
-import { MealStats } from "./MealStats";
+import { RecipeStats } from "./RecipeStats";
 import type { MealSelectionResponseDTO, RecipeCardDTO } from "@/types";
 
 // ============================================================================
@@ -22,16 +22,12 @@ interface SelectedMealCardProps {
   mealId: number;
   /** Whether this meal entry is marked as completed */
   isCompleted?: boolean;
-  /** Whether this meal is favorited */
-  isFavorite?: boolean;
   /** Whether this meal is saved (persists after leaving planner) */
   isSaved?: boolean;
   /** Called when Mark Complete is clicked */
   onMarkComplete?: () => void;
   /** Called when Edit Meal is clicked */
   onEditMeal?: () => void;
-  /** Called when Favorite is toggled */
-  onToggleFavorite?: () => void;
   /** Called when Save is toggled */
   onToggleSave?: () => void;
   /** Called when Remove is clicked */
@@ -97,11 +93,9 @@ function SelectedMealSkeleton({ className }: { className?: string }) {
 export function SelectedMealCard({
   mealId,
   isCompleted = false,
-  isFavorite = false,
   isSaved = false,
   onMarkComplete,
   onEditMeal,
-  onToggleFavorite,
   onToggleSave,
   onRemove,
   onAddSide,
@@ -218,12 +212,6 @@ export function SelectedMealCard({
                     {formatTime(mainRecipe.total_time)} total
                   </span>
                 )}
-                {isFavorite && (
-                  <span className="flex items-center gap-1.5 text-error">
-                    <Heart className="h-4 w-4 fill-current" strokeWidth={1.5} />
-                    Favorite
-                  </span>
-                )}
               </div>
             </div>
 
@@ -266,13 +254,13 @@ export function SelectedMealCard({
 
           {/* RIGHT: Stats & Actions Section */}
           <div className="w-full lg:w-80 flex-shrink-0 p-6 space-y-4">
-            {/* Meal Stats */}
-            <MealStats
-              totalCookTime={meal.total_cook_time ?? null}
-              avgServings={meal.avg_servings ?? null}
+            {/* Recipe Stats */}
+            <RecipeStats
+              cookTime={meal.total_cook_time ?? null}
+              servings={meal.avg_servings ?? null}
               timesCooked={meal.times_cooked ?? null}
               lastCooked={meal.last_cooked ?? null}
-              addedAt={meal.created_at ?? null}
+              dateAdded={meal.main_recipe?.created_at ?? null}
             />
 
             {/* Action Buttons */}
@@ -299,23 +287,9 @@ export function SelectedMealCard({
                   {isSaved ? "Saved" : "Save"}
                 </Button>
                 <Button
-                  onClick={onToggleFavorite}
-                  variant="outline"
-                  className="gap-1.5"
-                >
-                  <Heart
-                    className={cn(
-                      "h-4 w-4",
-                      isFavorite && "fill-current text-error"
-                    )}
-                    strokeWidth={1.5}
-                  />
-                  {isFavorite ? "Unfavorite" : "Favorite"}
-                </Button>
-                <Button
                   onClick={onRemove}
                   variant="outline"
-                  className="col-span-2 border-destructive text-destructive"
+                  className="border-destructive text-destructive"
                 >
                   Remove
                 </Button>

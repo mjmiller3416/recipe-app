@@ -29,7 +29,6 @@ router = APIRouter()
 def list_meals(
     name_pattern: Optional[str] = Query(None, description="Search by meal name"),
     tags: Optional[str] = Query(None, description="Comma-separated list of tags"),
-    favorites_only: bool = Query(False, description="Filter to favorites only"),
     saved: Optional[bool] = Query(None, description="Filter by saved status (true=saved, false=transient, omit=all)"),
     limit: Optional[int] = Query(None, ge=1, le=100),
     offset: Optional[int] = Query(None, ge=0),
@@ -41,7 +40,6 @@ def list_meals(
     Filters are stackable (AND logic):
     - name_pattern: Case-insensitive name search
     - tags: Comma-separated, meals must have ALL specified tags
-    - favorites_only: Filter to favorites
     - saved: Filter by saved status (true=saved only, false=transient only)
     """
     # Parse tags if provided
@@ -52,7 +50,6 @@ def list_meals(
     filter_dto = MealFilterDTO(
         name_pattern=name_pattern,
         tags=tag_list,
-        favorites_only=favorites_only,
         saved_only=saved,
         limit=limit,
         offset=offset,
@@ -60,13 +57,6 @@ def list_meals(
 
     service = MealService(session)
     return service.filter_meals(filter_dto)
-
-
-@router.get("/favorites", response_model=List[MealResponseDTO])
-def get_favorites(session: Session = Depends(get_session)):
-    """Get all favorite meals."""
-    service = MealService(session)
-    return service.get_favorite_meals()
 
 
 @router.get("/by-recipe/{recipe_id}", response_model=List[MealResponseDTO])
@@ -97,7 +87,6 @@ def create_meal(
     - meal_name: Required, 1-255 characters
     - main_recipe_id: Required, must exist
     - side_recipe_ids: Optional, max 3, maintains order
-    - is_favorite: Optional, defaults to false
     - tags: Optional list of strings
     """
     service = MealService(session)
@@ -139,16 +128,6 @@ def delete_meal(meal_id: int, session: Session = Depends(get_session)):
     if not service.delete_meal(meal_id):
         raise HTTPException(status_code=404, detail="Meal not found")
     return {"message": "Meal deleted successfully"}
-
-
-@router.post("/{meal_id}/favorite", response_model=MealResponseDTO)
-def toggle_favorite(meal_id: int, session: Session = Depends(get_session)):
-    """Toggle the favorite status of a meal."""
-    service = MealService(session)
-    meal = service.toggle_favorite(meal_id)
-    if not meal:
-        raise HTTPException(status_code=404, detail="Meal not found")
-    return meal
 
 
 @router.post("/{meal_id}/save", response_model=MealResponseDTO)

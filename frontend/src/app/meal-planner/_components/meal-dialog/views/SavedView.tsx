@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Search, Heart, Bookmark } from "lucide-react";
+import { Search, Bookmark } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -137,9 +137,6 @@ function MealCard({ meal, isAdding, onClick }: MealCardProps) {
             </p>
           )}
         </div>
-        {meal.is_favorite && (
-          <Heart className="h-4 w-4 text-destructive fill-destructive flex-shrink-0" aria-hidden="true" />
-        )}
       </div>
     </Card>
   );
@@ -162,7 +159,6 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
   const [meals, setMeals] = useState<MealSelectionResponseDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [addingMealId, setAddingMealId] = useState<number | null>(null);
 
@@ -210,10 +206,6 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
       ) {
         return false;
       }
-      // Favorites filter
-      if (showFavoritesOnly && !meal.is_favorite) {
-        return false;
-      }
       // Meal type filter (OR within group)
       if (
         mealTypeFilters.length > 0 &&
@@ -237,7 +229,7 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
       }
       return true;
     });
-  }, [meals, searchTerm, showFavoritesOnly, selectedFilters]);
+  }, [meals, searchTerm, selectedFilters]);
 
   // --------------------------------------------------------------------------
   // Handlers
@@ -277,29 +269,15 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
 
   return (
     <div className="space-y-4">
-      {/* Search and Filter Row */}
-      <div className="flex items-center gap-2">
-        {/* Search Input */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search saved meals..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-
-        {/* Favorites Toggle */}
-        <Button
-          variant={showFavoritesOnly ? "default" : "outline"}
-          size="sm"
-          shape="pill"
-          onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-        >
-          <Heart className={cn(showFavoritesOnly && "fill-current")} />
-          Favorites
-        </Button>
+      {/* Search Input */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search saved meals..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9"
+        />
       </div>
 
       {/* Filter Dropdown */}
