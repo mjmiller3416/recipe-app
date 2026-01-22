@@ -7,6 +7,7 @@ import {
   SlidersHorizontal,
   ArrowUp,
   ArrowDown,
+  ArrowLeft,
   X,
   ChefHat,
   Clock,
@@ -91,6 +92,8 @@ interface HeroSectionProps {
   activeQuickFilters: Set<string>;
   onQuickFilterToggle: (filterId: string) => void;
   quickFilterOptions: QuickFilter[];
+  title?: string;
+  description?: string;
 }
 
 function HeroSection({
@@ -101,7 +104,11 @@ function HeroSection({
   activeQuickFilters,
   onQuickFilterToggle,
   quickFilterOptions,
+  title = "Find your next meal",
+  description,
 }: HeroSectionProps) {
+  const defaultDescription = `Browse through your collection of ${recipeCount} saved recipes`;
+  const displayDescription = description ?? defaultDescription;
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       onSearch();
@@ -127,10 +134,10 @@ function HeroSection({
       <div className="relative z-10 max-w-4xl mx-auto px-6 py-16 text-center">
         {/* Headline */}
         <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-3 tracking-tight">
-          Find your next meal
+          {title}
         </h1>
         <p className="text-muted-foreground text-lg mb-8">
-          Browse through your collection of {recipeCount} saved recipes
+          {displayDescription}
         </p>
 
         {/* Search Bar */}
@@ -224,6 +231,10 @@ interface StickyHeaderBarProps {
   activeFilters: ActiveFilter[];
   onRemoveFilter: (filter: ActiveFilter) => void;
   onClearAllFilters: () => void;
+  /** Optional back button callback - renders back arrow on left */
+  onBack?: () => void;
+  /** Optional action button to render on far right (e.g., Done button) */
+  actionButton?: React.ReactNode;
 }
 
 function StickyHeaderBar({
@@ -239,12 +250,25 @@ function StickyHeaderBar({
   activeFilters,
   onRemoveFilter,
   onClearAllFilters,
+  onBack,
+  actionButton,
 }: StickyHeaderBarProps) {
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
       {/* Section Header with Sort */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-0 mb-4">
         <div className="flex items-center gap-3">
+          {onBack && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onBack}
+              className="rounded-xl flex-shrink-0"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="sr-only">Back</span>
+            </Button>
+          )}
           <Sparkles className="h-5 w-5 text-primary" />
           <h2 className="text-lg md:text-xl font-semibold text-foreground">Your Recipes</h2>
           <span className="text-sm text-muted-foreground hidden sm:inline">
@@ -308,6 +332,8 @@ function StickyHeaderBar({
               </span>
             )}
           </Button>
+          {/* Optional action button (e.g., Done for select mode) */}
+          {actionButton}
         </div>
       </div>
 
@@ -356,6 +382,14 @@ export interface RecipeBrowserViewProps {
   selectedIds?: Set<string | number>;
   /** Filter to only show main dishes or side dishes */
   filterMealType?: "main" | "side" | null;
+  /** Custom hero section title */
+  heroTitle?: string;
+  /** Custom hero section description */
+  heroDescription?: string;
+  /** Optional back button callback - adds back arrow to sticky header */
+  onBack?: () => void;
+  /** Optional action button for sticky header (e.g., Done button) */
+  actionButton?: React.ReactNode;
 }
 
 // ============================================================================
@@ -367,6 +401,10 @@ export function RecipeBrowserView({
   onSelect,
   selectedIds = new Set(),
   filterMealType = null,
+  heroTitle,
+  heroDescription,
+  onBack,
+  actionButton,
 }: RecipeBrowserViewProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -395,7 +433,7 @@ export function RecipeBrowserView({
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<FilterState>({
     categories: [],
-    mealTypes: [],
+    mealTypes: filterMealType === "side" ? ["side"] : [],
     dietaryPreferences: [],
     favoritesOnly: initialFavoritesOnly,
     maxCookTime: null,
@@ -589,18 +627,6 @@ export function RecipeBrowserView({
       maxCookTime: filters.maxCookTime,
       newDays: filters.newDays,
     });
-
-    // Apply filterMealType prop (for select mode picker)
-    if (filterMealType) {
-      result = result.filter((recipe) => {
-        if (filterMealType === "side") {
-          return recipe.mealType === "side";
-        } else {
-          // "main" means anything that's not a side
-          return recipe.mealType !== "side";
-        }
-      });
-    }
 
     // Sorting (not part of shared filter utils - view-specific)
     result = [...result].sort((a, b) => {
@@ -855,46 +881,9 @@ export function RecipeBrowserView({
     );
   }
 
-  // Determine title based on mode and filterMealType
-  const pageTitle = mode === "select"
-    ? filterMealType === "side"
-      ? "Select Side Dishes"
-      : "Select a Recipe"
-    : "Recipes";
-
-  return (
-    <PageLayout
-      title={pageTitle}
-      hero={
-        mode === "browse" ? (
-          <HeroSection
-            recipeCount={recipes.length}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            onSearch={() => {}}
-            activeQuickFilters={activeQuickFilters}
-            onQuickFilterToggle={handleQuickFilterToggle}
-            quickFilterOptions={visibleQuickFilters}
-          />
-        ) : null
-      }
-      stickyHeader={
-        <StickyHeaderBar
-          resultCount={filteredRecipes.length}
-          totalCount={recipes.length}
-          sortBy={sortBy}
-          sortDirection={sortDirection}
-          onSortChange={setSortBy}
-          onSortDirectionToggle={toggleSortDirection}
-          showFilters={showFilters}
-          onToggleFilters={() => setShowFilters(!showFilters)}
-          onOpenMobileFilters={() => setMobileFiltersOpen(true)}
-          activeFilters={activeFilters}
-          onRemoveFilter={handleRemoveFilter}
-          onClearAllFilters={handleClearAllFilters}
-        />
-      }
-    >
+  // Shared content for both modes
+  const mainContent = (
+    <>
       <div className="flex gap-3 md:gap-6">
         {/* Filter Sidebar - Desktop only */}
         {showFilters && (
@@ -987,6 +976,46 @@ export function RecipeBrowserView({
           </div>
         </SheetContent>
       </Sheet>
+    </>
+  );
+
+  // Both modes use full PageLayout with hero and sticky header
+  return (
+    <PageLayout
+      title="Recipes"
+      hero={
+        <HeroSection
+          recipeCount={recipes.length}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          onSearch={() => {}}
+          activeQuickFilters={activeQuickFilters}
+          onQuickFilterToggle={handleQuickFilterToggle}
+          quickFilterOptions={visibleQuickFilters}
+          title={heroTitle}
+          description={heroDescription}
+        />
+      }
+      stickyHeader={
+        <StickyHeaderBar
+          resultCount={filteredRecipes.length}
+          totalCount={recipes.length}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSortChange={setSortBy}
+          onSortDirectionToggle={toggleSortDirection}
+          showFilters={showFilters}
+          onToggleFilters={() => setShowFilters(!showFilters)}
+          onOpenMobileFilters={() => setMobileFiltersOpen(true)}
+          activeFilters={activeFilters}
+          onRemoveFilter={handleRemoveFilter}
+          onClearAllFilters={handleClearAllFilters}
+          onBack={onBack}
+          actionButton={actionButton}
+        />
+      }
+    >
+      {mainContent}
     </PageLayout>
   );
 }

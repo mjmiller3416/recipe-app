@@ -41,6 +41,9 @@ export interface MealPreviewPanelProps {
   /** Whether the add button is in loading/submitting state */
   isSubmitting?: boolean;
 
+  /** Whether to show the header (default true, set false when inside a dialog with its own title) */
+  showHeader?: boolean;
+
   /** Additional class names */
   className?: string;
 }
@@ -69,33 +72,27 @@ export function MealPreviewPanel({
   onRemoveSide,
   onAddToQueue,
   isSubmitting = false,
+  showHeader = true,
   className,
 }: MealPreviewPanelProps) {
   // Computed values
-  const totalTime =
-    (mainDish?.totalTime || 0) +
-    sides.reduce((acc, s) => acc + (s.totalTime || 0), 0);
-  const avgServings = mainDish
-    ? Math.round(
-        (mainDish.servings + sides.reduce((acc, s) => acc + s.servings, 0)) /
-          (1 + sides.length)
-      )
-    : 0;
   const isComplete = !!mainDish;
   const emptySlotCount = 3 - sides.length;
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-primary-surface flex items-center justify-center">
-          <UtensilsCrossed className="w-5 h-5 text-primary" />
+      {/* Header - hidden when inside a dialog with its own title */}
+      {showHeader && (
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-primary-surface flex items-center justify-center">
+            <UtensilsCrossed className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Meal Preview</h2>
+            <p className="text-sm text-muted-foreground">Build your perfect meal</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Meal Preview</h2>
-          <p className="text-sm text-muted-foreground">Build your perfect meal</p>
-        </div>
-      </div>
+      )}
 
       {/* Main Dish Section */}
       <div className="mb-6">
@@ -222,24 +219,6 @@ export function MealPreviewPanel({
         </div>
       </div>
 
-      {/* Stats Summary - only shown when main dish is selected */}
-      {mainDish && (
-        <div className="mt-6 pt-4 border-t border-border">
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-elevated rounded-xl p-3 text-center">
-              <Clock className="w-5 h-5 text-primary mx-auto mb-1" />
-              <p className="text-lg font-semibold text-foreground">{totalTime}m</p>
-              <p className="text-xs text-muted-foreground">Total Time</p>
-            </div>
-            <div className="bg-elevated rounded-xl p-3 text-center">
-              <Users className="w-5 h-5 text-secondary mx-auto mb-1" />
-              <p className="text-lg font-semibold text-foreground">{avgServings}</p>
-              <p className="text-xs text-muted-foreground">Avg Servings</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Action Button */}
       <div className="mt-auto pt-4">
         <Button
@@ -247,7 +226,7 @@ export function MealPreviewPanel({
           size="lg"
           onClick={onAddToQueue}
           disabled={!isComplete || isSubmitting}
-          className={cn("w-full", isComplete && !isSubmitting && "animate-glow")}
+          className="w-full"
         >
           <Plus className="w-5 h-5" />
           {isSubmitting ? "Adding..." : "Add to Meal Queue"}

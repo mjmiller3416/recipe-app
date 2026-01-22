@@ -1,49 +1,35 @@
-# Bug Fix & UX Improvement: Meal Creation Flow
+# UX: Confirm Before Canceling Meal Creation
 
-## Problem 1 (Bug)
-When selecting a main dish from the RecipePickerDialog, the MealPreviewDialog doesn't appear because it's only rendered inside the `if (showRecipePicker)` conditional block.
+## Problem
+Users can accidentally cancel meal creation by:
+- Clicking outside the MealPreviewDialog
+- Pressing Escape
+- Clicking the back button on RecipePickerDialog
+- Navigating via sidebar
 
-## Problem 2 (UX Improvement)
-User requested showing the MealPreviewDialog first when clicking "Add Meal" to provide better context.
-
-## Changes Made
-
-### 1. Fixed dialog rendering condition
-**File:** `MealPlannerView.tsx:416`
-```javascript
-// Changed from:
-if (showRecipePicker) {
-// To:
-if (showRecipePicker || showMealPreview) {
-```
-
-### 2. Changed "Add Meal" to open preview dialog first
-**File:** `MealPlannerView.tsx`
-- `handleAddMealClick()` and `handleCreateMealClick()` now open `showMealPreview` instead of `showRecipePicker`
-- Added new `handleSelectMainFromPreview()` handler to open recipe picker from preview dialog
-- Updated `handlePickerClose()` to always return to preview dialog
-
-### 3. Made empty main dish slot clickable
-**File:** `MealPreviewPanel.tsx`
-- Added `onSelectMain` prop
-- Converted empty main dish div to clickable button with hover state
-
-### 4. Passed prop through MealPreviewDialog
-**File:** `MealPreviewDialog.tsx`
-- Added `onSelectMain` prop and passed to MealPreviewPanel
-
-## New Flow
-1. Click "Add Meal" → MealPreviewDialog opens (empty)
-2. Click empty main dish slot → RecipePickerDialog opens
-3. Select main dish → Returns to MealPreviewDialog with selection
-4. Optionally add sides
-5. Click "Add to Meal Queue" → Meal created
+## Solution
+Add confirmation dialog when user tries to exit meal creation flow with a main dish selected.
 
 ## Tasks
-- [x] Fix condition in MealPlannerView.tsx line 416
-- [x] Update handleAddMealClick to open preview first
-- [x] Add handleSelectMainFromPreview handler
-- [x] Add onSelectMain prop to MealPreviewPanel
-- [x] Make empty main dish slot clickable
-- [x] Add onSelectMain prop to MealPreviewDialog
-- [x] Update handlePickerClose to return to preview
+- [x] Add `useUnsavedChanges` hook to MealPlannerView (handles browser nav + sidebar)
+- [x] Add discard confirmation state and dialog
+- [x] Intercept MealPreviewDialog close attempts
+- [x] Intercept RecipePickerDialog back/escape (returns to preview dialog, which has confirmation)
+- [x] Add AlertDialog UI for confirmation
+
+## Files Changed
+- `frontend/src/app/meal-planner/_components/MealPlannerView.tsx`
+
+## Review
+Added two confirmation dialogs:
+
+1. **Discard Dialog** - Shows when user tries to close the MealPreviewDialog (click outside, press X, escape) while they have a main dish selected. Asks "Discard Meal?" with options to "Keep Editing" or "Discard".
+
+2. **Leave Dialog** - Shows when user tries to navigate away via:
+   - Browser back/forward buttons
+   - Sidebar navigation (via SafeLink)
+   - Browser refresh/close (native browser dialog)
+
+The `useUnsavedChanges` hook tracks `isDirty: !!pendingMain` to know when meal creation is in progress. When confirmed, `resetMealCreation()` clears all pending state.
+
+Note: RecipePickerDialog already returns to MealPreviewDialog on close, so confirmation happens there.

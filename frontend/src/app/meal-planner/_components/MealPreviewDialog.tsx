@@ -63,7 +63,7 @@ export function MealPreviewDialog({
 }: MealPreviewDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="sm" className="max-h-[90vh] overflow-y-auto">
+      <DialogContent size="sm" className="max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>Confirm Your Meal</DialogTitle>
           <DialogDescription>
@@ -81,6 +81,7 @@ export function MealPreviewDialog({
             onRemoveSide={onRemoveSide}
             onAddToQueue={onConfirm}
             isSubmitting={isSubmitting}
+            showHeader={false}
           />
         </div>
 

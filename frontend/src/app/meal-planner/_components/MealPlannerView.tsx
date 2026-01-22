@@ -1,9 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { plannerApi } from "@/lib/api";
 import { PlannerEntryResponseDTO, MealSelectionResponseDTO } from "@/types";
 import { MealDialog } from "./meal-dialog/MealDialog";
@@ -13,7 +24,8 @@ import { CompletedDropdown, CompletedMealItem } from "./CompletedDropdown";
 import { SelectedMealCard } from "./meal-display/SelectedMealCard";
 import { RecipePickerDialog } from "./RecipePickerDialog";
 import { MealPreviewDialog } from "./MealPreviewDialog";
-import { ChefHat } from "lucide-react";
+import { AlertTriangle, ChefHat } from "lucide-react";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import type { RecipeCardData } from "@/types";
 
 // ============================================================================
@@ -39,6 +51,29 @@ export function MealPlannerPage() {
   const [pendingMain, setPendingMain] = useState<RecipeCardData | null>(null);
   const [pendingSides, setPendingSides] = useState<RecipeCardData[]>([]);
   const [isCreatingMeal, setIsCreatingMeal] = useState(false);
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+
+  // Track if user has started meal creation (selected a main dish)
+  const hasPendingMeal = !!pendingMain;
+
+  // Helper to reset meal creation state
+  const resetMealCreation = useCallback(() => {
+    setPendingMain(null);
+    setPendingSides([]);
+    setShowMealPreview(false);
+    setShowRecipePicker(false);
+  }, []);
+
+  // Unsaved changes hook - handles browser nav and sidebar via SafeLink
+  const {
+    showLeaveDialog,
+    setShowLeaveDialog,
+    confirmLeave,
+    cancelLeave,
+  } = useUnsavedChanges({
+    isDirty: hasPendingMeal,
+    onConfirmLeave: resetMealCreation,
+  });
 
   // Check for create=true URL parameter and redirect to create page
   useEffect(() => {
@@ -179,14 +214,32 @@ export function MealPlannerPage() {
     }
   };
 
+  // Handle meal preview dialog close - show confirmation if meal is in progress
+  const handleMealPreviewClose = (open: boolean) => {
+    if (!open && hasPendingMeal) {
+      // User trying to close with a meal in progress - show confirmation
+      setShowDiscardDialog(true);
+    } else {
+      setShowMealPreview(open);
+    }
+  };
+
+  // Confirm discarding meal creation
+  const handleConfirmDiscard = () => {
+    setShowDiscardDialog(false);
+    resetMealCreation();
+  };
+
+  // Cancel discarding - stay in meal creation
+  const handleCancelDiscard = () => {
+    setShowDiscardDialog(false);
+  };
+
   // Handle removing main dish from preview
   const handleRemovePendingMain = () => {
     setPendingMain(null);
     setPendingSides([]);
-    // Close preview and reopen picker for main selection
-    setShowMealPreview(false);
-    setPickerMode("main");
-    setShowRecipePicker(true);
+    // Stay on preview dialog - user can click the empty slot to select a new main
   };
 
   // Handle removing a side dish from preview
@@ -230,7 +283,16 @@ export function MealPlannerPage() {
       window.dispatchEvent(new Event("planner-updated"));
     } catch (err) {
       console.error("Failed to create meal:", err);
-      setError(err instanceof Error ? err.message : "Failed to create meal");
+      const message = err instanceof Error ? err.message : "Failed to create meal";
+
+      // Show user-friendly toast for capacity errors
+      if (message.includes("maximum capacity")) {
+        toast.error("Meal queue is full", {
+          description: "Remove or clear completed meals to add more.",
+        });
+      } else {
+        toast.error(message);
+      }
     } finally {
       setIsCreatingMeal(false);
     }
@@ -417,6 +479,75 @@ export function MealPlannerPage() {
     }
   };
 
+  // When recipe picker is open, render it directly without PageLayout header
+  if (showRecipePicker) {
+    return (
+      <div className="min-h-screen bg-background">
+        <RecipePickerDialog
+          open={showRecipePicker}
+          onOpenChange={handlePickerClose}
+          onSelect={handleRecipeSelect}
+          selectedIds={
+            pickerMode === "side"
+              ? new Set(pendingSides.map((s) => s.id))
+              : pendingMain
+                ? new Set([pendingMain.id])
+                : new Set()
+          }
+          filterMealType={pickerMode === "side" ? "side" : null}
+          title={pickerMode === "side" ? "Add Side Dishes" : "Select Main Dish"}
+          description={
+            pickerMode === "side"
+              ? "Choose up to 3 side dishes for your meal"
+              : "Choose the main dish for your meal"
+          }
+          showDoneButton={pickerMode === "side"}
+          onDone={handleSidesDone}
+        />
+
+        {/* Overlay dialogs still need to render */}
+        <MealPreviewDialog
+          open={showMealPreview}
+          onOpenChange={handleMealPreviewClose}
+          mainDish={pendingMain}
+          sides={pendingSides}
+          onSelectMain={handleSelectMainFromPreview}
+          onRemoveMain={handleRemovePendingMain}
+          onRemoveSide={handleRemovePendingSide}
+          onAddSides={handleAddSidesClick}
+          onConfirm={handleConfirmMeal}
+          isSubmitting={isCreatingMeal}
+        />
+
+        {/* Discard Confirmation Dialog */}
+        <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-warning" />
+                Discard Meal?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                You have a meal in progress. Are you sure you want to discard it?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleCancelDiscard}>
+                Keep Editing
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleConfirmDiscard}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                Discard
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    );
+  }
+
   return (
     <PageLayout
       title="Meal Planner"
@@ -495,33 +626,10 @@ export function MealPlannerPage() {
         onMealUpdated={handleMealUpdated}
       />
 
-      {/* Recipe Picker Dialog - for selecting main dish or sides */}
-      <RecipePickerDialog
-        open={showRecipePicker}
-        onOpenChange={handlePickerClose}
-        onSelect={handleRecipeSelect}
-        selectedIds={
-          pickerMode === "side"
-            ? new Set(pendingSides.map((s) => s.id))
-            : pendingMain
-              ? new Set([pendingMain.id])
-              : new Set()
-        }
-        filterMealType={pickerMode === "side" ? "side" : null}
-        title={pickerMode === "side" ? "Add Side Dishes" : "Select Main Dish"}
-        description={
-          pickerMode === "side"
-            ? "Choose up to 3 side dishes for your meal"
-            : "Choose the main dish for your meal"
-        }
-        showDoneButton={pickerMode === "side"}
-        onDone={handleSidesDone}
-      />
-
       {/* Meal Preview Dialog - overlay for building a new meal */}
       <MealPreviewDialog
         open={showMealPreview}
-        onOpenChange={setShowMealPreview}
+        onOpenChange={handleMealPreviewClose}
         mainDish={pendingMain}
         sides={pendingSides}
         onSelectMain={handleSelectMainFromPreview}
@@ -532,6 +640,58 @@ export function MealPlannerPage() {
         isSubmitting={isCreatingMeal}
       />
 
+      {/* Discard Confirmation Dialog - for dialog close attempts */}
+      <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              Discard Meal?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You have a meal in progress. Are you sure you want to discard it?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDiscard}>
+              Keep Editing
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDiscard}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Leave Confirmation Dialog - for browser navigation */}
+      <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              Discard Meal?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You have a meal in progress. Are you sure you want to leave? Your
+              selection will be lost.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelLeave}>
+              Keep Editing
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmLeave}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageLayout>
   );
 }

@@ -510,6 +510,10 @@
   animation: pulse-soft 2s ease-in-out infinite;
 }
 
+.animate-pulse-soft:hover {
+  animation-play-state: paused;
+}
+
 .animate-collapse-down {
   animation: collapse-down var(--duration-normal) var(--ease-out);
 }
@@ -878,7 +882,8 @@ html body[data-scroll-locked],
 html body[data-scroll-locked="1"] {
   padding-right: 0 !important;
   margin-right: 0 !important;
-  overflow: visible !important;
+  overflow-x: hidden !important;
+  overflow-y: scroll !important;
   margin: 0 !important;
   --removed-body-scroll-bar-size: 0 !important;
 }

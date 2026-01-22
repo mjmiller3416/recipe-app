@@ -61,7 +61,7 @@ export function RecipeSelectCard({
       onClick={handleClick}
       className={cn(
         "overflow-hidden group p-0 gap-0",
-        isSelected && "ring-2 ring-primary shadow-glow-primary",
+        isSelected && "outline outline-2 outline-primary",
         isSelected && "animate-bounce-subtle",
         className
       )}

@@ -99,8 +99,8 @@ export function MealGridCard({
         "liftable hover:bg-hover",
         // Focus styles
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        // Selected state
-        isSelected && "ring-2 ring-primary",
+        // Selected state - use outline instead of ring so it persists on hover (ring uses box-shadow which gets overridden by liftable)
+        isSelected && "outline outline-2 outline-primary",
         className
       )}
     >
