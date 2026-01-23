@@ -24,7 +24,8 @@ import { CompletedDropdown, CompletedMealItem } from "./CompletedDropdown";
 import { SelectedMealCard } from "./meal-display/SelectedMealCard";
 import { RecipePickerDialog } from "./RecipePickerDialog";
 import { MealPreviewDialog } from "./MealPreviewDialog";
-import { AlertTriangle, ChefHat } from "lucide-react";
+import { AlertTriangle, ChefHat, ArrowUpDown } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import type { RecipeCardData } from "@/types";
 
@@ -52,6 +53,7 @@ export function MealPlannerPage() {
   const [pendingSides, setPendingSides] = useState<RecipeCardData[]>([]);
   const [isCreatingMeal, setIsCreatingMeal] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [isReorderMode, setIsReorderMode] = useState(false);
 
   // Track if user has started meal creation (selected a main dish)
   const hasPendingMeal = !!pendingMain;
@@ -65,13 +67,14 @@ export function MealPlannerPage() {
   }, []);
 
   // Unsaved changes hook - handles browser nav and sidebar via SafeLink
+  // Include showRecipePicker so protection is active during recipe selection
   const {
     showLeaveDialog,
     setShowLeaveDialog,
     confirmLeave,
     cancelLeave,
   } = useUnsavedChanges({
-    isDirty: hasPendingMeal,
+    isDirty: showRecipePicker || hasPendingMeal,
     onConfirmLeave: resetMealCreation,
   });
 
@@ -451,6 +454,31 @@ export function MealPlannerPage() {
     }
   };
 
+  // Handle drag-and-drop reorder of grid items
+  const handleReorder = useCallback(
+    async (reorderedItems: MealGridItem[]) => {
+      const reorderedIds = reorderedItems.map((item) => item.id);
+      const previousEntries = entries;
+
+      // Optimistic update: reorder entries to match new order
+      const reorderedEntries = reorderedIds
+        .map((id) => entries.find((e) => e.id === id))
+        .filter((e): e is PlannerEntryResponseDTO => e !== undefined);
+
+      // Merge reordered active entries with completed entries
+      setEntries([...reorderedEntries, ...completedEntries]);
+
+      try {
+        await plannerApi.reorderEntries(reorderedIds);
+        window.dispatchEvent(new Event("planner-updated"));
+      } catch (err) {
+        console.error("Failed to reorder entries:", err);
+        setEntries(previousEntries);
+      }
+    },
+    [entries, completedEntries]
+  );
+
   // Handle clearing all completed entries
   const handleClearCompleted = async () => {
     const previousEntries = entries;
@@ -554,6 +582,23 @@ export function MealPlannerPage() {
       description="Plan your weekly meals"
       actions={
         <div className="flex items-center gap-2">
+          {/* Reorder Toggle Button */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                onClick={() => setIsReorderMode(!isReorderMode)}
+                variant={isReorderMode ? "default" : "outline"}
+                size="icon"
+                aria-label={isReorderMode ? "Done reordering" : "Reorder meals"}
+              >
+                <ArrowUpDown strokeWidth={1.5} className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {isReorderMode ? "Done reordering" : "Reorder meals"}
+            </TooltipContent>
+          </Tooltip>
+
           {/* Create Meal Button */}
           <Button
             onClick={handleCreateMealClick}
@@ -582,6 +627,8 @@ export function MealPlannerPage() {
           onItemClick={handleGridItemClick}
           onAddMealClick={handleAddMealClick}
           onCycleShoppingMode={handleCycleShoppingMode}
+          onReorder={handleReorder}
+          isReorderMode={isReorderMode}
         />
 
         {/* BOTTOM: SELECTED MEAL CARD */}

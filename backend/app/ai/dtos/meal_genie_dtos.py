@@ -19,11 +19,18 @@ class MealGenieRequestDTO(BaseModel):
 
 
 class MealGenieResponseDTO(BaseModel):
-    """Response DTO for Meal Genie chat."""
+    """Response DTO for Meal Genie chat.
+
+    Can include recipe data if the AI decides to generate a recipe.
+    """
 
     success: bool
     response: Optional[str] = None
     error: Optional[str] = None
+    # Optional recipe data (if AI generated one)
+    recipe: Optional["GeneratedRecipeDTO"] = None
+    reference_image_data: Optional[str] = None  # Base64 encoded (1:1 square)
+    banner_image_data: Optional[str] = None  # Base64 encoded (21:9 ultrawide)
 
 
 # Recipe Generation DTOs
@@ -70,3 +77,7 @@ class RecipeGenerationResponseDTO(BaseModel):
     ai_message: Optional[str] = None  # Friendly message from AI
     needs_more_info: bool = False  # True if AI is asking follow-up questions
     error: Optional[str] = None
+
+
+# Rebuild models to resolve forward references
+MealGenieResponseDTO.model_rebuild()

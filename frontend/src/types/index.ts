@@ -481,6 +481,10 @@ export interface MealGenieResponseDTO {
   success: boolean;
   response?: string;
   error?: string;
+  // Optional recipe data (if AI generated one)
+  recipe?: GeneratedRecipeDTO;
+  reference_image_data?: string;
+  banner_image_data?: string;
 }
 
 // Recipe Generation Types

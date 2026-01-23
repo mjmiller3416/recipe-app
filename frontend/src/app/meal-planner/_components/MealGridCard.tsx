@@ -1,11 +1,13 @@
 "use client";
 
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RecipeBannerImage } from "@/components/recipe/RecipeBannerImage";
-import { ShoppingCart, Users, Clock, Bookmark } from "lucide-react";
+import { ShoppingCart, Users, Clock, Bookmark, GripVertical } from "lucide-react";
 import { ShoppingMode } from "@/types";
 
 // ============================================================================
@@ -28,6 +30,7 @@ interface MealGridCardProps {
   isSelected?: boolean;
   onClick?: () => void;
   onCycleShoppingMode?: () => void;
+  isReorderMode?: boolean;
   className?: string;
 }
 
@@ -81,12 +84,29 @@ export function MealGridCard({
   isSelected = false,
   onClick,
   onCycleShoppingMode,
+  isReorderMode = false,
   className,
 }: MealGridCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   const shoppingMode = item.shoppingMode ?? "all";
 
   return (
     <Card
+      ref={setNodeRef}
+      style={style}
       onClick={onClick}
       tabIndex={0}
       role="button"
@@ -95,12 +115,14 @@ export function MealGridCard({
         // Base styles
         "group cursor-pointer overflow-hidden",
         "pb-0 pt-0 gap-0",
-        // Liftable hover effect
-        "liftable hover:bg-hover",
+        // Liftable hover effect (disabled while dragging to prevent transform conflicts)
+        !isDragging && "liftable hover:bg-hover",
         // Focus styles
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         // Selected state - use outline instead of ring so it persists on hover (ring uses box-shadow which gets overridden by liftable)
         isSelected && "outline outline-2 outline-primary",
+        // Dragging state - transition-none overrides Card's built-in transition-all
+        isDragging && "opacity-50 shadow-lg z-10 transition-none",
         className
       )}
     >
@@ -111,8 +133,27 @@ export function MealGridCard({
           fallbackSrc={item.imageUrl}
           alt={item.name}
           aspectRatio="16/9"
-          className="transition-transform duration-300 group-hover:scale-105"
+          className={cn(
+            // Hover zoom effect (disabled while dragging to prevent jitter)
+            !isDragging && "transition-transform duration-300 group-hover:scale-105"
+          )}
         />
+
+        {/* Drag Handle - Top Left (only visible in reorder mode) */}
+        {isReorderMode && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            shape="pill"
+            className="absolute top-2 left-2 size-6 bg-overlay-strong cursor-grab active:cursor-grabbing touch-none"
+            aria-label="Drag to reorder"
+            onClick={(e) => e.stopPropagation()}
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="size-3.5 text-muted-foreground" strokeWidth={1.5} />
+          </Button>
+        )}
 
         {/* Status Icons - Top Right */}
         <div className="absolute top-2 right-2 flex gap-1">

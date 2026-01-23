@@ -46,8 +46,9 @@ export function MealQueueItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group flex items-center gap-3 p-3 rounded-lg bg-elevated hover:bg-hover transition-all duration-300",
-        isDragging && "opacity-50 shadow-lg z-10",
+        "group flex items-center gap-3 p-3 rounded-lg bg-elevated hover:bg-hover",
+        // Disable transitions while dragging to prevent jitter, otherwise use normal transitions
+        isDragging ? "opacity-50 shadow-lg z-10 transition-none" : "transition-all duration-300",
         isCompleting && "opacity-0"
       )}
     >

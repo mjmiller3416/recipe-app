@@ -25,12 +25,16 @@ async def ask_meal_genie(
     """
     Send a message to Meal Genie and get a response.
 
+    The AI may decide to generate a recipe if the user asks for one.
+    If a recipe is generated, it will be included in the response along
+    with optional AI-generated images.
+
     Args:
         request: The chat request with message and optional conversation history
         session: Database session for fetching user context
 
     Returns:
-        Response with AI-generated answer
+        Response with AI-generated answer, optionally including recipe data
     """
     try:
         # Build user context from database
@@ -49,9 +53,49 @@ async def ask_meal_genie(
                 status_code=500, detail=result.get("error", "Failed to get response")
             )
 
+        response_text = result["response"]
+
+        # Check if AI generated a recipe in the response
+        recipe_data = service._extract_recipe_json(response_text)
+
+        if recipe_data:
+            # Recipe was generated - parse it and optionally generate images
+            from app.ai.dtos.meal_genie_dtos import GeneratedRecipeDTO
+
+            try:
+                recipe = GeneratedRecipeDTO(**recipe_data)
+                ai_message = service._extract_ai_message(response_text)
+
+                # Generate images for the recipe
+                reference_image_data = None
+                banner_image_data = None
+                try:
+                    image_service = get_image_generation_service()
+                    image_result = image_service.generate_dual_recipe_images(
+                        recipe.recipe_name
+                    )
+                    if image_result["success"]:
+                        reference_image_data = image_result.get("reference_image_data")
+                        banner_image_data = image_result.get("banner_image_data")
+                except Exception as e:
+                    print(f"Image generation exception: {e}")
+
+                return MealGenieResponseDTO(
+                    success=True,
+                    response=ai_message,
+                    recipe=recipe,
+                    reference_image_data=reference_image_data,
+                    banner_image_data=banner_image_data,
+                    error=None,
+                )
+            except Exception as e:
+                # Failed to parse recipe, return as normal chat
+                print(f"Failed to parse recipe: {e}")
+
+        # Normal chat response (no recipe)
         return MealGenieResponseDTO(
             success=True,
-            response=result["response"],
+            response=response_text,
             error=None,
         )
 

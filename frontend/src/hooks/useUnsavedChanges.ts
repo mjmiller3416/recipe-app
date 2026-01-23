@@ -200,9 +200,10 @@ export function useUnsavedChanges({
     // Navigate after a micro-task to ensure state updates complete
     setTimeout(() => {
       if (target === "__BROWSER_BACK__") {
-        // We need to go back 2 steps: one for the guard state we pushed when 
-        // intercepting, and one more to get to the actual previous page
-        window.history.go(-2);
+        // Go back 1 step to pop the guard state we re-pushed when intercepting.
+        // onConfirmLeave already cleaned up the picker state, so user stays on
+        // the current page (meal planner) with the picker closed.
+        window.history.back();
       } else if (target) {
         router.push(target);
       }
