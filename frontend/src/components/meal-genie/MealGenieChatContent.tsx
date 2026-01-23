@@ -1,13 +1,18 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Sparkles, Send, X, ChefHat, Lightbulb, Calendar, Minimize2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Sparkles, Send, X, ChefHat, Lightbulb, Calendar, Minimize2, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { mealGenieApi } from "@/lib/api";
 import { useChatHistory } from "@/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import type { GeneratedRecipeDTO } from "@/types";
+
+// Session storage key for AI-generated recipe (must match useRecipeForm.ts)
+const AI_RECIPE_STORAGE_KEY = "meal-genie-generated-recipe";
 
 const SUGGESTIONS = [
   { icon: ChefHat, text: "What can I make with chicken?", color: "text-primary" },
@@ -30,6 +35,7 @@ export function MealGenieChatContent({
   onExpand,
   isMobile = false,
 }: MealGenieChatContentProps) {
+  const router = useRouter();
   const [input, setInput] = useState("");
   const { messages, addMessage, clearHistory } = useChatHistory();
   const [isLoading, setIsLoading] = useState(false);
@@ -38,6 +44,13 @@ export function MealGenieChatContent({
   const inputRef = useRef<HTMLInputElement>(null);
   const [showTopFade, setShowTopFade] = useState(false);
   const [showBottomFade, setShowBottomFade] = useState(false);
+
+  // Track pending recipe for "View Recipe Draft" button
+  const [pendingRecipe, setPendingRecipe] = useState<{
+    recipe: GeneratedRecipeDTO;
+    referenceImageData: string | null;
+    bannerImageData: string | null;
+  } | null>(null);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -81,9 +94,23 @@ export function MealGenieChatContent({
     setIsLoading(true);
 
     try {
+      // Single API call - AI decides if it should generate a recipe
       const response = await mealGenieApi.ask(textToSend, messages);
-      if (response.success && response.response) {
-        addMessage({ role: "assistant", content: response.response });
+
+      if (response.success) {
+        // Check if AI generated a recipe
+        if (response.recipe) {
+          // Store recipe in state - show button instead of auto-navigating
+          setPendingRecipe({
+            recipe: response.recipe,
+            referenceImageData: response.reference_image_data || null,
+            bannerImageData: response.banner_image_data || null,
+          });
+          addMessage({ role: "assistant", content: response.response || "I've created a recipe for you!" });
+        } else if (response.response) {
+          // Normal chat response
+          addMessage({ role: "assistant", content: response.response });
+        }
       } else {
         throw new Error(response.error || "Failed to get response");
       }
@@ -94,6 +121,14 @@ export function MealGenieChatContent({
       setIsLoading(false);
     }
   }, [input, isLoading, messages, addMessage, isMinimized, onExpand]);
+
+  // Navigate to recipe form when user clicks "View Recipe Draft"
+  const handleViewRecipe = useCallback(() => {
+    if (!pendingRecipe) return;
+    sessionStorage.setItem(AI_RECIPE_STORAGE_KEY, JSON.stringify(pendingRecipe));
+    router.push("/recipes/add?from=ai");
+    setPendingRecipe(null);
+  }, [pendingRecipe, router]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -179,13 +214,13 @@ export function MealGenieChatContent({
       {/* Messages / Empty State Area */}
       <div className="relative flex-1 min-h-0">
         {/* Scroll fade indicators */}
-        <div 
+        <div
           className={cn(
             "absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-elevated to-transparent pointer-events-none z-10 transition-opacity duration-200",
             showTopFade ? "opacity-100" : "opacity-0"
           )}
         />
-        <div 
+        <div
           className={cn(
             "absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-elevated to-transparent pointer-events-none z-10 transition-opacity duration-200",
             showBottomFade ? "opacity-100" : "opacity-0"
@@ -212,7 +247,7 @@ export function MealGenieChatContent({
                         "max-w-[85%] px-3.5 py-2.5 text-sm leading-relaxed",
                         message.role === "user"
                           ? "bg-primary text-primary-foreground rounded-2xl rounded-br-sm"
-                          : "bg-gradient-to-br from-muted to-muted/80 border border-border/30 text-foreground rounded-2xl rounded-bl-sm"
+                          : "bg-gradient-to-br from-muted to-muted/80 border border-border/30 text-foreground rounded-2xl rounded-bl-sm whitespace-pre-line"
                       )}
                     >
                       {message.content}
@@ -237,6 +272,27 @@ export function MealGenieChatContent({
                         <span className="text-xs text-muted-foreground">Thinking...</span>
                       </div>
                     </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* View Recipe Draft button - shown when a recipe is ready */}
+              <AnimatePresence>
+                {pendingRecipe && !isLoading && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex justify-start"
+                  >
+                    <Button
+                      onClick={handleViewRecipe}
+                      className="gap-2 bg-primary hover:bg-primary-hover text-primary-foreground"
+                    >
+                      <FileText className="h-4 w-4" />
+                      View Recipe Draft
+                    </Button>
                   </motion.div>
                 )}
               </AnimatePresence>
