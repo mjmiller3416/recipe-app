@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
 interface UseUnsavedChangesOptions {
@@ -134,7 +134,8 @@ export function useUnsavedChanges({
   }, [isDirty]);
 
   // Handle browser back/forward buttons with history manipulation
-  useEffect(() => {
+  // Use useLayoutEffect to push guard state synchronously before browser can handle back button
+  useLayoutEffect(() => {
     if (isDirty && !historyStateAddedRef.current) {
       window.history.pushState({ unsavedChangesGuard: true }, "", window.location.href);
       historyStateAddedRef.current = true;

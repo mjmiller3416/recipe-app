@@ -114,10 +114,10 @@ export function SafeLink({ href, children, className, onClick }: SafeLinkProps) 
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancel}>Stay on Page</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogCancel onClick={handleCancel}>Keep Editing</AlertDialogCancel>
+            <AlertDialogAction
               onClick={handleConfirm}
-              className="bg-secondary hover:bg-secondary/90"
+              className="bg-destructive text-white hover:bg-destructive/90"
             >
               Discard Changes
             </AlertDialogAction>

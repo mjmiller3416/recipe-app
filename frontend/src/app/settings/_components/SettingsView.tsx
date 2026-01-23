@@ -252,7 +252,7 @@ export function SettingsView() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmLeave}
-              className="bg-secondary hover:bg-secondary/90"
+              className="bg-destructive text-white hover:bg-destructive/90"
             >
               Discard Changes
             </AlertDialogAction>
