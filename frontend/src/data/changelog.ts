@@ -2,9 +2,21 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-01-21 - Improvements
+- Meal Genie now prioritizes your saved recipes when making suggestions
+
+## 2026-01-21 - Bug Fixes
+- Fixed dropdown menus causing layout shift and unintended modal behavior
+
+## 2026-01-20 - New Features
+- Drag-and-drop reordering of meals in the Meal Planner sidebar
+
 ## 2026-01-20 - Improvements
 - AI image generation now shows a progress bar so you can see each step as your recipe image is created
 - Meals in the planner are now automatically saved when you add them — no extra steps needed
+
+## 2026-01-20 - Bug Fixes
+- Fixed issue where Meal Genie could create duplicate recipes when generating suggestions
 
 ## 2026-01-19 - Improvements
 - Meal Genie now provides 6-10 creative recipe ideas immediately when you ask for suggestions, instead of asking questions first
