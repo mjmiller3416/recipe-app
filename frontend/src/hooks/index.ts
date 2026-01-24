@@ -10,3 +10,10 @@ export { useUnitConversionRules } from "./useUnitConversionRules";
 export { useChatHistory } from "./useChatHistory";
 export { useSortableDnd } from "./useSortableDnd";
 export { useRecipeFilters, type UseRecipeFiltersOptions, type UseRecipeFiltersReturn } from "./useRecipeFilters";
+export {
+  useIngredientAutocomplete,
+  type AutocompleteIngredient,
+  type AutocompleteItem,
+  type UseIngredientAutocompleteOptions,
+  type UseIngredientAutocompleteReturn,
+} from "./useIngredientAutocomplete";

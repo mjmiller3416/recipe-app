@@ -2,7 +2,8 @@
 
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getRecipeEmoji } from "@/lib/recipeEmoji";
+import { getRecipeIcon } from "@/lib/recipeIcon";
+import { RecipeIcon } from "@/components/common/RecipeIcon";
 import { Button } from "@/components/ui/button";
 
 // ============================================================================
@@ -39,7 +40,7 @@ export function SideChip({ name, category, onClick, className }: SideChipProps) 
   }
 
   // 2. FILLED SLOT VARIANT (Uses 'outline' variant)
-  const emoji = getRecipeEmoji(name, category);
+  const icon = getRecipeIcon(name, category);
 
   return (
     <Button
@@ -47,7 +48,7 @@ export function SideChip({ name, category, onClick, className }: SideChipProps) 
       onClick={onClick}
       className={cn("font-normal justify-start", className)}
     >
-      <span className="text-base shrink-0">{emoji}</span>
+      <RecipeIcon icon={icon} className="w-5 h-5 shrink-0" />
       <span className="truncate">{name}</span>
     </Button>
   );

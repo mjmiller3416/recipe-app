@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getRecipeEmoji } from "@/lib/recipeEmoji";
+import { getRecipeIcon } from "@/lib/recipeIcon";
+import type { RecipeIconData } from "@/components/common/RecipeIcon";
 
 // ============================================================================
 // TYPES
@@ -10,7 +11,7 @@ import { getRecipeEmoji } from "@/lib/recipeEmoji";
 export interface RecentRecipe {
   id: number;
   name: string;
-  emoji: string;
+  icon: RecipeIconData;
   viewedAt: number; // timestamp for ordering
 }
 
@@ -21,6 +22,37 @@ export interface RecentRecipe {
 const STORAGE_KEY = "meal-genie-recent-recipes";
 const MAX_RECENT_RECIPES = 3;
 const CUSTOM_EVENT_NAME = "recent-recipes-updated";
+
+// ============================================================================
+// MIGRATION HELPERS
+// ============================================================================
+
+/** Old format stored emoji as string */
+interface LegacyRecentRecipe {
+  id: number;
+  name: string;
+  emoji?: string;
+  icon?: RecipeIconData;
+  viewedAt: number;
+}
+
+/**
+ * Migrate old localStorage format (emoji: string) to new format (icon: RecipeIconData)
+ */
+function migrateRecipe(recipe: LegacyRecentRecipe): RecentRecipe {
+  // Already in new format
+  if (recipe.icon && typeof recipe.icon === "object" && "type" in recipe.icon) {
+    return recipe as RecentRecipe;
+  }
+
+  // Migrate from old emoji format
+  return {
+    id: recipe.id,
+    name: recipe.name,
+    icon: getRecipeIcon(recipe.name),
+    viewedAt: recipe.viewedAt,
+  };
+}
 
 // ============================================================================
 // HOOK
@@ -72,8 +104,9 @@ export function useRecentRecipes(): UseRecentRecipesReturn {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        const parsed = JSON.parse(stored) as RecentRecipe[];
-        const sorted = parsed.sort((a, b) => b.viewedAt - a.viewedAt);
+        const parsed = JSON.parse(stored) as LegacyRecentRecipe[];
+        const migrated = parsed.map(migrateRecipe);
+        const sorted = migrated.sort((a, b) => b.viewedAt - a.viewedAt);
         setRecentRecipes(sorted.slice(0, MAX_RECENT_RECIPES));
       }
     } catch (error) {
@@ -94,8 +127,9 @@ export function useRecentRecipes(): UseRecentRecipesReturn {
     const handleStorageEvent = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {
         try {
-          const parsed = JSON.parse(e.newValue) as RecentRecipe[];
-          const sorted = parsed.sort((a, b) => b.viewedAt - a.viewedAt);
+          const parsed = JSON.parse(e.newValue) as LegacyRecentRecipe[];
+          const migrated = parsed.map(migrateRecipe);
+          const sorted = migrated.sort((a, b) => b.viewedAt - a.viewedAt);
           setRecentRecipes(sorted.slice(0, MAX_RECENT_RECIPES));
         } catch (error) {
           console.error("[useRecentRecipes] Failed to parse storage event:", error);
@@ -139,7 +173,7 @@ export function useRecentRecipes(): UseRecentRecipesReturn {
         const newRecipe: RecentRecipe = {
           id: recipe.id,
           name: recipe.name,
-          emoji: getRecipeEmoji(recipe.name, recipe.category),
+          icon: getRecipeIcon(recipe.name, recipe.category),
           viewedAt: Date.now(),
         };
 

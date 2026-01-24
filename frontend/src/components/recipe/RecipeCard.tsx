@@ -6,6 +6,7 @@ import { Clock, Users } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { RecipeCardData } from "@/types";
+import { getRecipeCardUrl } from "@/lib/imageUtils";
 import { FavoriteButton } from "../common/FavoriteButton";
 import { RecipeBadge, RecipeBadgeGroup } from "./RecipeBadge";
 import { RecipeImage } from "./RecipeImage";
@@ -214,7 +215,6 @@ function RecipeCardMedium({
       interactive
       className={cn(
         "group overflow-hidden",
-        // Enhanced lift effect for medium cards
         "hover:-translate-y-2",
         "pb-0 pt-0 gap-0",
         className
@@ -225,24 +225,21 @@ function RecipeCardMedium({
       role="button"
       aria-label={`View ${recipe.name} recipe`}
     >
-      {/* Image Container - Fixed hover glitch */}
-      <div className="relative w-full aspect-[4/3] overflow-hidden bg-elevated">
+      {/* Full-bleed image container - image height = card height */}
+      <div className="relative w-full aspect-[3/4] overflow-hidden bg-elevated">
         <RecipeImage
-          src={recipe.imageUrl}
+          src={getRecipeCardUrl(recipe.imageUrl, 600, 800)}
           alt={recipe.name}
-          className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+          className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-300 ease-out group-hover:scale-105"
           iconSize="lg"
           showLoadingState={false}
         />
-        {/* Hover Overlay - Scales with image */}
-        {recipe.imageUrl && (
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out group-hover:scale-105"
-               style={{ transformOrigin: 'center center' }}
-          />
-        )}
-        
-        {/* Favorite Button */}
-        <div className="absolute top-4 right-4">
+
+        {/* Gradient overlay for text readability - always visible */}
+        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-background via-background/70 to-transparent pointer-events-none" />
+
+        {/* Favorite Button - top right */}
+        <div className="absolute top-4 right-4 z-10">
           <FavoriteButton
             isFavorite={recipe.isFavorite || false}
             onToggle={onFavoriteClick}
@@ -251,9 +248,9 @@ function RecipeCardMedium({
           />
         </div>
 
-        {/* Meal Type Badge - Now at top-left, no category badge */}
+        {/* Meal Type Badge - top left */}
         {showCategory && recipe.mealType && (
-          <div className="absolute top-4 left-4">
+          <div className="absolute top-4 left-4 z-10">
             <RecipeBadge
               label={recipe.mealType}
               type="mealType"
@@ -262,34 +259,23 @@ function RecipeCardMedium({
             />
           </div>
         )}
-      </div>
 
-      {/* Recipe Info */}
-      <div className="p-6 space-y-4">
-        <h3 className="text-xl font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-200">
-          {recipe.name}
-        </h3>
+        {/* Content overlay at bottom */}
+        <div className="absolute inset-x-0 bottom-0 p-4 z-10">
+          <h3 className="text-lg font-bold text-foreground line-clamp-2 group-hover:text-primary transition-colors duration-200 mb-2">
+            {recipe.name}
+          </h3>
 
-        {/* Metadata Row */}
-        <div className="flex items-center gap-6 text-base text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Users className="h-5 w-5 text-primary flex-shrink-0" />
+          {/* Compact metadata row */}
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Users className="h-4 w-4" />
+              <span>{recipe.servings}</span>
             </div>
-            <div>
-              <span className="font-semibold text-foreground">{recipe.servings}</span>
-              <span className="text-sm ml-1">serving{recipe.servings !== 1 ? "s" : ""}</span>
-            </div>
-          </div>
-
-          <div className="h-8 w-px bg-border" />
-
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Clock className="h-5 w-5 text-primary flex-shrink-0" />
-            </div>
-            <div>
-              <span className="font-semibold text-foreground">{formatTime(recipe.totalTime)}</span>
+            <div className="h-4 w-px bg-border" />
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-4 w-4" />
+              <span>{formatTime(recipe.totalTime)}</span>
             </div>
           </div>
         </div>

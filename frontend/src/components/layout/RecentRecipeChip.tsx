@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Clock } from "lucide-react";
 import { useRecentRecipes } from "@/hooks";
 import { cn } from "@/lib/utils";
+import { RecipeIcon, type RecipeIconData } from "@/components/common/RecipeIcon";
 
 interface RecentRecipesSectionProps {
   onNavigate?: () => void;
@@ -38,7 +39,7 @@ export function RecentRecipesSection({ onNavigate }: RecentRecipesSectionProps) 
             key={recipe.id}
             id={recipe.id}
             name={recipe.name}
-            emoji={recipe.emoji}
+            icon={recipe.icon}
             onClick={onNavigate}
           />
         ))}
@@ -50,11 +51,11 @@ export function RecentRecipesSection({ onNavigate }: RecentRecipesSectionProps) 
 interface RecentRecipeChipProps {
   id: number;
   name: string;
-  emoji: string;
+  icon: RecipeIconData;
   onClick?: () => void;
 }
 
-function RecentRecipeChip({ id, name, emoji, onClick }: RecentRecipeChipProps) {
+function RecentRecipeChip({ id, name, icon, onClick }: RecentRecipeChipProps) {
   return (
     <Link
       href={`/recipes/${id}`}
@@ -72,7 +73,7 @@ function RecentRecipeChip({ id, name, emoji, onClick }: RecentRecipeChipProps) {
         "interactive-subtle"
       )}
     >
-      <span className="flex-shrink-0">{emoji}</span>
+      <RecipeIcon icon={icon} className="w-5 h-5 flex-shrink-0" />
       <span className="truncate">{name}</span>
     </Link>
   );

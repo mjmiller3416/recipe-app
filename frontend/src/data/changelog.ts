@@ -2,6 +2,17 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-01-24 - New Features
+- Configure your default recipe sort order in Settings → Recipe Preferences — choose between A-Z, Most Recent, or Cook Time
+- New Meal Planning settings section — set your default servings (1-12) and choose whether your week starts on Sunday or Monday
+- New Shopping List settings section — choose when checked items are cleared (Manual, On Refresh, or Daily)
+
+## 2026-01-24 - Improvements
+- Quick Add widget now suggests ingredients as you type, matching the autocomplete behavior from the recipe editor — selecting an ingredient auto-fills the category
+- Shopping list categories now display custom icons instead of generic emojis — each category (Produce, Meat, Dairy, Spices, etc.) has its own distinct icon
+- Recipe icons are now smarter with priority-based matching — specific keywords like "salmon" match before generic ones like "fish" for more accurate icons
+- Expanded recipe icon coverage with 25+ new food keywords mapped to icons, reducing emoji fallbacks
+
 ## 2026-01-21 - Improvements
 - Meal Genie now prioritizes your saved recipes when making suggestions
 

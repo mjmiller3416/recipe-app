@@ -439,7 +439,14 @@ export function RecipeBrowserView({
     maxCookTime: null,
     newDays: null,
   });
-  const [sortBy, setSortBy] = useState<SortOption>("alphabetical");
+  // Map settings sort order to component sort option (settings uses "recent", component uses "createdAt")
+  const getInitialSortOption = (): SortOption => {
+    const settingValue = settings.recipePreferences.defaultSortOrder;
+    if (settingValue === "recent") return "createdAt";
+    return settingValue;
+  };
+
+  const [sortBy, setSortBy] = useState<SortOption>(getInitialSortOption);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [showFilters, setShowFilters] = useState(() => {
     // Initialize from sessionStorage, default to true if not set

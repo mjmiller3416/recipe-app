@@ -8,29 +8,42 @@ import { ChevronUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RecipeIcon, type RecipeIconData } from "@/components/common/RecipeIcon";
 
 // Storage key prefix for persisting collapsed state
 const COLLAPSED_STORAGE_KEY = "shopping-category-collapsed";
 
 // ============================================================================
-// CATEGORY EMOJI MAPPING
+// CATEGORY ICON MAPPING
 // ============================================================================
 
-const CATEGORY_EMOJIS: Record<string, string> = {
-  "Produce": "🥬",
-  "Dairy & Eggs": "🧀",
-  "Dairy": "🧀",
-  "Meat & Seafood": "🥩",
-  "Meat": "🥩",
-  "Bakery": "🥖",
-  "Pantry": "🫙",
-  "Frozen": "🧊",
-  "Beverages": "🥤",
-  "Other": "📦",
+/**
+ * Maps ingredient category values to icons.
+ * Uses lowercase keys to match against normalized category values.
+ */
+const CATEGORY_ICONS: Record<string, RecipeIconData> = {
+  produce: { type: "icon", value: "group-of-vegetables" },
+  dairy: { type: "icon", value: "cheese" },
+  deli: { type: "icon", value: "salami" },
+  meat: { type: "icon", value: "cuts-of-beef" },
+  condiments: { type: "icon", value: "sauce-bottle" },
+  "oils-and-vinegars": { type: "icon", value: "olive-oil" },
+  seafood: { type: "icon", value: "prawn" },
+  pantry: { type: "icon", value: "tin-can" },
+  spices: { type: "icon", value: "spice" },
+  frozen: { type: "icon", value: "ice" },
+  bakery: { type: "icon", value: "baguette" },
+  baking: { type: "icon", value: "flour" },
+  beverages: { type: "icon", value: "cola" },
+  other: { type: "icon", value: "grocery-bag" },
 };
 
-function getCategoryEmoji(category: string): string {
-  return CATEGORY_EMOJIS[category] || CATEGORY_EMOJIS["Other"];
+const DEFAULT_CATEGORY_ICON: RecipeIconData = { type: "icon", value: "grocery-bag" };
+
+function getCategoryIcon(category: string): RecipeIconData {
+  // Normalize to lowercase for matching
+  const normalizedCategory = category.toLowerCase();
+  return CATEGORY_ICONS[normalizedCategory] || DEFAULT_CATEGORY_ICON;
 }
 
 // ============================================================================
@@ -123,8 +136,8 @@ export function ShoppingCategory({
     localStorage.setItem(storageKey, newExpanded ? "expanded" : "collapsed");
   };
 
-  // Get category emoji
-  const emoji = getCategoryEmoji(category);
+  // Get category icon
+  const icon = getCategoryIcon(category);
 
   return (
     <Card
@@ -139,8 +152,8 @@ export function ShoppingCategory({
         onClick={handleToggleExpanded}
         className="w-full flex items-center gap-3 px-4 py-4 h-auto justify-start rounded-none"
       >
-        {/* Category emoji */}
-        <span className="text-2xl flex-shrink-0">{emoji}</span>
+        {/* Category icon */}
+        <RecipeIcon icon={icon} className="size-8 flex-shrink-0" />
 
         {/* Category name and count */}
         <div className="flex-1 text-left">

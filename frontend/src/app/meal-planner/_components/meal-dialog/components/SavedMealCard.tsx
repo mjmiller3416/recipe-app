@@ -1,9 +1,10 @@
 "use client";
 
-import { Heart, ChefHat } from "lucide-react";
+import { ChefHat } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
-import { getRecipeEmoji } from "@/lib/recipeEmoji";
+import { getRecipeIcon } from "@/lib/recipeIcon";
+import { RecipeIcon } from "@/components/common/RecipeIcon";
 import { cn } from "@/lib/utils";
 import type { MealSelectionResponseDTO } from "@/types";
 
@@ -90,7 +91,7 @@ export function SavedMealCard({
         className
       )}
     >
-      <div className="flex">
+      <div className="flex h-28">
         {/* Main dish image section */}
         <div className="relative w-28 h-28 bg-gradient-to-br from-hover to-elevated flex-shrink-0 overflow-hidden">
           {/* Image with hover zoom */}
@@ -105,30 +106,32 @@ export function SavedMealCard({
           </div>
         </div>
 
-        {/* Content section */}
-        <div className="flex-1 p-4 min-w-0">
-          {/* Meal name */}
-          <h3 className="font-semibold text-foreground text-base mb-1 truncate group-hover:text-primary transition-colors">
+        {/* Content section - flex column to distribute content */}
+        <div className="flex-1 py-2 px-3 min-w-0 overflow-hidden flex flex-col">
+          {/* Top: Meal name */}
+          <h3 className="font-semibold text-foreground text-base truncate group-hover:text-primary transition-colors">
             {meal.meal_name}
           </h3>
 
-          {/* Main recipe name */}
-          {mainRecipe && (
-            <p className="text-sm text-muted-foreground mb-2 truncate">
+          {/* Main recipe name - only show if different from meal name */}
+          {mainRecipe && mainRecipe.recipe_name !== meal.meal_name && (
+            <p className="text-sm text-muted-foreground truncate">
               {mainRecipe.recipe_name}
             </p>
           )}
 
-          {/* Side dish emoji row */}
-          <div className="flex items-center gap-2 mb-2">
+          {/* Middle: Side dish icons - grows to fill available space */}
+          <div className="flex-1 flex items-center gap-2">
             {sideRecipes.length > 0 ? (
               sideRecipes.map((side, i) => (
                 <span
                   key={i}
-                  className="text-lg"
                   title={side.recipe_name}
                 >
-                  {getRecipeEmoji(side.recipe_name, side.recipe_category ?? undefined)}
+                  <RecipeIcon
+                    icon={getRecipeIcon(side.recipe_name, side.recipe_category ?? undefined)}
+                    className="w-5 h-5"
+                  />
                 </span>
               ))
             ) : (
@@ -136,7 +139,7 @@ export function SavedMealCard({
             )}
           </div>
 
-          {/* Stats row */}
+          {/* Bottom: Stats row - pushed to bottom by flex */}
           <div className="flex items-center gap-3 text-xs text-muted-foreground/80 whitespace-nowrap">
             {meal.times_cooked !== null && meal.times_cooked > 0 && (
               <>

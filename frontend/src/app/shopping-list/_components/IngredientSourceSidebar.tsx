@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { getRecipeEmoji } from "@/lib/recipeEmoji";
+import { getRecipeIcon } from "@/lib/recipeIcon";
+import { RecipeIcon } from "@/components/common/RecipeIcon";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,7 +64,7 @@ export function IngredientSourceSidebar({
         <div className="flex flex-col gap-2 overflow-y-auto overflow-x-hidden flex-1 px-1 -mx-1 pb-0.5">
           {recipes.map((recipe, index) => {
             const isActive = activeFilter === recipe.name;
-            const emoji = getRecipeEmoji(recipe.name);
+            const icon = getRecipeIcon(recipe.name);
             // Show separator before new meal groups (but not the first one)
             const showSeparator = recipe.isFirstInMeal && index > 0;
 
@@ -78,8 +79,8 @@ export function IngredientSourceSidebar({
                     isActive && "bg-primary/15 border border-primary/50"
                   )}
                 >
-                  {/* Recipe emoji */}
-                  <span className="text-xl flex-shrink-0">{emoji}</span>
+                  {/* Recipe icon */}
+                  <RecipeIcon icon={icon} className="w-5 h-5 flex-shrink-0" />
 
                   {/* Recipe info */}
                   <div className="flex-1 min-w-0 text-left">
