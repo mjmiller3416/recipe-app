@@ -396,7 +396,7 @@ export function MealPlannerPage() {
       if (meal.main_recipe) {
         const mainDish: RecipeCardData = {
           id: meal.main_recipe.id,
-          name: meal.main_recipe.name,
+          name: meal.main_recipe.recipe_name,
           servings: meal.main_recipe.servings ?? 0,
           totalTime: meal.main_recipe.total_time ?? 0,
           imageUrl: meal.main_recipe.reference_image_path ?? undefined,
@@ -408,7 +408,7 @@ export function MealPlannerPage() {
       if (meal.side_recipes && meal.side_recipes.length > 0) {
         const sides: RecipeCardData[] = meal.side_recipes.map((r) => ({
           id: r.id,
-          name: r.name,
+          name: r.recipe_name,
           servings: r.servings ?? 0,
           totalTime: r.total_time ?? 0,
           imageUrl: r.reference_image_path ?? undefined,
