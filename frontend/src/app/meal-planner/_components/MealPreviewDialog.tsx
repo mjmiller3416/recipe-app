@@ -21,6 +21,8 @@ export interface MealPreviewDialogProps {
   open: boolean;
   /** Called when the dialog open state changes */
   onOpenChange: (open: boolean) => void;
+  /** Dialog mode - "create" for new meals, "edit" for existing meals */
+  mode?: "create" | "edit";
   /** Currently selected main dish (null if empty) */
   mainDish: RecipeCardData | null;
   /** Currently selected side dishes */
@@ -52,6 +54,7 @@ export interface MealPreviewDialogProps {
 export function MealPreviewDialog({
   open,
   onOpenChange,
+  mode = "create",
   mainDish,
   sides,
   onSelectMain,
@@ -61,13 +64,17 @@ export function MealPreviewDialog({
   onConfirm,
   isSubmitting = false,
 }: MealPreviewDialogProps) {
+  const isEditMode = mode === "edit";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="sm" className="max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
-          <DialogTitle>Confirm Your Meal</DialogTitle>
+          <DialogTitle>{isEditMode ? "Edit Meal" : "Confirm Your Meal"}</DialogTitle>
           <DialogDescription>
-            Review your selection and add to the meal queue
+            {isEditMode
+              ? "Update your meal selection"
+              : "Review your selection and add to the meal queue"}
           </DialogDescription>
         </DialogHeader>
 
@@ -82,6 +89,8 @@ export function MealPreviewDialog({
             onAddToQueue={onConfirm}
             isSubmitting={isSubmitting}
             showHeader={false}
+            buttonText={isEditMode ? "Save Changes" : "Add to Meal Queue"}
+            submittingText={isEditMode ? "Saving..." : "Adding..."}
           />
         </div>
 

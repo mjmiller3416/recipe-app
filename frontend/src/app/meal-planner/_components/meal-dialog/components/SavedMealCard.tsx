@@ -137,7 +137,7 @@ export function SavedMealCard({
           </div>
 
           {/* Stats row */}
-          <div className="flex items-center gap-3 text-xs text-muted-foreground/80">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground/80 whitespace-nowrap">
             {meal.times_cooked !== null && meal.times_cooked > 0 && (
               <>
                 <span className="flex items-center gap-1">

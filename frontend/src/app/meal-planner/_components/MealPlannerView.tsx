@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useLayoutEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -17,16 +17,16 @@ import {
 } from "@/components/ui/alert-dialog";
 import { plannerApi } from "@/lib/api";
 import { PlannerEntryResponseDTO, MealSelectionResponseDTO } from "@/types";
-import { MealDialog } from "./meal-dialog/MealDialog";
 import { MealGrid } from "./MealGrid";
 import { MealGridItem } from "./MealGridCard";
 import { CompletedDropdown, CompletedMealItem } from "./CompletedDropdown";
 import { SelectedMealCard } from "./meal-display/SelectedMealCard";
 import { RecipePickerDialog } from "./RecipePickerDialog";
 import { MealPreviewDialog } from "./MealPreviewDialog";
-import { AlertTriangle, ChefHat, ArrowUpDown } from "lucide-react";
+import { SavedMealsDialog } from "./SavedMealsDialog";
+import { AlertTriangle, ChefHat, ArrowUpDown, Bookmark } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { useUnsavedChanges, setNavigationBypass } from "@/hooks/useUnsavedChanges";
 import type { RecipeCardData } from "@/types";
 
 // ============================================================================
@@ -42,28 +42,30 @@ export function MealPlannerPage() {
   const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [mealRefreshKey, setMealRefreshKey] = useState(0);
 
-  // Dialog orchestration state for meal creation flow
+  // Dialog orchestration state for meal creation/edit flow
   const [showRecipePicker, setShowRecipePicker] = useState(false);
   const [showMealPreview, setShowMealPreview] = useState(false);
+  const [showSavedMealsDialog, setShowSavedMealsDialog] = useState(false);
   const [pickerMode, setPickerMode] = useState<"main" | "side">("main");
   const [pendingMain, setPendingMain] = useState<RecipeCardData | null>(null);
   const [pendingSides, setPendingSides] = useState<RecipeCardData[]>([]);
   const [isCreatingMeal, setIsCreatingMeal] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const [isReorderMode, setIsReorderMode] = useState(false);
+  const [editingMealId, setEditingMealId] = useState<number | null>(null);
 
   // Track if user has started meal creation (selected a main dish)
   const hasPendingMeal = !!pendingMain;
 
-  // Helper to reset meal creation state
+  // Helper to reset meal creation/edit state
   const resetMealCreation = useCallback(() => {
     setPendingMain(null);
     setPendingSides([]);
     setShowMealPreview(false);
     setShowRecipePicker(false);
+    setEditingMealId(null);
   }, []);
 
   // Unsaved changes hook - handles browser nav and sidebar via SafeLink
@@ -77,6 +79,36 @@ export function MealPlannerPage() {
     isDirty: showRecipePicker || hasPendingMeal,
     onConfirmLeave: resetMealCreation,
   });
+
+  // Track picker state in a ref for the popstate handler
+  const showRecipePickerRef = useRef(showRecipePicker);
+  showRecipePickerRef.current = showRecipePicker;
+
+  // Handle browser back button when picker is open
+  // This intercepts back button and shows discard dialog instead of navigating away
+  useEffect(() => {
+    if (!showRecipePicker) return;
+
+    // Push a guard state when picker opens
+    window.history.pushState({ pickerGuard: true }, "", window.location.href);
+
+    const handlePopState = (e: PopStateEvent) => {
+      if (showRecipePickerRef.current) {
+        // Temporarily bypass the useUnsavedChanges handler
+        setNavigationBypass(true);
+        // Re-push guard to stay on page
+        window.history.pushState({ pickerGuard: true }, "", window.location.href);
+        // Show the discard dialog
+        setShowDiscardDialog(true);
+        // Reset bypass after a short delay
+        setTimeout(() => setNavigationBypass(false), 100);
+      }
+    };
+
+    // Use capture phase to run before other listeners
+    window.addEventListener("popstate", handlePopState, true);
+    return () => window.removeEventListener("popstate", handlePopState, true);
+  }, [showRecipePicker]);
 
   // Check for create=true URL parameter and redirect to create page
   useEffect(() => {
@@ -250,7 +282,7 @@ export function MealPlannerPage() {
     setPendingSides((prev) => prev.filter((s) => Number(s.id) !== recipeId));
   };
 
-  // Handle confirming meal creation
+  // Handle confirming meal creation or update
   const handleConfirmMeal = async () => {
     if (!pendingMain) return;
 
@@ -258,35 +290,48 @@ export function MealPlannerPage() {
     try {
       const sideRecipeIds = pendingSides.map((r) => Number(r.id));
 
-      // Create the meal
-      const meal = await plannerApi.createMeal({
-        meal_name: pendingMain.name,
-        main_recipe_id: Number(pendingMain.id),
-        side_recipe_ids: sideRecipeIds,
-      });
+      if (editingMealId) {
+        // Update existing meal
+        const updatedMeal = await plannerApi.updateMeal(editingMealId, {
+          meal_name: pendingMain.name,
+          main_recipe_id: Number(pendingMain.id),
+          side_recipe_ids: sideRecipeIds,
+        });
 
-      // Add to planner
-      await plannerApi.addToPlanner(meal.id);
+        // Update local entries state
+        handleMealUpdated(updatedMeal);
 
-      // Refresh entries
-      const data = await plannerApi.getEntries();
-      setEntries(data);
+        // Close dialogs and reset state
+        resetMealCreation();
+      } else {
+        // Create new meal
+        const meal = await plannerApi.createMeal({
+          meal_name: pendingMain.name,
+          main_recipe_id: Number(pendingMain.id),
+          side_recipe_ids: sideRecipeIds,
+        });
 
-      // Select the new entry
-      const newEntry = data.find((e) => e.meal_id === meal.id);
-      if (newEntry) {
-        setSelectedEntryId(newEntry.id);
+        // Add to planner
+        await plannerApi.addToPlanner(meal.id);
+
+        // Refresh entries
+        const data = await plannerApi.getEntries();
+        setEntries(data);
+
+        // Select the new entry
+        const newEntry = data.find((e) => e.meal_id === meal.id);
+        if (newEntry) {
+          setSelectedEntryId(newEntry.id);
+        }
+
+        // Close dialogs and reset state
+        resetMealCreation();
       }
-
-      // Close dialogs and reset state
-      setShowMealPreview(false);
-      setPendingMain(null);
-      setPendingSides([]);
 
       window.dispatchEvent(new Event("planner-updated"));
     } catch (err) {
-      console.error("Failed to create meal:", err);
-      const message = err instanceof Error ? err.message : "Failed to create meal";
+      console.error("Failed to save meal:", err);
+      const message = err instanceof Error ? err.message : "Failed to save meal";
 
       // Show user-friendly toast for capacity errors
       if (message.includes("maximum capacity")) {
@@ -340,18 +385,59 @@ export function MealPlannerPage() {
     }
   };
 
-  // Handle Edit Meal button click - opens the edit meal dialog
-  const handleEditMeal = () => {
-    if (selectedMealId) {
-      setShowEditDialog(true);
+  // Handle Edit Meal button click - fetches meal data and opens preview dialog in edit mode
+  const handleEditMeal = async () => {
+    if (!selectedMealId) return;
+
+    try {
+      const meal = await plannerApi.getMeal(selectedMealId);
+
+      // Convert main recipe to RecipeCardData format
+      if (meal.main_recipe) {
+        const mainDish: RecipeCardData = {
+          id: meal.main_recipe.id,
+          name: meal.main_recipe.name,
+          servings: meal.main_recipe.servings ?? 0,
+          totalTime: meal.main_recipe.total_time ?? 0,
+          imageUrl: meal.main_recipe.reference_image_path ?? undefined,
+        };
+        setPendingMain(mainDish);
+      }
+
+      // Convert side recipes to RecipeCardData format
+      if (meal.side_recipes && meal.side_recipes.length > 0) {
+        const sides: RecipeCardData[] = meal.side_recipes.map((r) => ({
+          id: r.id,
+          name: r.name,
+          servings: r.servings ?? 0,
+          totalTime: r.total_time ?? 0,
+          imageUrl: r.reference_image_path ?? undefined,
+        }));
+        setPendingSides(sides);
+      } else {
+        setPendingSides([]);
+      }
+
+      // Set edit mode and open dialog
+      setEditingMealId(selectedMealId);
+      setShowMealPreview(true);
+    } catch (err) {
+      console.error("Failed to fetch meal for editing:", err);
+      toast.error("Failed to load meal for editing");
     }
   };
 
-  // Handle Add Side click - opens edit dialog
-  const handleAddSide = () => {
-    if (selectedMealId) {
-      setShowEditDialog(true);
-    }
+  // Handle Add Side click - opens edit dialog with side picker
+  const handleAddSide = async () => {
+    // Same as edit meal - opens the dialog with existing meal data
+    await handleEditMeal();
+  };
+
+  // Handle saved meal added to planner from SavedMealsDialog
+  const handleSavedMealAdded = (entry: PlannerEntryResponseDTO) => {
+    setEntries((prev) => [...prev, entry]);
+    setSelectedEntryId(entry.id);
+    window.dispatchEvent(new Event("planner-updated"));
   };
 
   // Handle meal updated - refresh entry data in local state
@@ -537,6 +623,7 @@ export function MealPlannerPage() {
         <MealPreviewDialog
           open={showMealPreview}
           onOpenChange={handleMealPreviewClose}
+          mode={editingMealId ? "edit" : "create"}
           mainDish={pendingMain}
           sides={pendingSides}
           onSelectMain={handleSelectMainFromPreview}
@@ -599,6 +686,16 @@ export function MealPlannerPage() {
             </TooltipContent>
           </Tooltip>
 
+          {/* Saved Meals Button */}
+          <Button
+            onClick={() => setShowSavedMealsDialog(true)}
+            variant="outline"
+            className="gap-2"
+          >
+            <Bookmark strokeWidth={1.5} />
+            Saved Meals
+          </Button>
+
           {/* Create Meal Button */}
           <Button
             onClick={handleCreateMealClick}
@@ -660,23 +757,11 @@ export function MealPlannerPage() {
         )}
       </div>
 
-      {/* Meal Dialog - for editing existing meals */}
-      <MealDialog
-        open={showEditDialog}
-        onOpenChange={(open) => {
-          if (!open) {
-            setShowEditDialog(false);
-          }
-        }}
-        mode="edit"
-        mealId={selectedMealId}
-        onMealUpdated={handleMealUpdated}
-      />
-
-      {/* Meal Preview Dialog - overlay for building a new meal */}
+      {/* Meal Preview Dialog - overlay for building/editing a meal */}
       <MealPreviewDialog
         open={showMealPreview}
         onOpenChange={handleMealPreviewClose}
+        mode={editingMealId ? "edit" : "create"}
         mainDish={pendingMain}
         sides={pendingSides}
         onSelectMain={handleSelectMainFromPreview}
@@ -685,6 +770,13 @@ export function MealPlannerPage() {
         onAddSides={handleAddSidesClick}
         onConfirm={handleConfirmMeal}
         isSubmitting={isCreatingMeal}
+      />
+
+      {/* Saved Meals Dialog - for browsing and quick-adding saved meals */}
+      <SavedMealsDialog
+        open={showSavedMealsDialog}
+        onOpenChange={setShowSavedMealsDialog}
+        onEntryCreated={handleSavedMealAdded}
       />
 
       {/* Discard Confirmation Dialog - for dialog close attempts */}

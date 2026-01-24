@@ -44,6 +44,12 @@ export interface MealPreviewPanelProps {
   /** Whether to show the header (default true, set false when inside a dialog with its own title) */
   showHeader?: boolean;
 
+  /** Custom text for the action button (default: "Add to Meal Queue") */
+  buttonText?: string;
+
+  /** Custom text shown while submitting (default: "Adding...") */
+  submittingText?: string;
+
   /** Additional class names */
   className?: string;
 }
@@ -73,6 +79,8 @@ export function MealPreviewPanel({
   onAddToQueue,
   isSubmitting = false,
   showHeader = true,
+  buttonText = "Add to Meal Queue",
+  submittingText = "Adding...",
   className,
 }: MealPreviewPanelProps) {
   // Computed values
@@ -229,7 +237,7 @@ export function MealPreviewPanel({
           className="w-full"
         >
           <Plus className="w-5 h-5" />
-          {isSubmitting ? "Adding..." : "Add to Meal Queue"}
+          {isSubmitting ? submittingText : buttonText}
         </Button>
 
         {!isComplete && (

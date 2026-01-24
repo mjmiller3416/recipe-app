@@ -278,7 +278,7 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
       ) : (
         <ScrollableCardList
           className="min-h-[40vh] max-h-[40vh]"
-          innerClassName="grid grid-cols-1 md:grid-cols-2 gap-4"
+          innerClassName="grid grid-cols-1 gap-3"
         >
           {filteredMeals.map((meal) => (
             <SavedMealCard

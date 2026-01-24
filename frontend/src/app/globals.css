@@ -870,22 +870,34 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  /* Let html handle main scrollbar, body content flows naturally */
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
-/* Prevent Radix UI/react-remove-scroll from adding margin compensation.
-   Since we force scrollbar visible with overflow-y:scroll, the scrollbar
-   never disappears, so we don't need the compensation.
+/* ============================================
+   SCROLL-LOCK FIX FOR RADIX UI COMPONENTS
+   ============================================
 
-   The injected <style> tag sets --removed-body-scroll-bar-size which is
-   used to calculate margin. We must override with higher specificity. */
+   PROBLEM:
+   When Radix UI dialogs/selects open, they add `data-scroll-locked` to body.
+   Previously we had `overflow-y: scroll` on BOTH html AND body, creating
+   TWO scrollbars - the "ghost scrollbar" with arrows.
+
+   SOLUTION:
+   - html handles ALL page scrolling with always-visible scrollbar
+   - body should be overflow: hidden when scroll-locked (no body scrollbar)
+   - Override all Radix scroll compensation since scrollbar never disappears
+
+   ============================================ */
 html body[data-scroll-locked],
 html body[data-scroll-locked="1"] {
+  /* CRITICAL: Use 'hidden' not 'scroll' to avoid double scrollbar */
+  overflow: hidden !important;
   padding-right: 0 !important;
   margin-right: 0 !important;
-  overflow-x: hidden !important;
-  overflow-y: scroll !important;
   margin: 0 !important;
-  --removed-body-scroll-bar-size: 0 !important;
+  --removed-body-scroll-bar-size: 0px !important;
 }
 
 /* Override the injected style tag's CSS variable at :root level */

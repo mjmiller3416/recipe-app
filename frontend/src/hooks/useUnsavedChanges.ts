@@ -139,6 +139,9 @@ export function useUnsavedChanges({
     if (isDirty && !historyStateAddedRef.current) {
       window.history.pushState({ unsavedChangesGuard: true }, "", window.location.href);
       historyStateAddedRef.current = true;
+    } else if (!isDirty && historyStateAddedRef.current) {
+      // Reset ref when isDirty becomes false so guard can be re-pushed if isDirty becomes true again
+      historyStateAddedRef.current = false;
     }
   }, [isDirty]);
 
