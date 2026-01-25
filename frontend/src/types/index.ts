@@ -390,6 +390,122 @@ export interface ExportFilterDTO {
 }
 
 // ============================================================================
+// Full Backup Types
+// ============================================================================
+
+export interface IngredientBackup {
+  id: number;
+  ingredient_name: string;
+  ingredient_category: string;
+}
+
+export interface RecipeBackup {
+  id: number;
+  recipe_name: string;
+  recipe_category: string;
+  meal_type: string;
+  diet_pref: string | null;
+  total_time: number | null;
+  servings: number | null;
+  directions: string | null;
+  notes: string | null;
+  reference_image_path: string | null;
+  banner_image_path: string | null;
+  created_at: string;
+  is_favorite: boolean;
+}
+
+export interface RecipeIngredientBackup {
+  recipe_id: number;
+  ingredient_id: number;
+  quantity: number | null;
+  unit: string | null;
+}
+
+export interface RecipeHistoryBackup {
+  id: number;
+  recipe_id: number;
+  cooked_at: string;
+}
+
+export interface MealBackup {
+  id: number;
+  meal_name: string;
+  main_recipe_id: number;
+  side_recipe_ids: number[];
+  tags: string[];
+  is_saved: boolean;
+  created_at: string;
+}
+
+export interface PlannerEntryBackup {
+  id: number;
+  meal_id: number;
+  position: number;
+  is_completed: boolean;
+  completed_at: string | null;
+  scheduled_date: string | null;
+  shopping_mode: string;
+  is_cleared: boolean;
+}
+
+export interface ShoppingItemBackup {
+  id: number;
+  ingredient_name: string;
+  quantity: number;
+  unit: string | null;
+  category: string | null;
+  source: string;
+  have: boolean;
+  flagged: boolean;
+  state_key: string | null;
+  recipe_sources: string[] | null;
+}
+
+export interface ShoppingStateBackup {
+  id: number;
+  key: string;
+  quantity: number;
+  unit: string;
+  checked: boolean;
+  flagged: boolean;
+}
+
+export interface BackupData {
+  ingredients: IngredientBackup[];
+  recipes: RecipeBackup[];
+  recipe_ingredients: RecipeIngredientBackup[];
+  recipe_history: RecipeHistoryBackup[];
+  meals: MealBackup[];
+  planner_entries: PlannerEntryBackup[];
+  shopping_items: ShoppingItemBackup[];
+  shopping_states: ShoppingStateBackup[];
+}
+
+export interface FullBackup {
+  version: string;
+  created_at: string;
+  app_name: string;
+  settings: Record<string, unknown> | null;
+  data: BackupData;
+}
+
+export interface RestorePreview {
+  backup_version: string;
+  backup_created_at: string;
+  counts: Record<string, number>;
+  has_settings: boolean;
+  warnings: string[];
+}
+
+export interface RestoreResult {
+  success: boolean;
+  restored_counts: Record<string, number>;
+  errors: string[];
+  settings: Record<string, unknown> | null;
+}
+
+// ============================================================================
 // Utility Types
 // ============================================================================
 

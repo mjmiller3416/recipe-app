@@ -16,6 +16,9 @@ import type {
   ImportResultDTO,
   DuplicateResolutionDTO,
   ExportFilterDTO,
+  FullBackup,
+  RestorePreview,
+  RestoreResult,
   ImageGenerationResponseDTO,
   BannerGenerationResponseDTO,
   CookingTipResponseDTO,
@@ -964,6 +967,78 @@ export const dataManagementApi = {
       const error = await response.json();
       throw new ApiError(
         error.detail || "Failed to clear data",
+        response.status
+      );
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Export full backup including all database data
+   * @returns FullBackup object (frontend adds settings before download)
+   */
+  exportFullBackup: async (): Promise<FullBackup> => {
+    const response = await fetch(`${API_BASE}/api/data-management/backup/full`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new ApiError(
+        error.detail || "Failed to export backup",
+        response.status
+      );
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Preview restore from backup file
+   * @param file - The JSON backup file
+   * @returns RestorePreview with counts and warnings
+   */
+  previewRestore: async (file: File): Promise<RestorePreview> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${API_BASE}/api/data-management/restore/preview`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new ApiError(
+        error.detail || "Failed to preview restore",
+        response.status
+      );
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Execute restore from backup file
+   * @param file - The JSON backup file
+   * @param clearExisting - Whether to clear existing data first (default true)
+   * @returns RestoreResult with counts, errors, and settings to restore
+   */
+  executeRestore: async (file: File, clearExisting: boolean = true): Promise<RestoreResult> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(
+      `${API_BASE}/api/data-management/restore/execute?clear_existing=${clearExisting}`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new ApiError(
+        error.detail || "Failed to execute restore",
         response.status
       );
     }

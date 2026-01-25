@@ -6,8 +6,9 @@ Pydantic DTOs for data management operations (import/export).
 # ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
 from __future__ import annotations
 
+from datetime import date, datetime
 from enum import Enum
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -125,3 +126,164 @@ class ExportFilterDTO(BaseModel):
     recipe_category: Optional[str] = None
     meal_type: Optional[str] = None
     favorites_only: bool = False
+
+
+# ── Full Backup DTOs ───────────────────────────────────────────────────────────────────────────────────────────
+class IngredientBackupDTO(BaseModel):
+    """Ingredient data for full backup."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    ingredient_name: str
+    ingredient_category: str
+
+
+class RecipeBackupDTO(BaseModel):
+    """Recipe data for full backup."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    recipe_name: str
+    recipe_category: str
+    meal_type: str
+    diet_pref: Optional[str] = None
+    total_time: Optional[int] = None
+    servings: Optional[int] = None
+    directions: Optional[str] = None
+    notes: Optional[str] = None
+    reference_image_path: Optional[str] = None
+    banner_image_path: Optional[str] = None
+    created_at: datetime
+    is_favorite: bool = False
+
+
+class RecipeIngredientBackupDTO(BaseModel):
+    """Recipe ingredient link for full backup."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    recipe_id: int
+    ingredient_id: int
+    quantity: Optional[float] = None
+    unit: Optional[str] = None
+
+
+class RecipeHistoryBackupDTO(BaseModel):
+    """Recipe cooking history for full backup."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    recipe_id: int
+    cooked_at: datetime
+
+
+class MealBackupDTO(BaseModel):
+    """Meal data for full backup."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    meal_name: str
+    main_recipe_id: int
+    side_recipe_ids: List[int] = []
+    tags: List[str] = []
+    is_saved: bool = False
+    created_at: datetime
+
+
+class PlannerEntryBackupDTO(BaseModel):
+    """Planner entry data for full backup."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    meal_id: int
+    position: int
+    is_completed: bool = False
+    completed_at: Optional[datetime] = None
+    scheduled_date: Optional[date] = None
+    shopping_mode: str = "all"
+    is_cleared: bool = False
+
+
+class ShoppingItemBackupDTO(BaseModel):
+    """Shopping item data for full backup."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    ingredient_name: str
+    quantity: float = 0.0
+    unit: Optional[str] = None
+    category: Optional[str] = None
+    source: str
+    have: bool = False
+    flagged: bool = False
+    state_key: Optional[str] = None
+    recipe_sources: Optional[List[str]] = None
+
+
+class ShoppingStateBackupDTO(BaseModel):
+    """Shopping state data for full backup."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    key: str
+    quantity: float
+    unit: str
+    checked: bool = False
+    flagged: bool = False
+
+
+class BackupDataDTO(BaseModel):
+    """Container for all backup data."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    ingredients: List[IngredientBackupDTO] = []
+    recipes: List[RecipeBackupDTO] = []
+    recipe_ingredients: List[RecipeIngredientBackupDTO] = []
+    recipe_history: List[RecipeHistoryBackupDTO] = []
+    meals: List[MealBackupDTO] = []
+    planner_entries: List[PlannerEntryBackupDTO] = []
+    shopping_items: List[ShoppingItemBackupDTO] = []
+    shopping_states: List[ShoppingStateBackupDTO] = []
+
+
+class FullBackupDTO(BaseModel):
+    """Complete backup including settings and all data."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    version: str = "1.0.0"
+    created_at: datetime
+    app_name: str = "meal-genie"
+    settings: Optional[Dict[str, Any]] = None
+    data: BackupDataDTO
+
+
+class RestorePreviewDTO(BaseModel):
+    """Preview of what will be restored."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    backup_version: str
+    backup_created_at: datetime
+    counts: Dict[str, int]
+    has_settings: bool
+    warnings: List[str] = []
+
+
+class RestoreResultDTO(BaseModel):
+    """Result after restore completes."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    success: bool
+    restored_counts: Dict[str, int]
+    errors: List[str] = []
+    settings: Optional[Dict[str, Any]] = None

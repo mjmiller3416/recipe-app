@@ -15,8 +15,11 @@ from app.database.db import get_session
 from app.dtos.data_management_dtos import (
     DuplicateResolutionDTO,
     ExportFilterDTO,
+    FullBackupDTO,
     ImportPreviewDTO,
     ImportResultDTO,
+    RestorePreviewDTO,
+    RestoreResultDTO,
 )
 from app.services.data_management_service import DataManagementService
 
@@ -206,3 +209,114 @@ async def clear_all_data(
     service = DataManagementService(session)
     counts = service.clear_all_data()
     return {"success": True, "deleted_counts": counts}
+
+
+# ── Full Backup/Restore Endpoints ──────────────────────────────────────────────────────────────────────────────
+
+
+@router.get("/backup/full")
+async def export_full_backup(
+    session: Session = Depends(get_session),
+):
+    """
+    Export all database data as JSON.
+
+    The frontend should call this, then add localStorage settings
+    before downloading the file.
+
+    Returns a FullBackupDTO with all data.
+    """
+    service = DataManagementService(session)
+    backup = service.export_full_backup()
+    return backup.model_dump(mode="json")
+
+
+@router.post("/restore/preview", response_model=RestorePreviewDTO)
+async def preview_restore(
+    file: UploadFile = File(...),
+    session: Session = Depends(get_session),
+):
+    """
+    Upload a backup file and get a preview of what will be restored.
+    Does not make any changes to the database.
+
+    The file should be a JSON backup file created by the export endpoint.
+    """
+    # Validate file type
+    if not file.filename or not file.filename.endswith(".json"):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid file format. Please upload a .json backup file",
+        )
+
+    # Read file content
+    content = await file.read()
+
+    # Validate file size (20MB max for JSON backups)
+    if len(content) > 20 * 1024 * 1024:
+        raise HTTPException(
+            status_code=413,
+            detail="File too large. Maximum size is 20MB",
+        )
+
+    # Parse JSON
+    try:
+        backup_data = json.loads(content)
+        backup = FullBackupDTO(**backup_data)
+    except (json.JSONDecodeError, ValueError) as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid backup file: {str(e)}",
+        )
+
+    service = DataManagementService(session)
+    preview = service.preview_restore(backup)
+
+    return preview
+
+
+@router.post("/restore/execute")
+async def execute_restore(
+    file: UploadFile = File(...),
+    clear_existing: bool = Query(True, description="Clear existing data before restore"),
+    session: Session = Depends(get_session),
+):
+    """
+    Execute a full restore from backup file.
+
+    WARNING: If clear_existing=True (default), all current data will be deleted first.
+
+    Returns the restore result including any settings from the backup
+    that the frontend should restore to localStorage.
+    """
+    # Validate file type
+    if not file.filename or not file.filename.endswith(".json"):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid file format. Please upload a .json backup file",
+        )
+
+    # Read file content
+    content = await file.read()
+
+    # Validate file size
+    if len(content) > 20 * 1024 * 1024:
+        raise HTTPException(
+            status_code=413,
+            detail="File too large. Maximum size is 20MB",
+        )
+
+    # Parse JSON
+    try:
+        backup_data = json.loads(content)
+        backup = FullBackupDTO(**backup_data)
+    except (json.JSONDecodeError, ValueError) as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid backup file: {str(e)}",
+        )
+
+    service = DataManagementService(session)
+    result = service.execute_restore(backup, clear_existing)
+
+    return result.model_dump(mode="json")
