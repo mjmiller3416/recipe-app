@@ -18,7 +18,7 @@ backend/.env
 .idea/
 node_modules/
 
-# Frontend public folder
-frontend/public/
+# Frontend - ignore user uploads but keep static assets (icons, images)
+# frontend/public/uploads/
 .mcp.json
 .mcp.json
