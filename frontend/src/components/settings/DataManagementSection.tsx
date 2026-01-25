@@ -159,7 +159,7 @@ export function DataManagementSection() {
 
       // Add localStorage settings if requested
       if (includeSettings) {
-        backup.settings = settings;
+        backup.settings = settings as Record<string, unknown>;
       }
 
       // Create and download JSON file
