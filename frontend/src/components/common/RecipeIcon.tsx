@@ -7,7 +7,6 @@
 
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 
 export type RecipeIconData =
@@ -33,13 +32,12 @@ export function RecipeIcon({ icon, className }: RecipeIconProps) {
 
   if (icon.type === "icon") {
     return (
-      <Image
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
         src={`/icons/${icon.value}.png`}
         alt=""
-        width={20}
-        height={20}
         className={className ?? "w-5 h-5"}
-        unoptimized
+        loading="lazy"
         onError={() => setHasError(true)}
       />
     );
