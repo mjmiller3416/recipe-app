@@ -1,5 +1,7 @@
 """API router for Meal Genie conversational AI."""
 
+from typing import List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -15,6 +17,43 @@ from app.ai.services.image_generation_service import get_image_generation_servic
 from app.ai.services.user_context_builder import UserContextBuilder
 
 router = APIRouter()
+
+# Keywords that indicate user wants shopping list context
+SHOPPING_LIST_KEYWORDS = [
+    "shopping list",
+    "what i have",
+    "what i've got",
+    "ingredients i have",
+    "use what i have",
+    "with what i have",
+    "from my list",
+    "my ingredients",
+    "available ingredients",
+    "based on my",
+]
+
+
+def _should_include_shopping_list(
+    message: str, conversation_history: Optional[List[dict]] = None
+) -> bool:
+    """Check if user's message or recent history references shopping list.
+
+    Args:
+        message: Current user message
+        conversation_history: Optional list of previous conversation messages
+
+    Returns:
+        True if shopping list context should be included
+    """
+    text_to_check = message.lower()
+
+    # Also check recent conversation history (last 3 user messages)
+    if conversation_history:
+        for entry in conversation_history[-6:]:  # Check more entries to find ~3 user msgs
+            if entry.get("role") == "user":
+                text_to_check += " " + entry.get("content", "").lower()
+
+    return any(keyword in text_to_check for keyword in SHOPPING_LIST_KEYWORDS)
 
 
 @router.post("/ask", response_model=MealGenieResponseDTO)
@@ -38,8 +77,12 @@ async def ask_meal_genie(
     """
     try:
         # Build user context from database
+        # Only include shopping list if user explicitly references it
+        include_shopping = _should_include_shopping_list(
+            request.message, request.conversation_history
+        )
         context_builder = UserContextBuilder(session)
-        user_context = context_builder.build_context()
+        user_context = context_builder.build_context(include_shopping_list=include_shopping)
 
         service = get_meal_genie_service()
         result = service.ask(
@@ -129,8 +172,12 @@ async def generate_recipe(
     """
     try:
         # Build user context from database
+        # Only include shopping list if user explicitly references it
+        include_shopping = _should_include_shopping_list(
+            request.message, request.conversation_history
+        )
         context_builder = UserContextBuilder(session)
-        user_context = context_builder.build_context()
+        user_context = context_builder.build_context(include_shopping_list=include_shopping)
 
         # Generate recipe using Meal Genie
         service = get_meal_genie_service()

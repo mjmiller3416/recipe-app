@@ -22,12 +22,16 @@ class UserContextBuilder:
         self.planner_repo = PlannerRepo(session)
         self.shopping_repo = ShoppingRepo(session)
 
-    def build_context(self) -> str:
+    def build_context(self, include_shopping_list: bool = False) -> str:
         """
         Build complete user context string.
 
+        Args:
+            include_shopping_list: Whether to include shopping list in context.
+                Defaults to False - only include when user explicitly requests it.
+
         Returns:
-            Formatted context string with recipes, meal plan, and shopping list.
+            Formatted context string with recipes, meal plan, and optionally shopping list.
             Returns empty string if no user data exists.
         """
         sections: List[str] = []
@@ -40,9 +44,10 @@ class UserContextBuilder:
         if meal_plan_context:
             sections.append(meal_plan_context)
 
-        shopping_context = self._build_shopping_context()
-        if shopping_context:
-            sections.append(shopping_context)
+        if include_shopping_list:
+            shopping_context = self._build_shopping_context()
+            if shopping_context:
+                sections.append(shopping_context)
 
         if not sections:
             return ""
