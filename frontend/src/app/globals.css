@@ -861,6 +861,24 @@
    BASE STYLES
    ============================================ */
 
+/* ⚠️  WARNING: DOUBLE SCROLLBAR BUG - READ BEFORE MODIFYING ⚠️
+   ─────────────────────────────────────────────────────────────
+   The html/body overflow settings below are carefully configured
+   to prevent a DOUBLE SCROLLBAR bug when opening Select dropdowns
+   or Dialog modals.
+
+   THE RULES:
+   1. html MUST have overflow-y: scroll (shows the ONLY scrollbar)
+   2. body MUST have overflow-y: hidden (NEVER shows its own scrollbar)
+
+   DO NOT CHANGE body to overflow-y: visible or overflow-y: scroll
+   This WILL cause a secondary empty scrollbar to appear when Radix UI
+   components add data-scroll-locked to the body.
+
+   This bug has regressed multiple times. If you need to modify
+   scrolling behavior, test with Select and Dialog components first!
+   ───────────────────────────────────────────────────────────────── */
+
 html {
   /* Always show scrollbar to prevent layout shift when dialogs/dropdowns open */
   overflow-y: scroll;
@@ -870,9 +888,9 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-  /* Let html handle main scrollbar, body content flows naturally */
+  /* ⚠️ MUST be hidden - see warning above. Do NOT change to visible/scroll */
   overflow-x: hidden;
-  overflow-y: visible;
+  overflow-y: hidden;
 }
 
 /* ============================================
