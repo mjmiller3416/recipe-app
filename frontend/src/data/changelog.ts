@@ -3,6 +3,7 @@
 // ============================================
 const CHANGELOG_MD = `
 ## 2026-01-24 - New Features
+- Full Data Backup & Restore — create complete JSON backups of all your data (recipes, meals, planner entries, shopping lists, and settings) from Settings → Data Management
 - Configure your default recipe sort order in Settings → Recipe Preferences — choose between A-Z, Most Recent, or Cook Time
 - New Meal Planning settings section — set your default servings (1-12) and choose whether your week starts on Sunday or Monday
 - New Shopping List settings section — choose when checked items are cleared (Manual, On Refresh, or Daily)
