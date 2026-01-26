@@ -15,47 +15,92 @@ from app.ai.dtos import (
 from app.ai.services import get_meal_genie_service
 from app.ai.services.image_generation_service import get_image_generation_service
 from app.ai.services.user_context_builder import UserContextBuilder
+from app.ai.config.meal_genie_config import (
+    should_include_ingredients,
+    should_include_shopping_list,
+)
 
 router = APIRouter()
 
-# Keywords that indicate user wants shopping list context
-SHOPPING_LIST_KEYWORDS = [
-    "shopping list",
-    "what i have",
-    "what i've got",
-    "ingredients i have",
-    "use what i have",
-    "with what i have",
-    "from my list",
-    "my ingredients",
-    "available ingredients",
-    "based on my",
-]
 
-
-def _should_include_shopping_list(
-    message: str, conversation_history: Optional[List[dict]] = None
-) -> bool:
-    """Check if user's message or recent history references shopping list.
-
-    Args:
-        message: Current user message
-        conversation_history: Optional list of previous conversation messages
-
-    Returns:
-        True if shopping list context should be included
+@router.post("/chat", response_model=MealGenieResponseDTO)
+async def chat_with_meal_genie(
+    request: MealGenieRequestDTO,
+    session: Session = Depends(get_session),
+) -> MealGenieResponseDTO:
     """
-    text_to_check = message.lower()
+    Unified chat endpoint for Meal Genie.
 
-    # Also check recent conversation history (last 3 user messages)
-    if conversation_history:
-        for entry in conversation_history[-6:]:  # Check more entries to find ~3 user msgs
-            if entry.get("role") == "user":
-                text_to_check += " " + entry.get("content", "").lower()
+    The AI decides what action to take:
+    - Suggest recipes
+    - Generate a full recipe
+    - Answer a cooking question
 
-    return any(keyword in text_to_check for keyword in SHOPPING_LIST_KEYWORDS)
+    Uses Gemini function calling to intelligently route requests.
+    """
+    try:
+        # Convert history to dict format for keyword detection
+        history_dicts = None
+        if request.conversation_history:
+            history_dicts = [
+                {"role": m.role, "content": m.content}
+                for m in request.conversation_history
+            ]
+
+        # Determine what context to load based on message content
+        include_ingredients = should_include_ingredients(request.message, history_dicts)
+        include_shopping = should_include_shopping_list(request.message, history_dicts)
+
+        # Build context data
+        context_builder = UserContextBuilder(session)
+        context_data = context_builder.build_context_data(
+            include_ingredients=include_ingredients,
+            include_shopping_list=include_shopping,
+        )
+
+        # Call the service
+        service = get_meal_genie_service()
+        result = service.chat(
+            message=request.message,
+            conversation_history=request.conversation_history,
+            user_context_data=context_data,
+        )
+
+        if result.get("type") == "error":
+            raise HTTPException(status_code=500, detail=result.get("error"))
+
+        # Handle recipe generation with images
+        recipe = result.get("recipe")
+        reference_image_data = None
+        banner_image_data = None
+
+        if recipe:
+            try:
+                image_service = get_image_generation_service()
+                image_result = image_service.generate_dual_recipe_images(
+                    recipe.recipe_name
+                )
+                if image_result.get("success"):
+                    reference_image_data = image_result.get("reference_image_data")
+                    banner_image_data = image_result.get("banner_image_data")
+            except Exception as e:
+                print(f"Image generation failed: {e}")
+
+        return MealGenieResponseDTO(
+            success=True,
+            response=result.get("response"),
+            recipe=recipe,
+            reference_image_data=reference_image_data,
+            banner_image_data=banner_image_data,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Meal Genie error: {str(e)}")
 
 
+# Keep /ask as backwards-compatible alias that routes to /chat
 @router.post("/ask", response_model=MealGenieResponseDTO)
 async def ask_meal_genie(
     request: MealGenieRequestDTO,
@@ -64,90 +109,10 @@ async def ask_meal_genie(
     """
     Send a message to Meal Genie and get a response.
 
+    This endpoint is an alias for /chat for backwards compatibility.
     The AI may decide to generate a recipe if the user asks for one.
-    If a recipe is generated, it will be included in the response along
-    with optional AI-generated images.
-
-    Args:
-        request: The chat request with message and optional conversation history
-        session: Database session for fetching user context
-
-    Returns:
-        Response with AI-generated answer, optionally including recipe data
     """
-    try:
-        # Build user context from database
-        # Only include shopping list if user explicitly references it
-        include_shopping = _should_include_shopping_list(
-            request.message, request.conversation_history
-        )
-        context_builder = UserContextBuilder(session)
-        user_context = context_builder.build_context(include_shopping_list=include_shopping)
-
-        service = get_meal_genie_service()
-        result = service.ask(
-            message=request.message,
-            conversation_history=request.conversation_history,
-            user_context=user_context,
-        )
-
-        if not result["success"]:
-            raise HTTPException(
-                status_code=500, detail=result.get("error", "Failed to get response")
-            )
-
-        response_text = result["response"]
-
-        # Check if AI generated a recipe in the response
-        recipe_data = service._extract_recipe_json(response_text)
-
-        if recipe_data:
-            # Recipe was generated - parse it and optionally generate images
-            from app.ai.dtos.meal_genie_dtos import GeneratedRecipeDTO
-
-            try:
-                recipe = GeneratedRecipeDTO(**recipe_data)
-                ai_message = service._extract_ai_message(response_text)
-
-                # Generate images for the recipe
-                reference_image_data = None
-                banner_image_data = None
-                try:
-                    image_service = get_image_generation_service()
-                    image_result = image_service.generate_dual_recipe_images(
-                        recipe.recipe_name
-                    )
-                    if image_result["success"]:
-                        reference_image_data = image_result.get("reference_image_data")
-                        banner_image_data = image_result.get("banner_image_data")
-                except Exception as e:
-                    print(f"Image generation exception: {e}")
-
-                return MealGenieResponseDTO(
-                    success=True,
-                    response=ai_message,
-                    recipe=recipe,
-                    reference_image_data=reference_image_data,
-                    banner_image_data=banner_image_data,
-                    error=None,
-                )
-            except Exception as e:
-                # Failed to parse recipe, return as normal chat
-                print(f"Failed to parse recipe: {e}")
-
-        # Normal chat response (no recipe)
-        return MealGenieResponseDTO(
-            success=True,
-            response=response_text,
-            error=None,
-        )
-
-    except HTTPException:
-        raise
-    except ValueError as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Meal Genie error: {str(e)}")
+    return await chat_with_meal_genie(request, session)
 
 
 @router.post("/generate-recipe", response_model=RecipeGenerationResponseDTO)
@@ -158,51 +123,54 @@ async def generate_recipe(
     """
     Generate a complete recipe with optional AI image.
 
-    This endpoint orchestrates:
-    1. Calling Meal Genie with the recipe_create tool
-    2. Parsing the generated recipe JSON
-    3. Optionally generating an AI image for the recipe
-
-    Args:
-        request: The recipe generation request
-        session: Database session for fetching user context
-
-    Returns:
-        Response with generated recipe data and optional image
+    This endpoint is kept for backwards compatibility.
+    Consider using /chat instead, which handles recipe generation automatically.
     """
     try:
-        # Build user context from database
-        # Only include shopping list if user explicitly references it
-        include_shopping = _should_include_shopping_list(
-            request.message, request.conversation_history
-        )
-        context_builder = UserContextBuilder(session)
-        user_context = context_builder.build_context(include_shopping_list=include_shopping)
+        # Convert history to dict format for keyword detection
+        history_dicts = None
+        if request.conversation_history:
+            history_dicts = [
+                {"role": m.role, "content": m.content}
+                for m in request.conversation_history
+            ]
 
-        # Generate recipe using Meal Genie
+        # Determine what context to load
+        include_ingredients = should_include_ingredients(request.message, history_dicts)
+        include_shopping = should_include_shopping_list(request.message, history_dicts)
+
+        # Build context
+        context_builder = UserContextBuilder(session)
+        context_data = context_builder.build_context_data(
+            include_ingredients=include_ingredients,
+            include_shopping_list=include_shopping,
+        )
+
+        # Call service
         service = get_meal_genie_service()
-        result = service.generate_recipe(
+        result = service.chat(
             message=request.message,
             conversation_history=request.conversation_history,
-            user_context=user_context,
+            user_context_data=context_data,
         )
 
-        if not result["success"]:
+        if result.get("type") == "error":
             return RecipeGenerationResponseDTO(
                 success=False,
                 error=result.get("error", "Failed to generate recipe"),
             )
 
-        # If AI is asking for more info, return the message
-        if result["needs_more_info"]:
+        # Check if we got a recipe
+        recipe = result.get("recipe")
+        if not recipe:
+            # No recipe generated - AI is probably asking for more info
             return RecipeGenerationResponseDTO(
                 success=True,
-                ai_message=result["ai_message"],
+                ai_message=result.get("response"),
                 needs_more_info=True,
             )
 
-        # We have a recipe - optionally generate images
-        recipe = result["recipe"]
+        # We have a recipe - generate images if requested
         reference_image_data = None
         banner_image_data = None
 
@@ -212,14 +180,12 @@ async def generate_recipe(
                 image_result = image_service.generate_dual_recipe_images(
                     recipe.recipe_name
                 )
-                if image_result["success"]:
+                if image_result.get("success"):
                     reference_image_data = image_result.get("reference_image_data")
                     banner_image_data = image_result.get("banner_image_data")
-                # Log any errors from image generation
                 if image_result.get("errors"):
                     print(f"Image generation errors: {image_result['errors']}")
             except Exception as e:
-                # Image generation failed, but we still have the recipe
                 print(f"Image generation exception: {e}")
 
         return RecipeGenerationResponseDTO(
@@ -227,7 +193,7 @@ async def generate_recipe(
             recipe=recipe,
             reference_image_data=reference_image_data,
             banner_image_data=banner_image_data,
-            ai_message=result["ai_message"],
+            ai_message=result.get("response"),
             needs_more_info=False,
         )
 

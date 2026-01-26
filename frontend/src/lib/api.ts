@@ -804,16 +804,33 @@ export const mealSuggestionsApi = {
 
 export const mealGenieApi = {
   /**
-   * Send a message to Meal Genie and get an AI response
+   * Send a message to Meal Genie
+   * AI decides whether to chat, suggest recipes, or generate a full recipe
    * @param message The user's message
    * @param conversationHistory Optional previous messages for context
-   * @returns Response with AI-generated answer
+   * @returns Response with AI-generated answer, optionally including recipe
+   */
+  chat: (
+    message: string,
+    conversationHistory?: MealGenieMessage[]
+  ): Promise<MealGenieResponseDTO> =>
+    fetchApi<MealGenieResponseDTO>("/api/ai/meal-genie/chat", {
+      method: "POST",
+      body: JSON.stringify({
+        message,
+        conversation_history: conversationHistory,
+      }),
+    }),
+
+  /**
+   * Send a message to Meal Genie (alias for chat)
+   * @deprecated Use chat() instead
    */
   ask: (
     message: string,
     conversationHistory?: MealGenieMessage[]
   ): Promise<MealGenieResponseDTO> =>
-    fetchApi<MealGenieResponseDTO>("/api/ai/meal-genie/ask", {
+    fetchApi<MealGenieResponseDTO>("/api/ai/meal-genie/chat", {
       method: "POST",
       body: JSON.stringify({
         message,
@@ -823,6 +840,7 @@ export const mealGenieApi = {
 
   /**
    * Generate a recipe with optional AI image
+   * @deprecated Use chat() instead - it handles recipe generation automatically
    * @param message The user's message/request
    * @param conversationHistory Optional previous messages for context
    * @param generateImage Whether to generate an AI image (default: true)

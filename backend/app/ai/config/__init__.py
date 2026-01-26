@@ -18,11 +18,13 @@ from .image_generation_config import (
 )
 from .meal_genie_config import (
     BASE_SYSTEM_PROMPT,
-    TOOLS,
+    TOOL_DEFINITIONS,
     MODEL_NAME as MEAL_GENIE_MODEL,
     API_KEY_ENV_VAR as MEAL_GENIE_API_KEY_ENV,
-    get_system_prompt,
-    get_enabled_tools,
+    get_full_system_prompt,
+    build_user_context_prompt,
+    should_include_ingredients,
+    should_include_shopping_list,
 )
 
 __all__ = [
@@ -42,9 +44,11 @@ __all__ = [
     "IMAGE_API_KEY_ENV",
     # Meal Genie
     "BASE_SYSTEM_PROMPT",
-    "TOOLS",
+    "TOOL_DEFINITIONS",
     "MEAL_GENIE_MODEL",
     "MEAL_GENIE_API_KEY_ENV",
-    "get_system_prompt",
-    "get_enabled_tools",
+    "get_full_system_prompt",
+    "build_user_context_prompt",
+    "should_include_ingredients",
+    "should_include_shopping_list",
 ]

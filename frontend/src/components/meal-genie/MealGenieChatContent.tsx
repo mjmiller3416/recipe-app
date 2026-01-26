@@ -98,8 +98,8 @@ export function MealGenieChatContent({
     setIsLoading(true);
 
     try {
-      // Single API call - AI decides if it should generate a recipe
-      const response = await mealGenieApi.ask(textToSend, messages);
+      // Single unified API call - AI decides what action to take
+      const response = await mealGenieApi.chat(textToSend, messages);
 
       if (response.success) {
         // Check if AI generated a recipe
