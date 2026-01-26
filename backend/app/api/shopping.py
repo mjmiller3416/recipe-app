@@ -8,6 +8,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import get_current_user
 from app.database.db import get_session
 from app.dtos.shopping_dtos import (
     BulkOperationResultDTO,
@@ -20,6 +21,7 @@ from app.dtos.shopping_dtos import (
     ShoppingListGenerationResultDTO,
     ShoppingListResponseDTO,
 )
+from app.models.user import User
 from app.services.shopping_service import ShoppingService
 
 router = APIRouter()
@@ -35,13 +37,14 @@ def get_shopping_list(
     offset: Optional[int] = Query(None, ge=0),
     auto_generate: bool = Query(False, description="Generate from planner before returning list"),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """Get the shopping list with optional filters.
 
     Set auto_generate=true to regenerate from active planner entries before returning.
     This combines the generate + get operations into a single request.
     """
-    service = ShoppingService(session)
+    service = ShoppingService(session, current_user.id)
 
     # Optionally regenerate from planner before fetching
     if auto_generate:
@@ -60,9 +63,13 @@ def get_shopping_list(
 
 
 @router.get("/items/{item_id}", response_model=ShoppingItemResponseDTO)
-def get_shopping_item(item_id: int, session: Session = Depends(get_session)):
+def get_shopping_item(
+    item_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Get a single shopping item by ID."""
-    service = ShoppingService(session)
+    service = ShoppingService(session, current_user.id)
     item = service.shopping_repo.get_shopping_item_by_id(item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Shopping item not found")
@@ -73,9 +80,10 @@ def get_shopping_item(item_id: int, session: Session = Depends(get_session)):
 def add_manual_item(
     item_data: ManualItemCreateDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """Add a manual item to the shopping list."""
-    service = ShoppingService(session)
+    service = ShoppingService(session, current_user.id)
     item = service.add_manual_item(item_data)
     if not item:
         raise HTTPException(status_code=500, detail="Failed to add item")
@@ -87,9 +95,10 @@ def update_shopping_item(
     item_id: int,
     update_data: ShoppingItemUpdateDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """Update a shopping item."""
-    service = ShoppingService(session)
+    service = ShoppingService(session, current_user.id)
     item = service.update_item(item_id, update_data)
     if not item:
         raise HTTPException(status_code=404, detail="Shopping item not found")
@@ -97,9 +106,13 @@ def update_shopping_item(
 
 
 @router.patch("/items/{item_id}/toggle", response_model=dict)
-def toggle_item_status(item_id: int, session: Session = Depends(get_session)):
+def toggle_item_status(
+    item_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Toggle the 'have' status of a shopping item."""
-    service = ShoppingService(session)
+    service = ShoppingService(session, current_user.id)
     result = service.toggle_item_status(item_id)
     if result is None:
         raise HTTPException(status_code=404, detail="Shopping item not found")
@@ -107,9 +120,13 @@ def toggle_item_status(item_id: int, session: Session = Depends(get_session)):
 
 
 @router.patch("/items/{item_id}/toggle-flag", response_model=dict)
-def toggle_item_flagged(item_id: int, session: Session = Depends(get_session)):
+def toggle_item_flagged(
+    item_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Toggle the 'flagged' status of a shopping item."""
-    service = ShoppingService(session)
+    service = ShoppingService(session, current_user.id)
     result = service.toggle_item_flagged(item_id)
     if result is None:
         raise HTTPException(status_code=404, detail="Shopping item not found")
@@ -117,9 +134,13 @@ def toggle_item_flagged(item_id: int, session: Session = Depends(get_session)):
 
 
 @router.delete("/items/{item_id}")
-def delete_shopping_item(item_id: int, session: Session = Depends(get_session)):
+def delete_shopping_item(
+    item_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Delete a shopping item."""
-    service = ShoppingService(session)
+    service = ShoppingService(session, current_user.id)
     if not service.delete_item(item_id):
         raise HTTPException(status_code=404, detail="Shopping item not found")
     return {"message": "Item deleted successfully"}
@@ -129,44 +150,60 @@ def delete_shopping_item(item_id: int, session: Session = Depends(get_session)):
 def generate_shopping_list(
     generation_data: ShoppingListGenerationDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """Generate shopping list from recipe IDs."""
-    service = ShoppingService(session)
+    service = ShoppingService(session, current_user.id)
     return service.generate_shopping_list(generation_data)
 
 
 @router.post("/generate-from-planner", response_model=ShoppingListGenerationResultDTO)
-def generate_from_planner(session: Session = Depends(get_session)):
+def generate_from_planner(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Generate shopping list from active (non-completed) planner entries."""
-    service = ShoppingService(session)
+    service = ShoppingService(session, current_user.id)
     return service.generate_from_active_planner()
 
 
 @router.delete("/clear", response_model=BulkOperationResultDTO)
-def clear_shopping_list(session: Session = Depends(get_session)):
+def clear_shopping_list(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Clear the entire shopping list."""
-    service = ShoppingService(session)
+    service = ShoppingService(session, current_user.id)
     return service.clear_shopping_list()
 
 
 @router.delete("/clear-manual", response_model=BulkOperationResultDTO)
-def clear_manual_items(session: Session = Depends(get_session)):
+def clear_manual_items(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Clear only manual items from the shopping list."""
-    service = ShoppingService(session)
+    service = ShoppingService(session, current_user.id)
     return service.clear_manual_items()
 
 
 @router.delete("/clear-recipe", response_model=BulkOperationResultDTO)
-def clear_recipe_items(session: Session = Depends(get_session)):
+def clear_recipe_items(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Clear only recipe-generated items from the shopping list."""
-    service = ShoppingService(session)
+    service = ShoppingService(session, current_user.id)
     return service.clear_recipe_items()
 
 
 @router.delete("/clear-completed", response_model=dict)
-def clear_completed_items(session: Session = Depends(get_session)):
+def clear_completed_items(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Clear all completed (have=True) items from the shopping list."""
-    service = ShoppingService(session)
+    service = ShoppingService(session, current_user.id)
     count = service.clear_completed_items()
     return {"message": f"Cleared {count} completed items", "deleted_count": count}
 
@@ -175,9 +212,10 @@ def clear_completed_items(session: Session = Depends(get_session)):
 def bulk_update_status(
     update_data: BulkStateUpdateDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """Bulk update 'have' status for multiple items."""
-    service = ShoppingService(session)
+    service = ShoppingService(session, current_user.id)
     return service.bulk_update_status(update_data)
 
 
@@ -185,6 +223,7 @@ def bulk_update_status(
 def get_ingredient_breakdown(
     recipe_ids: str = Query(..., description="Comma-separated list of recipe IDs"),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """Get ingredient breakdown by recipe."""
     try:
@@ -192,7 +231,7 @@ def get_ingredient_breakdown(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid recipe IDs format")
 
-    service = ShoppingService(session)
+    service = ShoppingService(session, current_user.id)
     breakdown = service.get_ingredient_breakdown(ids)
 
     # Convert to list of dicts for response

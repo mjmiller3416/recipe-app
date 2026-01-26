@@ -16,9 +16,10 @@ from app.dtos.recipe_dtos import RecipeFilterDTO
 class UserContextBuilder:
     """Builds structured user context data for AI prompts."""
 
-    def __init__(self, session: Session):
-        """Initialize with database session."""
+    def __init__(self, session: Session, user_id: int):
+        """Initialize with database session and user ID."""
         self.session = session
+        self.user_id = user_id
         self.recipe_repo = RecipeRepo(session)
         self.planner_repo = PlannerRepo(session)
         self.shopping_repo = ShoppingRepo(session)
@@ -91,7 +92,7 @@ class UserContextBuilder:
         This prevents context window bloat while still providing useful data.
         """
         filter_dto = RecipeFilterDTO()
-        all_recipes = self.recipe_repo.filter_recipes(filter_dto)
+        all_recipes = self.recipe_repo.filter_recipes(filter_dto, self.user_id)
 
         if not all_recipes:
             return []
@@ -123,7 +124,7 @@ class UserContextBuilder:
     def _get_recipe_ingredients(self) -> Dict[str, List[str]]:
         """Get ingredients for each recipe (for ingredient-based queries)."""
         filter_dto = RecipeFilterDTO()
-        recipes = self.recipe_repo.filter_recipes(filter_dto)
+        recipes = self.recipe_repo.filter_recipes(filter_dto, self.user_id)
         result: Dict[str, List[str]] = {}
 
         for recipe in recipes:
@@ -140,7 +141,7 @@ class UserContextBuilder:
 
     def _get_meal_plan(self) -> List[dict]:
         """Get current meal plan entries."""
-        entries = self.planner_repo.get_incomplete_entries()
+        entries = self.planner_repo.get_incomplete_entries(self.user_id)
 
         return [
             {
@@ -156,7 +157,7 @@ class UserContextBuilder:
 
     def _get_shopping_list(self) -> dict:
         """Get shopping list split by have/need."""
-        items = self.shopping_repo.get_all_shopping_items()
+        items = self.shopping_repo.get_all_shopping_items(self.user_id)
         return {
             "need": [i.ingredient_name for i in items if not i.have],
             "have": [i.ingredient_name for i in items if i.have],
@@ -166,7 +167,7 @@ class UserContextBuilder:
     def _build_recipes_context(self) -> str:
         """Build saved recipes summary (legacy format)."""
         filter_dto = RecipeFilterDTO()
-        recipes = self.recipe_repo.filter_recipes(filter_dto)
+        recipes = self.recipe_repo.filter_recipes(filter_dto, self.user_id)
 
         if not recipes:
             return ""
@@ -183,7 +184,7 @@ class UserContextBuilder:
 
     def _build_meal_plan_context(self) -> str:
         """Build current meal plan summary (legacy format)."""
-        entries = self.planner_repo.get_incomplete_entries()
+        entries = self.planner_repo.get_incomplete_entries(self.user_id)
 
         if not entries:
             return ""
@@ -200,7 +201,7 @@ class UserContextBuilder:
 
     def _build_shopping_context(self) -> str:
         """Build shopping list summary (legacy format)."""
-        items = self.shopping_repo.get_all_shopping_items()
+        items = self.shopping_repo.get_all_shopping_items(self.user_id)
 
         if not items:
             return ""

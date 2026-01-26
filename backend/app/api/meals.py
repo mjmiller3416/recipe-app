@@ -9,6 +9,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import get_current_user
 from app.database.db import get_session
 from app.dtos.meal_dtos import (
     MealCreateDTO,
@@ -16,6 +17,7 @@ from app.dtos.meal_dtos import (
     MealResponseDTO,
     MealUpdateDTO,
 )
+from app.models.user import User
 from app.services.meal_service import (
     InvalidRecipeError,
     MealSaveError,
@@ -33,6 +35,7 @@ def list_meals(
     limit: Optional[int] = Query(None, ge=1, le=100),
     offset: Optional[int] = Query(None, ge=0),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     List meals with optional filters.
@@ -55,21 +58,29 @@ def list_meals(
         offset=offset,
     )
 
-    service = MealService(session)
+    service = MealService(session, current_user.id)
     return service.filter_meals(filter_dto)
 
 
 @router.get("/by-recipe/{recipe_id}", response_model=List[MealResponseDTO])
-def get_meals_by_recipe(recipe_id: int, session: Session = Depends(get_session)):
+def get_meals_by_recipe(
+    recipe_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Get all meals that contain a specific recipe (main or side)."""
-    service = MealService(session)
+    service = MealService(session, current_user.id)
     return service.get_meals_by_recipe(recipe_id)
 
 
 @router.get("/{meal_id}", response_model=MealResponseDTO)
-def get_meal(meal_id: int, session: Session = Depends(get_session)):
+def get_meal(
+    meal_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Get a single meal by ID."""
-    service = MealService(session)
+    service = MealService(session, current_user.id)
     meal = service.get_meal(meal_id)
     if not meal:
         raise HTTPException(status_code=404, detail="Meal not found")
@@ -80,6 +91,7 @@ def get_meal(meal_id: int, session: Session = Depends(get_session)):
 def create_meal(
     meal_data: MealCreateDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Create a new meal.
@@ -89,7 +101,7 @@ def create_meal(
     - side_recipe_ids: Optional, max 3, maintains order
     - tags: Optional list of strings
     """
-    service = MealService(session)
+    service = MealService(session, current_user.id)
     try:
         return service.create_meal(meal_data)
     except InvalidRecipeError as e:
@@ -103,9 +115,10 @@ def update_meal(
     meal_id: int,
     update_data: MealUpdateDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """Update an existing meal."""
-    service = MealService(session)
+    service = MealService(session, current_user.id)
     try:
         meal = service.update_meal(meal_id, update_data)
         if not meal:
@@ -118,27 +131,35 @@ def update_meal(
 
 
 @router.delete("/{meal_id}")
-def delete_meal(meal_id: int, session: Session = Depends(get_session)):
+def delete_meal(
+    meal_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """
     Delete a meal.
 
     Note: This will CASCADE delete any planner entries referencing this meal.
     """
-    service = MealService(session)
+    service = MealService(session, current_user.id)
     if not service.delete_meal(meal_id):
         raise HTTPException(status_code=404, detail="Meal not found")
     return {"message": "Meal deleted successfully"}
 
 
 @router.post("/{meal_id}/save", response_model=MealResponseDTO)
-def toggle_save(meal_id: int, session: Session = Depends(get_session)):
+def toggle_save(
+    meal_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """
     Toggle the saved status of a meal.
 
     Saved meals persist permanently.
     Unsaved (transient) meals are deleted when they leave the planner.
     """
-    service = MealService(session)
+    service = MealService(session, current_user.id)
     meal = service.toggle_save(meal_id)
     if not meal:
         raise HTTPException(status_code=404, detail="Meal not found")
@@ -150,13 +171,14 @@ def add_side_recipe(
     meal_id: int,
     recipe_id: int,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Add a side recipe to a meal.
 
     Maximum of 3 side recipes allowed.
     """
-    service = MealService(session)
+    service = MealService(session, current_user.id)
     try:
         meal = service.add_side_recipe(meal_id, recipe_id)
         if not meal:
@@ -173,9 +195,10 @@ def remove_side_recipe(
     meal_id: int,
     recipe_id: int,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """Remove a side recipe from a meal."""
-    service = MealService(session)
+    service = MealService(session, current_user.id)
     try:
         meal = service.remove_side_recipe(meal_id, recipe_id)
         if not meal:
@@ -190,13 +213,14 @@ def reorder_side_recipes(
     meal_id: int,
     side_recipe_ids: List[int],
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Reorder the side recipes of a meal.
 
     The provided list must contain the same recipe IDs as the current sides.
     """
-    service = MealService(session)
+    service = MealService(session, current_user.id)
     try:
         meal = service.reorder_side_recipes(meal_id, side_recipe_ids)
         if not meal:

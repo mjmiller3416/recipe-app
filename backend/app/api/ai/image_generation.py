@@ -1,8 +1,8 @@
 """API router for AI image generation."""
 
-from fastapi import APIRouter, HTTPException
-
 import base64
+
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.ai.dtos import (
     ImageGenerationRequestDTO,
@@ -11,6 +11,8 @@ from app.ai.dtos import (
     BannerGenerationResponseDTO,
 )
 from app.ai.services import get_image_generation_service
+from app.api.dependencies import require_pro
+from app.models.user import User
 
 router = APIRouter()
 
@@ -18,6 +20,7 @@ router = APIRouter()
 @router.post("", response_model=ImageGenerationResponseDTO)
 async def generate_recipe_image(
     request: ImageGenerationRequestDTO,
+    current_user: User = Depends(require_pro),
 ) -> ImageGenerationResponseDTO:
     """
     Generate an AI image for a recipe based on its name.
@@ -63,6 +66,7 @@ async def generate_recipe_image(
 @router.post("/banner", response_model=BannerGenerationResponseDTO)
 async def generate_banner_image(
     request: BannerGenerationRequestDTO,
+    current_user: User = Depends(require_pro),
 ) -> BannerGenerationResponseDTO:
     """
     Generate a banner (21:9) image from an existing reference image.

@@ -10,6 +10,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import get_current_user
 from app.database.db import get_session
 from app.dtos.planner_dtos import (
     CookingStreakDTO,
@@ -19,6 +20,7 @@ from app.dtos.planner_dtos import (
     PlannerReorderDTO,
     PlannerSummaryDTO,
 )
+from app.models.user import User
 from app.services.planner_service import (
     InvalidMealError,
     PlannerFullError,
@@ -34,6 +36,7 @@ def get_all_entries(
     meal_id: Optional[int] = Query(None, description="Filter by meal ID"),
     completed: Optional[bool] = Query(None, description="Filter by completion status"),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get planner entries with optional filtering.
@@ -41,14 +44,18 @@ def get_all_entries(
     - **meal_id**: Filter entries for a specific meal
     - **completed**: Filter by completion status (true/false)
     """
-    service = PlannerService(session)
+    service = PlannerService(session, current_user.id)
     return service.get_all_entries(meal_id=meal_id, completed=completed)
 
 
 @router.get("/entries/{entry_id}", response_model=PlannerEntryResponseDTO)
-def get_entry(entry_id: int, session: Session = Depends(get_session)):
+def get_entry(
+    entry_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Get a single planner entry by ID."""
-    service = PlannerService(session)
+    service = PlannerService(session, current_user.id)
     entry = service.get_entry(entry_id)
     if not entry:
         raise HTTPException(status_code=404, detail="Planner entry not found")
@@ -56,16 +63,22 @@ def get_entry(entry_id: int, session: Session = Depends(get_session)):
 
 
 @router.get("/summary", response_model=PlannerSummaryDTO)
-def get_summary(session: Session = Depends(get_session)):
+def get_summary(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Get a summary of the current planner state."""
-    service = PlannerService(session)
+    service = PlannerService(session, current_user.id)
     return service.get_summary()
 
 
 @router.get("/meal-ids", response_model=List[int])
-def get_meal_ids(session: Session = Depends(get_session)):
+def get_meal_ids(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Get all meal IDs currently in the planner."""
-    service = PlannerService(session)
+    service = PlannerService(session, current_user.id)
     return service.get_meal_ids()
 
 
@@ -73,6 +86,7 @@ def get_meal_ids(session: Session = Depends(get_session)):
 def get_cooking_streak(
     tz: Optional[str] = Query(None, description="User's IANA timezone (e.g., 'America/New_York')"),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get cooking streak information.
@@ -82,7 +96,7 @@ def get_cooking_streak(
 
     The tz parameter ensures dates are calculated in the user's timezone.
     """
-    service = PlannerService(session)
+    service = PlannerService(session, current_user.id)
     return service.get_cooking_streak(user_timezone=tz)
 
 
@@ -91,6 +105,7 @@ def get_cooking_streak(
 def add_meal_to_planner(
     meal_id: int,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Add a meal to the planner.
@@ -98,7 +113,7 @@ def add_meal_to_planner(
     Creates a new planner entry referencing the meal.
     The meal must exist. Maximum 15 entries allowed.
     """
-    service = PlannerService(session)
+    service = PlannerService(session, current_user.id)
     try:
         return service.add_meal_to_planner(meal_id)
     except PlannerFullError as e:
@@ -113,13 +128,14 @@ def add_meal_to_planner(
 def add_meals_to_planner(
     data: PlannerBulkAddDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Add multiple meals to the planner.
 
     All meals must exist. Total entries cannot exceed 15.
     """
-    service = PlannerService(session)
+    service = PlannerService(session, current_user.id)
     try:
         return service.add_meals_to_planner(data.meal_ids)
     except PlannerFullError as e:
@@ -135,13 +151,14 @@ def add_meals_to_planner(
 def reorder_entries(
     data: PlannerReorderDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Reorder planner entries.
 
     Provide entry IDs in the desired order. Positions will be reassigned 0, 1, 2, ...
     """
-    service = PlannerService(session)
+    service = PlannerService(session, current_user.id)
     success = service.reorder_entries(data.entry_ids)
     return PlannerOperationResultDTO(
         success=success,
@@ -151,9 +168,13 @@ def reorder_entries(
 
 
 @router.post("/entries/{entry_id}/complete", response_model=PlannerEntryResponseDTO)
-def mark_completed(entry_id: int, session: Session = Depends(get_session)):
+def mark_completed(
+    entry_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Mark a planner entry as completed."""
-    service = PlannerService(session)
+    service = PlannerService(session, current_user.id)
     entry = service.mark_completed(entry_id)
     if not entry:
         raise HTTPException(status_code=404, detail="Planner entry not found")
@@ -161,9 +182,13 @@ def mark_completed(entry_id: int, session: Session = Depends(get_session)):
 
 
 @router.post("/entries/{entry_id}/incomplete", response_model=PlannerEntryResponseDTO)
-def mark_incomplete(entry_id: int, session: Session = Depends(get_session)):
+def mark_incomplete(
+    entry_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Mark a planner entry as incomplete."""
-    service = PlannerService(session)
+    service = PlannerService(session, current_user.id)
     entry = service.mark_incomplete(entry_id)
     if not entry:
         raise HTTPException(status_code=404, detail="Planner entry not found")
@@ -171,7 +196,11 @@ def mark_incomplete(entry_id: int, session: Session = Depends(get_session)):
 
 
 @router.post("/entries/{entry_id}/cycle-shopping-mode", response_model=PlannerEntryResponseDTO)
-def cycle_shopping_mode(entry_id: int, session: Session = Depends(get_session)):
+def cycle_shopping_mode(
+    entry_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """
     Cycle the shopping mode of a planner entry.
 
@@ -180,7 +209,7 @@ def cycle_shopping_mode(entry_id: int, session: Session = Depends(get_session)):
     - produce_only: Include only produce category ingredients
     - none: Exclude from shopping list entirely
     """
-    service = PlannerService(session)
+    service = PlannerService(session, current_user.id)
     entry = service.cycle_shopping_mode(entry_id)
     if not entry:
         raise HTTPException(status_code=404, detail="Planner entry not found")
@@ -189,38 +218,52 @@ def cycle_shopping_mode(entry_id: int, session: Session = Depends(get_session)):
 
 # -- Remove Operations ---------------------------------------------------------------------------
 @router.delete("/entries/{entry_id}")
-def remove_entry(entry_id: int, session: Session = Depends(get_session)):
+def remove_entry(
+    entry_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """
     Remove a planner entry.
 
     Note: This does NOT delete the underlying meal.
     The meal can be re-added to the planner later.
     """
-    service = PlannerService(session)
+    service = PlannerService(session, current_user.id)
     if not service.remove_entry(entry_id):
         raise HTTPException(status_code=404, detail="Planner entry not found")
     return {"message": "Entry removed from planner"}
 
 
 @router.delete("/entries/by-meal/{meal_id}")
-def remove_entries_by_meal(meal_id: int, session: Session = Depends(get_session)):
+def remove_entries_by_meal(
+    meal_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Remove all planner entries for a specific meal."""
-    service = PlannerService(session)
+    service = PlannerService(session, current_user.id)
     count = service.remove_entries_by_meal(meal_id)
     return {"message": f"Removed {count} entries for meal {meal_id}"}
 
 
 @router.delete("/clear")
-def clear_planner(session: Session = Depends(get_session)):
+def clear_planner(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Clear all entries from the planner."""
-    service = PlannerService(session)
+    service = PlannerService(session, current_user.id)
     count = service.clear_planner()
     return {"message": f"Cleared {count} entries from planner"}
 
 
 @router.delete("/clear-completed")
-def clear_completed(session: Session = Depends(get_session)):
+def clear_completed(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Clear all completed entries from the planner."""
-    service = PlannerService(session)
+    service = PlannerService(session, current_user.id)
     count = service.clear_completed()
     return {"message": f"Cleared {count} completed entries from planner"}

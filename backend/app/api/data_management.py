@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from io import BytesIO
 import json
 
+from app.api.dependencies import get_current_user
 from app.database.db import get_session
 from app.dtos.data_management_dtos import (
     DuplicateResolutionDTO,
@@ -21,6 +22,7 @@ from app.dtos.data_management_dtos import (
     RestorePreviewDTO,
     RestoreResultDTO,
 )
+from app.models.user import User
 from app.services.data_management_service import DataManagementService
 
 router = APIRouter()
@@ -33,6 +35,7 @@ MAX_FILE_SIZE = 10 * 1024 * 1024
 async def preview_import(
     file: UploadFile = File(...),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Upload an xlsx file and get a preview of what will be imported.
@@ -86,6 +89,7 @@ async def execute_import(
     file: UploadFile = File(...),
     resolutions: str = Form(default="[]"),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Execute the import with user-specified duplicate resolutions.
@@ -149,6 +153,7 @@ async def export_recipes(
     meal_type: Optional[str] = Query(None),
     favorites_only: bool = Query(False),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Export recipes to an xlsx file.
@@ -197,6 +202,7 @@ async def download_template():
 @router.delete("/clear-all")
 async def clear_all_data(
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Delete all data from the database.
@@ -217,6 +223,7 @@ async def clear_all_data(
 @router.get("/backup/full")
 async def export_full_backup(
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Export all database data as JSON.
@@ -235,6 +242,7 @@ async def export_full_backup(
 async def preview_restore(
     file: UploadFile = File(...),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Upload a backup file and get a preview of what will be restored.
@@ -280,6 +288,7 @@ async def execute_restore(
     file: UploadFile = File(...),
     clear_existing: bool = Query(True, description="Clear existing data before restore"),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Execute a full restore from backup file.
