@@ -24,4 +24,5 @@ __all__ = [
     "EntryNotFoundError",
     "ShoppingService",
     "UserService",
+    "UsageService",
 ]

@@ -21,6 +21,7 @@ from app.ai.config.meal_genie_config import (
     should_include_shopping_list,
 )
 from app.models.user import User
+from app.services.usage_service import UsageService
 
 router = APIRouter()
 
@@ -88,6 +89,20 @@ async def chat_with_meal_genie(
                     banner_image_data = image_result.get("banner_image_data")
             except Exception as e:
                 print(f"Image generation failed: {e}")
+
+        # Track usage (silent fail - don't break AI feature for tracking issues)
+        try:
+            usage_service = UsageService(session, current_user.id)
+            # Always track the assistant message
+            usage_service.increment("ai_assistant_messages")
+            # Track recipe creation if a recipe was generated
+            if recipe:
+                usage_service.increment("recipes_created")
+            # Track image generation if images were generated
+            if reference_image_data or banner_image_data:
+                usage_service.increment("ai_images_generated")
+        except Exception:
+            pass
 
         return MealGenieResponseDTO(
             success=True,
@@ -192,6 +207,20 @@ async def generate_recipe(
                     print(f"Image generation errors: {image_result['errors']}")
             except Exception as e:
                 print(f"Image generation exception: {e}")
+
+        # Track usage (silent fail - don't break AI feature for tracking issues)
+        try:
+            usage_service = UsageService(session, current_user.id)
+            # Always track the assistant message
+            usage_service.increment("ai_assistant_messages")
+            # Track recipe creation if a recipe was generated
+            if recipe:
+                usage_service.increment("recipes_created")
+            # Track image generation if images were generated
+            if reference_image_data or banner_image_data:
+                usage_service.increment("ai_images_generated")
+        except Exception:
+            pass
 
         return RecipeGenerationResponseDTO(
             success=True,

@@ -3,6 +3,7 @@
 import base64
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
 
 from app.ai.dtos import (
     ImageGenerationRequestDTO,
@@ -12,7 +13,9 @@ from app.ai.dtos import (
 )
 from app.ai.services import get_image_generation_service
 from app.api.dependencies import require_pro
+from app.database.db import get_session
 from app.models.user import User
+from app.services.usage_service import UsageService
 
 router = APIRouter()
 
@@ -20,6 +23,7 @@ router = APIRouter()
 @router.post("", response_model=ImageGenerationResponseDTO)
 async def generate_recipe_image(
     request: ImageGenerationRequestDTO,
+    session: Session = Depends(get_session),
     current_user: User = Depends(require_pro),
 ) -> ImageGenerationResponseDTO:
     """
@@ -47,6 +51,12 @@ async def generate_recipe_image(
                 detail="; ".join(errors) if errors else "Image generation failed",
             )
 
+        # Track usage (silent fail - don't break AI feature for tracking issues)
+        try:
+            UsageService(session, current_user.id).increment("ai_images_generated")
+        except Exception:
+            pass
+
         return ImageGenerationResponseDTO(
             success=True,
             reference_image_data=result.get("reference_image_data"),
@@ -66,6 +76,7 @@ async def generate_recipe_image(
 @router.post("/banner", response_model=BannerGenerationResponseDTO)
 async def generate_banner_image(
     request: BannerGenerationRequestDTO,
+    session: Session = Depends(get_session),
     current_user: User = Depends(require_pro),
 ) -> BannerGenerationResponseDTO:
     """
@@ -101,6 +112,12 @@ async def generate_banner_image(
                 status_code=500,
                 detail=result.get("error") or "Banner generation failed",
             )
+
+        # Track usage (silent fail - don't break AI feature for tracking issues)
+        try:
+            UsageService(session, current_user.id).increment("ai_images_generated")
+        except Exception:
+            pass
 
         return BannerGenerationResponseDTO(
             success=True,
