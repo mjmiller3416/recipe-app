@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { settingsApi } from "@/lib/api";
 
 // ============================================================================
 // TYPES
@@ -101,10 +103,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
 };
 
 // ============================================================================
-// STORAGE KEY
+// STORAGE KEYS
 // ============================================================================
 
 const SETTINGS_STORAGE_KEY = "meal-genie-settings";
+const THEME_STORAGE_KEY = "meal-genie-theme"; // Separate key for instant theme load
 
 // ============================================================================
 // HOOK
@@ -116,9 +119,18 @@ interface UseSettingsReturn {
    */
   settings: AppSettings;
   /**
-   * Whether settings have been loaded from storage
+   * Whether settings have been loaded from storage/API
    */
   isLoaded: boolean;
+  /**
+   * Whether settings are currently being fetched from the API
+   * (UI can show skeleton during initial load)
+   */
+  isLoading: boolean;
+  /**
+   * Whether settings are currently being synced to the API
+   */
+  isSyncing: boolean;
   /**
    * Update a specific section of settings
    */
@@ -133,7 +145,7 @@ interface UseSettingsReturn {
   /**
    * Save current settings to storage
    */
-  saveSettings: () => void;
+  saveSettings: () => Promise<void>;
   /**
    * Reset settings to defaults
    */
@@ -153,44 +165,114 @@ interface UseSettingsReturn {
 }
 
 /**
- * Hook for managing application settings with localStorage persistence.
- * 
- * Phase 1: localStorage (current)
- * Phase 2: API calls (future - swap internals, component code unchanged)
- * 
+ * Hook for managing application settings with API sync and localStorage fallback.
+ *
+ * Behavior:
+ * - Theme is ALWAYS stored in localStorage for instant load (prevents flash)
+ * - When signed in: fetches settings from API, syncs changes to API
+ * - When signed out: falls back to localStorage
+ * - Graceful degradation: if API fails, falls back to localStorage
+ *
  * @example
  * ```tsx
- * const { settings, updateSettings, saveSettings, hasUnsavedChanges } = useSettings();
- * 
+ * const { settings, updateSettings, saveSettings, hasUnsavedChanges, isLoading } = useSettings();
+ *
  * // Update profile
  * updateSettings('profile', { userName: 'John' });
- * 
- * // Save to storage
- * saveSettings();
+ *
+ * // Save to storage/API
+ * await saveSettings();
  * ```
  */
 export function useSettings(): UseSettingsReturn {
-  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const { isSignedIn, isLoaded: isAuthLoaded, getToken } = useAuth();
+
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    // Initialize with theme from localStorage for instant apply (SSR-safe)
+    if (typeof window !== "undefined") {
+      try {
+        const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+        if (storedTheme) {
+          const theme = JSON.parse(storedTheme) as AppearanceSettings["theme"];
+          return {
+            ...DEFAULT_SETTINGS,
+            appearance: { ...DEFAULT_SETTINGS.appearance, theme },
+          };
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    }
+    return DEFAULT_SETTINGS;
+  });
   const [savedSettings, setSavedSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  // Load settings from storage on mount
+  // Track if we've already loaded settings this session
+  const hasLoadedRef = useRef(false);
+
+  // Load settings on mount - from API if signed in, otherwise localStorage
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as Partial<AppSettings>;
-        // Deep merge with defaults to handle new settings fields
-        const merged = deepMergeSettings(DEFAULT_SETTINGS, parsed);
-        setSettings(merged);
-        setSavedSettings(merged);
+    // Wait for auth to load before fetching
+    if (!isAuthLoaded) return;
+    // Only load once per session
+    if (hasLoadedRef.current) return;
+
+    async function loadSettings() {
+      setIsLoading(true);
+      hasLoadedRef.current = true;
+
+      try {
+        if (isSignedIn) {
+          // Try to fetch from API
+          const token = await getToken();
+          const apiSettings = await settingsApi.get(token);
+
+          if (apiSettings && Object.keys(apiSettings).length > 0) {
+            // API returned settings - merge with defaults
+            const merged = deepMergeSettings(DEFAULT_SETTINGS, apiSettings as Partial<AppSettings>);
+            setSettings(merged);
+            setSavedSettings(merged);
+
+            // Also save theme to localStorage for instant load on refresh
+            localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(merged.appearance.theme));
+            // Keep full settings in localStorage as fallback
+            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(merged));
+          } else {
+            // API returned empty - load from localStorage and sync to API
+            const localSettings = loadFromLocalStorage();
+            setSettings(localSettings);
+            setSavedSettings(localSettings);
+
+            // Sync localStorage settings to API for first-time users
+            try {
+              await settingsApi.replace(localSettings as Record<string, unknown>, token);
+            } catch {
+              console.warn("[useSettings] Failed to sync initial settings to API");
+            }
+          }
+        } else {
+          // Not signed in - use localStorage
+          const localSettings = loadFromLocalStorage();
+          setSettings(localSettings);
+          setSavedSettings(localSettings);
+        }
+      } catch (error) {
+        console.error("[useSettings] Failed to load settings from API:", error);
+        // Fallback to localStorage
+        const localSettings = loadFromLocalStorage();
+        setSettings(localSettings);
+        setSavedSettings(localSettings);
+      } finally {
+        setIsLoading(false);
+        setIsLoaded(true);
       }
-    } catch (error) {
-      console.error("[useSettings] Failed to load settings:", error);
-    } finally {
-      setIsLoaded(true);
     }
-  }, []);
+
+    loadSettings();
+  }, [isAuthLoaded, isSignedIn, getToken]);
 
   // Update a specific section
   const updateSettings = useCallback(
@@ -210,7 +292,7 @@ export function useSettings(): UseSettingsReturn {
   const updateMultipleSections = useCallback((updates: Partial<AppSettings>) => {
     setSettings((prev) => {
       const newSettings = { ...prev };
-      
+
       if (updates.profile) {
         newSettings.profile = { ...prev.profile, ...updates.profile };
       }
@@ -237,19 +319,34 @@ export function useSettings(): UseSettingsReturn {
     });
   }, []);
 
-  // Save to storage
-  const saveSettings = useCallback(() => {
-    try {
-      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-      setSavedSettings(settings);
-      
-      // Dispatch event for other components to react
-      window.dispatchEvent(new CustomEvent("settings-updated", { detail: settings }));
-    } catch (error) {
-      console.error("[useSettings] Failed to save settings:", error);
-      throw error;
+  // Save to storage/API
+  const saveSettings = useCallback(async () => {
+    // Always save theme to localStorage for instant load
+    localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(settings.appearance.theme));
+    // Always save full settings to localStorage as fallback
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+
+    // Optimistically update saved state
+    setSavedSettings(settings);
+
+    // Dispatch event for other components to react
+    window.dispatchEvent(new CustomEvent("settings-updated", { detail: settings }));
+
+    // If signed in, sync to API
+    if (isSignedIn) {
+      setIsSyncing(true);
+      try {
+        const token = await getToken();
+        await settingsApi.replace(settings as Record<string, unknown>, token);
+      } catch (error) {
+        console.error("[useSettings] Failed to sync settings to API:", error);
+        // Settings are already saved locally, so this is a silent failure
+        // User can continue working - settings will sync next time
+      } finally {
+        setIsSyncing(false);
+      }
     }
-  }, [settings]);
+  }, [settings, isSignedIn, getToken]);
 
   // Reset all settings to defaults
   const resetSettings = useCallback(() => {
@@ -275,6 +372,8 @@ export function useSettings(): UseSettingsReturn {
   return {
     settings,
     isLoaded,
+    isLoading,
+    isSyncing,
     updateSettings,
     updateMultipleSections,
     saveSettings,
@@ -283,6 +382,22 @@ export function useSettings(): UseSettingsReturn {
     hasUnsavedChanges,
     discardChanges,
   };
+}
+
+/**
+ * Load settings from localStorage with defaults merge
+ */
+function loadFromLocalStorage(): AppSettings {
+  try {
+    const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored) as Partial<AppSettings>;
+      return deepMergeSettings(DEFAULT_SETTINGS, parsed);
+    }
+  } catch (error) {
+    console.error("[useSettings] Failed to load from localStorage:", error);
+  }
+  return DEFAULT_SETTINGS;
 }
 
 // ============================================================================
