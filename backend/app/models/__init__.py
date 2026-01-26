@@ -9,6 +9,8 @@ from .recipe_ingredient import RecipeIngredient
 from .shopping_item import ShoppingItem
 from .shopping_state import ShoppingState
 from .unit_conversion_rule import UnitConversionRule
+from .user import User
+from .user_settings import UserSettings
 
 __all__ = [
     "Recipe",
@@ -20,4 +22,6 @@ __all__ = [
     "ShoppingItem",
     "ShoppingState",
     "UnitConversionRule",
+    "User",
+    "UserSettings",
 ]
