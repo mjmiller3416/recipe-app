@@ -38,15 +38,16 @@ class DuplicateRecipeError(Exception):
 class RecipeService:
     """Service layer for managing recipes and their ingredients."""
 
-    def __init__(self, session: Session | None = None):
+    def __init__(self, session: Session, user_id: int):
         """
-        Initialize the RecipeService with a database session and repositories.
-        If no session is provided, a new session is created.
+        Initialize the RecipeService with a database session and user ID.
+
+        Args:
+            session: SQLAlchemy database session (required).
+            user_id: ID of the authenticated user (required for multi-tenant isolation).
         """
-        if session is None:
-            from app.database.db import create_session
-            session = create_session()
         self.session = session
+        self.user_id = user_id
         # ensure ingredient repository is created before passing into recipe repository
         self.ingredient_repo = IngredientRepo(self.session)
         self.recipe_repo = RecipeRepo(self.session, self.ingredient_repo)
@@ -55,7 +56,8 @@ class RecipeService:
     def create_recipe_with_ingredients(self, recipe_dto: RecipeCreateDTO) -> Recipe:
         if self.recipe_repo.recipe_exists(
             name=recipe_dto.recipe_name,
-            category=recipe_dto.recipe_category
+            category=recipe_dto.recipe_category,
+            user_id=self.user_id,
         ):
             raise DuplicateRecipeError(
                 f"Recipe '{recipe_dto.recipe_name}' "
@@ -63,7 +65,7 @@ class RecipeService:
             )
 
         try:
-            recipe = self.recipe_repo.persist_recipe_and_links(recipe_dto)
+            recipe = self.recipe_repo.persist_recipe_and_links(recipe_dto, self.user_id)
             self.session.commit()
             return recipe
         except SQLAlchemyError as err:
@@ -97,17 +99,17 @@ class RecipeService:
 
     def list_filtered(self, filter_dto: RecipeFilterDTO) -> list[Recipe]:
         """
-        List recipes based on filter criteria.
+        List recipes based on filter criteria for the current user.
 
         Args:
             filter_dto (RecipeFilterDTO): Filter criteria for recipes.
 
         Returns:
-            list[Recipe]: List of recipes matching the filter.
+            list[Recipe]: List of recipes matching the filter (owned by current user).
         """
-        return self.recipe_repo.filter_recipes(filter_dto)
+        return self.recipe_repo.filter_recipes(filter_dto, self.user_id)
 
-    def toggle_favorite(self, recipe_id: int) -> Recipe:
+    def toggle_favorite(self, recipe_id: int) -> Recipe | None:
         """
         Toggle the favorite status of a recipe using the current session.
 
@@ -115,10 +117,12 @@ class RecipeService:
             recipe_id (int): ID of the recipe to toggle.
 
         Returns:
-            Recipe: The updated recipe with new favorite status.
+            Optional[Recipe]: The updated recipe with new favorite status, or None if not found/owned.
         """
         # Use the repository bound to this service's session
-        updated_recipe = self.recipe_repo.toggle_favorite(recipe_id)
+        updated_recipe = self.recipe_repo.toggle_favorite(recipe_id, self.user_id)
+        if not updated_recipe:
+            return None
         # persist the change
         try:
             self.session.commit()
@@ -137,10 +141,10 @@ class RecipeService:
             image_path (str): New default image path to set.
 
         Returns:
-            Recipe | None: The updated recipe or None if not found.
+            Recipe | None: The updated recipe or None if not found/owned.
         """
         try:
-            recipe = self.recipe_repo.get_by_id(recipe_id)
+            recipe = self.recipe_repo.get_by_id(recipe_id, self.user_id)
             if not recipe:
                 return None
 
@@ -162,10 +166,10 @@ class RecipeService:
             image_path (str): New banner image path to set.
 
         Returns:
-            Recipe | None: The updated recipe or None if not found.
+            Recipe | None: The updated recipe or None if not found/owned.
         """
         try:
-            recipe = self.recipe_repo.get_by_id(recipe_id)
+            recipe = self.recipe_repo.get_by_id(recipe_id, self.user_id)
             if not recipe:
                 return None
 
@@ -185,9 +189,12 @@ class RecipeService:
         Before deletion:
         - Meals with this recipe as main will CASCADE delete
         - Meals with this recipe as a side will have it removed from their side_recipe_ids
+
+        Returns:
+            bool: True if deleted, False if not found/owned.
         """
         try:
-            recipe = self.recipe_repo.get_by_id(recipe_id)
+            recipe = self.recipe_repo.get_by_id(recipe_id, self.user_id)
             if not recipe:
                 return False
 
@@ -254,9 +261,12 @@ class RecipeService:
     def update_recipe(self, recipe_id: int, update_dto: RecipeUpdateDTO) -> Recipe:
         """
         Update an existing recipe and its ingredient links.
+
+        Raises:
+            RecipeSaveError: If recipe not found/owned or database error occurs.
         """
         try:
-            updated_recipe = self.recipe_repo.update_recipe(recipe_id, update_dto)
+            updated_recipe = self.recipe_repo.update_recipe(recipe_id, update_dto, self.user_id)
             if not updated_recipe:
                 raise RecipeSaveError(f"Recipe {recipe_id} not found.")
             self.session.commit()
@@ -269,15 +279,15 @@ class RecipeService:
 
     def get_recipe(self, recipe_id: int) -> Recipe | None:
         """
-        Retrieve a single recipe by ID.
+        Retrieve a single recipe by ID for the current user.
 
         Args:
             recipe_id (int): ID of the recipe to retrieve.
 
         Returns:
-            Optional[Recipe]: The Recipe if found, else None.
+            Optional[Recipe]: The Recipe if found and owned by user, else None.
         """
-        return self.recipe_repo.get_by_id(recipe_id)
+        return self.recipe_repo.get_by_id(recipe_id, self.user_id)
 
     def get_last_cooked_date(self, recipe_id: int) -> datetime | None:
         """
@@ -287,6 +297,6 @@ class RecipeService:
             recipe_id (int): ID of the recipe to check.
 
         Returns:
-            datetime | None: The last cooked date, or None if never cooked.
+            datetime | None: The last cooked date, or None if never cooked or not owned.
         """
-        return self.recipe_repo.get_last_cooked_date(recipe_id)
+        return self.recipe_repo.get_last_cooked_date(recipe_id, self.user_id)
