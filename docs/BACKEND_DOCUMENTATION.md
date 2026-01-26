@@ -26,12 +26,20 @@ Complete technical documentation for the Meal Genie backend API.
 The Meal Genie backend is a RESTful API built with FastAPI and Python. It provides:
 
 - **Recipe Management** - CRUD operations for recipes with ingredients
-- **Meal Planning** - Create meals from recipes and plan them
-- **Shopping Lists** - Generate shopping lists from planned meals
+- **Meal Planning** - Create meals from recipes and plan them with shopping modes
+- **Shopping Lists** - Generate shopping lists from planned meals with flagging support
 - **Ingredient Management** - Manage ingredient database
+- **Unit Conversions** - Ingredient-specific unit conversion rules
 - **Data Import/Export** - Excel import/export functionality
 - **Image Upload** - Cloudinary integration for recipe images
-- **AI Image Generation** - Gemini AI-powered recipe image generation
+- **AI Features** - Comprehensive AI-powered capabilities:
+  - **Meal Genie** - Conversational AI assistant with function calling
+  - **Recipe Generation** - AI-generated recipes with dual images
+  - **Cooking Tips** - Random AI-generated cooking tips
+  - **Meal Suggestions** - AI-powered side dish recommendations
+  - **Image Generation** - Dual image generation (reference + banner)
+- **Dashboard** - Lightweight statistics endpoint
+- **Cooking Streaks** - Track consecutive cooking days
 - **User Feedback** - GitHub issue integration for feedback
 
 ---
@@ -64,52 +72,79 @@ backend/
 │   │   ├── planner.py                   # Planner endpoints
 │   │   ├── shopping.py                  # Shopping list endpoints
 │   │   ├── ingredients.py               # Ingredient endpoints
+│   │   ├── unit_conversions.py          # Unit conversion endpoints
+│   │   ├── dashboard.py                 # Dashboard statistics endpoints
 │   │   ├── data_management.py           # Import/export endpoints
 │   │   ├── feedback.py                  # User feedback endpoints
 │   │   ├── upload.py                    # Image upload endpoints (Cloudinary)
-│   │   └── image_generation.py          # AI image generation endpoints
-│   └── core/
-│       ├── models/                      # SQLAlchemy ORM models
-│       │   ├── recipe.py
-│       │   ├── ingredient.py
-│       │   ├── recipe_ingredient.py
-│       │   ├── meal.py
-│       │   ├── planner_entry.py
-│       │   ├── recipe_history.py
-│       │   ├── shopping_item.py
-│       │   └── shopping_state.py
-│       ├── repositories/                # Data access layer
-│       │   ├── recipe_repo.py
-│       │   ├── meal_repo.py
-│       │   ├── planner_repo.py
-│       │   ├── shopping_repo.py
-│       │   └── ingredient_repo.py
-│       ├── services/                    # Business logic layer
-│       │   ├── recipe_service.py
-│       │   ├── meal_service.py
-│       │   ├── planner_service.py
-│       │   ├── shopping_service.py
-│       │   ├── ingredient_service.py
-│       │   ├── data_management_service.py
-│       │   ├── feedback_service.py
-│       │   └── image_generation_service.py  # AI image generation
-│       ├── dtos/                        # Pydantic validation models
-│       │   ├── recipe_dtos.py
-│       │   ├── meal_dtos.py
-│       │   ├── planner_dtos.py
-│       │   ├── shopping_dtos.py
-│       │   ├── ingredient_dtos.py
-│       │   ├── data_management_dtos.py
-│       │   ├── feedback.py
-│       │   └── image_generation_dtos.py     # AI image generation DTOs
-│       └── database/
-│           ├── db.py                    # Database connection & session
-│           ├── base.py                  # SQLAlchemy declarative base
-│           ├── app_data.db              # SQLite database file
-│           └── migrations/              # Alembic migrations
-│               ├── env.py
-│               ├── alembic.ini
-│               └── versions/            # Migration scripts
+│   │   └── ai/                          # AI-powered endpoints
+│   │       ├── __init__.py              # Router exports
+│   │       ├── meal_genie.py            # Conversational AI assistant
+│   │       ├── cooking_tips.py          # Random cooking tips
+│   │       ├── meal_suggestions.py      # Side dish suggestions
+│   │       └── image_generation.py      # AI image generation
+│   ├── ai/                              # AI services and configuration
+│   │   ├── __init__.py
+│   │   ├── config/                      # AI feature configurations
+│   │   │   ├── cooking_tips_config.py
+│   │   │   ├── image_generation_config.py
+│   │   │   ├── meal_genie_config.py
+│   │   │   └── meal_suggestions_config.py
+│   │   ├── dtos/                        # AI-specific DTOs
+│   │   │   ├── cooking_tip_dtos.py
+│   │   │   ├── image_generation_dtos.py
+│   │   │   ├── meal_genie_dtos.py
+│   │   │   └── meal_suggestions_dtos.py
+│   │   └── services/                    # AI service implementations
+│   │       ├── cooking_tip_service.py
+│   │       ├── image_generation_service.py
+│   │       ├── meal_genie_service.py
+│   │       ├── meal_suggestions_service.py
+│   │       └── user_context_builder.py
+│   ├── models/                          # SQLAlchemy ORM models
+│   │   ├── recipe.py
+│   │   ├── ingredient.py
+│   │   ├── recipe_ingredient.py
+│   │   ├── meal.py
+│   │   ├── planner_entry.py
+│   │   ├── recipe_history.py
+│   │   ├── shopping_item.py
+│   │   ├── shopping_state.py
+│   │   └── unit_conversion_rule.py      # Unit conversion rules
+│   ├── repositories/                    # Data access layer
+│   │   ├── recipe_repo.py
+│   │   ├── meal_repo.py
+│   │   ├── planner_repo.py
+│   │   ├── shopping_repo.py
+│   │   ├── ingredient_repo.py
+│   │   └── unit_conversion_repo.py      # Unit conversion repository
+│   ├── services/                        # Business logic layer
+│   │   ├── recipe_service.py
+│   │   ├── meal_service.py
+│   │   ├── planner_service.py
+│   │   ├── shopping_service.py
+│   │   ├── ingredient_service.py
+│   │   ├── unit_conversion_service.py   # Unit conversion service
+│   │   ├── data_management_service.py
+│   │   └── feedback_service.py
+│   ├── dtos/                            # Pydantic validation models
+│   │   ├── recipe_dtos.py
+│   │   ├── meal_dtos.py
+│   │   ├── planner_dtos.py
+│   │   ├── shopping_dtos.py
+│   │   ├── ingredient_dtos.py
+│   │   ├── unit_conversion_dtos.py      # Unit conversion DTOs
+│   │   ├── dashboard_dtos.py            # Dashboard DTOs
+│   │   ├── data_management_dtos.py
+│   │   └── feedback.py
+│   └── database/
+│       ├── db.py                        # Database connection & session
+│       ├── base.py                      # SQLAlchemy declarative base
+│       ├── app_data.db                  # SQLite database file
+│       └── migrations/                  # Alembic migrations
+│           ├── env.py
+│           ├── alembic.ini
+│           └── versions/                # Migration scripts
 ├── scripts/
 │   ├── seed_database.py                 # Sample data seeder
 │   └── list_recipes.py                  # Utility script
@@ -166,7 +201,9 @@ cp .env.example .env
 | `CLOUDINARY_CLOUD_NAME` | No | Cloudinary cloud name for image uploads |
 | `CLOUDINARY_API_KEY` | No | Cloudinary API key |
 | `CLOUDINARY_API_SECRET` | No | Cloudinary API secret |
-| `GEMINI_API_KEY` | No | Google Gemini API key for AI image generation |
+| `GEMINI_ASSISTANT_API_KEY` | No | Google Gemini API key for Meal Genie assistant |
+| `GEMINI_TIP_API_KEY` | No | Google Gemini API key for cooking tips |
+| `GEMINI_IMAGE_API_KEY` | No | Google Gemini API key for image generation |
 | `GITHUB_TOKEN` | No | GitHub PAT for feedback submission |
 | `GITHUB_REPO` | No | GitHub repo for feedback issues |
 | `CORS_ORIGINS` | No | Comma-separated allowed origins (default: *) |
@@ -213,6 +250,253 @@ Once running, access:
 |--------|----------|-------------|
 | GET | `/` | Root health check |
 | GET | `/health` | Health status |
+
+---
+
+### Dashboard Endpoints (`/api/dashboard`)
+
+#### Get Dashboard Stats
+```http
+GET /api/dashboard/stats
+```
+
+Lightweight statistics using COUNT queries for optimal performance.
+
+**Response:** `DashboardStatsDTO`
+```json
+{
+  "total_recipes": 25,
+  "favorites": 5,
+  "meals_planned": 3,
+  "shopping_items": 12
+}
+```
+
+---
+
+### Unit Conversion Endpoints (`/api/unit-conversions`)
+
+Manage ingredient-specific unit conversion rules (e.g., 8 tablespoons = 1 stick of butter).
+
+#### List All Rules
+```http
+GET /api/unit-conversions
+```
+
+**Response:** `UnitConversionRuleResponseDTO[]`
+
+#### Get Single Rule
+```http
+GET /api/unit-conversions/{rule_id}
+```
+
+**Response:** `UnitConversionRuleResponseDTO`
+
+#### Create Rule
+```http
+POST /api/unit-conversions
+```
+
+**Request Body:** `UnitConversionRuleCreateDTO`
+```json
+{
+  "ingredient_name": "butter",
+  "from_unit": "tablespoon",
+  "to_unit": "stick",
+  "factor": 0.125,
+  "round_up": true
+}
+```
+
+**Response:** `UnitConversionRuleResponseDTO`
+
+#### Update Rule
+```http
+PUT /api/unit-conversions/{rule_id}
+```
+
+**Request Body:** `UnitConversionRuleUpdateDTO`
+
+**Response:** `UnitConversionRuleResponseDTO`
+
+#### Delete Rule
+```http
+DELETE /api/unit-conversions/{rule_id}
+```
+
+**Response:** `204 No Content`
+
+---
+
+### AI Endpoints (`/api/ai`)
+
+AI-powered features using Google Gemini models.
+
+#### Meal Genie - Chat (`/api/ai/meal-genie`)
+
+Conversational AI assistant with intelligent function calling for recipe suggestions, generation, and cooking questions.
+
+##### Chat with Meal Genie
+```http
+POST /api/ai/meal-genie/chat
+```
+
+**Request Body:** `MealGenieRequestDTO`
+```json
+{
+  "message": "What can I make with chicken and rice?",
+  "conversation_history": [
+    {"role": "user", "content": "I'm looking for dinner ideas"},
+    {"role": "assistant", "content": "I'd be happy to help! What ingredients do you have?"}
+  ]
+}
+```
+
+**Response:** `MealGenieResponseDTO`
+```json
+{
+  "success": true,
+  "response": "Here are some great chicken and rice recipes...",
+  "recipe": null,
+  "reference_image_data": null,
+  "banner_image_data": null
+}
+```
+
+##### Ask Meal Genie (Alias)
+```http
+POST /api/ai/meal-genie/ask
+```
+
+Backwards-compatible alias for `/chat`.
+
+##### Generate Recipe
+```http
+POST /api/ai/meal-genie/generate-recipe
+```
+
+**Request Body:** `RecipeGenerationRequestDTO`
+```json
+{
+  "message": "Create a spicy Thai curry recipe",
+  "conversation_history": [],
+  "generate_image": true
+}
+```
+
+**Response:** `RecipeGenerationResponseDTO`
+```json
+{
+  "success": true,
+  "recipe": {
+    "recipe_name": "Thai Red Curry",
+    "recipe_category": "Thai",
+    "meal_type": "Dinner",
+    "ingredients": [...],
+    "directions": "..."
+  },
+  "reference_image_data": "base64_encoded...",
+  "banner_image_data": "base64_encoded...",
+  "ai_message": "I've created a delicious Thai Red Curry recipe for you!",
+  "needs_more_info": false
+}
+```
+
+---
+
+#### Cooking Tips (`/api/ai/cooking-tip`)
+
+##### Get Random Cooking Tip
+```http
+GET /api/ai/cooking-tip
+```
+
+**Response:** `CookingTipResponseDTO`
+```json
+{
+  "success": true,
+  "tip": "To prevent pasta from sticking, add a splash of olive oil to the boiling water.",
+  "error": null
+}
+```
+
+---
+
+#### Meal Suggestions (`/api/ai/meal-suggestions`)
+
+##### Get Side Dish Suggestions
+```http
+POST /api/ai/meal-suggestions
+```
+
+**Request Body:** `MealSuggestionsRequestDTO`
+```json
+{
+  "meal_name": "Italian Night",
+  "main_recipe_name": "Spaghetti Carbonara",
+  "existing_sides": ["Garlic Bread"]
+}
+```
+
+**Response:** `MealSuggestionsResponseDTO`
+```json
+{
+  "success": true,
+  "side_suggestions": ["Caesar Salad", "Roasted Vegetables", "Tiramisu"],
+  "cooking_tip": "For authentic carbonara, use guanciale instead of bacon.",
+  "error": null
+}
+```
+
+---
+
+#### Image Generation (`/api/ai/image-generation`)
+
+AI-powered recipe image generation with dual image support (reference thumbnail + banner hero).
+
+##### Generate Dual Images
+```http
+POST /api/ai/image-generation
+```
+
+**Request Body:** `ImageGenerationRequestDTO`
+```json
+{
+  "recipe_name": "Pasta Carbonara"
+}
+```
+
+**Response:** `ImageGenerationResponseDTO`
+```json
+{
+  "success": true,
+  "reference_image_data": "base64_encoded_thumbnail...",
+  "banner_image_data": "base64_encoded_hero...",
+  "error": null
+}
+```
+
+##### Generate Banner from Reference
+```http
+POST /api/ai/image-generation/banner
+```
+
+**Request Body:** `BannerGenerationRequestDTO`
+```json
+{
+  "recipe_name": "Pasta Carbonara",
+  "reference_image_data": "base64_encoded_reference_image..."
+}
+```
+
+**Response:** `BannerGenerationResponseDTO`
+```json
+{
+  "success": true,
+  "banner_image_data": "base64_encoded_banner...",
+  "error": null
+}
+```
 
 ---
 
@@ -352,7 +636,7 @@ GET /api/meals
 |-----------|------|-------------|
 | `name_pattern` | string | Search by name |
 | `tags` | string[] | Filter by tags |
-| `favorites_only` | boolean | Filter favorites |
+| `saved` | boolean | Filter by saved status (`true`=saved only, `false`=transient only, omit=all) |
 | `limit` | integer | Max results |
 | `offset` | integer | Pagination offset |
 
@@ -374,13 +658,6 @@ Get all meals that contain this recipe (as main or side).
 
 **Response:** `MealResponseDTO[]`
 
-#### Get Favorite Meals
-```http
-GET /api/meals/favorites
-```
-
-**Response:** `MealResponseDTO[]`
-
 #### Create Meal
 ```http
 POST /api/meals
@@ -392,7 +669,7 @@ POST /api/meals
   "meal_name": "Italian Night",
   "main_recipe_id": 1,
   "side_recipe_ids": [2, 3],
-  "is_favorite": false,
+  "is_saved": false,
   "tags": ["italian", "dinner", "family"]
 }
 ```
@@ -422,10 +699,12 @@ Cascades to planner entries.
 
 **Response:** `204 No Content`
 
-#### Toggle Favorite
+#### Toggle Saved Status
 ```http
-POST /api/meals/{meal_id}/favorite
+POST /api/meals/{meal_id}/save
 ```
+
+Toggles the `is_saved` flag. Saved meals persist permanently; unsaved (transient) meals may be deleted when removed from planner.
 
 **Response:** `MealResponseDTO`
 
@@ -497,6 +776,35 @@ GET /api/planner/summary
 }
 ```
 
+#### Get Cooking Streak
+```http
+GET /api/planner/streak
+```
+
+Track consecutive cooking days for gamification.
+
+**Query Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `tz` | string | User's IANA timezone (e.g., 'America/New_York') |
+
+**Response:** `CookingStreakDTO`
+```json
+{
+  "current_streak": 5,
+  "longest_streak": 12,
+  "weekly_activity": {
+    "Mon": 2,
+    "Tue": 1,
+    "Wed": 0,
+    "Thu": 3,
+    "Fri": 1,
+    "Sat": 0,
+    "Sun": 2
+  }
+}
+```
+
 #### Get Meal IDs
 ```http
 GET /api/planner/meal-ids
@@ -541,13 +849,6 @@ PUT /api/planner/entries/reorder
 
 **Response:** `PlannerOperationResultDTO`
 
-#### Toggle Completion
-```http
-POST /api/planner/entries/{entry_id}/toggle
-```
-
-**Response:** `PlannerEntryResponseDTO`
-
 #### Mark Completed
 ```http
 POST /api/planner/entries/{entry_id}/complete
@@ -559,6 +860,20 @@ POST /api/planner/entries/{entry_id}/complete
 ```http
 POST /api/planner/entries/{entry_id}/incomplete
 ```
+
+**Response:** `PlannerEntryResponseDTO`
+
+#### Cycle Shopping Mode
+```http
+POST /api/planner/entries/{entry_id}/cycle-shopping-mode
+```
+
+Cycles through shopping modes: `all` → `produce_only` → `none` → `all`
+
+**Shopping Mode Values:**
+- `all` - Include all ingredients in shopping list
+- `produce_only` - Include only produce category items
+- `none` - Exclude from shopping list entirely
 
 **Response:** `PlannerEntryResponseDTO`
 
@@ -606,6 +921,7 @@ GET /api/shopping
 | `category` | string | Filter by category |
 | `have` | boolean | Filter by status |
 | `search_term` | string | Search ingredient name |
+| `auto_generate` | boolean | Regenerate from planner before returning (default: false) |
 | `limit` | integer | Max results |
 | `offset` | integer | Pagination offset |
 
@@ -651,6 +967,15 @@ PATCH /api/shopping/items/{item_id}/toggle
 
 **Response:** `ShoppingItemResponseDTO`
 
+#### Toggle Item Flag
+```http
+PATCH /api/shopping/items/{item_id}/toggle-flag
+```
+
+Toggle the flagged status for marking items that need special attention.
+
+**Response:** `ShoppingItemResponseDTO`
+
 #### Delete Item
 ```http
 DELETE /api/shopping/items/{item_id}
@@ -670,6 +995,15 @@ POST /api/shopping/generate
   "servings_multiplier": 1.5
 }
 ```
+
+**Response:** `ShoppingListGenerationResultDTO`
+
+#### Generate from Planner
+```http
+POST /api/shopping/generate-from-planner
+```
+
+Generate shopping list from active planner entries, respecting each entry's `shopping_mode` setting.
 
 **Response:** `ShoppingListGenerationResultDTO`
 
@@ -1118,12 +1452,12 @@ class Meal(Base):
     meal_name: str                    # 1-255 characters
     main_recipe_id: int               # FK to Recipe (CASCADE)
     _side_recipe_ids_json: str        # JSON array, stored as TEXT
-    is_favorite: bool                 # For filtering
+    is_saved: bool                    # Persistence flag (saved meals persist permanently)
     _tags_json: str                   # JSON array, stored as TEXT
     created_at: datetime              # UTC timestamp
 
     # Relationships
-    main_recipe: Recipe
+    main_recipe: Recipe               # passive_deletes=True for recipe deletion handling
     planner_entries: List[PlannerEntry]  # Cascade delete
 ```
 
@@ -1141,14 +1475,16 @@ class Meal(Base):
 - Max 20 tags, 50 chars each
 
 **Helper Methods:**
-- `add_side_recipe(recipe_id)` - Add side (max 3, no duplicates)
-- `remove_side_recipe(recipe_id)` - Remove side
+- `add_side_recipe(recipe_id)` - Add side (max 3, no duplicates), returns bool
+- `remove_side_recipe(recipe_id)` - Remove side, returns bool
 - `get_all_recipe_ids()` - Returns [main_id] + side_ids
 - `has_recipe(recipe_id)` - Check if meal contains recipe
 
 **Constraints:**
 - Max 3 side recipes
 - Max 20 tags, 50 characters each
+
+**Note:** `is_saved` replaces the previous `is_favorite` field. Saved meals persist permanently; unsaved (transient) meals may be deleted when removed from planner.
 
 ---
 
@@ -1166,18 +1502,28 @@ class PlannerEntry(Base):
     is_completed: bool               # Default False
     completed_at: Optional[datetime] # Set when completed
     scheduled_date: Optional[date]   # For calendar feature
+    shopping_mode: str               # "all" | "produce_only" | "none" (default: "all")
+    is_cleared: bool                 # Soft-delete flag (default: False)
 
     # Relationships
     meal: Meal
 ```
 
+**Shopping Mode Values:**
+- `"all"` - Include all ingredients in shopping list
+- `"produce_only"` - Include only produce category items
+- `"none"` - Exclude from shopping list entirely
+
 **Helper Methods:**
 - `mark_completed()` - Sets is_completed=True, sets completed_at
 - `mark_incomplete()` - Sets is_completed=False, clears completed_at
 - `toggle_completion()` - Returns new is_completed value
+- `cycle_shopping_mode()` - Cycles: all → produce_only → none → all
 
 **Constraints:**
 - Max 15 entries in planner
+
+**Note:** `is_cleared` is a soft-delete flag that preserves cooking history for streak calculation while hiding cleared entries from the active planner view.
 
 ---
 
@@ -1196,7 +1542,9 @@ class ShoppingItem(Base):
     category: Optional[str]      # Max 100 characters
     source: Enum                 # "recipe" or "manual"
     have: bool                   # Checked status
+    flagged: bool                # Mark for special attention (default: False)
     state_key: Optional[str]     # For state persistence
+    recipe_sources: Optional[List[str]]  # JSON array of recipe names contributing to item
 ```
 
 **Class Methods:**
@@ -1207,6 +1555,8 @@ class ShoppingItem(Base):
 - `key()` - Generates unique key
 - `display_label()` - Returns "○/✓ name: qty unit"
 - `formatted_quantity()` - Clean quantity string
+
+**Note:** `recipe_sources` tracks which recipes contribute to the aggregated quantity, useful for understanding where ingredients come from in the shopping list.
 
 ---
 
@@ -1246,6 +1596,31 @@ class RecipeHistory(Base):
     # Relationships
     recipe: Recipe
 ```
+
+---
+
+### UnitConversionRule
+
+Ingredient-specific unit conversion rules for shopping list optimization.
+
+```python
+class UnitConversionRule(Base):
+    __tablename__ = "unit_conversion_rules"
+
+    id: int                    # Primary key
+    ingredient_name: str       # Indexed for lookup
+    from_unit: str             # Source unit
+    to_unit: str               # Target unit
+    factor: float              # Conversion factor
+    round_up: bool             # Round up result (default: True)
+    created_at: datetime       # UTC timestamp
+```
+
+**Example Use Case:**
+- Converting "8 tablespoons butter" → "1 stick butter"
+- Rule: ingredient_name="butter", from_unit="tablespoon", to_unit="stick", factor=0.125
+
+**Note:** `round_up=True` is recommended for shopping lists to ensure you don't run short.
 
 ---
 
@@ -1291,15 +1666,15 @@ class MealRepo:
     # Read
     def get_by_id(self, meal_id: int) -> Optional[Meal]
     def get_all(self) -> List[Meal]
-    def filter_meals(self, name_pattern, tags, favorites_only, limit, offset) -> List[Meal]
+    def filter_meals(self, name_pattern, tags, saved, limit, offset) -> List[Meal]
     def get_by_name_pattern(self, search_term: str) -> List[Meal]
-    def get_favorites(self) -> List[Meal]
+    def get_saved_meals(self) -> List[Meal]
     def get_meals_by_main_recipe(self, recipe_id: int) -> List[Meal]
     def get_meals_with_side_recipe(self, recipe_id: int) -> List[Meal]
 
     # Update
     def update_meal(self, meal_id: int, update_dto: MealUpdateDTO) -> Meal
-    def toggle_favorite(self, meal_id: int) -> Meal
+    def toggle_saved(self, meal_id: int) -> Meal
     def remove_side_recipe_from_all_meals(self, recipe_id: int) -> None
 
     # Delete
@@ -1391,6 +1766,29 @@ class IngredientRepo:
     def delete(self, ingredient_id: int) -> None
 ```
 
+### UnitConversionRepo
+
+```python
+class UnitConversionRepo:
+    def __init__(self, session: Session):
+        ...
+
+    # Create
+    def create(self, rule_dto: UnitConversionRuleCreateDTO) -> UnitConversionRule
+
+    # Read
+    def get_by_id(self, rule_id: int) -> Optional[UnitConversionRule]
+    def get_all(self) -> List[UnitConversionRule]
+    def get_by_ingredient(self, ingredient_name: str) -> List[UnitConversionRule]
+    def find_rule(self, ingredient_name: str, from_unit: str, to_unit: str) -> Optional[UnitConversionRule]
+
+    # Update
+    def update(self, rule_id: int, update_dto: UnitConversionRuleUpdateDTO) -> UnitConversionRule
+
+    # Delete
+    def delete(self, rule_id: int) -> None
+```
+
 ---
 
 ## Services
@@ -1433,11 +1831,11 @@ class MealService:
     def get_all_meals(self) -> List[MealResponseDTO]
     def filter_meals(self, filter_dto: MealFilterDTO) -> List[MealResponseDTO]
     def search_meals(self, search_term: str) -> List[MealResponseDTO]
-    def get_favorite_meals(self) -> List[MealResponseDTO]
+    def get_saved_meals(self) -> List[MealResponseDTO]
     def get_meals_by_recipe(self, recipe_id: int) -> List[MealResponseDTO]
     def update_meal(self, meal_id: int, update_dto: MealUpdateDTO) -> MealResponseDTO
     def delete_meal(self, meal_id: int) -> None
-    def toggle_favorite(self, meal_id: int) -> MealResponseDTO
+    def toggle_saved(self, meal_id: int) -> MealResponseDTO
     def add_side_recipe(self, meal_id: int, recipe_id: int) -> MealResponseDTO
     def remove_side_recipe(self, meal_id: int, recipe_id: int) -> MealResponseDTO
     def reorder_side_recipes(self, meal_id: int, side_recipe_ids: List[int]) -> MealResponseDTO
@@ -1538,37 +1936,127 @@ class DataManagementService:
 - `UPDATE` - Update existing recipe
 - `RENAME` - Create new with different name
 
+### UnitConversionService
+
+```python
+class UnitConversionService:
+    def __init__(self, session: Session):
+        ...
+
+    def create_rule(self, rule_dto: UnitConversionRuleCreateDTO) -> UnitConversionRuleResponseDTO
+    def get_rule(self, rule_id: int) -> UnitConversionRuleResponseDTO
+    def get_all_rules(self) -> List[UnitConversionRuleResponseDTO]
+    def update_rule(self, rule_id: int, update_dto: UnitConversionRuleUpdateDTO) -> UnitConversionRuleResponseDTO
+    def delete_rule(self, rule_id: int) -> None
+    def convert(self, ingredient_name: str, quantity: float, from_unit: str, to_unit: str) -> Optional[float]
+```
+
+---
+
+## AI Services (`app/ai/services/`)
+
+AI services are organized in a dedicated `app/ai/` directory with separate configs, DTOs, and services.
+
+### MealGenieService
+
+Conversational AI assistant using Gemini function calling for intelligent request routing.
+
+```python
+class MealGenieService:
+    def __init__(self):
+        """Initialize with GEMINI_ASSISTANT_API_KEY from environment."""
+
+    def chat(self, request: MealGenieRequestDTO, session: Session) -> MealGenieResponseDTO:
+        """
+        Process a chat message with intelligent routing.
+
+        Uses function calling to determine if user wants:
+        - Recipe suggestions
+        - Recipe generation
+        - Cooking questions answered
+        """
+
+    def generate_recipe(self, request: RecipeGenerationRequestDTO, session: Session) -> RecipeGenerationResponseDTO:
+        """
+        Generate a complete recipe with optional AI images.
+        """
+```
+
+**Configuration:**
+- Uses Google Gemini with function calling
+- Requires `GEMINI_ASSISTANT_API_KEY` environment variable
+- Integrates with `UserContextBuilder` for user data context
+
+### CookingTipService
+
+```python
+class CookingTipService:
+    def __init__(self):
+        """Initialize with GEMINI_TIP_API_KEY from environment."""
+
+    def get_random_tip(self) -> CookingTipResponseDTO:
+        """Generate a random cooking tip using AI."""
+```
+
+**Configuration:**
+- Requires `GEMINI_TIP_API_KEY` environment variable
+
+### MealSuggestionsService
+
+```python
+class MealSuggestionsService:
+    def __init__(self):
+        """Initialize with GEMINI_ASSISTANT_API_KEY from environment."""
+
+    def get_suggestions(self, request: MealSuggestionsRequestDTO) -> MealSuggestionsResponseDTO:
+        """
+        Get side dish suggestions and cooking tips for a meal.
+        """
+```
+
 ### ImageGenerationService
 
 ```python
 class ImageGenerationService:
     def __init__(self):
-        """Initialize with GEMINI_API_KEY from environment."""
+        """Initialize with GEMINI_IMAGE_API_KEY from environment."""
 
-    def generate_recipe_image(self, recipe_name: str) -> dict:
+    def generate_dual_images(self, recipe_name: str) -> ImageGenerationResponseDTO:
         """
-        Generate an AI image for a recipe.
-
-        Args:
-            recipe_name: The name of the recipe to generate an image for.
-
-        Returns:
-            dict with 'success', 'image_data' (base64), and optional 'error'
+        Generate both reference (thumbnail) and banner (hero) images.
         """
 
-# Singleton accessor
-def get_image_generation_service() -> ImageGenerationService:
-    """Get the singleton instance of the image generation service."""
+    def generate_banner_from_reference(self, recipe_name: str, reference_image_data: str) -> BannerGenerationResponseDTO:
+        """
+        Generate a banner image based on an existing reference image.
+        """
 ```
 
 **Configuration:**
-- Uses Google Gemini AI model `gemini-2.5-flash-image`
-- Requires `GEMINI_API_KEY` environment variable
+- Uses Google Gemini AI model
+- Requires `GEMINI_IMAGE_API_KEY` environment variable
 - Generates professional food photography style images
-- Returns base64-encoded image data
+- Returns base64-encoded image data for both reference and banner
 
-**Exceptions:**
-- Raises `ValueError` if `GEMINI_API_KEY` is not set
+### UserContextBuilder
+
+```python
+class UserContextBuilder:
+    def __init__(self, session: Session):
+        ...
+
+    def build_context(
+        self,
+        include_ingredients: bool = False,
+        include_shopping_list: bool = False,
+        include_meals: bool = False,
+        include_recipes: bool = False
+    ) -> str:
+        """
+        Build formatted context string for AI services.
+        Optionally includes user's ingredients, shopping lists, meals, and recipes.
+        """
+```
 
 ---
 
@@ -1664,7 +2152,7 @@ class MealBaseDTO(BaseModel):
     meal_name: str
     main_recipe_id: int
     side_recipe_ids: List[int] = []
-    is_favorite: bool = False
+    is_saved: bool = False
     tags: List[str] = []
 
 # Create request
@@ -1676,7 +2164,7 @@ class MealUpdateDTO(BaseModel):
     meal_name: Optional[str] = None
     main_recipe_id: Optional[int] = None
     side_recipe_ids: Optional[List[int]] = None
-    is_favorite: Optional[bool] = None
+    is_saved: Optional[bool] = None
     tags: Optional[List[str]] = None
 
 # Full response
@@ -1689,7 +2177,7 @@ class MealResponseDTO(MealBaseDTO):
 class MealFilterDTO(BaseModel):
     name_pattern: Optional[str] = None
     tags: Optional[List[str]] = None
-    favorites_only: bool = False
+    saved: Optional[bool] = None  # True=saved only, False=transient only, None=all
     limit: int = 100
     offset: int = 0
 
@@ -1714,6 +2202,8 @@ class PlannerEntryResponseDTO(BaseModel):
     is_completed: bool
     completed_at: Optional[datetime]
     scheduled_date: Optional[date]
+    shopping_mode: str  # "all" | "produce_only" | "none"
+    is_cleared: bool
 
 # Summary stats
 class PlannerSummaryDTO(BaseModel):
@@ -1722,6 +2212,12 @@ class PlannerSummaryDTO(BaseModel):
     pending_entries: int
     max_entries: int = 15
     available_slots: int
+
+# Cooking streak stats
+class CookingStreakDTO(BaseModel):
+    current_streak: int
+    longest_streak: int
+    weekly_activity: Dict[str, int]  # Mon-Sun activity counts
 
 # Reorder request
 class PlannerReorderDTO(BaseModel):
@@ -1750,7 +2246,9 @@ class ShoppingItemResponseDTO(BaseModel):
     category: Optional[str]
     source: str  # "recipe" or "manual"
     have: bool
+    flagged: bool
     state_key: Optional[str]
+    recipe_sources: Optional[List[str]]  # Recipe names contributing to item
 
 # Manual item create
 class ManualItemCreateDTO(BaseModel):
@@ -1902,17 +2400,129 @@ class ExportFilterDTO(BaseModel):
     favorites_only: bool = False
 ```
 
-### Image Generation DTOs
+### Unit Conversion DTOs
 
 ```python
-# Request for AI image generation
+# Create request
+class UnitConversionRuleCreateDTO(BaseModel):
+    ingredient_name: str
+    from_unit: str
+    to_unit: str
+    factor: float
+    round_up: bool = True
+
+# Update request
+class UnitConversionRuleUpdateDTO(BaseModel):
+    ingredient_name: Optional[str] = None
+    from_unit: Optional[str] = None
+    to_unit: Optional[str] = None
+    factor: Optional[float] = None
+    round_up: Optional[bool] = None
+
+# Response
+class UnitConversionRuleResponseDTO(BaseModel):
+    id: int
+    ingredient_name: str
+    from_unit: str
+    to_unit: str
+    factor: float
+    round_up: bool
+    created_at: datetime
+```
+
+### Dashboard DTOs
+
+```python
+class DashboardStatsDTO(BaseModel):
+    total_recipes: int
+    favorites: int
+    meals_planned: int
+    shopping_items: int
+```
+
+### AI DTOs (`app/ai/dtos/`)
+
+#### Meal Genie DTOs
+
+```python
+# Chat request
+class MealGenieRequestDTO(BaseModel):
+    message: str
+    conversation_history: List[Dict[str, str]] = []
+
+# Chat response
+class MealGenieResponseDTO(BaseModel):
+    success: bool
+    response: str
+    recipe: Optional[RecipeDTO] = None
+    reference_image_data: Optional[str] = None
+    banner_image_data: Optional[str] = None
+
+# Recipe generation request
+class RecipeGenerationRequestDTO(BaseModel):
+    message: str
+    conversation_history: List[Dict[str, str]] = []
+    generate_image: bool = True
+
+# Recipe generation response
+class RecipeGenerationResponseDTO(BaseModel):
+    success: bool
+    recipe: Optional[RecipeDTO] = None
+    reference_image_data: Optional[str] = None
+    banner_image_data: Optional[str] = None
+    ai_message: str
+    needs_more_info: bool = False
+```
+
+#### Cooking Tip DTOs
+
+```python
+class CookingTipResponseDTO(BaseModel):
+    success: bool
+    tip: str
+    error: Optional[str] = None
+```
+
+#### Meal Suggestions DTOs
+
+```python
+# Request
+class MealSuggestionsRequestDTO(BaseModel):
+    meal_name: str
+    main_recipe_name: str
+    existing_sides: List[str] = []
+
+# Response
+class MealSuggestionsResponseDTO(BaseModel):
+    success: bool
+    side_suggestions: List[str] = []
+    cooking_tip: str = ""
+    error: Optional[str] = None
+```
+
+#### Image Generation DTOs
+
+```python
+# Request for dual image generation
 class ImageGenerationRequestDTO(BaseModel):
     recipe_name: str
 
-# Response from image generation
+# Response with both images
 class ImageGenerationResponseDTO(BaseModel):
     success: bool
-    image_data: Optional[str] = None  # Base64 encoded image data
+    reference_image_data: Optional[str] = None  # Base64 thumbnail
+    banner_image_data: Optional[str] = None     # Base64 hero image
+    error: Optional[str] = None
+
+# Request for banner from reference
+class BannerGenerationRequestDTO(BaseModel):
+    recipe_name: str
+    reference_image_data: str  # Base64 reference image
+
+# Response for banner generation
+class BannerGenerationResponseDTO(BaseModel):
+    success: bool
+    banner_image_data: Optional[str] = None
     error: Optional[str] = None
 ```
 
@@ -2293,21 +2903,33 @@ def filter_items(self, filter_dto: FilterDTO) -> List[Item]:
 
 | Resource | Endpoint | Methods |
 |----------|----------|---------|
+| Dashboard | `/api/dashboard/stats` | GET |
 | Recipes | `/api/recipes` | GET, POST |
 | Recipe | `/api/recipes/{id}` | GET, PUT, DELETE |
 | Recipe Cards | `/api/recipes/cards` | GET |
 | Meals | `/api/meals` | GET, POST |
 | Meal | `/api/meals/{id}` | GET, PUT, DELETE |
+| Meal Save | `/api/meals/{id}/save` | POST |
+| Meal Sides | `/api/meals/{id}/sides/{recipe_id}` | POST, DELETE |
 | Planner | `/api/planner/entries` | GET, POST |
 | Planner Entry | `/api/planner/entries/{id}` | GET, DELETE |
+| Planner Streak | `/api/planner/streak` | GET |
 | Shopping | `/api/shopping` | GET |
 | Shopping Item | `/api/shopping/items/{id}` | GET, PATCH, DELETE |
+| Shopping Generate | `/api/shopping/generate-from-planner` | POST |
 | Ingredients | `/api/ingredients` | GET, POST |
 | Ingredient | `/api/ingredients/{id}` | GET, PUT, DELETE |
+| Unit Conversions | `/api/unit-conversions` | GET, POST |
+| Unit Conversion | `/api/unit-conversions/{id}` | GET, PUT, DELETE |
 | Import | `/api/data-management/import/*` | POST |
 | Export | `/api/data-management/export` | GET |
 | Upload | `/api/upload` | POST, DELETE |
-| Image Generation | `/api/generate-image` | POST |
+| AI Meal Genie | `/api/ai/meal-genie/chat` | POST |
+| AI Recipe Gen | `/api/ai/meal-genie/generate-recipe` | POST |
+| AI Cooking Tips | `/api/ai/cooking-tip` | GET |
+| AI Suggestions | `/api/ai/meal-suggestions` | POST |
+| AI Image Gen | `/api/ai/image-generation` | POST |
+| AI Banner Gen | `/api/ai/image-generation/banner` | POST |
 | Feedback | `/api/feedback` | POST |
 
 ---

@@ -25,11 +25,12 @@ Complete technical documentation for the Meal Genie frontend application.
 
 Meal Genie is a recipe management and meal planning application built with Next.js 16 and React 19. The frontend provides:
 
-- **Recipe Browser** - Search, filter, and manage recipes
-- **Meal Planner** - Plan meals for the week/month
-- **Shopping List** - Generate and manage shopping lists from recipes
-- **Dashboard** - Overview of meal planning stats
-- **Settings** - User preferences and configuration
+- **Recipe Browser** - Search, filter, and manage recipes with advanced filtering
+- **Meal Planner** - Plan meals with drag-and-drop reordering and AI suggestions
+- **Shopping List** - Auto-generated from meal plans with smart categorization
+- **Dashboard** - Overview with widgets for stats, streaks, quick actions, and AI chat
+- **Meal Genie AI** - Conversational assistant for cooking help and recipe suggestions
+- **Settings** - User preferences, data management, and unit conversions
 
 ---
 
@@ -39,13 +40,17 @@ Meal Genie is a recipe management and meal planning application built with Next.
 |------------|---------|---------|
 | Next.js | 16 | React framework with App Router |
 | React | 19 | UI library |
-| TypeScript | Latest | Type safety |
-| Tailwind CSS | 4 | Utility-first styling |
+| TypeScript | 5 | Type safety |
+| Tailwind CSS | 4 | Utility-first styling (PostCSS) |
 | shadcn/ui | New York style | UI component library |
 | Radix UI | Latest | Accessible primitives |
+| React Query | 5.x | Server state management |
+| dnd-kit | Latest | Drag and drop functionality |
+| Framer Motion | Latest | Animations |
 | Lucide React | Latest | Icon library |
 | Sonner | Latest | Toast notifications |
 | next-themes | Latest | Theme management |
+| React Markdown | Latest | Markdown rendering for AI responses |
 
 ---
 
@@ -58,29 +63,35 @@ frontend/
 ├── src/
 │   ├── app/                       # Next.js App Router pages
 │   │   ├── api/upload/            # Image upload API route
-│   │   ├── dashboard/             # Dashboard page
+│   │   ├── dashboard/             # Dashboard with widgets
+│   │   │   └── _components/       # Dashboard-specific components
 │   │   ├── meal-planner/          # Meal planner page
+│   │   │   ├── create/            # Create new meal plan
+│   │   │   └── _components/       # Planner components & dialogs
 │   │   ├── recipes/               # Recipe pages
 │   │   │   ├── [id]/              # Dynamic recipe detail
 │   │   │   │   ├── edit/          # Edit recipe
-│   │   │   │   └── page.tsx       # View recipe
+│   │   │   │   └── _components/   # Detail view components
 │   │   │   ├── add/               # Add new recipe
-│   │   │   ├── new/               # Alternative add form
-│   │   │   └── page.tsx           # Recipe browser
+│   │   │   └── _components/       # Browser & form components
 │   │   ├── shopping-list/         # Shopping list page
+│   │   │   └── _components/       # Shopping list components
 │   │   ├── settings/              # Settings page
+│   │   │   └── _components/       # Settings sections
 │   │   ├── layout.tsx             # Root layout
 │   │   ├── globals.css            # Global styles
 │   │   └── page.tsx               # Home (redirects to dashboard)
 │   ├── components/
-│   │   ├── ui/                    # shadcn/ui components
-│   │   ├── common/                # Shared components
+│   │   ├── ui/                    # shadcn/ui components (22+)
+│   │   ├── common/                # Shared components (12+)
 │   │   ├── forms/                 # Form components
 │   │   ├── recipe/                # Recipe-specific components
-│   │   ├── layout/                # Layout components
-│   │   └── meal-planner/          # Meal planner components
-│   ├── hooks/                     # Custom React hooks
-│   ├── lib/                       # Utilities and API client
+│   │   ├── layout/                # Layout components (10+)
+│   │   ├── meal-genie/            # AI assistant components
+│   │   └── settings/              # Settings components
+│   ├── hooks/                     # Custom React hooks (11)
+│   ├── lib/                       # Utilities, API client, providers
+│   │   └── providers/             # React Query provider
 │   └── types/                     # TypeScript type definitions
 ├── components.json                # shadcn/ui configuration
 ├── next.config.ts                 # Next.js configuration
@@ -98,47 +109,77 @@ frontend/
 | Route | File | Description |
 |-------|------|-------------|
 | `/` | `app/page.tsx` | Redirects to `/dashboard` |
-| `/dashboard` | `app/dashboard/page.tsx` | Main dashboard with stats |
+| `/dashboard` | `app/dashboard/page.tsx` | Main dashboard with widgets |
 | `/recipes` | `app/recipes/page.tsx` | Recipe browser with search/filter |
-| `/recipes/[id]` | `app/recipes/[id]/page.tsx` | Recipe detail view |
+| `/recipes/[id]` | `app/recipes/[id]/page.tsx` | Recipe detail view with print |
 | `/recipes/[id]/edit` | `app/recipes/[id]/edit/page.tsx` | Edit existing recipe |
 | `/recipes/add` | `app/recipes/add/page.tsx` | Add new recipe form |
-| `/recipes/new` | `app/recipes/new/page.tsx` | Alternative add form |
-| `/meal-planner` | `app/meal-planner/page.tsx` | Meal planning calendar |
+| `/meal-planner` | `app/meal-planner/page.tsx` | Meal planning with grid layout |
+| `/meal-planner/create` | `app/meal-planner/create/page.tsx` | Create new meal |
 | `/shopping-list` | `app/shopping-list/page.tsx` | Shopping list management |
 | `/settings` | `app/settings/page.tsx` | User settings |
 | `/api/upload` | `app/api/upload/route.ts` | Image upload endpoint |
 
 ### Page Features
 
+#### Dashboard (`/dashboard`)
+- Stats cards (total recipes, favorites, meals planned, shopping items)
+- Cooking streak tracker with weekly activity visualization
+- Upcoming meals widget (meal queue preview)
+- Quick add widget for fast recipe creation
+- Recipe roulette (random recipe suggestion)
+- Shopping list summary widget
+- Chef tip widget (AI-generated cooking tips)
+- Ask Meal Genie chat widget
+
 #### Recipe Browser (`/recipes`)
 - Hero section with search bar
-- Quick filter pills (breakfast, under 30min, dinner, vegetarian, favorites)
-- Advanced filters (category, meal type, dietary preferences, cook time)
-- Sort options (name, date, time, rating)
-- Grid/list view toggle
-- Pagination
+- Quick filter pills (breakfast, lunch, dinner, sides, new, under 30m, favorites)
+- Advanced filters sidebar (category, meal type, dietary preferences, cook time)
+- Sort options (name, date, time, servings)
+- Grid view with recipe cards
+- Recently viewed recipes chips
 
 #### Recipe Detail (`/recipes/[id]`)
-- Full recipe information
-- Ingredient list with quantities
-- Step-by-step instructions
-- Nutritional information (if available)
+- Hero banner image with gradient overlay
+- Recipe metadata (servings, time, tags)
+- Ingredient list grouped by category with checkboxes
+- Step-by-step directions
+- Notes section
+- Print preview dialog with optimized layout
+- Add to meal plan dialog
 - Favorite toggle
 - Edit/delete actions
 
 #### Meal Planner (`/meal-planner`)
-- Calendar view (week/month)
-- Drag-and-drop meal assignment
-- Main dish and side dish slots
-- Generate shopping list from planned meals
+- Grid layout for meals
+- Drag-and-drop reordering
+- Shopping mode cycling (all → produce only → none)
+- Completion tracking
+- Selected meal preview with AI suggestions
+- Saved meals dialog
+- Recipe picker dialog
+- Meal preview on hover
 
 #### Shopping List (`/shopping-list`)
-- Grouped by category
-- Checkbox for purchased items
+- Items grouped by category
+- Checkbox for "have" status
+- Flag items for attention
+- Recipe source sidebar (shows which recipes need each ingredient)
 - Manual item addition
 - Clear completed items
-- Recipe source tracking
+- Auto-generation from meal planner
+
+#### Settings (`/settings`)
+- Profile section
+- Appearance (theme toggle)
+- Meal planning preferences
+- Recipe preferences
+- Shopping list preferences
+- Unit conversion rules
+- AI features toggles
+- Data management (import/export/backup/restore)
+- Feedback submission
 
 ---
 
@@ -153,16 +194,25 @@ Core shadcn/ui components built on Radix UI primitives:
 | `Accordion` | `accordion.tsx` | Collapsible content sections |
 | `AlertDialog` | `alert-dialog.tsx` | Confirmation dialogs |
 | `Avatar` | `avatar.tsx` | User avatar display |
-| `Button` | `button.tsx` | Button with variants (default, destructive, outline, secondary, ghost, link) |
-| `Card` | `card.tsx` | Card container with header, content, footer |
+| `Badge` | `badge.tsx` | Status/category badges |
+| `Button` | `button.tsx` | Button with variants |
+| `Card` | `card.tsx` | Card container |
 | `Checkbox` | `checkbox.tsx` | Checkbox input |
 | `Collapsible` | `collapsible.tsx` | Expandable sections |
+| `Command` | `command.tsx` | Command palette |
 | `Dialog` | `dialog.tsx` | Modal dialogs |
+| `DropdownMenu` | `dropdown-menu.tsx` | Dropdown menus |
 | `Input` | `input.tsx` | Text input field |
 | `Label` | `label.tsx` | Form labels |
+| `MultiSelect` | `multi-select.tsx` | Multi-select dropdown |
+| `Popover` | `popover.tsx` | Popover containers |
+| `ScrollArea` | `scroll-area.tsx` | Scrollable containers |
 | `Select` | `select.tsx` | Dropdown select |
 | `Separator` | `separator.tsx` | Visual divider |
+| `Sheet` | `sheet.tsx` | Side drawer/panel |
+| `Skeleton` | `skeleton.tsx` | Loading placeholders |
 | `Sonner` | `sonner.tsx` | Toast notifications |
+| `Switch` | `switch.tsx` | Toggle switch |
 | `Tabs` | `tabs.tsx` | Tabbed content |
 | `Textarea` | `textarea.tsx` | Multi-line text input |
 | `Tooltip` | `tooltip.tsx` | Tooltip popover |
@@ -205,24 +255,58 @@ import { FavoriteButton } from "@/components/common/FavoriteButton";
 />
 ```
 
-**Props:**
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `isFavorite` | `boolean` | required | Current favorite state |
-| `onToggle` | `() => void` | required | Toggle callback |
-| `variant` | `"overlay" \| "inline"` | `"inline"` | Visual style |
-| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Button size |
+#### FilterBar
 
-#### SafeLink
-
-Navigation wrapper that prevents data loss with unsaved changes.
+Horizontal filter controls bar with quick filter pills.
 
 ```tsx
-import { SafeLink } from "@/components/common/SafeLink";
+import { FilterBar } from "@/components/common/FilterBar";
 
-<SafeLink href="/recipes">
-  View Recipes
-</SafeLink>
+<FilterBar
+  activeFilters={activeQuickFilters}
+  onToggleFilter={toggleQuickFilter}
+  onClearAll={clearAll}
+/>
+```
+
+#### FilterSidebar
+
+Sidebar panel for advanced filtering options.
+
+```tsx
+import { FilterSidebar } from "@/components/common/FilterSidebar";
+
+<FilterSidebar
+  filters={filters}
+  onFiltersChange={setFilters}
+  categoryOptions={RECIPE_CATEGORIES}
+  mealTypeOptions={MEAL_TYPES}
+/>
+```
+
+#### RecipeIcon
+
+Displays recipe category icon (emoji or Lucide icon).
+
+```tsx
+import { RecipeIcon } from "@/components/common/RecipeIcon";
+
+<RecipeIcon
+  icon={{ type: "emoji", value: "🍗" }}
+  size="md"
+/>
+```
+
+#### ScrollableCardList
+
+Horizontally scrollable container for cards.
+
+```tsx
+import { ScrollableCardList } from "@/components/common/ScrollableCardList";
+
+<ScrollableCardList>
+  {recipes.map(recipe => <RecipeCard key={recipe.id} recipe={recipe} />)}
+</ScrollableCardList>
 ```
 
 #### StatsCard
@@ -256,44 +340,28 @@ User feedback submission dialog that creates GitHub issues.
 ```tsx
 import { FeedbackDialog } from "@/components/common/FeedbackDialog";
 
-const [feedbackOpen, setFeedbackOpen] = useState(false);
-
 <FeedbackDialog
   open={feedbackOpen}
   onOpenChange={setFeedbackOpen}
 />
 ```
 
-**Props:**
-| Prop | Type | Description |
-|------|------|-------------|
-| `open` | `boolean` | Dialog open state |
-| `onOpenChange` | `(open: boolean) => void` | State change handler |
+#### ChangelogDialog
 
-**Features:**
-- Category selection: Feature Request, Bug Report, General Feedback, Question
-- Minimum 10 character message requirement
-- Submits to `feedbackApi` which creates GitHub issues
-- Auto-resets form on close
+Displays application changelog/release notes.
+
+```tsx
+import { ChangelogDialog } from "@/components/common/ChangelogDialog";
+
+<ChangelogDialog
+  open={changelogOpen}
+  onOpenChange={setChangelogOpen}
+/>
+```
 
 ### Form Components (`/components/forms/`)
 
 Specialized form inputs and components.
-
-#### ValidatedInput
-
-Text input with inline validation feedback.
-
-```tsx
-import { ValidatedInput } from "@/components/forms/ValidatedInput";
-
-<ValidatedInput
-  value={name}
-  onChange={setName}
-  error={errors.name}
-  placeholder="Recipe name"
-/>
-```
 
 #### QuantityInput
 
@@ -311,67 +379,34 @@ import { QuantityInput } from "@/components/forms/QuantityInput";
 
 Accepts formats: `1.5`, `1/2`, `1 1/2`, `1-1/2`
 
-#### IngredientRow
-
-Single ingredient input row for recipe forms.
-
-```tsx
-import { IngredientRow } from "@/components/forms/IngredientRow";
-
-<IngredientRow
-  ingredient={ingredient}
-  onChange={handleChange}
-  onRemove={handleRemove}
-/>
-```
-
-#### AddItemForm
-
-Form for adding items to shopping list.
-
-```tsx
-import { AddItemForm } from "@/components/forms/AddItemForm";
-
-<AddItemForm onAdd={handleAddItem} />
-```
-
 ### Recipe Components (`/components/recipe/`)
 
 Recipe-specific display components.
 
 #### RecipeCard
 
-Unified recipe card component supporting three sizes.
+Unified recipe card component supporting multiple sizes.
 
 ```tsx
-import { RecipeCard, RecipeCardGrid } from "@/components/recipe/RecipeCard";
+import { RecipeCard } from "@/components/recipe/RecipeCard";
 
-// Small - Horizontal compact layout
-<RecipeCard recipe={recipe} size="small" />
+// Standard grid card
+<RecipeCard recipe={recipe} />
 
-// Medium - Standard grid card (default)
-<RecipeCard recipe={recipe} size="medium" />
-
-// Large - Side-by-side with full details
-<RecipeCard recipe={recipe} size="large" />
-
-// Grid layout helper
-<RecipeCardGrid>
-  {recipes.map(recipe => (
-    <RecipeCard key={recipe.id} recipe={recipe} />
-  ))}
-</RecipeCardGrid>
+// With click handler
+<RecipeCard
+  recipe={recipe}
+  onClick={() => router.push(`/recipes/${recipe.id}`)}
+  onFavoriteToggle={() => handleToggle(recipe.id)}
+/>
 ```
 
 **Props:**
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `recipe` | `RecipeCardData` | required | Recipe data |
-| `size` | `"small" \| "medium" \| "large"` | `"medium"` | Card size variant |
 | `onClick` | `() => void` | - | Click handler |
 | `onFavoriteToggle` | `() => void` | - | Favorite toggle handler |
-| `showCategory` | `boolean` | `true` | Show category badge |
-| `maxIngredientsDisplay` | `number` | `5` | Max ingredients to show (large) |
 
 #### RecipeBadge
 
@@ -382,16 +417,8 @@ import { RecipeBadge } from "@/components/recipe/RecipeBadge";
 
 <RecipeBadge type="category" value="chicken" />
 <RecipeBadge type="mealType" value="dinner" size="sm" />
-<RecipeBadge type="dietary" value="vegetarian" variant="overlay" />
+<RecipeBadge type="dietary" value="vegetarian" />
 ```
-
-**Props:**
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `type` | `"category" \| "mealType" \| "dietary"` | required | Badge type |
-| `value` | `string` | required | Badge value |
-| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Badge size |
-| `variant` | `"default" \| "overlay"` | `"default"` | Visual variant |
 
 #### RecipeImage
 
@@ -404,6 +431,34 @@ import { RecipeImage } from "@/components/recipe/RecipeImage";
   src={recipe.imageUrl}
   alt={recipe.name}
   className="w-full h-48 object-cover"
+/>
+```
+
+#### RecipeBannerImage
+
+Hero banner image for recipe detail pages.
+
+```tsx
+import { RecipeBannerImage } from "@/components/recipe/RecipeBannerImage";
+
+<RecipeBannerImage
+  src={recipe.bannerImagePath}
+  fallbackSrc={recipe.referenceImagePath}
+  alt={recipe.name}
+/>
+```
+
+#### RecipeSelectCard
+
+Selectable recipe card for meal planning dialogs.
+
+```tsx
+import { RecipeSelectCard } from "@/components/recipe/RecipeSelectCard";
+
+<RecipeSelectCard
+  recipe={recipe}
+  isSelected={selectedId === recipe.id}
+  onSelect={() => setSelectedId(recipe.id)}
 />
 ```
 
@@ -423,9 +478,19 @@ import { AppLayout } from "@/components/layout/AppLayout";
 </AppLayout>
 ```
 
+#### ConditionalAppLayout
+
+Conditionally applies layout based on route (for isolated pages).
+
+```tsx
+import { ConditionalAppLayout } from "@/components/layout/ConditionalAppLayout";
+
+<ConditionalAppLayout>{children}</ConditionalAppLayout>
+```
+
 #### Sidebar
 
-Main navigation sidebar.
+Main navigation sidebar with nav items.
 
 ```tsx
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -440,6 +505,16 @@ import { Sidebar } from "@/components/layout/Sidebar";
 - Shopping List
 - Add Recipe
 - Settings
+
+#### MobileBottomNav
+
+Bottom navigation bar for mobile devices.
+
+```tsx
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+
+<MobileBottomNav />
+```
 
 #### PageHeader
 
@@ -464,6 +539,22 @@ import {
 </PageHeader>
 ```
 
+#### PageLayout
+
+Standardized page wrapper providing consistent structure.
+
+```tsx
+import { PageLayout } from "@/components/layout/PageLayout";
+
+<PageLayout
+  title="Shopping List"
+  description="Auto-generated from your meal plan"
+  actions={<Button>Add Item</Button>}
+>
+  {content}
+</PageLayout>
+```
+
 #### NavButton
 
 Navigation button with active state indicator.
@@ -479,261 +570,61 @@ import { NavButton } from "@/components/layout/NavButton";
 />
 ```
 
-#### Logo
+#### RecentRecipeChip
 
-Application logo component.
+Chip displaying a recently viewed recipe.
 
 ```tsx
-import { Logo } from "@/components/layout/Logo";
+import { RecentRecipeChip } from "@/components/layout/RecentRecipeChip";
 
-<Logo className="h-8 w-8" />
+<RecentRecipeChip
+  recipe={recentRecipe}
+  onClick={() => router.push(`/recipes/${recentRecipe.id}`)}
+/>
 ```
 
-#### PageLayout
+### Meal Genie Components (`/components/meal-genie/`)
 
-Standardized page wrapper providing consistent structure across pages.
+AI assistant chat interface components.
 
-```tsx
-import { PageLayout } from "@/components/layout/PageLayout";
+#### AskMealGenieWidget
 
-// Basic usage
-<PageLayout
-  title="Shopping List"
-  description="Auto-generated from your meal plan"
-  actions={<Button>Add Item</Button>}
->
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    {content}
-  </div>
-</PageLayout>
-
-// Custom header content (e.g., with back button)
-<PageLayout
-  title="Edit Recipe"
-  headerContent={
-    <PageHeaderContent>
-      <div className="flex items-center gap-4 flex-1">
-        <Button variant="ghost" size="icon"><ArrowLeft /></Button>
-        <PageHeaderTitle title="Edit Recipe" description="..." />
-      </div>
-      <PageHeaderActions>...</PageHeaderActions>
-    </PageHeaderContent>
-  }
->
-  {content}
-</PageLayout>
-```
-
-**Props:**
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `title` | `string` | Yes | Page title displayed in the header |
-| `description` | `string` | No | Description displayed below the title |
-| `actions` | `ReactNode` | No | Actions (buttons) on the right side of header |
-| `headerContent` | `ReactNode` | No | Custom header content replacing default layout |
-| `children` | `ReactNode` | Yes | Page content |
-| `className` | `string` | No | Class for outer wrapper |
-| `contentClassName` | `string` | No | Class for content container |
-
-### Meal Planner Components (`/components/meal-planner/`)
-
-Specialized components for the weekly meal planning interface with queue management.
-
-#### MealPlannerPage
-
-Main layout component for the meal planner with absolute positioning.
+Main AI chat widget with conversation history.
 
 ```tsx
-import { MealPlannerPage } from "@/components/meal-planner/MealPlannerPage";
+import { AskMealGenieWidget } from "@/components/meal-genie";
 
-<MealPlannerPage />
+<AskMealGenieWidget />
 ```
 
 **Features:**
-- Uses absolute positioning to fill parent space without scrolling
-- Integrates SelectedMealHero and WeeklyMenuSidebar
-- Manages modal state for creating new meals
+- Persistent chat history (localStorage)
+- Markdown rendering for AI responses
+- Suggested prompts for empty state
+- Loading indicators with animations
+- Clear history button
+- Auto-scroll to latest messages
 
-#### SelectedMealHero
+### Settings Components (`/components/settings/`)
 
-Hero display for the currently selected meal.
+Settings page section components.
+
+#### DataManagementSection
+
+Import/export and backup/restore functionality.
 
 ```tsx
-import { SelectedMealHero } from "@/components/meal-planner/SelectedMealHero";
+import { DataManagementSection } from "@/components/settings/DataManagementSection";
 
-<SelectedMealHero
-  meal={selectedMeal}
-  onComplete={handleComplete}
-  onEdit={handleEdit}
-  onRemove={handleRemove}
-/>
+<DataManagementSection />
 ```
 
 **Features:**
-- Displays meal image with optional completion overlay
-- Shows recipe info (servings, prep/cook times, tags)
-- Side dish grid display (up to 3 sides)
-- Action buttons (complete, edit, remove)
-
-#### WeeklyMenuSidebar
-
-Fixed sidebar with scrollable meal list.
-
-```tsx
-import { WeeklyMenuSidebar } from "@/components/meal-planner/WeeklyMenuSidebar";
-
-<WeeklyMenuSidebar
-  activeMeals={activeMeals}
-  completedMeals={completedMeals}
-  selectedId={selectedId}
-  onSelectMeal={handleSelect}
-  onToggleShoppingList={handleToggleShoppingList}
-  onToggleComplete={handleToggleComplete}
-  onClearCompleted={handleClearCompleted}
-  onOpenCreateModal={handleOpenModal}
-/>
-```
-
-**Features:**
-- Displays active and completed meals in sections
-- Independently scrolling content area
-- Dropdown for browsing saved meals
-- Clear completed meals action
-
-#### CreateMealModal
-
-Two-column modal for composing meals.
-
-```tsx
-import { CreateMealModal } from "@/components/meal-planner/CreateMealModal";
-
-<CreateMealModal
-  open={isModalOpen}
-  onOpenChange={setIsModalOpen}
-  recipes={recipes}
-  onSave={handleSave}
-  onSaveAndAdd={handleSaveAndAdd}
-/>
-```
-
-**Features:**
-- Left panel: Recipe browser with search/filter
-- Right panel: Meal composition (main + up to 3 side dishes)
-- Save or "Save and Add to Queue" options
-
-#### MealQueueCard
-
-Card component for individual meal entries in the sidebar.
-
-```tsx
-import { MealQueueCard } from "@/components/meal-planner/MealQueueCard";
-
-<MealQueueCard
-  meal={meal}
-  isSelected={isSelected}
-  onSelect={handleSelect}
-  onToggleShoppingList={handleToggleShoppingList}
-  onToggleComplete={handleToggleComplete}
-/>
-```
-
-**Props:**
-| Prop | Type | Description |
-|------|------|-------------|
-| `meal` | `MealQueueEntry` | Meal data with UI state |
-| `isSelected` | `boolean` | Selection state |
-| `onSelect` | `() => void` | Selection handler |
-| `onToggleShoppingList` | `() => void` | Shopping list toggle |
-| `onToggleComplete` | `() => void` | Completion toggle |
-
-#### ShoppingListIndicator
-
-Visual indicator for shopping list inclusion.
-
-```tsx
-import { ShoppingListIndicator } from "@/components/meal-planner/ShoppingListIndicator";
-
-<ShoppingListIndicator
-  included={isIncluded}
-  disabled={isCompleted}
-  onToggle={handleToggle}
-/>
-```
-
-#### SideDishGrid
-
-Grid display for side dishes in the hero section.
-
-```tsx
-import { SideDishGrid } from "@/components/meal-planner/SideDishGrid";
-
-<SideDishGrid sideRecipes={meal.sideRecipes} />
-```
-
-#### EmptyMenuState
-
-Placeholder when no meals are in the queue.
-
-```tsx
-import { EmptyMenuState } from "@/components/meal-planner/EmptyMenuState";
-
-<EmptyMenuState onCreateMeal={handleOpenModal} />
-```
-
-#### Meal Planner Types
-
-Local type definitions for meal planner components (`/components/meal-planner/types.ts`):
-
-```typescript
-interface SelectableRecipe {
-  id: number;
-  name: string;
-  imageUrl?: string;
-  category?: string;
-  mealType?: string;
-  prepTime?: number;
-  cookTime?: number;
-  servings?: number;
-  tags?: string[];
-}
-
-interface MealQueueEntry {
-  id: number;
-  name: string;
-  mainRecipe: MealMainRecipe;
-  sideRecipes: MealSideRecipe[];  // max 3
-  completed: boolean;
-  includeInShoppingList: boolean;
-  position: number;
-}
-
-interface SavedMeal {
-  id: number;
-  name: string;
-  mainRecipeImageUrl?: string;
-  sideCount: number;
-}
-
-interface UseMealQueueReturn {
-  meals: MealQueueEntry[];
-  selectedId: number | null;
-  activeMeals: MealQueueEntry[];
-  completedMeals: MealQueueEntry[];
-  selectedMeal: MealQueueEntry | undefined;
-  savedMeals: SavedMeal[];
-  isLoading: boolean;
-  error: string | null;
-  actions: {
-    setSelectedId: (id: number) => void;
-    toggleShoppingList: (id: number) => void;
-    toggleComplete: (id: number) => void;
-    removeFromMenu: (id: number) => void;
-    clearCompleted: () => void;
-    addMealToQueue: (savedMealId: number) => void;
-    reorderMeals: (fromIndex: number, toIndex: number) => void;
-  };
-}
-```
+- Export recipes to Excel
+- Import recipes from Excel with duplicate handling
+- Full backup (JSON with all data + settings)
+- Restore from backup with preview
+- Clear all data with confirmation
 
 ---
 
@@ -800,26 +691,62 @@ const mealTypes = await recipeApi.getMealTypes();
 ```typescript
 import { plannerApi } from "@/lib/api";
 
-// Get meals for date range
-const meals = await plannerApi.getMeals({ startDate, endDate });
+// Get all meals
+const meals = await plannerApi.getMeals();
 
-// Get summary stats
+// Get saved meals only
+const savedMeals = await plannerApi.getMeals({ saved: true });
+
+// Get planner summary
 const summary = await plannerApi.getSummary();
 
-// Get single meal
-const meal = await plannerApi.getMeal(id);
+// Create a new meal
+const meal = await plannerApi.createMeal({
+  meal_name: "Taco Tuesday",
+  main_recipe_id: 1,
+  side_recipe_ids: [2, 3],
+});
 
-// Create meal selection
-const newMeal = await plannerApi.createMeal(mealData);
+// Update meal
+const updated = await plannerApi.updateMeal(id, data);
 
-// Update meal selection
-const updated = await plannerApi.updateMeal(id, mealData);
-
-// Delete meal selection
+// Delete meal
 await plannerApi.deleteMeal(id);
 
-// Clear meal plan
-await plannerApi.clearPlan({ startDate, endDate });
+// Toggle saved status
+await plannerApi.toggleSave(id);
+
+// Add side to meal
+await plannerApi.addSideToMeal(mealId, recipeId);
+
+// --- Planner Entry Methods (Weekly Menu) ---
+
+// Get all planner entries with hydrated meal data
+const entries = await plannerApi.getEntries();
+
+// Add meal to planner
+const entry = await plannerApi.addToPlanner(mealId);
+
+// Remove entry from planner
+await plannerApi.removeEntry(entryId);
+
+// Mark entry as complete (records cooking history)
+await plannerApi.markComplete(entryId);
+
+// Mark entry as incomplete
+await plannerApi.markIncomplete(entryId);
+
+// Cycle shopping mode: all → produce_only → none → all
+await plannerApi.cycleShoppingMode(entryId);
+
+// Clear completed entries
+await plannerApi.clearCompleted();
+
+// Reorder entries (drag and drop)
+await plannerApi.reorderEntries([entryId1, entryId2, entryId3]);
+
+// Get cooking streak
+const streak = await plannerApi.getStreak();
 ```
 
 ### Shopping API
@@ -828,7 +755,10 @@ await plannerApi.clearPlan({ startDate, endDate });
 import { shoppingApi } from "@/lib/api";
 
 // Get shopping list
-const list = await shoppingApi.getList(filters);
+const list = await shoppingApi.getList();
+
+// Get with auto-generation from planner
+const list = await shoppingApi.getList(filters, true);
 
 // Get single item
 const item = await shoppingApi.getItem(id);
@@ -839,14 +769,20 @@ const newItem = await shoppingApi.addItem(itemData);
 // Update item
 const updated = await shoppingApi.updateItem(id, itemData);
 
-// Toggle item checked
+// Toggle item "have" status
 await shoppingApi.toggleItem(id);
+
+// Toggle item flagged status
+await shoppingApi.toggleFlagged(id);
 
 // Delete item
 await shoppingApi.deleteItem(id);
 
-// Generate from recipes
-await shoppingApi.generate({ recipeIds, servings });
+// Generate from specific recipes
+await shoppingApi.generate({ recipe_ids: [1, 2, 3] });
+
+// Generate from active planner entries
+await shoppingApi.generateFromPlanner();
 
 // Clear operations
 await shoppingApi.clear();           // Clear all
@@ -854,10 +790,10 @@ await shoppingApi.clearManual();     // Clear manual items
 await shoppingApi.clearCompleted();  // Clear checked items
 
 // Bulk update
-await shoppingApi.bulkUpdate(items);
+await shoppingApi.bulkUpdate({ 1: true, 2: false });
 
-// Get category breakdown
-const breakdown = await shoppingApi.getBreakdown();
+// Get ingredient breakdown (which recipes use which ingredients)
+const breakdown = await shoppingApi.getBreakdown(recipeIds);
 ```
 
 ### Ingredient API
@@ -865,13 +801,13 @@ const breakdown = await shoppingApi.getBreakdown();
 ```typescript
 import { ingredientApi } from "@/lib/api";
 
-// List ingredients
-const ingredients = await ingredientApi.list();
+// List/search ingredients
+const ingredients = await ingredientApi.list({ search_term: "chicken" });
 
 // Get categories
 const categories = await ingredientApi.getCategories();
 
-// Get ingredient names
+// Get ingredient names (for autocomplete)
 const names = await ingredientApi.getNames();
 
 // Get single ingredient
@@ -881,7 +817,7 @@ const ingredient = await ingredientApi.get(id);
 const newIngredient = await ingredientApi.create(ingredientData);
 
 // Search ingredients
-const results = await ingredientApi.search(query);
+const results = await ingredientApi.search({ search_term: "onion" });
 ```
 
 ### Upload API
@@ -889,8 +825,14 @@ const results = await ingredientApi.search(query);
 ```typescript
 import { uploadApi } from "@/lib/api";
 
-// Upload recipe image
-const imagePath = await uploadApi.uploadRecipeImage(file, recipeId);
+// Upload recipe image (file)
+const result = await uploadApi.uploadRecipeImage(file, recipeId, "reference");
+
+// Upload banner image
+const banner = await uploadApi.uploadRecipeImage(file, recipeId, "banner");
+
+// Upload base64 image (for AI-generated images)
+const result = await uploadApi.uploadBase64Image(base64Data, recipeId, "reference");
 ```
 
 ### Image Generation API
@@ -898,13 +840,72 @@ const imagePath = await uploadApi.uploadRecipeImage(file, recipeId);
 ```typescript
 import { imageGenerationApi } from "@/lib/api";
 
-// Generate AI image for a recipe
+// Generate AI image for recipe
 const response = await imageGenerationApi.generate("Chicken Parmesan");
 
-if (response.success && response.image_data) {
-  // response.image_data is base64 encoded
-  const imageSrc = `data:image/png;base64,${response.image_data}`;
+if (response.success && response.reference_image_data) {
+  const imageSrc = `data:image/png;base64,${response.reference_image_data}`;
 }
+
+// Generate banner from reference image
+const banner = await imageGenerationApi.generateBanner(
+  "Chicken Parmesan",
+  base64ReferenceImage
+);
+```
+
+### Cooking Tip API
+
+```typescript
+import { cookingTipApi } from "@/lib/api";
+
+// Get random AI cooking tip
+const tip = await cookingTipApi.getTip();
+```
+
+### Meal Suggestions API
+
+```typescript
+import { mealSuggestionsApi } from "@/lib/api";
+
+// Get AI side dish suggestions for a meal
+const suggestions = await mealSuggestionsApi.getSuggestions({
+  main_recipe_name: "Grilled Chicken",
+  main_recipe_category: "chicken",
+  meal_type: "dinner",
+});
+```
+
+### Meal Genie API
+
+```typescript
+import { mealGenieApi } from "@/lib/api";
+
+// Send chat message (AI determines response type)
+const response = await mealGenieApi.chat(
+  "What can I make with chicken and rice?",
+  conversationHistory
+);
+
+if (response.success && response.response) {
+  // Text response
+  console.log(response.response);
+
+  // Optional: AI may include a generated recipe
+  if (response.recipe) {
+    console.log("Generated recipe:", response.recipe);
+  }
+}
+```
+
+### Dashboard API
+
+```typescript
+import { dashboardApi } from "@/lib/api";
+
+// Get dashboard stats
+const stats = await dashboardApi.getStats();
+// { total_recipes, favorites, meals_planned, shopping_items }
 ```
 
 ### Data Management API
@@ -914,38 +915,64 @@ import { dataManagementApi } from "@/lib/api";
 
 // Preview Excel import
 const preview = await dataManagementApi.previewImport(file);
-// preview.total_recipes, preview.new_recipes, preview.duplicate_recipes
 
-// Execute import with duplicate resolution
+// Execute import with duplicate resolutions
 const result = await dataManagementApi.executeImport(file, resolutions);
-// result.created_count, result.updated_count
 
 // Export recipes to Excel
-const blob = await dataManagementApi.exportRecipes();
-// Download the blob as .xlsx file
+const blob = await dataManagementApi.exportRecipes(filters);
 
 // Download import template
 const templateBlob = await dataManagementApi.downloadTemplate();
+
+// Full backup (all data)
+const backup = await dataManagementApi.exportFullBackup();
+
+// Preview restore
+const preview = await dataManagementApi.previewRestore(file);
+
+// Execute restore
+const result = await dataManagementApi.executeRestore(file, clearExisting);
 
 // Clear all data
 await dataManagementApi.clearAllData();
 ```
 
+### Unit Conversion API
+
+```typescript
+import { unitConversionApi } from "@/lib/api";
+
+// List all rules
+const rules = await unitConversionApi.list();
+
+// Get single rule
+const rule = await unitConversionApi.get(id);
+
+// Create rule
+const newRule = await unitConversionApi.create({
+  ingredient_name: "butter",
+  from_unit: "cup",
+  to_unit: "stick",
+  factor: 2,
+  round_up: true,
+});
+
+// Delete rule
+await unitConversionApi.delete(id);
+```
+
 ### Feedback API
 
 ```typescript
-import { feedbackApi, FeedbackSubmitDTO, FeedbackResponseDTO } from "@/lib/api";
+import { feedbackApi } from "@/lib/api";
 
 // Submit user feedback (creates GitHub issue)
-const response: FeedbackResponseDTO = await feedbackApi.submit({
-  category: "Feature Request",  // or "Bug Report", "General Feedback", "Question"
-  message: "I would love a dark mode toggle in the sidebar..."
+const response = await feedbackApi.submit({
+  category: "Feature Request",
+  message: "I would love a dark mode toggle...",
+  metadata: { page: "/settings" },
 });
-
-if (response.success) {
-  console.log(response.message);
-  // response.issue_url contains the GitHub issue URL if available
-}
 ```
 
 ---
@@ -961,234 +988,301 @@ All types are defined in `src/types/index.ts` and mirror backend DTOs.
 interface RecipeCardDTO {
   id: number;
   recipe_name: string;
-  description: string | null;
-  servings: number;
-  total_time: number | null;
-  category: string | null;
-  meal_type: string[] | null;
-  dietary_preferences: string[] | null;
-  image_url: string | null;
   is_favorite: boolean;
-  created_at: string;
-  updated_at: string;
+  reference_image_path: string | null;
+  banner_image_path: string | null;
+  servings: number | null;
+  total_time: number | null;
+  recipe_category?: string | null;
+  meal_type?: string | null;
+  diet_pref?: string | null;
+  times_cooked?: number | null;
+  last_cooked?: string | null;
+  created_at?: string | null;
 }
 
 // Full recipe response
-interface RecipeResponseDTO extends RecipeCardDTO {
-  instructions: string | null;
+interface RecipeResponseDTO extends RecipeBaseDTO {
+  id: number;
+  is_favorite: boolean;
+  created_at: string | null;
   ingredients: RecipeIngredientResponseDTO[];
 }
 
-// Create/update payload
-interface RecipeCreateDTO {
-  recipe_name: string;
-  description?: string;
-  instructions?: string;
-  servings: number;
-  total_time?: number;
-  category?: string;
-  meal_type?: string[];
-  dietary_preferences?: string[];
-  image_url?: string;
-  is_favorite?: boolean;
-  ingredients?: RecipeIngredientDTO[];
-}
-
-// Frontend-mapped format
+// Frontend-mapped format for components
 interface RecipeCardData {
-  id: number;
+  id: string | number;
   name: string;
-  description: string | null;
   servings: number;
-  totalTime: number | null;
-  category: string | null;
-  mealType: string[] | null;
-  dietaryPreferences: string[] | null;
-  imageUrl: string | null;
-  isFavorite: boolean;
-  createdAt: string;
-  updatedAt: string;
+  totalTime: number;
+  imageUrl?: string;
+  category?: string;
+  mealType?: string;
+  dietaryPreference?: string;
+  isFavorite?: boolean;
   ingredients?: RecipeIngredient[];
-}
-```
-
-### Ingredient Types
-
-```typescript
-interface IngredientResponseDTO {
-  id: number;
-  ingredient_name: string;
-  category: string | null;
-}
-
-interface IngredientDetailDTO {
-  id: number;
-  ingredient_name: string;
-  category: string | null;
-  quantity: number;
-  unit: string | null;
-}
-
-// Frontend format
-interface RecipeIngredient {
-  id: number;
-  name: string;
-  quantity: number;
-  unit: string | null;
-  category: string | null;
+  createdAt?: string;
 }
 ```
 
 ### Meal Planning Types
 
 ```typescript
+// Meal with recipes
 interface MealSelectionResponseDTO {
   id: number;
-  date: string;
-  meal_type: string;
+  meal_name: string;
+  main_recipe_id: number;
+  side_recipe_ids: number[];
+  is_saved: boolean;
+  tags: string[];
+  created_at: string | null;
+  main_recipe: RecipeCardDTO | null;
+  side_recipes: RecipeCardDTO[];
+  total_cook_time: number | null;
+  avg_servings: number | null;
+  times_cooked: number | null;
+  last_cooked: string | null;
+}
+
+// Planner entry (meal in weekly menu)
+interface PlannerEntryResponseDTO {
+  id: number;
+  meal_id: number;
+  position: number;
+  is_completed: boolean;
+  completed_at: string | null;
+  scheduled_date: string | null;
+  shopping_mode?: ShoppingMode; // "all" | "produce_only" | "none"
+  meal_name: string | null;
+  meal_is_saved?: boolean;
   main_recipe_id: number | null;
-  main_recipe?: RecipeCardDTO;
-  side_recipe_id: number | null;
-  side_recipe?: RecipeCardDTO;
-  notes: string | null;
-  is_favorite: boolean;
+  side_recipe_ids: number[];
+  main_recipe: RecipeCardDTO | null;
 }
 
-interface MealSelectionCreateDTO {
-  date: string;
-  meal_type: string;
-  main_recipe_id?: number;
-  side_recipe_id?: number;
-  notes?: string;
-}
-
-interface MealPlanSummaryDTO {
-  total_meals: number;
-  meals_this_week: number;
-  favorite_meals: number;
+// Cooking streak
+interface CookingStreakDTO {
+  current_streak: number;
+  longest_streak: number;
+  week_activity: boolean[]; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
+  last_cooked_date: string | null;
+  today_index: number; // 0=Monday, 6=Sunday
 }
 ```
 
 ### Shopping List Types
 
 ```typescript
+type ShoppingSource = "recipe" | "manual";
+type ShoppingMode = "all" | "produce_only" | "none";
+
 interface ShoppingItemResponseDTO {
   id: number;
   ingredient_name: string;
   quantity: number;
   unit: string | null;
   category: string | null;
-  is_checked: boolean;
-  is_manual: boolean;
-  source_recipe_ids: number[];
-  created_at: string;
+  source: ShoppingSource;
+  have: boolean;
+  flagged: boolean;
+  state_key: string | null;
+  recipe_sources: string[]; // Recipe names using this ingredient
 }
 
 interface ShoppingListResponseDTO {
   items: ShoppingItemResponseDTO[];
   total_items: number;
   checked_items: number;
+  recipe_items: number;
+  manual_items: number;
   categories: string[];
 }
-
-interface ManualItemCreateDTO {
-  ingredient_name: string;
-  quantity: number;
-  unit?: string;
-  category?: string;
-}
-
-interface ShoppingListGenerationDTO {
-  recipe_ids: number[];
-  servings?: number;
-}
 ```
 
-### Filter Types
+### Meal Genie Types
 
 ```typescript
-interface RecipeFilterDTO {
-  search?: string;
-  category?: string;
-  meal_type?: string[];
-  dietary_preferences?: string[];
-  max_time?: number;
-  is_favorite?: boolean;
-  sort_by?: "name" | "created_at" | "total_time" | "rating";
-  sort_direction?: "asc" | "desc";
-  limit?: number;
-  offset?: number;
+interface MealGenieMessage {
+  role: "user" | "assistant";
+  content: string;
 }
 
-interface ShoppingListFilterDTO {
-  category?: string;
-  is_checked?: boolean;
-  is_manual?: boolean;
-}
-```
-
-### Data Management Types
-
-```typescript
-interface ImportPreviewDTO {
-  total_recipes: number;
-  new_recipes: number;
-  duplicate_recipes: DuplicateRecipeDTO[];
-  validation_errors: ValidationErrorDTO[];
-}
-
-interface ImportResultDTO {
+interface MealGenieResponseDTO {
   success: boolean;
-  created_count: number;
-  updated_count: number;
-  errors: string[];
-}
-
-interface DuplicateRecipeDTO {
-  name: string;
-  existing_id: number;
-  row_number: number;
-}
-
-interface ValidationErrorDTO {
-  row_number: number;
-  field: string;
-  message: string;
-}
-```
-
-### Image Generation Types
-
-```typescript
-interface ImageGenerationRequestDTO {
-  recipe_name: string;
-}
-
-interface ImageGenerationResponseDTO {
-  success: boolean;
-  image_data?: string; // Base64 encoded image
+  response?: string;
   error?: string;
+  recipe?: GeneratedRecipeDTO;
+  reference_image_data?: string;
+  banner_image_data?: string;
+}
+
+interface GeneratedRecipeDTO {
+  recipe_name: string;
+  recipe_category: string;
+  meal_type: string;
+  diet_pref?: string;
+  total_time?: number;
+  servings?: number;
+  directions?: string;
+  notes?: string;
+  ingredients: GeneratedIngredientDTO[];
 }
 ```
 
-### Feedback Types
+### Dashboard Types
 
 ```typescript
-interface FeedbackSubmitDTO {
-  category: string;  // "Feature Request" | "Bug Report" | "General Feedback" | "Question"
-  message: string;
+interface DashboardStatsDTO {
+  total_recipes: number;
+  favorites: number;
+  meals_planned: number;
+  shopping_items: number;
+}
+```
+
+### Backup/Restore Types
+
+```typescript
+interface FullBackup {
+  version: string;
+  created_at: string;
+  app_name: string;
+  settings: Record<string, unknown> | null;
+  data: BackupData;
 }
 
-interface FeedbackResponseDTO {
+interface RestorePreview {
+  backup_version: string;
+  backup_created_at: string;
+  counts: Record<string, number>;
+  has_settings: boolean;
+  warnings: string[];
+}
+
+interface RestoreResult {
   success: boolean;
-  issue_url?: string;
-  message: string;
+  restored_counts: Record<string, number>;
+  errors: string[];
+  settings: Record<string, unknown> | null;
 }
 ```
 
 ---
 
 ## Custom Hooks
+
+### useRecipeFilters
+
+Comprehensive recipe filtering with quick filter synchronization.
+
+```typescript
+import { useRecipeFilters } from "@/hooks";
+
+function RecipeBrowser() {
+  const {
+    filters,
+    activeQuickFilters,
+    hasActiveFilters,
+    activeFiltersList,
+    setSearchTerm,
+    toggleCategory,
+    toggleMealType,
+    toggleDietary,
+    toggleFavorites,
+    setMaxCookTime,
+    setNewDays,
+    toggleQuickFilter,
+    removeActiveFilter,
+    clearAll,
+    applyTo,
+  } = useRecipeFilters({
+    onFiltersChange: (filters) => console.log("Filters changed:", filters),
+  });
+
+  // Apply filters to recipes
+  const filteredRecipes = applyTo(recipes);
+
+  return (
+    <>
+      <FilterBar
+        activeFilters={activeQuickFilters}
+        onToggleFilter={toggleQuickFilter}
+      />
+      {/* ... */}
+    </>
+  );
+}
+```
+
+### useChatHistory
+
+Persistent chat history for Meal Genie with localStorage sync.
+
+```typescript
+import { useChatHistory } from "@/hooks";
+
+function ChatWidget() {
+  const { messages, isLoaded, addMessage, clearHistory } = useChatHistory();
+
+  const handleSend = async (text: string) => {
+    addMessage({ role: "user", content: text });
+    const response = await mealGenieApi.chat(text, messages);
+    addMessage({ role: "assistant", content: response.response });
+  };
+
+  return (/* ... */);
+}
+```
+
+### useRecentRecipes
+
+Track recently viewed recipes with localStorage persistence.
+
+```typescript
+import { useRecentRecipes } from "@/hooks";
+
+function RecipeDetail({ recipe }) {
+  const { recentRecipes, addToRecent } = useRecentRecipes();
+
+  useEffect(() => {
+    addToRecent({
+      id: recipe.id,
+      name: recipe.name,
+      category: recipe.category,
+    });
+  }, [recipe.id]);
+
+  return (/* ... */);
+}
+```
+
+### useSortableDnd
+
+Pre-configured dnd-kit sensors and modifiers for vertical lists.
+
+```typescript
+import { useSortableDnd } from "@/hooks";
+import { DndContext, closestCenter } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+
+function SortableList({ items }) {
+  const { sensors, modifiers } = useSortableDnd();
+
+  return (
+    <DndContext
+      sensors={sensors}
+      modifiers={modifiers}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext items={items} strategy={verticalListSortingStrategy}>
+        {/* Sortable items */}
+      </SortableContext>
+    </DndContext>
+  );
+}
+```
 
 ### useUnsavedChanges
 
@@ -1203,60 +1297,18 @@ function RecipeForm() {
   const {
     showLeaveDialog,
     setShowLeaveDialog,
-    pendingNavigation,
-    handleNavigation,
     confirmLeave,
-    cancelLeave
+    cancelLeave,
   } = useUnsavedChanges("/recipes/add", isDirty);
 
   return (
     <>
-      <form>
-        {/* form fields */}
-      </form>
-
+      <form>{/* form fields */}</form>
       <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
-            <AlertDialogDescription>
-              You have unsaved changes. Are you sure you want to leave?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={cancelLeave}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmLeave}>Leave</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
+        {/* Confirmation dialog */}
       </AlertDialog>
     </>
   );
-}
-```
-
-**Helper Functions:**
-
-```typescript
-import {
-  setNavigationBypass,
-  hasAnyUnsavedChanges,
-  getUnsavedChangesCheck
-} from "@/hooks";
-
-// Temporarily disable checks (for confirmed navigation)
-setNavigationBypass(true);
-router.push("/recipes");
-setNavigationBypass(false);
-
-// Check if any page has unsaved changes
-if (hasAnyUnsavedChanges()) {
-  // Show warning
-}
-
-// Get check function for specific page
-const check = getUnsavedChangesCheck("/recipes/add");
-if (check && check()) {
-  // Page has unsaved changes
 }
 ```
 
@@ -1272,12 +1324,10 @@ function SettingsPage() {
     settings,
     isLoaded,
     updateSettings,
-    updateMultipleSections,
     saveSettings,
     resetSettings,
-    resetSection,
     hasUnsavedChanges,
-    discardChanges
+    discardChanges,
   } = useSettings();
 
   if (!isLoaded) return <Loading />;
@@ -1288,231 +1338,104 @@ function SettingsPage() {
         value={settings.profile.userName}
         onChange={(e) => updateSettings("profile", { userName: e.target.value })}
       />
-
-      <Select
-        value={settings.appearance.theme}
-        onValueChange={(value) => updateSettings("appearance", { theme: value })}
-      >
-        <SelectItem value="light">Light</SelectItem>
-        <SelectItem value="dark">Dark</SelectItem>
-        <SelectItem value="system">System</SelectItem>
-      </Select>
-
       <Button type="submit" disabled={!hasUnsavedChanges}>
         Save Changes
-      </Button>
-      <Button variant="outline" onClick={discardChanges}>
-        Discard
       </Button>
     </form>
   );
 }
 ```
 
-**Settings Structure:**
+### useIngredientAutocomplete
+
+Autocomplete suggestions for ingredient inputs.
 
 ```typescript
-interface AppSettings {
-  profile: {
-    userName: string;
-    email: string;
-    avatar: string;
-  };
-  appearance: {
-    theme: "light" | "dark" | "system";
-  };
-  mealPlanning: {
-    defaultServings: number;
-    weekStartDay: "sunday" | "monday";
-    defaultMealTypes: string[];
-  };
-  recipePreferences: {
-    measurementUnit: "imperial" | "metric";
-    dietaryRestrictions: string[];
-    allergenAlerts: string[];
-    defaultBrowserView: "grid" | "list";
-    defaultSortOrder: string;
-  };
-  shoppingList: {
-    categorySortOrder: string[];
-    autoClearChecked: boolean;
-    combineDuplicates: boolean;
-  };
-  dataManagement: {
-    autoBackup: boolean;
-    backupFrequency: "daily" | "weekly" | "monthly";
-  };
+import { useIngredientAutocomplete } from "@/hooks";
+
+function IngredientInput() {
+  const {
+    query,
+    setQuery,
+    suggestions,
+    isLoading,
+    selectedIndex,
+    handleKeyDown,
+    selectSuggestion,
+  } = useIngredientAutocomplete({
+    onSelect: (ingredient) => console.log("Selected:", ingredient),
+  });
+
+  return (
+    <div>
+      <Input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={handleKeyDown}
+      />
+      {suggestions.map((item, i) => (
+        <div
+          key={item.id}
+          className={i === selectedIndex ? "bg-accent" : ""}
+          onClick={() => selectSuggestion(item)}
+        >
+          {item.name}
+        </div>
+      ))}
+    </div>
+  );
 }
 ```
 
-### useMealQueue
+### useUnitConversionRules
 
-Comprehensive state management for the weekly meal queue. Handles queue state, selection, shopping list toggles, and API synchronization.
+Manage unit conversion rules from settings.
 
 ```typescript
-import { useMealQueue } from "@/hooks/useMealQueue";
+import { useUnitConversionRules } from "@/hooks";
 
-function MealPlanner() {
+function UnitConversionsSection() {
   const {
-    meals,
-    selectedId,
-    activeMeals,
-    completedMeals,
-    selectedMeal,
-    savedMeals,
+    rules,
     isLoading,
     error,
-    recipes,
-    createMeal,
+    addRule,
+    deleteRule,
     refetch,
-    actions: {
-      setSelectedId,
-      toggleShoppingList,
-      toggleComplete,
-      removeFromMenu,
-      clearCompleted,
-      addMealToQueue,
-      reorderMeals,
-    },
-  } = useMealQueue();
+  } = useUnitConversionRules();
 
-  // Create a new meal
-  const handleSave = (name: string, mainId: number, sideIds: number[]) => {
-    createMeal(name, mainId, sideIds, true); // true = add to queue
-  };
-
-  // Toggle shopping list inclusion
-  const handleToggleShopping = (id: number) => {
-    actions.toggleShoppingList(id);
-  };
-
-  // Mark meal as complete (auto-excludes from shopping list)
-  const handleComplete = (id: number) => {
-    actions.toggleComplete(id);
-  };
+  return (/* ... */);
 }
 ```
-
-**Return Values:**
-| Property | Type | Description |
-|----------|------|-------------|
-| `meals` | `MealQueueEntry[]` | All meals in the queue |
-| `selectedId` | `number \| null` | Currently selected meal ID |
-| `activeMeals` | `MealQueueEntry[]` | Non-completed meals, sorted by position |
-| `completedMeals` | `MealQueueEntry[]` | Completed meals |
-| `selectedMeal` | `MealQueueEntry \| undefined` | Currently selected meal object |
-| `savedMeals` | `SavedMeal[]` | All saved meals for dropdown |
-| `isLoading` | `boolean` | Loading state |
-| `error` | `string \| null` | Error message if any |
-| `recipes` | `SelectableRecipe[]` | Available recipes for selection |
-| `createMeal` | `function` | Create new meal with optional queue add |
-| `refetch` | `function` | Refetch data from API |
-
-**Actions:**
-| Action | Signature | Description |
-|--------|-----------|-------------|
-| `setSelectedId` | `(id: number) => void` | Select a meal |
-| `toggleShoppingList` | `(id: number) => void` | Toggle shopping list inclusion |
-| `toggleComplete` | `(id: number) => void` | Toggle completion (auto-excludes from shopping) |
-| `removeFromMenu` | `(id: number) => void` | Delete meal from queue and API |
-| `clearCompleted` | `() => void` | Remove all completed meals |
-| `addMealToQueue` | `(savedMealId: number) => void` | Add existing saved meal to queue |
-| `reorderMeals` | `(from: number, to: number) => void` | Reorder meals (drag-and-drop) |
 
 ---
 
 ## Utility Functions
 
-### Form Validation (`lib/formValidation.ts`)
+### Filter Utilities (`lib/filterUtils.ts`)
 
-Pydantic-like validation system that normalizes input and returns errors.
-
-#### Basic Validators
+Recipe filtering logic with support for quick filters.
 
 ```typescript
 import {
-  validateString,
-  validateNumber,
-  validateInteger,
-  validateRecipeName,
-  validateIngredientName,
-  validateQuantity,
-  validateServings,
-  validateTotalTime
-} from "@/lib/formValidation";
+  applyFilters,
+  hasActiveFilters,
+  getActiveFiltersList,
+  removeFilter,
+  quickFiltersToRecipeFilters,
+  DEFAULT_FILTERS,
+} from "@/lib/filterUtils";
 
-// String validation
-const result = validateString(input, {
-  min: 1,
-  max: 255,
-  required: true,
-  pattern: /^[a-zA-Z\s]+$/,
-  message: "Custom error message",
-  label: "Field Name"
-});
+// Apply filters to recipe array
+const filtered = applyFilters(recipes, filters);
 
-if (!result.isValid) {
-  console.error(result.error);
+// Check if any filters are active
+if (hasActiveFilters(filters)) {
+  // Show clear button
 }
 
-// Pre-built validators
-const nameResult = validateRecipeName("Pasta Carbonara");
-const quantityResult = validateQuantity("1.5");
-const servingsResult = validateServings("4");
-```
-
-#### Form-Level Validation
-
-```typescript
-import { validateForm, ValidationSchema } from "@/lib/formValidation";
-
-interface RecipeFormData {
-  name: string;
-  servings: string;
-  totalTime: string;
-}
-
-const schema: ValidationSchema<RecipeFormData> = {
-  name: validateRecipeName,
-  servings: validateServings,
-  totalTime: validateTotalTime
-};
-
-const { values, isValid, errors } = validateForm(formData, schema);
-
-if (!isValid) {
-  // errors = { name?: string, servings?: string, totalTime?: string }
-  Object.entries(errors).forEach(([field, error]) => {
-    console.error(`${field}: ${error}`);
-  });
-}
-```
-
-#### Advanced Validators
-
-```typescript
-import { chain, optional, createAsyncValidator, collectErrors } from "@/lib/formValidation";
-
-// Chain validators
-const validator = chain(
-  validateString({ min: 1 }),
-  (value) => value.includes("@") ? valid(value) : invalid(value, "Must contain @")
-);
-
-// Optional fields
-const optionalNumber = optional(validateNumber({ min: 0 }));
-
-// Async validation with debounce
-const checkUniqueName = createAsyncValidator(
-  async (name) => {
-    const exists = await api.checkExists(name);
-    return exists ? "Name already exists" : null;
-  },
-  300 // debounce ms
-);
-
-// Collect errors from array
-const ingredientErrors = collectErrors(ingredients, validateIngredient);
+// Get list of active filters for display
+const activeList = getActiveFiltersList(filters, filterOptions);
 ```
 
 ### Image Utilities (`lib/imageUtils.ts`)
@@ -1522,7 +1445,7 @@ import {
   getRecipeImageUrl,
   getRecipeImageUrlWithFallback,
   generateRecipeImagePath,
-  generateRecipeBannerPath
+  generateRecipeBannerPath,
 } from "@/lib/imageUtils";
 
 // Get URL or undefined for invalid paths
@@ -1530,13 +1453,6 @@ const url = getRecipeImageUrl("/images/recipes/1.jpg");
 
 // Get URL with fallback placeholder
 const urlWithFallback = getRecipeImageUrlWithFallback(recipe.imageUrl);
-
-// Generate paths for new images
-const imagePath = generateRecipeImagePath(recipeId, "jpg");
-// → "/images/recipes/123.jpg"
-
-const bannerPath = generateRecipeBannerPath(recipeId, "jpg");
-// → "/images/recipes/123-banner.jpg"
 ```
 
 ### Quantity Utilities (`lib/quantityUtils.ts`)
@@ -1548,41 +1464,30 @@ import { parseQuantity, formatQuantity, formatDuration } from "@/lib/quantityUti
 parseQuantity("1.5");      // → 1.5
 parseQuantity("1/2");      // → 0.5
 parseQuantity("1 1/2");    // → 1.5
-parseQuantity("1-1/2");    // → 1.5
 
 // Format number as user-friendly string
 formatQuantity(1.5);       // → "1 1/2"
 formatQuantity(0.333);     // → "1/3"
-formatQuantity(0.25);      // → "1/4"
-formatQuantity(2);         // → "2"
 
-// Format duration in minutes to human-readable string
+// Format duration in minutes
 formatDuration(30);        // → "30 min"
-formatDuration(60);        // → "1h"
 formatDuration(90);        // → "1h 30m"
-formatDuration(120);       // → "2h"
-formatDuration(0);         // → "0 min"
 ```
 
-### Recipe Card Mapper (`lib/recipeCardMapper.ts`)
+### Recipe Icon Utilities (`lib/recipeIcon.ts`)
 
 ```typescript
-import { mapRecipeForCard, mapRecipesForCards, mapIngredientForCard } from "@/lib/recipeCardMapper";
+import { getRecipeIcon } from "@/lib/recipeIcon";
 
-// Map single recipe
-const cardData = mapRecipeForCard(recipeDTO);
-
-// Map array of recipes
-const cards = mapRecipesForCards(recipeDTOs);
-
-// Map ingredient
-const ingredient = mapIngredientForCard(ingredientDTO);
+// Get icon for recipe based on name/category
+const icon = getRecipeIcon("Chicken Parmesan", "chicken");
+// Returns: { type: "emoji", value: "🍗" } or { type: "lucide", value: "utensils" }
 ```
 
 ### General Utilities (`lib/utils.ts`)
 
 ```typescript
-import { cn, formatQuantity } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 // Merge Tailwind classes
 const className = cn(
@@ -1597,16 +1502,20 @@ const className = cn(
 ```typescript
 import {
   MEAL_TYPES,
+  MEAL_TYPE_OPTIONS,
   RECIPE_CATEGORIES,
+  RECIPE_CATEGORY_OPTIONS,
   DIETARY_PREFERENCES,
   INGREDIENT_UNITS,
   INGREDIENT_CATEGORIES,
-  QUICK_FILTERS
+  INGREDIENT_CATEGORY_ORDER,
+  QUICK_FILTERS,
+  DEFAULT_QUICK_FILTER_IDS,
 } from "@/lib/constants";
 
 // Use in select dropdowns
 <Select>
-  {MEAL_TYPES.map(type => (
+  {MEAL_TYPE_OPTIONS.map(type => (
     <SelectItem key={type.value} value={type.value}>
       {type.label}
     </SelectItem>
@@ -1623,11 +1532,12 @@ QUICK_FILTERS.forEach(filter => {
 
 | Constant | Values |
 |----------|--------|
-| `MEAL_TYPES` | breakfast, lunch, dinner, dessert, snack |
-| `RECIPE_CATEGORIES` | ground-beef, chicken, seafood, veggie, other |
-| `DIETARY_PREFERENCES` | vegetarian, vegan, gluten-free, dairy-free, keto, paleo, low-carb |
-| `INGREDIENT_UNITS` | tbs, tsp, cup, oz, lbs, g, kg, ml, L, bag, box, can, jar, package, piece, whole, pinch, dash, to-taste |
-| `INGREDIENT_CATEGORIES` | produce, dairy, meat, seafood, pantry, spices, frozen, bakery, beverages, other |
+| `MEAL_TYPES` | all, appetizer, breakfast, lunch, dinner, dessert, side, snack, sauce, other |
+| `RECIPE_CATEGORIES` | all, beef, chicken, pork, seafood, vegetarian, other |
+| `DIETARY_PREFERENCES` | none, vegan, gluten-free, dairy-free, keto, paleo, low-carb, diabetic |
+| `INGREDIENT_UNITS` | tbs, tsp, cup, oz, lbs, stick, bag, box, can, jar, package, piece, slice, whole, pinch, dash, to-taste |
+| `INGREDIENT_CATEGORIES` | produce, dairy, deli, meat, condiments, oils-and-vinegars, seafood, pantry, spices, frozen, bakery, baking, beverages, other |
+| `QUICK_FILTERS` | breakfast, lunch, dinner, dessert, sides, sauce, under30, vegetarian, favorites, new |
 
 ---
 
@@ -1659,10 +1569,6 @@ import { Button } from "../../../components/ui/button";
 import { Button } from "@/components/ui/button";
 ```
 
-### Next.js (`next.config.ts`)
-
-Minimal configuration - uses Next.js defaults.
-
 ### shadcn/ui (`components.json`)
 
 ```json
@@ -1690,8 +1596,7 @@ Minimal configuration - uses Next.js defaults.
 
 ```bash
 npx shadcn@latest add button
-npx shadcn@latest add card
-npx shadcn@latest add dialog
+npx shadcn@latest add card dialog
 ```
 
 ### Environment Variables
@@ -1704,32 +1609,33 @@ npx shadcn@latest add dialog
 
 ## State Management
 
-The application uses minimal state management with React's built-in features:
+The application uses a hybrid approach to state management:
+
+### Server State (React Query)
+
+Used for all API data fetching and caching.
+
+```typescript
+import { QueryProvider } from "@/lib/providers/QueryProvider";
+
+// Wrap app in QueryProvider (in layout.tsx)
+<QueryProvider>{children}</QueryProvider>
+```
 
 ### Local Component State
 
 ```typescript
 const [recipes, setRecipes] = useState<RecipeCardData[]>([]);
 const [isLoading, setIsLoading] = useState(true);
-const [error, setError] = useState<string | null>(null);
 ```
 
-### Settings Persistence
+### Persisted State (localStorage)
 
-User preferences are stored in `localStorage` via the `useSettings` hook:
+User preferences and session data stored via custom hooks:
 
-```typescript
-const { settings, updateSettings } = useSettings();
-```
-
-### Global State Registry
-
-Cross-page state for unsaved changes tracking:
-
-```typescript
-// Global Map registry (internal to useUnsavedChanges)
-const unsavedChangesRegistry = new Map<string, () => boolean>();
-```
+- `useSettings` - Application settings
+- `useChatHistory` - Meal Genie chat messages
+- `useRecentRecipes` - Recently viewed recipes
 
 ### Theme Management
 
@@ -1747,9 +1653,11 @@ import { ThemeProvider } from "next-themes";
 
 ## Form Validation
 
-### Pattern 1: Field-Level Validation
+### Pattern: Field-Level Validation
 
 ```typescript
+import { validateRecipeName, validateQuantity } from "@/lib/formValidation";
+
 function RecipeForm() {
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
@@ -1761,70 +1669,11 @@ function RecipeForm() {
   };
 
   return (
-    <ValidatedInput
+    <Input
       value={name}
-      onChange={handleNameChange}
-      error={nameError}
-      placeholder="Recipe name"
+      onChange={(e) => handleNameChange(e.target.value)}
+      className={nameError ? "border-destructive" : ""}
     />
-  );
-}
-```
-
-### Pattern 2: Form Submission Validation
-
-```typescript
-function RecipeForm() {
-  const [formData, setFormData] = useState({
-    name: "",
-    servings: "",
-    totalTime: ""
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const schema = {
-      name: validateRecipeName,
-      servings: validateServings,
-      totalTime: optional(validateTotalTime)
-    };
-
-    const { values, isValid, errors } = validateForm(formData, schema);
-
-    if (!isValid) {
-      setErrors(errors);
-      return;
-    }
-
-    // Submit with validated values
-    api.createRecipe(values);
-  };
-}
-```
-
-### Pattern 3: Real-Time Validation
-
-```typescript
-function RecipeForm() {
-  const [name, setName] = useState("");
-
-  const nameResult = useMemo(
-    () => validateRecipeName(name),
-    [name]
-  );
-
-  return (
-    <div>
-      <Input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className={!nameResult.isValid ? "border-red-500" : ""}
-      />
-      {!nameResult.isValid && (
-        <p className="text-sm text-red-500">{nameResult.error}</p>
-      )}
-    </div>
   );
 }
 ```
@@ -1835,30 +1684,22 @@ function RecipeForm() {
 
 ### CSS Variables
 
-Defined in `globals.css` and used throughout the application:
+Defined in `globals.css` with light and dark theme support:
 
 ```css
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
+  /* ... */
 }
 
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
-  /* ... dark theme overrides */
+  /* ... */
 }
 ```
 
@@ -1873,9 +1714,6 @@ Defined in `globals.css` and used throughout the application:
 
 // Dark mode aware
 <div className="bg-white dark:bg-gray-900">
-
-// Using CSS variables
-<div className="bg-sidebar text-sidebar-foreground">
 ```
 
 ### Class Merging
@@ -1939,7 +1777,8 @@ npx shadcn@latest add
 
 1. Create directory in `src/app/`
 2. Add `page.tsx` file
-3. Export default component
+3. Add `_components/` directory for page-specific components
+4. Export default component
 
 ```typescript
 // src/app/my-page/page.tsx
@@ -1954,7 +1793,7 @@ export default function MyPage() {
 
 ### Creating New Components
 
-1. Determine component category (ui, common, forms, recipe, layout)
+1. Determine component category (ui, common, forms, recipe, layout, meal-genie, settings)
 2. Create file in appropriate directory
 3. Export component
 
@@ -1996,21 +1835,11 @@ export const newFeatureApi = {
   async create(data: Partial<NewFeatureDTO>): Promise<NewFeatureDTO> {
     return fetchApi("/api/new-feature", {
       method: "POST",
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
-  }
+  },
 };
 ```
-
-### Best Practices
-
-1. **Type Safety** - Always define TypeScript interfaces for props and API responses
-2. **Component Organization** - Keep components small and focused
-3. **Error Handling** - Use try/catch with ApiError for API calls
-4. **Form Validation** - Use the validation utilities for consistent UX
-5. **Accessibility** - Leverage Radix UI primitives for ARIA support
-6. **Performance** - Use `useMemo` and `useCallback` for expensive operations
-7. **Code Style** - Run `npm run lint` before committing
 
 ---
 
@@ -2026,12 +1855,14 @@ Quick reference for common file locations:
 | Add form component | `src/components/forms/` |
 | Add recipe component | `src/components/recipe/` |
 | Add layout component | `src/components/layout/` |
-| Add meal planner component | `src/components/meal-planner/` |
+| Add meal genie component | `src/components/meal-genie/` |
+| Add settings component | `src/components/settings/` |
 | Add API method | `src/lib/api.ts` |
 | Add TypeScript type | `src/types/index.ts` |
 | Add custom hook | `src/hooks/` |
 | Add utility function | `src/lib/` |
 | Add constant/dropdown | `src/lib/constants.ts` |
+| Add filter logic | `src/lib/filterUtils.ts` |
 | Modify global styles | `src/app/globals.css` |
 | Configure TypeScript | `tsconfig.json` |
 | Configure shadcn/ui | `components.json` |
