@@ -5,6 +5,7 @@ from .meal_repo import MealRepo
 from .planner_repo import PlannerRepo
 from .recipe_repo import RecipeRepo
 from .shopping_repo import ShoppingRepo
+from .user_repo import UserRepo
 
 __all__ = [
     "RecipeRepo",
@@ -12,4 +13,5 @@ __all__ = [
     "MealRepo",
     "PlannerRepo",
     "ShoppingRepo",
+    "UserRepo",
 ]

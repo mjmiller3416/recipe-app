@@ -19,6 +19,7 @@ from .recipe_service import (
     RecipeService,
 )
 from .shopping_service import ShoppingService
+from .user_service import UserService
 
 __all__ = [
     "RecipeService",
@@ -34,4 +35,5 @@ __all__ = [
     "InvalidMealError",
     "EntryNotFoundError",
     "ShoppingService",
+    "UserService",
 ]
