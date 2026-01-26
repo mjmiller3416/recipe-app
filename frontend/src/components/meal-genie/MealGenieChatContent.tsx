@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Sparkles, Send, X, ChefHat, Lightbulb, Calendar, Minimize2, FileText } from "lucide-react";
+import { Sparkles, Send, X, ChefHat, Lightbulb, Calendar, Minimize2, Maximize2, Minus, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { mealGenieApi } from "@/lib/api";
 import { useChatHistory } from "@/hooks";
@@ -23,16 +23,20 @@ const SUGGESTIONS = [
 interface MealGenieChatContentProps {
   onClose: () => void;
   isMinimized?: boolean;
+  isExpanded?: boolean;
   onMinimize?: () => void;
   onExpand?: () => void;
+  onCollapse?: () => void;
   isMobile?: boolean;
 }
 
 export function MealGenieChatContent({
   onClose,
   isMinimized = false,
+  isExpanded = false,
   onMinimize,
   onExpand,
+  onCollapse,
   isMobile = false,
 }: MealGenieChatContentProps) {
   const router = useRouter();
@@ -190,14 +194,32 @@ export function MealGenieChatContent({
               </motion.div>
             )}
           </AnimatePresence>
-          {!isMobile && onMinimize && (
+          {/* Expand/Collapse button - desktop only */}
+          {!isMobile && (isExpanded ? onCollapse : onExpand) && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={isExpanded ? onCollapse : onExpand}
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              aria-label={isExpanded ? "Collapse chat" : "Expand chat"}
+            >
+              {isExpanded ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </Button>
+          )}
+          {/* Minimize to circle button - desktop only, not when expanded */}
+          {!isMobile && !isExpanded && onMinimize && (
             <Button
               variant="ghost"
               size="icon"
               onClick={onMinimize}
               className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              aria-label="Minimize to icon"
             >
-              <Minimize2 className="h-4 w-4" />
+              <Minus className="h-4 w-4" />
             </Button>
           )}
           <Button
