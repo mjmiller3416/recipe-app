@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from .recipe import Recipe
     from .recipe_history import RecipeHistory
     from .shopping_item import ShoppingItem
+    from .user_usage import UserUsage
 
 
 def _utcnow() -> datetime:
@@ -94,6 +95,13 @@ class User(Base):
 
     recipe_history: Mapped[List["RecipeHistory"]] = relationship(
         "RecipeHistory",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
+    usage_records: Mapped[List["UserUsage"]] = relationship(
+        "UserUsage",
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True
