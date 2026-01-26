@@ -7,11 +7,15 @@ SQLAlchemy model for tracking when recipes were cooked.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database.base import Base
+
+if TYPE_CHECKING:
+    from .user import User
 
 
 def _utcnow() -> datetime:
@@ -26,9 +30,11 @@ class RecipeHistory(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     recipe_id: Mapped[int] = mapped_column(ForeignKey("recipe.id", ondelete="CASCADE"), nullable=False)
     cooked_at: Mapped[datetime] = mapped_column(default=_utcnow)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
 
     # ── Relationships ───────────────────────────────────────────────────────────────────────────────────────
     recipe = relationship("Recipe", back_populates="history")
+    user: Mapped["User"] = relationship("User", back_populates="recipe_history")
 
     # ── String Representation ───────────────────────────────────────────────────────────────────────────────
     def __repr__(self) -> str:

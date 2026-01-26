@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import Boolean, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
@@ -24,6 +24,7 @@ from .recipe_ingredient import RecipeIngredient
 
 if TYPE_CHECKING:
     from .meal import Meal
+    from .user import User
 
 
 # ── Recipe Model ────────────────────────────────────────────────────────────────────────────────────────────
@@ -44,6 +45,9 @@ class Recipe(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
 
+    # User ownership
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
     # ── Relationships  ──────────────────────────────────────────────────────────────────────────────────────
     ingredients: Mapped[List[RecipeIngredient]] = relationship(
         "RecipeIngredient",
@@ -63,6 +67,8 @@ class Recipe(Base):
         back_populates="main_recipe",
         passive_deletes=True
     )
+
+    user: Mapped["User"] = relationship("User", back_populates="recipes")
 
     # ── String Representation ───────────────────────────────────────────────────────────────────────────────
     def __repr__(self) -> str:
