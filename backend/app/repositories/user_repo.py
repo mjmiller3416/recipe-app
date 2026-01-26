@@ -149,3 +149,39 @@ class UserRepo:
         if avatar_url is not None:
             user.avatar_url = avatar_url
         return user
+
+    def get_settings(self, user_id: int) -> Optional[UserSettings]:
+        """
+        Get user settings by user ID.
+
+        Args:
+            user_id: The internal database user ID.
+
+        Returns:
+            UserSettings if found, None otherwise.
+        """
+        stmt = select(UserSettings).where(UserSettings.user_id == user_id)
+        return self.session.scalars(stmt).first()
+
+    def get_or_create_settings(self, user_id: int) -> UserSettings:
+        """
+        Get user settings, creating with defaults if they don't exist.
+
+        This ensures a user always has a settings record, which simplifies
+        downstream code that needs to read or update settings.
+
+        Args:
+            user_id: The internal database user ID.
+
+        Returns:
+            UserSettings (existing or newly created with defaults).
+        """
+        settings = self.get_settings(user_id)
+        if settings is not None:
+            return settings
+
+        # Create with defaults (UserSettings model handles default values)
+        settings = UserSettings(user_id=user_id)
+        self.session.add(settings)
+        self.session.flush()
+        return settings
