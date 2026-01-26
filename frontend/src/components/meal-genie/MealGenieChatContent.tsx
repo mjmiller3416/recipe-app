@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, Send, X, ChefHat, Lightbulb, Calendar, Minimize2, Maximize2, Minus, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from "react-markdown";
 import { mealGenieApi } from "@/lib/api";
 import { useChatHistory } from "@/hooks";
 import { Button } from "@/components/ui/button";
@@ -272,7 +273,13 @@ export function MealGenieChatContent({
                           : "bg-gradient-to-br from-muted to-muted/80 border border-border/30 text-foreground rounded-2xl rounded-bl-sm whitespace-pre-line"
                       )}
                     >
-                      {message.content}
+                      {message.role === "assistant" ? (
+                        <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none [&>p]:m-0">
+                          {message.content}
+                        </ReactMarkdown>
+                      ) : (
+                        message.content
+                      )}
                     </div>
                   </motion.div>
                 ))}
