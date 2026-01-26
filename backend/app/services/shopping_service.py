@@ -32,13 +32,16 @@ from ..repositories.shopping_repo import ShoppingRepo
 class ShoppingService:
     """Service for shopping list operations with business logic."""
 
-    def __init__(self, session: Session | None = None):
-        """Initialize the ShoppingService with a database session and repositories.
-        If no session is provided, a new session is created."""
-        if session is None:
-            from app.database.db import create_session
-            session = create_session()
+    def __init__(self, session: Session, user_id: int):
+        """
+        Initialize the ShoppingService with a database session and user ID.
+
+        Args:
+            session: SQLAlchemy database session (required).
+            user_id: ID of the authenticated user (required for multi-tenant isolation).
+        """
         self.session = session
+        self.user_id = user_id
         self.shopping_repo = ShoppingRepo(self.session)
         self.meal_repo = MealRepo(self.session)
         self.planner_repo = PlannerRepo(self.session)
@@ -49,7 +52,7 @@ class ShoppingService:
         meal_ids_or_dto: Union[List[int], ShoppingListGenerationDTO]
         ) -> ShoppingListGenerationResultDTO:
         """
-        Generate shopping list from meal selections or from a ShoppingListGenerationDTO.
+        Generate shopping list from meal selections or from a ShoppingListGenerationDTO for the current user.
 
         Args:
             meal_ids_or_dto (List[int] or ShoppingListGenerationDTO): List of meal selection IDs or DTO.
@@ -66,12 +69,12 @@ class ShoppingService:
         try:
             # Empty selection: clear recipe items and all states, then return
             if not recipe_ids:
-                self.shopping_repo.clear_shopping_items(source="recipe")
+                self.shopping_repo.clear_shopping_items(self.user_id, source="recipe")
                 # Delete all orphaned states since there are no recipe items
-                self.shopping_repo.delete_orphaned_states([])
+                self.shopping_repo.delete_orphaned_states([], self.user_id)
                 self.session.commit()
                 # Count remaining items (manual items only)
-                total_items = len(self.shopping_repo.get_all_shopping_items())
+                total_items = len(self.shopping_repo.get_all_shopping_items(self.user_id))
                 return ShoppingListGenerationResultDTO(
                     success=True,
                     items_created=0,
@@ -96,7 +99,7 @@ class ShoppingService:
 
     def generate_shopping_list_from_recipes(self, recipe_ids: List[int]) -> ShoppingListGenerationResultDTO:
         """
-        Generate shopping list from recipes with state restoration.
+        Generate shopping list from recipes with state restoration for the current user.
 
         Args:
             recipe_ids (List[int]): List of recipe IDs.
@@ -105,15 +108,15 @@ class ShoppingService:
             ShoppingListGenerationResultDTO: Generation result with statistics.
         """
         try:
-            # clear existing recipe-generated items
-            deleted_count = self.shopping_repo.clear_shopping_items(source="recipe")
+            # clear existing recipe-generated items for user
+            deleted_count = self.shopping_repo.clear_shopping_items(self.user_id, source="recipe")
 
             # aggregate ingredients from recipes
             recipe_items = self.shopping_repo.aggregate_ingredients(recipe_ids)
 
             # Batch load all saved states in a single query (fixes N+1 problem)
             state_keys = [item.state_key for item in recipe_items if item.state_key]
-            saved_states = self.shopping_repo.get_shopping_states_batch(state_keys)
+            saved_states = self.shopping_repo.get_shopping_states_batch(state_keys, self.user_id)
 
             # Apply saved states to items (only if quantity hasn't increased)
             for item in recipe_items:
@@ -136,24 +139,24 @@ class ShoppingService:
             for item in recipe_items:
                 if item.state_key and (item.have or item.flagged):
                     self.shopping_repo.save_shopping_state(
-                        item.state_key, item.quantity, item.unit or "", item.have, item.flagged
+                        item.state_key, item.quantity, item.unit or "", item.have, self.user_id, item.flagged
                     )
 
-            # save new items
+            # save new items for user
             items_created = 0
             for item in recipe_items:
-                self.shopping_repo.create_shopping_item(item)
+                self.shopping_repo.create_shopping_item(item, self.user_id)
                 items_created += 1
 
             # Clean up orphaned states that no longer have corresponding items
             valid_state_keys = [item.state_key for item in recipe_items if item.state_key]
-            self.shopping_repo.delete_orphaned_states(valid_state_keys)
+            self.shopping_repo.delete_orphaned_states(valid_state_keys, self.user_id)
 
             # commit transaction after creating all items
             self.session.commit()
 
             # get total count including manual items
-            total_items = len(self.shopping_repo.get_all_shopping_items())
+            total_items = len(self.shopping_repo.get_all_shopping_items(self.user_id))
 
             return ShoppingListGenerationResultDTO(
                 success=True,
@@ -176,7 +179,7 @@ class ShoppingService:
 
     def _extract_recipe_ids_from_meals(self, meal_ids: List[int]) -> List[int]:
         """
-        Extract all recipe IDs from meals.
+        Extract all recipe IDs from meals for the current user.
 
         Args:
             meal_ids (List[int]): List of meal IDs.
@@ -186,14 +189,14 @@ class ShoppingService:
         """
         recipe_ids = []
         for meal_id in meal_ids:
-            meal = self.meal_repo.get_by_id(meal_id)
+            meal = self.meal_repo.get_by_id(meal_id, self.user_id)
             if meal:
                 recipe_ids.extend(meal.get_all_recipe_ids())
         return recipe_ids
 
     def get_recipe_ids_from_meals(self, meal_ids: List[int]) -> List[int]:
         """
-        Public alias for extracting all recipe IDs from meals.
+        Public alias for extracting all recipe IDs from meals for the current user.
 
         Args:
             meal_ids (List[int]): List of meal IDs.
@@ -205,7 +208,7 @@ class ShoppingService:
 
     def generate_from_active_planner(self) -> ShoppingListGenerationResultDTO:
         """
-        Generate shopping list from active planner entries with mode-aware filtering.
+        Generate shopping list from active planner entries with mode-aware filtering for the current user.
 
         Shopping modes:
         - 'all': Include all ingredients from the meal
@@ -217,7 +220,7 @@ class ShoppingService:
         """
         try:
             # Get planner entries (excludes 'none' mode entries)
-            entries = self.planner_repo.get_shopping_entries()
+            entries = self.planner_repo.get_shopping_entries(self.user_id)
 
             # Group recipe IDs by shopping mode
             all_recipe_ids: List[int] = []
@@ -252,7 +255,7 @@ class ShoppingService:
         produce_only_recipe_ids: List[int]
     ) -> ShoppingListGenerationResultDTO:
         """
-        Generate shopping list with mode-aware ingredient filtering.
+        Generate shopping list with mode-aware ingredient filtering for the current user.
 
         Args:
             all_recipe_ids: Recipe IDs to include all ingredients from
@@ -264,10 +267,10 @@ class ShoppingService:
         try:
             # Handle empty case
             if not all_recipe_ids and not produce_only_recipe_ids:
-                self.shopping_repo.clear_shopping_items(source="recipe")
-                self.shopping_repo.delete_orphaned_states([])
+                self.shopping_repo.clear_shopping_items(self.user_id, source="recipe")
+                self.shopping_repo.delete_orphaned_states([], self.user_id)
                 self.session.commit()
-                total_items = len(self.shopping_repo.get_all_shopping_items())
+                total_items = len(self.shopping_repo.get_all_shopping_items(self.user_id))
                 return ShoppingListGenerationResultDTO(
                     success=True,
                     items_created=0,
@@ -277,7 +280,7 @@ class ShoppingService:
                 )
 
             # Clear existing recipe items
-            self.shopping_repo.clear_shopping_items(source="recipe")
+            self.shopping_repo.clear_shopping_items(self.user_id, source="recipe")
 
             # Aggregate ingredients from "all" mode entries
             all_items = self.shopping_repo.aggregate_ingredients(all_recipe_ids) if all_recipe_ids else []
@@ -292,7 +295,7 @@ class ShoppingService:
 
             # Restore saved states (same logic as generate_shopping_list_from_recipes)
             state_keys = [item.state_key for item in recipe_items if item.state_key]
-            saved_states = self.shopping_repo.get_shopping_states_batch(state_keys)
+            saved_states = self.shopping_repo.get_shopping_states_batch(state_keys, self.user_id)
 
             for item in recipe_items:
                 if item.state_key:
@@ -309,21 +312,21 @@ class ShoppingService:
             for item in recipe_items:
                 if item.state_key and (item.have or item.flagged):
                     self.shopping_repo.save_shopping_state(
-                        item.state_key, item.quantity, item.unit or "", item.have, item.flagged
+                        item.state_key, item.quantity, item.unit or "", item.have, self.user_id, item.flagged
                     )
 
             # Create shopping items
             items_created = 0
             for item in recipe_items:
-                self.shopping_repo.create_shopping_item(item)
+                self.shopping_repo.create_shopping_item(item, self.user_id)
                 items_created += 1
 
             # Clean up orphaned states
             valid_state_keys = [item.state_key for item in recipe_items if item.state_key]
-            self.shopping_repo.delete_orphaned_states(valid_state_keys)
+            self.shopping_repo.delete_orphaned_states(valid_state_keys, self.user_id)
 
             self.session.commit()
-            total_items = len(self.shopping_repo.get_all_shopping_items())
+            total_items = len(self.shopping_repo.get_all_shopping_items(self.user_id))
 
             return ShoppingListGenerationResultDTO(
                 success=True,
@@ -379,7 +382,7 @@ class ShoppingService:
             filters: Optional[ShoppingListFilterDTO] = None
         ) -> ShoppingListResponseDTO:
         """
-        Get the current shopping list with optional filters.
+        Get the current shopping list with optional filters for the current user.
 
         Args:
             filters (Optional[ShoppingListFilterDTO]): Filter criteria.
@@ -391,6 +394,7 @@ class ShoppingService:
             # apply filters if provided
             if filters:
                 items = self.shopping_repo.search_shopping_items(
+                    user_id=self.user_id,
                     search_term=filters.search_term,
                     source=filters.source,
                     category=filters.category,
@@ -399,7 +403,7 @@ class ShoppingService:
                     offset=filters.offset
                 )
             else:
-                items = self.shopping_repo.get_all_shopping_items()
+                items = self.shopping_repo.get_all_shopping_items(self.user_id)
 
             # convert to response DTOs - recipe_sources is now stored on the item itself
             item_dtos = [
@@ -408,7 +412,7 @@ class ShoppingService:
             ]
 
             # get summary statistics
-            summary = self.shopping_repo.get_shopping_list_summary()
+            summary = self.shopping_repo.get_shopping_list_summary(self.user_id)
 
             return ShoppingListResponseDTO(
                 items=item_dtos,
@@ -431,12 +435,12 @@ class ShoppingService:
 
     def _build_recipe_sources_map(self) -> Dict[str, List[str]]:
         """
-        Build a mapping from state_key to list of recipe names.
+        Build a mapping from state_key to list of recipe names for the current user.
         Uses the active planner entries to get recipe IDs, then fetches breakdown.
         """
         try:
             # Get recipe IDs from shopping entries (same as generate_from_active_planner)
-            entries = self.planner_repo.get_shopping_entries()
+            entries = self.planner_repo.get_shopping_entries(self.user_id)
             recipe_ids: List[int] = []
             for entry in entries:
                 if entry.meal:
@@ -465,7 +469,7 @@ class ShoppingService:
             create_dto: ManualItemCreateDTO
         ) -> Optional[ShoppingItemResponseDTO]:
         """
-        Add a manual item to the shopping list.
+        Add a manual item to the shopping list for the current user.
 
         Args:
             create_dto (ManualItemCreateDTO): Manual item data.
@@ -481,7 +485,7 @@ class ShoppingService:
                 category=create_dto.category
             )
 
-            created_item = self.shopping_repo.create_shopping_item(manual_item)
+            created_item = self.shopping_repo.create_shopping_item(manual_item, self.user_id)
             self.session.commit()
             return self._item_to_response_dto(created_item)
 
@@ -492,17 +496,17 @@ class ShoppingService:
     def update_item(self, item_id: int, update_dto: ShoppingItemUpdateDTO
         ) -> Optional[ShoppingItemResponseDTO]:
         """
-        Update a shopping item.
+        Update a shopping item for the current user.
 
         Args:
             item_id (int): ID of the item to update.
             update_dto (ShoppingItemUpdateDTO): Update data.
 
         Returns:
-            Optional[ShoppingItemResponseDTO]: Updated item or None if failed.
+            Optional[ShoppingItemResponseDTO]: Updated item or None if failed/not owned.
         """
         try:
-            item = self.shopping_repo.get_shopping_item_by_id(item_id)
+            item = self.shopping_repo.get_shopping_item_by_id(item_id, self.user_id)
             if not item:
                 return None
 
@@ -520,7 +524,7 @@ class ShoppingService:
                 # update state if this is a recipe item
                 if item.state_key and item.source == "recipe":
                     self.shopping_repo.save_shopping_state(
-                        item.state_key, item.quantity, item.unit or "", item.have, item.flagged
+                        item.state_key, item.quantity, item.unit or "", item.have, self.user_id, item.flagged
                     )
 
             updated_item = self.shopping_repo.update_item(item)
@@ -533,7 +537,7 @@ class ShoppingService:
 
     def delete_item(self, item_id: int) -> bool:
         """
-        Delete a shopping item.
+        Delete a shopping item for the current user.
 
         Args:
             item_id (int): ID of the item to delete.
@@ -542,7 +546,7 @@ class ShoppingService:
             bool: True if deleted successfully.
         """
         try:
-            result = self.shopping_repo.delete_item(item_id)
+            result = self.shopping_repo.delete_item(item_id, self.user_id)
             self.session.commit()
             return result
         except SQLAlchemyError:
@@ -551,13 +555,13 @@ class ShoppingService:
 
     def clear_manual_items(self) -> BulkOperationResultDTO:
         """
-        Clear all manual items from the shopping list.
+        Clear all manual items from the shopping list for the current user.
 
         Returns:
             BulkOperationResultDTO: Operation result.
         """
         try:
-            deleted_count = self.shopping_repo.clear_shopping_items(source="manual")
+            deleted_count = self.shopping_repo.clear_shopping_items(self.user_id, source="manual")
             self.session.commit()
             return BulkOperationResultDTO(
                 success=True,
@@ -576,13 +580,13 @@ class ShoppingService:
 
     def clear_recipe_items(self) -> BulkOperationResultDTO:
         """
-        Clear all recipe-generated items from the shopping list.
+        Clear all recipe-generated items from the shopping list for the current user.
 
         Returns:
             BulkOperationResultDTO: Operation result.
         """
         try:
-            deleted_count = self.shopping_repo.clear_shopping_items(source="recipe")
+            deleted_count = self.shopping_repo.clear_shopping_items(self.user_id, source="recipe")
             self.session.commit()
             return BulkOperationResultDTO(
                 success=True,
@@ -602,16 +606,16 @@ class ShoppingService:
     # ── Item Status Management ──────────────────────────────────────────────────────────────────────────────
     def toggle_item_status(self, item_id: int) -> Optional[bool]:
         """
-        Toggle the 'have' status of a shopping item.
+        Toggle the 'have' status of a shopping item for the current user.
 
         Args:
             item_id (int): ID of the item to toggle.
 
         Returns:
-            Optional[bool]: New have status or None if failed.
+            Optional[bool]: New have status or None if failed/not owned.
         """
         try:
-            item = self.shopping_repo.get_shopping_item_by_id(item_id)
+            item = self.shopping_repo.get_shopping_item_by_id(item_id, self.user_id)
             if not item:
                 return False
 
@@ -620,7 +624,7 @@ class ShoppingService:
             # update state for recipe items
             if item.state_key and item.source == "recipe":
                 self.shopping_repo.save_shopping_state(
-                    item.state_key, item.quantity, item.unit or "", item.have, item.flagged
+                    item.state_key, item.quantity, item.unit or "", item.have, self.user_id, item.flagged
                 )
 
             self.shopping_repo.update_item(item)
@@ -633,16 +637,16 @@ class ShoppingService:
 
     def toggle_item_flagged(self, item_id: int) -> Optional[bool]:
         """
-        Toggle the 'flagged' status of a shopping item.
+        Toggle the 'flagged' status of a shopping item for the current user.
 
         Args:
             item_id (int): ID of the item to toggle.
 
         Returns:
-            Optional[bool]: New flagged status or None if item not found.
+            Optional[bool]: New flagged status or None if item not found/not owned.
         """
         try:
-            item = self.shopping_repo.get_shopping_item_by_id(item_id)
+            item = self.shopping_repo.get_shopping_item_by_id(item_id, self.user_id)
             if not item:
                 return None
 
@@ -651,7 +655,7 @@ class ShoppingService:
             # persist flagged state for recipe items so it survives regeneration
             if item.state_key and item.source == "recipe":
                 self.shopping_repo.save_shopping_state(
-                    item.state_key, item.quantity, item.unit or "", item.have, item.flagged
+                    item.state_key, item.quantity, item.unit or "", item.have, self.user_id, item.flagged
                 )
 
             self.shopping_repo.update_item(item)
@@ -664,13 +668,17 @@ class ShoppingService:
 
     def clear_completed_items(self) -> int:
         """
-        Clear all completed (have=True) shopping items and return count deleted.
+        Clear all completed (have=True) shopping items for the current user and return count deleted.
         """
         from sqlalchemy import delete
 
         from app.models.shopping_item import ShoppingItem
         try:
-            stmt = delete(ShoppingItem).where(ShoppingItem.have.is_(True))
+            stmt = (
+                delete(ShoppingItem)
+                .where(ShoppingItem.user_id == self.user_id)
+                .where(ShoppingItem.have.is_(True))
+            )
             result = self.session.execute(stmt)
             self.session.commit()
             return result.rowcount
@@ -679,7 +687,7 @@ class ShoppingService:
 
     def bulk_update_status(self, update_dto: BulkStateUpdateDTO) -> BulkOperationResultDTO:
         """
-        Bulk update 'have' status for multiple shopping items.
+        Bulk update 'have' status for multiple shopping items for the current user.
 
         Args:
             update_dto (BulkStateUpdateDTO): DTO containing item_updates mapping (item_id -> have status).
@@ -690,14 +698,14 @@ class ShoppingService:
         try:
             updated_count = 0
             for item_id, have in update_dto.item_updates.items():
-                item = self.shopping_repo.get_shopping_item_by_id(item_id)
+                item = self.shopping_repo.get_shopping_item_by_id(item_id, self.user_id)
                 if not item:
                     continue
                 item.have = have
                 # update state for recipe items
                 if item.state_key and item.source == "recipe":
                     self.shopping_repo.save_shopping_state(
-                        item.state_key, item.quantity, item.unit or "", item.have, item.flagged
+                        item.state_key, item.quantity, item.unit or "", item.have, self.user_id, item.flagged
                     )
                 self.shopping_repo.update_item(item)
                 updated_count += 1
@@ -783,13 +791,13 @@ class ShoppingService:
     # ── Shopping List Management ────────────────────────────────────────────────────────────────────────────
     def clear_shopping_list(self) -> BulkOperationResultDTO:
         """
-        Clear the entire shopping list.
+        Clear the entire shopping list for the current user.
 
         Returns:
             BulkOperationResultDTO: Operation result.
         """
         try:
-            deleted_count = self.shopping_repo.clear_shopping_items()
+            deleted_count = self.shopping_repo.clear_shopping_items(self.user_id)
             self.session.commit()
             return BulkOperationResultDTO(
                 success=True,
@@ -808,7 +816,7 @@ class ShoppingService:
 
     def get_shopping_summary(self) -> Any:
         """
-        Get shopping list summary with attribute access and renamed fields.
+        Get shopping list summary with attribute access and renamed fields for the current user.
 
         Returns:
             An object with attributes total_items, completed_items, manual_items, recipe_items.
@@ -828,7 +836,7 @@ class ShoppingService:
 
     def search_items(self, search_term: str) -> list:
         """
-        Search shopping items by ingredient name.
+        Search shopping items by ingredient name for the current user.
 
         Args:
             search_term (str): Substring to search within ingredient names.
@@ -837,19 +845,19 @@ class ShoppingService:
             List of ShoppingItemResponseDTO or model instances matching the term.
         """
         # Perform search via repository
-        items = self.shopping_repo.search_shopping_items(search_term=search_term)
+        items = self.shopping_repo.search_shopping_items(self.user_id, search_term=search_term)
         # Convert to response DTOs
         return [self._item_to_response_dto(item) for item in items]
 
     def get_shopping_list_summary(self) -> Dict[str, Any]:
         """
-        Get summary statistics for the shopping list.
+        Get summary statistics for the shopping list for the current user.
 
         Returns:
             Dict[str, Any]: Summary with counts and completion percentage.
         """
         try:
-            return self.shopping_repo.get_shopping_list_summary()
+            return self.shopping_repo.get_shopping_list_summary(self.user_id)
         except SQLAlchemyError:
             return {
                 "total_items": 0,

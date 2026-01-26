@@ -27,12 +27,13 @@ class MealRepo:
         self.session = session
 
     # -- Create Operations -----------------------------------------------------------------------
-    def create_meal(self, meal: Meal) -> Meal:
+    def create_meal(self, meal: Meal, user_id: int) -> Meal:
         """
         Create and persist a new Meal to the database.
 
         Args:
             meal: Unsaved Meal instance (id should be None)
+            user_id: ID of the user who owns this meal
 
         Returns:
             Saved Meal with assigned ID
@@ -40,73 +41,88 @@ class MealRepo:
         if meal.id is not None:
             raise ValueError("Cannot create a meal that already has an ID.")
 
+        meal.user_id = user_id
         self.session.add(meal)
         self.session.flush()
         self.session.refresh(meal)
         return meal
 
     # -- Read Operations -------------------------------------------------------------------------
-    def get_by_id(self, meal_id: int) -> Optional[Meal]:
+    def get_by_id(self, meal_id: int, user_id: Optional[int] = None) -> Optional[Meal]:
         """
         Get a meal by ID with eager-loaded main recipe.
 
         Args:
             meal_id: ID of the meal to load
+            user_id: If provided, only return the meal if it belongs to this user.
+                Returns None if the meal exists but belongs to a different user (no existence leak).
 
         Returns:
-            Meal if found, None otherwise
+            Meal if found and owned by user, None otherwise
         """
         stmt = (
             select(Meal)
             .where(Meal.id == meal_id)
             .options(joinedload(Meal.main_recipe))
         )
+        if user_id is not None:
+            stmt = stmt.where(Meal.user_id == user_id)
         result = self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    def get_all(self) -> List[Meal]:
+    def get_all(self, user_id: int) -> List[Meal]:
         """
-        Get all meals with eager-loaded main recipes.
-
-        Returns:
-            List of all meals
-        """
-        stmt = select(Meal).options(joinedload(Meal.main_recipe))
-        result = self.session.execute(stmt)
-        return result.scalars().unique().all()
-
-    def get_by_name_pattern(self, name_pattern: str) -> List[Meal]:
-        """
-        Get meals by name pattern (case-insensitive).
+        Get all meals with eager-loaded main recipes for a specific user.
 
         Args:
-            name_pattern: Pattern to search for in meal names
+            user_id: ID of the user whose meals to retrieve
 
         Returns:
-            List of matching meals
+            List of all meals belonging to the user
         """
         stmt = (
             select(Meal)
+            .where(Meal.user_id == user_id)
+            .options(joinedload(Meal.main_recipe))
+        )
+        result = self.session.execute(stmt)
+        return result.scalars().unique().all()
+
+    def get_by_name_pattern(self, name_pattern: str, user_id: int) -> List[Meal]:
+        """
+        Get meals by name pattern (case-insensitive) for a specific user.
+
+        Args:
+            name_pattern: Pattern to search for in meal names
+            user_id: ID of the user whose meals to search
+
+        Returns:
+            List of matching meals belonging to the user
+        """
+        stmt = (
+            select(Meal)
+            .where(Meal.user_id == user_id)
             .where(Meal.meal_name.ilike(f"%{name_pattern}%"))
             .options(joinedload(Meal.main_recipe))
         )
         result = self.session.execute(stmt)
         return result.scalars().unique().all()
 
-    def get_by_tags(self, tags: List[str], match_all: bool = True) -> List[Meal]:
+    def get_by_tags(self, tags: List[str], user_id: int, match_all: bool = True) -> List[Meal]:
         """
-        Get meals that have the specified tags (case-insensitive).
+        Get meals that have the specified tags (case-insensitive) for a specific user.
 
         Args:
             tags: List of tags to filter by
+            user_id: ID of the user whose meals to search
             match_all: If True, meals must have ALL tags. If False, any tag matches.
 
         Returns:
-            List of matching meals
+            List of matching meals belonging to the user
         """
         # For SQLite, we need to check the JSON array
         # Using LIKE with LOWER for case-insensitive matching
-        meals = self.get_all()
+        meals = self.get_all(user_id)
         matching_meals = []
 
         tags_lower = [t.lower() for t in tags]
@@ -124,6 +140,7 @@ class MealRepo:
 
     def filter_meals(
         self,
+        user_id: int,
         name_pattern: Optional[str] = None,
         tags: Optional[List[str]] = None,
         saved_only: Optional[bool] = None,
@@ -131,9 +148,10 @@ class MealRepo:
         offset: Optional[int] = None
     ) -> List[Meal]:
         """
-        Filter meals with multiple criteria (stackable filters).
+        Filter meals with multiple criteria (stackable filters) for a specific user.
 
         Args:
+            user_id: ID of the user whose meals to filter
             name_pattern: Optional name search pattern
             tags: Optional list of tags to filter by (AND logic)
             saved_only: If True, only saved meals; if False, only transient; if None, all
@@ -141,9 +159,12 @@ class MealRepo:
             offset: Number of results to skip
 
         Returns:
-            List of matching meals
+            List of matching meals belonging to the user
         """
         stmt = select(Meal).options(joinedload(Meal.main_recipe))
+
+        # Always filter by user - users only see their own meals
+        stmt = stmt.where(Meal.user_id == user_id)
 
         if name_pattern:
             stmt = stmt.where(Meal.meal_name.ilike(f"%{name_pattern}%"))
@@ -192,17 +213,18 @@ class MealRepo:
         return merged_meal
 
     # -- Delete Operations -----------------------------------------------------------------------
-    def delete(self, meal_id: int) -> bool:
+    def delete(self, meal_id: int, user_id: int) -> bool:
         """
-        Delete a meal by ID.
+        Delete a meal by ID if it belongs to the user.
 
         Args:
             meal_id: ID of the meal to delete
+            user_id: ID of the user who owns the meal
 
         Returns:
-            True if deleted, False if not found
+            True if deleted, False if not found or not owned
         """
-        meal = self.get_by_id(meal_id)
+        meal = self.get_by_id(meal_id, user_id)
         if meal:
             self.session.delete(meal)
             self.session.flush()
@@ -210,63 +232,68 @@ class MealRepo:
         return False
 
     # -- Recipe Relationship Operations ----------------------------------------------------------
-    def get_meals_by_main_recipe(self, recipe_id: int) -> List[Meal]:
+    def get_meals_by_main_recipe(self, recipe_id: int, user_id: int) -> List[Meal]:
         """
-        Get all meals that use a recipe as their main recipe.
+        Get all meals that use a recipe as their main recipe for a specific user.
 
         Args:
             recipe_id: ID of the recipe
+            user_id: ID of the user whose meals to search
 
         Returns:
-            List of meals with this recipe as main
+            List of meals with this recipe as main belonging to the user
         """
         stmt = (
             select(Meal)
+            .where(Meal.user_id == user_id)
             .where(Meal.main_recipe_id == recipe_id)
             .options(joinedload(Meal.main_recipe))
         )
         result = self.session.execute(stmt)
         return result.scalars().unique().all()
 
-    def get_meals_with_side_recipe(self, recipe_id: int) -> List[Meal]:
+    def get_meals_with_side_recipe(self, recipe_id: int, user_id: int) -> List[Meal]:
         """
-        Get all meals that have a recipe in their side recipes.
+        Get all meals that have a recipe in their side recipes for a specific user.
 
         Args:
             recipe_id: ID of the recipe
+            user_id: ID of the user whose meals to search
 
         Returns:
-            List of meals containing this recipe as a side
+            List of meals containing this recipe as a side belonging to the user
         """
         # Need to search JSON array - for SQLite we search the text
-        meals = self.get_all()
+        meals = self.get_all(user_id)
         return [m for m in meals if recipe_id in m.side_recipe_ids]
 
-    def get_meals_containing_recipe(self, recipe_id: int) -> List[Meal]:
+    def get_meals_containing_recipe(self, recipe_id: int, user_id: int) -> List[Meal]:
         """
-        Get all meals that contain a recipe (main or side).
+        Get all meals that contain a recipe (main or side) for a specific user.
 
         Args:
             recipe_id: ID of the recipe
+            user_id: ID of the user whose meals to search
 
         Returns:
-            List of meals containing this recipe
+            List of meals containing this recipe belonging to the user
         """
-        meals = self.get_all()
+        meals = self.get_all(user_id)
         return [m for m in meals if m.has_recipe(recipe_id)]
 
-    def remove_side_recipe_from_all_meals(self, recipe_id: int) -> int:
+    def remove_side_recipe_from_all_meals(self, recipe_id: int, user_id: int) -> int:
         """
-        Remove a recipe from all meals' side recipe lists.
+        Remove a recipe from all meals' side recipe lists for a specific user.
         Used when a recipe is deleted.
 
         Args:
             recipe_id: ID of the recipe to remove
+            user_id: ID of the user whose meals to update
 
         Returns:
             Number of meals updated
         """
-        meals = self.get_meals_with_side_recipe(recipe_id)
+        meals = self.get_meals_with_side_recipe(recipe_id, user_id)
         count = 0
         for meal in meals:
             if meal.remove_side_recipe(recipe_id):
@@ -275,47 +302,64 @@ class MealRepo:
         return count
 
     # -- Validation Methods ----------------------------------------------------------------------
-    def validate_meal_ids(self, meal_ids: List[int]) -> List[int]:
+    def validate_meal_ids(self, meal_ids: List[int], user_id: int) -> List[int]:
         """
-        Validate which meal IDs exist in the database.
+        Validate which meal IDs exist in the database and belong to the user.
 
         Args:
             meal_ids: List of meal IDs to validate
+            user_id: ID of the user whose meals to validate
 
         Returns:
-            List of valid meal IDs that exist
+            List of valid meal IDs that exist and belong to the user
         """
         if not meal_ids:
             return []
 
-        stmt = select(Meal.id).where(Meal.id.in_(meal_ids))
+        stmt = (
+            select(Meal.id)
+            .where(Meal.user_id == user_id)
+            .where(Meal.id.in_(meal_ids))
+        )
         result = self.session.execute(stmt)
         return list(result.scalars().all())
 
-    def validate_recipe_ids(self, recipe_ids: List[int]) -> List[int]:
+    def validate_recipe_ids(self, recipe_ids: List[int], user_id: int) -> List[int]:
         """
-        Validate which recipe IDs exist in the database.
+        Validate which recipe IDs exist in the database and belong to the user.
 
         Args:
             recipe_ids: List of recipe IDs to validate
+            user_id: ID of the user whose recipes to validate
 
         Returns:
-            List of valid recipe IDs that exist
+            List of valid recipe IDs that exist and belong to the user
         """
         if not recipe_ids:
             return []
 
-        stmt = select(Recipe.id).where(Recipe.id.in_(recipe_ids))
+        stmt = (
+            select(Recipe.id)
+            .where(Recipe.user_id == user_id)
+            .where(Recipe.id.in_(recipe_ids))
+        )
         result = self.session.execute(stmt)
         return list(result.scalars().all())
 
     # -- Utility Methods -------------------------------------------------------------------------
-    def count(self) -> int:
+    def count(self, user_id: int) -> int:
         """
-        Count total number of meals in the database.
+        Count total number of meals for a specific user.
+
+        Args:
+            user_id: ID of the user whose meals to count
 
         Returns:
-            Total count of meals
+            Total count of meals belonging to the user
         """
-        stmt = select(func.count()).select_from(Meal)
+        stmt = (
+            select(func.count())
+            .select_from(Meal)
+            .where(Meal.user_id == user_id)
+        )
         return self.session.execute(stmt).scalar() or 0

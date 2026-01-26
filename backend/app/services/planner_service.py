@@ -47,15 +47,16 @@ class EntryNotFoundError(Exception):
 class PlannerService:
     """Service for planner entry operations with business logic."""
 
-    def __init__(self, session: Session | None = None):
+    def __init__(self, session: Session, user_id: int):
         """
-        Initialize the PlannerService with a database session and repositories.
-        If no session is provided, a new session is created.
+        Initialize the PlannerService with a database session and user ID.
+
+        Args:
+            session: SQLAlchemy database session (required).
+            user_id: ID of the authenticated user (required for multi-tenant isolation).
         """
-        if session is None:
-            from app.database.db import create_session
-            session = create_session()
         self.session = session
+        self.user_id = user_id
         self.repo = PlannerRepo(self.session)
         self.meal_repo = MealRepo(self.session)
         self.recipe_repo = RecipeRepo(self.session)
@@ -65,7 +66,7 @@ class PlannerService:
         self, meal_id: int, position: Optional[int] = None
     ) -> PlannerEntryResponseDTO:
         """
-        Add a meal to the planner.
+        Add a meal to the planner for the current user.
 
         Args:
             meal_id: ID of the meal to add
@@ -76,26 +77,26 @@ class PlannerService:
 
         Raises:
             PlannerFullError: If planner is at capacity (15 entries)
-            InvalidMealError: If meal ID doesn't exist
+            InvalidMealError: If meal ID doesn't exist or isn't owned by user
         """
         try:
             # Check capacity
-            if self.repo.is_at_capacity():
+            if self.repo.is_at_capacity(self.user_id):
                 raise PlannerFullError(
                     f"Planner is at maximum capacity ({MAX_PLANNER_ENTRIES} entries)"
                 )
 
-            # Validate meal exists
-            valid_ids = self.meal_repo.validate_meal_ids([meal_id])
+            # Validate meal exists and belongs to user
+            valid_ids = self.meal_repo.validate_meal_ids([meal_id], self.user_id)
             if meal_id not in valid_ids:
                 raise InvalidMealError(f"Meal ID {meal_id} does not exist")
 
             # Add entry
-            entry = self.repo.add_entry(meal_id, position)
+            entry = self.repo.add_entry(meal_id, self.user_id, position)
             self.session.commit()
 
             # Refresh to get relationships
-            entry = self.repo.get_by_id(entry.id)
+            entry = self.repo.get_by_id(entry.id, self.user_id)
             return self._entry_to_response_dto(entry)
 
         except (PlannerFullError, InvalidMealError):
@@ -107,7 +108,7 @@ class PlannerService:
 
     def add_meals_to_planner(self, meal_ids: List[int]) -> List[PlannerEntryResponseDTO]:
         """
-        Add multiple meals to the planner.
+        Add multiple meals to the planner for the current user.
 
         Args:
             meal_ids: List of meal IDs to add
@@ -117,18 +118,18 @@ class PlannerService:
 
         Raises:
             PlannerFullError: If adding would exceed capacity
-            InvalidMealError: If any meal ID doesn't exist
+            InvalidMealError: If any meal ID doesn't exist or isn't owned by user
         """
         try:
-            current_count = self.repo.count()
+            current_count = self.repo.count(self.user_id)
             if current_count + len(meal_ids) > MAX_PLANNER_ENTRIES:
                 raise PlannerFullError(
                     f"Cannot add {len(meal_ids)} meals: would exceed "
                     f"maximum capacity ({MAX_PLANNER_ENTRIES})"
                 )
 
-            # Validate all meal IDs
-            valid_ids = self.meal_repo.validate_meal_ids(meal_ids)
+            # Validate all meal IDs belong to user
+            valid_ids = self.meal_repo.validate_meal_ids(meal_ids, self.user_id)
             invalid_ids = [mid for mid in meal_ids if mid not in valid_ids]
             if invalid_ids:
                 raise InvalidMealError(f"Meal IDs {invalid_ids} do not exist")
@@ -136,7 +137,7 @@ class PlannerService:
             # Add entries
             entries = []
             for meal_id in meal_ids:
-                entry = self.repo.add_entry(meal_id)
+                entry = self.repo.add_entry(meal_id, self.user_id)
                 entries.append(entry)
 
             self.session.commit()
@@ -144,7 +145,7 @@ class PlannerService:
             # Refresh and convert to DTOs
             result = []
             for entry in entries:
-                entry = self.repo.get_by_id(entry.id)
+                entry = self.repo.get_by_id(entry.id, self.user_id)
                 result.append(self._entry_to_response_dto(entry))
 
             return result
@@ -159,16 +160,16 @@ class PlannerService:
     # -- Read Operations -------------------------------------------------------------------------
     def get_entry(self, entry_id: int) -> Optional[PlannerEntryResponseDTO]:
         """
-        Get a planner entry by ID.
+        Get a planner entry by ID for the current user.
 
         Args:
             entry_id: ID of the entry
 
         Returns:
-            Entry as DTO or None if not found
+            Entry as DTO or None if not found/not owned
         """
         try:
-            entry = self.repo.get_by_id(entry_id)
+            entry = self.repo.get_by_id(entry_id, self.user_id)
             return self._entry_to_response_dto(entry) if entry else None
         except SQLAlchemyError:
             return None
@@ -179,7 +180,7 @@ class PlannerService:
         completed: Optional[bool] = None,
     ) -> List[PlannerEntryResponseDTO]:
         """
-        Get planner entries with optional filtering.
+        Get planner entries with optional filtering for the current user.
 
         Args:
             meal_id: Filter by specific meal ID
@@ -191,16 +192,16 @@ class PlannerService:
         try:
             # Apply filters based on parameters
             if meal_id is not None:
-                entries = self.repo.get_by_meal_id(meal_id)
+                entries = self.repo.get_by_meal_id(meal_id, self.user_id)
                 # Apply completion filter if also specified
                 if completed is not None:
                     entries = [e for e in entries if e.is_completed == completed]
             elif completed is True:
-                entries = self.repo.get_completed_entries()
+                entries = self.repo.get_completed_entries(self.user_id)
             elif completed is False:
-                entries = self.repo.get_incomplete_entries()
+                entries = self.repo.get_incomplete_entries(self.user_id)
             else:
-                entries = self.repo.get_all()
+                entries = self.repo.get_all(self.user_id)
 
             return [self._entry_to_response_dto(e) for e in entries]
         except SQLAlchemyError:
@@ -208,25 +209,25 @@ class PlannerService:
 
     def get_meal_ids(self) -> List[int]:
         """
-        Get all meal IDs in the planner.
+        Get all meal IDs in the planner for the current user.
 
         Returns:
             List of meal IDs in position order
         """
         try:
-            return self.repo.get_meal_ids()
+            return self.repo.get_meal_ids(self.user_id)
         except SQLAlchemyError:
             return []
 
     def get_summary(self) -> PlannerSummaryDTO:
         """
-        Get a summary of the current planner state.
+        Get a summary of the current planner state for the current user.
 
         Returns:
             PlannerSummaryDTO with counts and status
         """
         try:
-            entries = self.repo.get_all()
+            entries = self.repo.get_all(self.user_id)
             total_entries = len(entries)
             completed = sum(1 for e in entries if e.is_completed)
 
@@ -261,7 +262,7 @@ class PlannerService:
 
     def get_cooking_streak(self, user_timezone: Optional[str] = None) -> CookingStreakDTO:
         """
-        Get cooking streak information based on completed meals.
+        Get cooking streak information based on completed meals for the current user.
 
         Calculates:
         - Current consecutive day streak (breaks if a day is missed)
@@ -277,7 +278,7 @@ class PlannerService:
         """
         try:
             # Get all entries with completion history (includes cleared entries)
-            entries = self.repo.get_cooking_history_entries()
+            entries = self.repo.get_cooking_history_entries(self.user_id)
 
             # Determine the timezone to use for date calculations
             try:
@@ -384,7 +385,7 @@ class PlannerService:
     # -- Update Operations -----------------------------------------------------------------------
     def reorder_entries(self, entry_ids: List[int]) -> bool:
         """
-        Reorder planner entries.
+        Reorder planner entries for the current user.
 
         Args:
             entry_ids: List of entry IDs in desired order
@@ -393,7 +394,7 @@ class PlannerService:
             True if successful
         """
         try:
-            result = self.repo.reorder_entries(entry_ids)
+            result = self.repo.reorder_entries(entry_ids, self.user_id)
             self.session.commit()
             return result
         except SQLAlchemyError:
@@ -402,21 +403,21 @@ class PlannerService:
 
     def cycle_shopping_mode(self, entry_id: int) -> Optional[PlannerEntryResponseDTO]:
         """
-        Cycle the shopping mode of a planner entry: all -> produce_only -> none -> all.
+        Cycle the shopping mode of a planner entry for the current user: all -> produce_only -> none -> all.
 
         Args:
             entry_id: ID of the entry
 
         Returns:
-            Updated entry as DTO or None if not found
+            Updated entry as DTO or None if not found/not owned
         """
         try:
-            entry = self.repo.cycle_shopping_mode(entry_id)
+            entry = self.repo.cycle_shopping_mode(entry_id, self.user_id)
             if not entry:
                 return None
 
             self.session.commit()
-            entry = self.repo.get_by_id(entry.id)
+            entry = self.repo.get_by_id(entry.id, self.user_id)
             return self._entry_to_response_dto(entry)
         except SQLAlchemyError:
             self.session.rollback()
@@ -424,25 +425,25 @@ class PlannerService:
 
     def mark_completed(self, entry_id: int) -> Optional[PlannerEntryResponseDTO]:
         """
-        Mark a planner entry as completed.
+        Mark a planner entry as completed for the current user.
 
         Args:
             entry_id: ID of the entry
 
         Returns:
-            Updated entry as DTO or None if not found
+            Updated entry as DTO or None if not found/not owned
         """
         try:
-            entry = self.repo.mark_completed(entry_id)
+            entry = self.repo.mark_completed(entry_id, self.user_id)
             if not entry:
                 return None
 
             # Record cooking history for the main recipe
             if entry.meal and entry.meal.main_recipe_id:
-                self.recipe_repo.record_cooked(entry.meal.main_recipe_id)
+                self.recipe_repo.record_cooked(entry.meal.main_recipe_id, self.user_id)
 
             self.session.commit()
-            entry = self.repo.get_by_id(entry.id)
+            entry = self.repo.get_by_id(entry.id, self.user_id)
             return self._entry_to_response_dto(entry)
         except SQLAlchemyError:
             self.session.rollback()
@@ -450,21 +451,21 @@ class PlannerService:
 
     def mark_incomplete(self, entry_id: int) -> Optional[PlannerEntryResponseDTO]:
         """
-        Mark a planner entry as incomplete.
+        Mark a planner entry as incomplete for the current user.
 
         Args:
             entry_id: ID of the entry
 
         Returns:
-            Updated entry as DTO or None if not found
+            Updated entry as DTO or None if not found/not owned
         """
         try:
-            entry = self.repo.mark_incomplete(entry_id)
+            entry = self.repo.mark_incomplete(entry_id, self.user_id)
             if not entry:
                 return None
 
             self.session.commit()
-            entry = self.repo.get_by_id(entry.id)
+            entry = self.repo.get_by_id(entry.id, self.user_id)
             return self._entry_to_response_dto(entry)
         except SQLAlchemyError:
             self.session.rollback()
@@ -481,32 +482,32 @@ class PlannerService:
         Args:
             meal_id: ID of the meal to potentially clean up
         """
-        meal = self.meal_repo.get_by_id(meal_id)
+        meal = self.meal_repo.get_by_id(meal_id, self.user_id)
         if meal and not meal.is_saved:
-            remaining = self.repo.count_active_entries_for_meal(meal_id)
+            remaining = self.repo.count_active_entries_for_meal(meal_id, self.user_id)
             if remaining == 0:
-                self.meal_repo.delete(meal_id)
+                self.meal_repo.delete(meal_id, self.user_id)
 
     # -- Remove Operations -----------------------------------------------------------------------
     def remove_entry(self, entry_id: int) -> bool:
         """
-        Remove a planner entry.
+        Remove a planner entry for the current user.
         Transient meals are deleted if this was their last reference.
 
         Args:
             entry_id: ID of the entry
 
         Returns:
-            True if removed, False if not found
+            True if removed, False if not found/not owned
         """
         try:
             # Get entry first to capture meal_id before deletion
-            entry = self.repo.get_by_id(entry_id)
+            entry = self.repo.get_by_id(entry_id, self.user_id)
             if not entry:
                 return False
 
             meal_id = entry.meal_id
-            result = self.repo.remove_entry(entry_id)
+            result = self.repo.remove_entry(entry_id, self.user_id)
 
             if result:
                 # Clean up transient meal if no longer referenced
@@ -520,7 +521,7 @@ class PlannerService:
 
     def remove_entries_by_meal(self, meal_id: int) -> int:
         """
-        Remove all planner entries for a specific meal.
+        Remove all planner entries for a specific meal for the current user.
 
         Args:
             meal_id: ID of the meal
@@ -529,7 +530,7 @@ class PlannerService:
             Number of entries removed
         """
         try:
-            count = self.repo.remove_entries_by_meal_id(meal_id)
+            count = self.repo.remove_entries_by_meal_id(meal_id, self.user_id)
             self.session.commit()
             return count
         except SQLAlchemyError:
@@ -538,7 +539,7 @@ class PlannerService:
 
     def clear_planner(self) -> int:
         """
-        Clear all entries from the planner.
+        Clear all entries from the planner for the current user.
         Transient meals are deleted when their entries are cleared.
 
         Returns:
@@ -546,10 +547,10 @@ class PlannerService:
         """
         try:
             # Get all meal IDs before clearing
-            entries = self.repo.get_all()
+            entries = self.repo.get_all(self.user_id)
             meal_ids = list(set(e.meal_id for e in entries))
 
-            count = self.repo.clear_all()
+            count = self.repo.clear_all(self.user_id)
 
             # Clean up transient meals
             for meal_id in meal_ids:
@@ -563,7 +564,7 @@ class PlannerService:
 
     def clear_completed(self) -> int:
         """
-        Clear all completed entries from the planner.
+        Clear all completed entries from the planner for the current user.
         Transient meals are deleted if they have no remaining active entries.
 
         Returns:
@@ -571,10 +572,10 @@ class PlannerService:
         """
         try:
             # Get meal IDs from completed entries before clearing
-            completed_entries = self.repo.get_completed_entries()
+            completed_entries = self.repo.get_completed_entries(self.user_id)
             meal_ids = list(set(e.meal_id for e in completed_entries))
 
-            count = self.repo.clear_completed()
+            count = self.repo.clear_completed(self.user_id)
 
             # Clean up transient meals
             for meal_id in meal_ids:
