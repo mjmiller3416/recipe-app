@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { ConditionalAppLayout } from "@/components/layout/ConditionalAppLayout";
 import { Toaster } from "@/components/ui/sonner";
@@ -39,10 +40,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
         suppressHydrationWarning
       >
-        <QueryProvider>
-          <ConditionalAppLayout>{children}</ConditionalAppLayout>
-          <Toaster />
-        </QueryProvider>
+        <ClerkProvider>
+          <QueryProvider>
+            <ConditionalAppLayout>{children}</ConditionalAppLayout>
+            <Toaster />
+          </QueryProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

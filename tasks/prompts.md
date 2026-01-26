@@ -195,7 +195,7 @@ Create the authentication configuration and FastAPI dependencies for Clerk JWT v
 
 Create `backend/app/core/auth_config.py`:
 - AuthSettings class using pydantic_settings.BaseSettings
-- Fields: clerk_secret_key (str), clerk_publishable_key (str), clerk_jwks_url (str, default "https://api.clerk.com/v1/jwks")
+- Fields: clerk_secret_key (str), CLERK_PUBLISHABLE_KEY (str), clerk_jwks_url (str, default "https://api.clerk.com/v1/jwks")
 - Add auth_disabled (bool, default False) and dev_user_id (int, default 1) for local development
 - Add get_auth_settings() function with @lru_cache decorator
 
@@ -488,7 +488,7 @@ Set up Clerk authentication in the Next.js frontend.
    - Style to match the app's design system
 
 6. Create/update `frontend/.env.example` with:
-   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
+   CLERK_PUBLISHABLE_KEY=pk_test_xxx
    CLERK_SECRET_KEY=sk_test_xxx
    NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
    NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up

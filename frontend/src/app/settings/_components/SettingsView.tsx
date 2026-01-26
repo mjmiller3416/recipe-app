@@ -85,22 +85,8 @@ export function SettingsView() {
   const renderCategoryContent = () => {
     switch (activeCategory) {
       case "profile":
-        return (
-          <ProfileSection
-            userName={settings.profile.userName}
-            email={settings.profile.email}
-            avatar={settings.profile.avatar}
-            onuserNameChange={(value) =>
-              updateSettings("profile", { userName: value })
-            }
-            onEmailChange={(value) =>
-              updateSettings("profile", { email: value })
-            }
-            onAvatarChange={(value) =>
-              updateSettings("profile", { avatar: value })
-            }
-          />
-        );
+        // Profile is now managed by Clerk - no props needed
+        return <ProfileSection />;
 
       case "appearance":
         return (

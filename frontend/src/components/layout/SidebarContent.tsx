@@ -13,7 +13,14 @@ import {
   MessageSquarePlus,
   Newspaper,
   Sparkles,
+  Settings,
 } from "lucide-react";
+import {
+  SignedIn,
+  SignedOut,
+  UserButton,
+  SignInButton,
+} from "@clerk/nextjs";
 import { Logo } from "@/components/layout/Logo";
 import { NavButton } from "@/components/layout/NavButton";
 import { RecentRecipesSection } from "@/components/layout/RecentRecipeChip";
@@ -175,28 +182,58 @@ export function SidebarContent({ onNavigate, onOpenMealGenie }: SidebarContentPr
           newItemCount={newItemCount}
         />
 
-        {/* User Profile - Links to Settings */}
-        <Link
-          href="/settings"
-          onClick={onNavigate}
-          className="flex items-center gap-3 rounded-lg p-3 bg-elevated hover:bg-hover transition-colors group"
-        >
-          <div className="relative flex-shrink-0">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={settings.profile.avatar} />
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {settings.profile.userName.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="absolute bottom-0 right-0 h-3 w-3 bg-status-online rounded-full border-2 border-sidebar" />
+        {/* User Profile - Clerk Authentication */}
+        <SignedIn>
+          <div className="flex items-center gap-3 rounded-lg p-3 bg-elevated">
+            <UserButton
+              afterSignOutUrl="/sign-in"
+              appearance={{
+                elements: {
+                  avatarBox: "h-10 w-10",
+                  userButtonPopoverCard: "bg-card border border-border shadow-lg",
+                  userButtonPopoverActions: "text-foreground",
+                  userButtonPopoverActionButton: "text-foreground hover:bg-accent",
+                  userButtonPopoverFooter: "hidden",
+                },
+              }}
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground">
+                Account
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Manage profile
+              </p>
+            </div>
+            <Link
+              href="/settings"
+              onClick={onNavigate}
+              className="p-2 rounded-md hover:bg-hover transition-colors"
+            >
+              <Settings className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+            </Link>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">
-              {settings.profile.userName}
-            </p>
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors flex-shrink-0" />
-        </Link>
+        </SignedIn>
+        <SignedOut>
+          <SignInButton mode="modal">
+            <button className="flex items-center gap-3 rounded-lg p-3 bg-elevated hover:bg-hover transition-colors w-full">
+              <Avatar className="h-10 w-10">
+                <AvatarFallback className="bg-muted text-muted-foreground">
+                  ?
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="text-sm font-medium text-foreground">
+                  Sign In
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Access your account
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </SignInButton>
+        </SignedOut>
       </div>
 
       {/* Theme Toggle - Bottom */}

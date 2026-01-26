@@ -1,42 +1,69 @@
 "use client";
 
-import { useRef } from "react";
-import { User, Upload, Mail, Lock, Camera } from "lucide-react";
+import { User, Mail, ExternalLink, Shield } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { SectionHeader } from "../SectionHeader";
+import { Skeleton } from "@/components/ui/skeleton";
 
-interface ProfileSectionProps {
-  userName: string;
-  email: string;
-  avatar: string;
-  onuserNameChange: (value: string) => void;
-  onEmailChange: (value: string) => void;
-  onAvatarChange: (value: string) => void;
-}
+/**
+ * ProfileSection displays the user's Clerk-managed profile information.
+ * Profile data is read-only - users manage it through Clerk's account portal.
+ */
+export function ProfileSection() {
+  const { user, isLoaded } = useUser();
 
-export function ProfileSection({
-  userName,
-  email,
-  avatar,
-  onuserNameChange,
-  onEmailChange,
-  onAvatarChange,
-}: ProfileSectionProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Loading state
+  if (!isLoaded) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <SectionHeader
+            icon={User}
+            title="Account & Profile"
+            description="Your account information managed by Clerk"
+          />
+          <div className="space-y-6">
+            <div className="flex items-center gap-6">
+              <Skeleton className="h-24 w-24 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-48" />
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // For now, create a local URL. In production, this would upload to storage.
-      const url = URL.createObjectURL(file);
-      onAvatarChange(url);
-    }
-  };
+  // Not signed in (shouldn't happen on protected routes)
+  if (!user) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <SectionHeader
+            icon={User}
+            title="Account & Profile"
+            description="Sign in to view your profile"
+          />
+          <p className="text-muted-foreground">
+            Please sign in to access your profile settings.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const primaryEmail = user.emailAddresses.find(
+    (email) => email.id === user.primaryEmailAddressId
+  );
+  const displayName = user.fullName || user.firstName || "User";
+  const initials = displayName.charAt(0).toUpperCase();
 
   return (
     <Card>
@@ -44,113 +71,97 @@ export function ProfileSection({
         <SectionHeader
           icon={User}
           title="Account & Profile"
-          description="Manage your personal information and account settings"
+          description="Your account information managed by Clerk"
         />
 
         <div className="space-y-6">
-          {/* Avatar Section */}
+          {/* Avatar and Name Section */}
           <div className="flex items-center gap-6">
-            <div className="relative group">
-              <Avatar className="h-24 w-24 border-4 border-elevated">
-                <AvatarImage src={avatar} alt={userName} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                  {userName.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-              >
-                <Camera className="h-6 w-6 text-white" />
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarUpload}
-                className="hidden"
-              />
-            </div>
+            <Avatar className="h-24 w-24 border-4 border-elevated">
+              <AvatarImage src={user.imageUrl} alt={displayName} />
+              <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
             <div className="flex-1">
-              <h3 className="font-medium text-foreground">Profile Picture</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-semibold text-foreground">
+                  {displayName}
+                </h3>
+                <Badge variant="secondary" className="text-xs">
+                  <Shield className="h-3 w-3 mr-1" />
+                  Verified
+                </Badge>
+              </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Click on the avatar to upload a new image
+                Member since{" "}
+                {new Date(user.createdAt!).toLocaleDateString("en-US", {
+                  month: "long",
+                  year: "numeric",
+                })}
               </p>
               <Button
                 variant="outline"
                 size="sm"
                 className="mt-3 gap-2"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => window.open("https://accounts.clerk.com/user", "_blank")}
               >
-                <Upload className="h-4 w-4" />
-                Upload New
+                <ExternalLink className="h-4 w-4" />
+                Manage Profile
               </Button>
             </div>
           </div>
 
           <Separator />
 
-          {/* Username */}
+          {/* Email Display */}
           <div className="space-y-2">
-            <Label htmlFor="display-name" className="flex items-center gap-2">
-              <User className="h-3.5 w-3.5 text-muted-foreground" />
-              Username
-            </Label>
-            <Input
-              id="display-name"
-              placeholder="Enter your name"
-              value={userName}
-              onChange={(e) => onuserNameChange(e.target.value)}
-              className="max-w-md"
-            />
-            <p className="text-xs text-muted-foreground">
-              This name will be displayed throughout the app
-            </p>
-          </div>
-
-          {/* Email */}
-          <div className="space-y-2">
-            <Label htmlFor="email" className="flex items-center gap-2">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Mail className="h-3.5 w-3.5 text-muted-foreground" />
               Email Address
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => onEmailChange(e.target.value)}
-              className="max-w-md"
-            />
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="px-3 py-2 bg-elevated rounded-md text-foreground max-w-md flex-1">
+                {primaryEmail?.emailAddress || "No email set"}
+              </div>
+              {primaryEmail?.verification?.status === "verified" && (
+                <Badge variant="outline" className="text-xs text-green-600 border-green-600/30">
+                  Verified
+                </Badge>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
-              Used for account recovery and notifications
+              Email is managed through your Clerk account settings
             </p>
           </div>
 
           <Separator />
 
-          {/* Password Section (Placeholder) */}
+          {/* Account Security Info */}
           <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-              Password
-            </Label>
-            <div className="flex items-center gap-4">
-              <Input
-                type="password"
-                value="••••••••"
-                disabled
-                className="max-w-md bg-elevated"
-              />
-              <Button variant="outline" size="sm" disabled className="gap-2">
-                <Lock className="h-4 w-4" />
-                Change Password
-              </Button>
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+              Account Security
             </div>
-            <p className="text-xs text-muted-foreground">
-              Password management will be available once authentication is
-              connected
-            </p>
+            <div className="bg-elevated rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  Password & 2FA
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2 h-8"
+                  onClick={() => window.open("https://accounts.clerk.com/user/security", "_blank")}
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Manage
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Manage your password, two-factor authentication, and connected accounts through Clerk
+              </p>
+            </div>
           </div>
         </div>
       </CardContent>

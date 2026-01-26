@@ -16,7 +16,7 @@ class AuthSettings(BaseSettings):
 
     Attributes:
         clerk_secret_key: Clerk secret key for API calls (sk_xxx)
-        clerk_publishable_key: Clerk publishable key (pk_xxx)
+        CLERK_PUBLISHABLE_KEY: Clerk publishable key (pk_xxx)
         clerk_jwks_url: URL to fetch Clerk's JWKS for JWT verification
         auth_disabled: When True, bypasses JWT validation (for local dev)
         dev_user_id: User ID to use when auth_disabled is True
@@ -30,7 +30,7 @@ class AuthSettings(BaseSettings):
 
     # Clerk configuration
     clerk_secret_key: Optional[str] = None
-    clerk_publishable_key: Optional[str] = None
+    CLERK_PUBLISHABLE_KEY: Optional[str] = None
     clerk_jwks_url: str = "https://api.clerk.com/v1/jwks"
 
     # Development mode bypass
@@ -40,7 +40,7 @@ class AuthSettings(BaseSettings):
     @property
     def is_configured(self) -> bool:
         """Check if Clerk is properly configured for production use."""
-        return bool(self.clerk_secret_key and self.clerk_publishable_key)
+        return bool(self.clerk_secret_key and self.CLERK_PUBLISHABLE_KEY)
 
 
 @lru_cache()

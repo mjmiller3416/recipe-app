@@ -722,7 +722,7 @@ class AuthSettings(BaseSettings):
     
     # Clerk settings
     clerk_secret_key: str = ""
-    clerk_publishable_key: str = ""
+    CLERK_PUBLISHABLE_KEY: str = ""
     clerk_jwks_url: str = "https://api.clerk.com/v1/jwks"
     
     # For local development without auth
@@ -1512,7 +1512,7 @@ npm install @clerk/nextjs
 **File:** `frontend/.env.local` (create or update)
 
 ```bash
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxx
+CLERK_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxx
 CLERK_SECRET_KEY=sk_test_xxxxxxxxxxxxx
 
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
@@ -1817,7 +1817,7 @@ export function useSettings() {
 In Railway dashboard, add for frontend:
 
 ```
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_xxxxx
+CLERK_PUBLISHABLE_KEY=pk_live_xxxxx
 CLERK_SECRET_KEY=sk_live_xxxxx
 ```
 
