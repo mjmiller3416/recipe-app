@@ -117,18 +117,52 @@ class User(Base):
 
     # ── Helper Methods ──────────────────────────────────────────────────────
     def __repr__(self) -> str:
-        return f"<User(id={self.id}, email='{self.email}', tier='{self.subscription_tier}')>"
+        return f"<User(id={self.id}, email='{self.email}', access='{self.access_reason}')>"
     
     @property
-    def is_pro(self) -> bool:
-        """Check if user has an active pro subscription."""
-        return (
-            self.subscription_tier == "pro" 
-            and self.subscription_status == "active"
-        )
+    def has_pro_access(self) -> bool:
+        """Check if user has pro-level access through any path."""
+        # Admins always have full access
+        if self.is_admin:
+            return True
+        
+        # Active paid subscription
+        if self.subscription_tier == "pro" and self.subscription_status == "active":
+            return True
+        
+        # Granted temporary access (testers, promos)
+        if self.granted_pro_until:
+            if self.granted_pro_until > datetime.now(timezone.utc):
+                return True
+        
+        return False
+    
+    @property
+    def access_reason(self) -> str:
+        """Why does this user have their current access level? (for debugging/support)"""
+        if self.is_admin:
+            return "admin"
+        if self.subscription_tier == "pro" and self.subscription_status == "active":
+            return "subscription"
+        if self.granted_pro_until and self.granted_pro_until > datetime.now(timezone.utc):
+            return f"granted ({self.granted_by or 'manual'})"
+        return "free"
 ```
 
 **After creating:** Update `backend/app/models/__init__.py` to export User.
+
+**Note:** The model above needs the additional fields. Add these after `subscription_ends_at`:
+
+```python
+    # ── Admin Flag ──────────────────────────────────────────────────────
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    
+    # ── Granted Access (for testers, promos) ────────────────────────────
+    granted_pro_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    granted_by: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)  # "beta_2026", "promo", etc.
+```
+
+And add `Boolean` to the sqlalchemy imports.
 
 ---
 
@@ -234,6 +268,80 @@ class UserSettings(Base):
 
 ---
 
+### Task 1.2b: Create UserUsage Model
+
+**File:** `backend/app/models/user_usage.py` (new file)
+
+```python
+"""app/models/user_usage.py
+
+SQLAlchemy ORM model for tracking user feature usage.
+Used for rate limiting, analytics, and enforcing subscription limits.
+"""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import TYPE_CHECKING
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from ..database.base import Base
+
+if TYPE_CHECKING:
+    from .user import User
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+class UserUsage(Base):
+    """
+    Tracks monthly usage of rate-limited features.
+    
+    A new record is created for each user+month combination.
+    This allows tracking usage over time and enforcing monthly limits.
+    """
+    __tablename__ = "user_usage"
+    
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    month: Mapped[str] = mapped_column(String(7), nullable=False, index=True)  # "2026-01"
+    
+    # AI feature usage
+    ai_images_generated: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    ai_suggestions_requested: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    ai_assistant_messages: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    
+    # General feature usage (for future subscription limits)
+    recipes_created: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    
+    # Ensure one record per user per month
+    __table_args__ = (
+        UniqueConstraint('user_id', 'month', name='uq_user_usage_user_month'),
+    )
+    
+    # Relationship
+    user: Mapped["User"] = relationship("User", backref="usage_records")
+    
+    def __repr__(self) -> str:
+        return f"<UserUsage(user_id={self.user_id}, month='{self.month}', images={self.ai_images_generated})>"
+```
+
+**After creating:** Update `backend/app/models/__init__.py` to export UserUsage.
+
+---
+
 ### Task 1.3: Update Models __init__.py
 
 **File:** `backend/app/models/__init__.py`
@@ -254,6 +362,7 @@ from .shopping_state import ShoppingState
 from .unit_conversion_rule import UnitConversionRule
 from .user import User  # ADD
 from .user_settings import UserSettings  # ADD
+from .user_usage import UserUsage  # ADD
 
 __all__ = [
     "Recipe",
@@ -267,6 +376,7 @@ __all__ = [
     "UnitConversionRule",
     "User",  # ADD
     "UserSettings",  # ADD
+    "UserUsage",  # ADD
 ]
 ```
 
@@ -431,27 +541,30 @@ alembic revision --autogenerate -m "Add user tables and user_id foreign keys"
 
 The generated migration needs to handle existing data. Modify it to:
 
-1. Create User and UserSettings tables first
+1. Create User and UserSettings tables first (including is_admin and granted_pro_until fields)
 2. Add user_id columns as NULLABLE initially
-3. Create a default "admin" user
-4. Assign existing data to that user
+3. Create Kelsey's user with her actual email and is_admin=true
+4. Assign existing data to her user
 5. Make user_id NOT NULL after data is migrated
 
 **Example migration modification:**
 
 ```python
 def upgrade() -> None:
-    # 1. Create users table
+    # 1. Create users table (with all fields)
     op.create_table('users',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
         sa.Column('clerk_id', sa.String(length=255), nullable=False),
         sa.Column('email', sa.String(length=255), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=True),
         sa.Column('avatar_url', sa.Text(), nullable=True),
+        sa.Column('is_admin', sa.Boolean(), nullable=False, server_default='false'),
         sa.Column('stripe_customer_id', sa.String(length=255), nullable=True),
         sa.Column('subscription_tier', sa.String(length=50), nullable=False, server_default='free'),
         sa.Column('subscription_status', sa.String(length=50), nullable=False, server_default='active'),
         sa.Column('subscription_ends_at', sa.DateTime(timezone=True), nullable=True),
+        sa.Column('granted_pro_until', sa.DateTime(timezone=True), nullable=True),
+        sa.Column('granted_by', sa.String(length=100), nullable=True),
         sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
         sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
         sa.PrimaryKeyConstraint('id'),
@@ -471,11 +584,41 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('user_id')
     )
     
-    # 3. Create placeholder admin user for existing data
-    # This user will be "claimed" when you first sign up with Clerk
+    # 2b. Create user_usage table (for tracking feature usage)
+    op.create_table('user_usage',
+        sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column('user_id', sa.Integer(), nullable=False),
+        sa.Column('month', sa.String(length=7), nullable=False),
+        sa.Column('ai_images_generated', sa.Integer(), nullable=False, server_default='0'),
+        sa.Column('ai_suggestions_requested', sa.Integer(), nullable=False, server_default='0'),
+        sa.Column('ai_assistant_messages', sa.Integer(), nullable=False, server_default='0'),
+        sa.Column('recipes_created', sa.Integer(), nullable=False, server_default='0'),
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('user_id', 'month', name='uq_user_usage_user_month')
+    )
+    op.create_index('ix_user_usage_user_id', 'user_usage', ['user_id'])
+    op.create_index('ix_user_usage_month', 'user_usage', ['month'])
+    
+    # 3. Create Kelsey's user - she owns all existing data
+    # ⚠️ REPLACE WITH HER ACTUAL EMAIL
     op.execute("""
-        INSERT INTO users (clerk_id, email, name, subscription_tier, subscription_status, created_at, updated_at)
-        VALUES ('pending_claim', 'admin@placeholder.local', 'Admin', 'pro', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        INSERT INTO users (
+            clerk_id, email, name, is_admin,
+            subscription_tier, subscription_status,
+            created_at, updated_at
+        ) VALUES (
+            'pending_claim',
+            'REPLACE_WITH_KELSEY_EMAIL',
+            'Kelsey',
+            true,
+            'free',
+            'active',
+            CURRENT_TIMESTAMP,
+            CURRENT_TIMESTAMP
+        )
     """)
     
     # 4. Add user_id columns as NULLABLE first
@@ -485,7 +628,7 @@ def upgrade() -> None:
     op.add_column('shopping_items', sa.Column('user_id', sa.Integer(), nullable=True))
     op.add_column('recipe_history', sa.Column('user_id', sa.Integer(), nullable=True))
     
-    # 5. Assign existing data to admin user (id=1)
+    # 5. Assign existing data to Kelsey (user id=1)
     op.execute("UPDATE recipe SET user_id = 1 WHERE user_id IS NULL")
     op.execute("UPDATE meals SET user_id = 1 WHERE user_id IS NULL")
     op.execute("UPDATE planner_entries SET user_id = 1 WHERE user_id IS NULL")
@@ -512,6 +655,14 @@ def upgrade() -> None:
     op.create_index('ix_shopping_items_user_id', 'shopping_items', ['user_id'])
     op.create_index('ix_recipe_history_user_id', 'recipe_history', ['user_id'])
 ```
+
+**How account claiming works:**
+- When Kelsey signs in with Clerk using her email, the auth system will:
+  1. Look for a user with her Clerk ID (won't find one)
+  2. Look for an unclaimed user matching her email (finds the one we created)
+  3. Claims it by updating clerk_id from 'pending_claim' to her actual Clerk ID
+  4. She now has access to all existing recipes, meals, etc.
+- Anyone else signing in gets a fresh, empty account
 
 ---
 
@@ -729,25 +880,29 @@ async def get_current_user(
     user = session.query(User).filter(User.clerk_id == clerk_id).first()
     
     if not user:
-        # Check if this is the first user claiming the admin placeholder
-        placeholder = session.query(User).filter(
+        # Get email from token for matching
+        email_from_token = payload.get("email", "")
+        
+        # Check if there's an unclaimed user with this email
+        # This is how Kelsey claims her existing data
+        unclaimed_user = session.query(User).filter(
+            User.email == email_from_token,
             User.clerk_id == "pending_claim"
         ).first()
         
-        if placeholder:
-            # First user claims the existing data
-            placeholder.clerk_id = clerk_id
-            placeholder.email = payload.get("email", f"{clerk_id}@clerk.user")
-            placeholder.name = payload.get("name")
-            placeholder.avatar_url = payload.get("image_url")
+        if unclaimed_user:
+            # Claim the existing account
+            unclaimed_user.clerk_id = clerk_id
+            unclaimed_user.name = payload.get("name") or unclaimed_user.name
+            unclaimed_user.avatar_url = payload.get("image_url")
             session.commit()
-            session.refresh(placeholder)
-            return placeholder
+            session.refresh(unclaimed_user)
+            return unclaimed_user
         
-        # Create new user
+        # Create new user (fresh account, no existing data)
         user = User(
             clerk_id=clerk_id,
-            email=payload.get("email", f"{clerk_id}@clerk.user"),
+            email=email_from_token or f"{clerk_id}@clerk.user",
             name=payload.get("name"),
             avatar_url=payload.get("image_url"),
         )
@@ -783,10 +938,15 @@ async def get_current_user_optional(
 
 def require_pro(user: User = Depends(get_current_user)) -> User:
     """
-    Dependency that requires a Pro subscription.
+    Dependency that requires Pro-level access.
     Use for premium-only endpoints.
+    
+    Pro access can come from:
+    - is_admin flag (you and Kelsey)
+    - Active paid subscription
+    - Granted temporary access (testers)
     """
-    if not user.is_pro:
+    if not user.has_pro_access:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="This feature requires a Pro subscription"
@@ -877,6 +1037,101 @@ class UserRepo:
             self.session.add(settings)
             self.session.flush()
         return settings
+```
+
+---
+
+### Task 3.1b: Create Usage Service
+
+**File:** `backend/app/services/usage_service.py` (new file)
+
+```python
+"""app/services/usage_service.py
+
+Service for tracking and checking feature usage limits.
+Tracks usage now, enforcement comes later.
+"""
+
+from datetime import datetime
+from typing import Optional
+
+from sqlalchemy.orm import Session
+
+from app.models.user_usage import UserUsage
+
+
+class UsageService:
+    """Service for tracking feature usage."""
+    
+    def __init__(self, session: Session):
+        self.session = session
+    
+    def _get_current_month(self) -> str:
+        """Get current month string in YYYY-MM format."""
+        return datetime.now().strftime("%Y-%m")
+    
+    def _get_or_create_usage(self, user_id: int, month: Optional[str] = None) -> UserUsage:
+        """Get or create usage record for a user+month."""
+        if month is None:
+            month = self._get_current_month()
+        
+        usage = self.session.query(UserUsage).filter(
+            UserUsage.user_id == user_id,
+            UserUsage.month == month
+        ).first()
+        
+        if not usage:
+            usage = UserUsage(user_id=user_id, month=month)
+            self.session.add(usage)
+            self.session.flush()
+        
+        return usage
+    
+    def increment(self, user_id: int, field: str, amount: int = 1) -> UserUsage:
+        """
+        Increment a usage counter.
+        
+        Args:
+            user_id: User to track
+            field: Field name (e.g., 'ai_images_generated')
+            amount: Amount to increment by (default 1)
+        
+        Returns:
+            Updated UserUsage record
+        """
+        usage = self._get_or_create_usage(user_id)
+        
+        current_value = getattr(usage, field, 0)
+        setattr(usage, field, current_value + amount)
+        
+        self.session.commit()
+        return usage
+    
+    def get_usage(self, user_id: int, month: Optional[str] = None) -> UserUsage:
+        """Get usage record for a user (creates if doesn't exist)."""
+        return self._get_or_create_usage(user_id, month)
+    
+    def check_limit(self, user_id: int, field: str, limit: int) -> bool:
+        """
+        Check if user is under their limit.
+        
+        Args:
+            user_id: User to check
+            field: Field name to check
+            limit: Maximum allowed value
+        
+        Returns:
+            True if user is under limit, False if at/over limit
+        """
+        usage = self._get_or_create_usage(user_id)
+        current_value = getattr(usage, field, 0)
+        return current_value < limit
+    
+    def get_remaining(self, user_id: int, field: str, limit: int) -> int:
+        """Get remaining usage for a field."""
+        usage = self._get_or_create_usage(user_id)
+        current_value = getattr(usage, field, 0)
+        return max(0, limit - current_value)
 ```
 
 ---
@@ -1607,18 +1862,19 @@ Create a test file or manually verify:
 
 ```
 Phase 1: Backend Models & Migrations
-[ ] 1.1  Create User model
-[ ] 1.2  Create UserSettings model
-[ ] 1.3  Update models __init__.py
-[ ] 1.4  Add user_id to Recipe
-[ ] 1.5  Add user_id to Meal
-[ ] 1.6  Add user_id to PlannerEntry
-[ ] 1.7  Add user_id to ShoppingItem
-[ ] 1.8  Add user_id to RecipeHistory
-[ ] 1.9  Update Alembic env.py
-[ ] 1.10 Generate Alembic migration
-[ ] 1.11 Modify migration for existing data
-[ ] 1.12 Run migration
+[ ] 1.1   Create User model
+[ ] 1.2   Create UserSettings model
+[ ] 1.2b  Create UserUsage model
+[ ] 1.3   Update models __init__.py
+[ ] 1.4   Add user_id to Recipe
+[ ] 1.5   Add user_id to Meal
+[ ] 1.6   Add user_id to PlannerEntry
+[ ] 1.7   Add user_id to ShoppingItem
+[ ] 1.8   Add user_id to RecipeHistory
+[ ] 1.9   Update Alembic env.py
+[ ] 1.10  Generate Alembic migration
+[ ] 1.11  Modify migration for existing data (includes user_usage table)
+[ ] 1.12  Run migration
 
 Phase 2: Auth Dependencies
 [ ] 2.1  Install auth dependencies
@@ -1627,16 +1883,17 @@ Phase 2: Auth Dependencies
 [ ] 2.4  Add environment variables
 
 Phase 3: Update Services
-[ ] 3.1  Create UserRepo
-[ ] 3.2  Update RecipeRepo
-[ ] 3.3  Update RecipeService
-[ ] 3.4  Update MealService
-[ ] 3.5  Update MealRepo
-[ ] 3.6  Update PlannerService
-[ ] 3.7  Update PlannerRepo
-[ ] 3.8  Update ShoppingService
-[ ] 3.9  Update ShoppingRepo
-[ ] 3.10 Update DashboardService
+[ ] 3.1   Create UserRepo
+[ ] 3.1b  Create UsageService
+[ ] 3.2   Update RecipeRepo
+[ ] 3.3   Update RecipeService
+[ ] 3.4   Update MealService
+[ ] 3.5   Update MealRepo
+[ ] 3.6   Update PlannerService
+[ ] 3.7   Update PlannerRepo
+[ ] 3.8   Update ShoppingService
+[ ] 3.9   Update ShoppingRepo
+[ ] 3.10  Update DashboardService
 
 Phase 4: Update API Routes
 [ ] 4.1  Update recipes.py
@@ -1647,6 +1904,7 @@ Phase 4: Update API Routes
 [ ] 4.6  Create settings.py
 [ ] 4.7  Register settings router
 [ ] 4.8  Verify CORS config
+[ ] 4.9  Add usage tracking to AI endpoints
 
 Phase 5: Frontend Clerk
 [ ] 5.1  Install @clerk/nextjs
@@ -1664,6 +1922,7 @@ Phase 6: Testing
 [ ] 6.1  Test data isolation
 [ ] 6.2  Test auth flow
 [ ] 6.3  Test settings migration
+[ ] 6.4  Test usage tracking (verify increments on AI calls)
 ```
 
 ---

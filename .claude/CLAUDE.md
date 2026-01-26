@@ -160,15 +160,43 @@ This project has an extensive design system. **Always follow these rules**:
 - `next-devtools` - Next.js MCP tools (requires dev server running)
 - `cloudinary-asset-mgmt` - Image upload and management
 
-## Claude Code Skills
+## Claude Code Skills & Commands
 
-Custom skills are available in `.claude/skills/` and `.claude/commands/`:
+### Skills vs Commands (IMPORTANT)
 
-- `/design` - Apply frontend design skill
-- `/audit` - Audit a UI component for design system compliance
+| Folder | Purpose | Claude Access |
+|--------|---------|---------------|
+| `.claude/skills/` | Reference documentation (patterns, tokens, checklists) | ✅ **Auto-read** when relevant |
+| `.claude/commands/` | User-invoked slash commands | ❌ **Only when user explicitly invokes** |
+
+**Claude should automatically read skill documentation** when working on related tasks, but **never invoke commands** unless the user explicitly types them (e.g., `/design`, `/audit`).
+
+### Skill Documentation (Auto-Read)
+
+**Frontend Design** (`.claude/skills/frontend-design/`):
+- [SKILL.md](.claude/skills/frontend-design/SKILL.md) - Design skill overview
+- [tokens.md](.claude/skills/frontend-design/tokens.md) - CSS variable reference
+- [component-usage.md](.claude/skills/frontend-design/component-usage.md) - Component patterns
+- [audit-checklist.md](.claude/skills/frontend-design/audit-checklist.md) - Compliance checklist
+
+**Backend Development** (`.claude/skills/backend-dev/`):
+- [SKILL.md](.claude/skills/backend-dev/SKILL.md) - Quick reference and patterns
+- [patterns.md](.claude/skills/backend-dev/patterns.md) - Layer-specific code templates
+- [checklist.md](.claude/skills/backend-dev/checklist.md) - Code review checklist
+
+### Commands (User-Invoked Only)
+
+These commands in `.claude/commands/` are **only run when explicitly invoked**:
+
+- `/design` - Frontend design workflow
+- `/audit` - Audit a UI component
+- `/batch-audit` - Audit multiple components
+- `/ds-fix` - Fix design system violations
+- `/backend` - Backend development workflow
 - `/todo` - Generate TODO items
 - `/changelog` - Generate changelog entries
 - `/fix` - Fix a TODO item
+- `/sync-issues` - Sync GitHub issues to TODOs
 
 ## Deployment
 
