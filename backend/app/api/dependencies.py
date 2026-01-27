@@ -235,6 +235,7 @@ async def get_current_user(
 
     # Extract claims from JWT
     # Clerk JWTs use 'sub' for user ID, and may include email in different fields
+    print(f"[AUTH] JWT payload keys: {list(payload.keys())}")
     clerk_id = payload.get("sub")
     email = (
         payload.get("email")
@@ -243,8 +244,10 @@ async def get_current_user(
     )
     name = payload.get("name") or payload.get("first_name")
     avatar_url = payload.get("picture") or payload.get("image_url")
+    print(f"[AUTH] Extracted: clerk_id={clerk_id}, email={email}, name={name}")
 
     if not clerk_id:
+        print("[AUTH] ERROR: Missing clerk_id (sub claim)")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token missing required claim: sub",
@@ -252,6 +255,8 @@ async def get_current_user(
         )
 
     if not email:
+        print("[AUTH] ERROR: Missing email - JWT does not contain email claim!")
+        print(f"[AUTH] Full payload: {payload}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token missing required claim: email",
