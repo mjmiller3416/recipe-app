@@ -57,9 +57,9 @@ async function fetchApi<T>(
 ): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...options?.headers,
+    ...(options?.headers as Record<string, string>),
   };
 
   // Add Authorization header if token is provided
@@ -895,7 +895,7 @@ export const uploadApi = {
     formData.append("recipeId", recipeId.toString());
     formData.append("imageType", imageType);
 
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -937,7 +937,7 @@ export const uploadApi = {
     formData.append("recipeId", recipeId.toString());
     formData.append("imageType", imageType);
 
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -1165,7 +1165,7 @@ export const dataManagementApi = {
     const formData = new FormData();
     formData.append("file", file);
 
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -1203,7 +1203,7 @@ export const dataManagementApi = {
     formData.append("file", file);
     formData.append("resolutions", JSON.stringify(resolutions));
 
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -1234,7 +1234,7 @@ export const dataManagementApi = {
   exportRecipes: async (filters?: ExportFilterDTO, token?: string | null): Promise<Blob> => {
     const query = filters ? buildQueryString(filters as Record<string, unknown>) : "";
 
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -1258,7 +1258,7 @@ export const dataManagementApi = {
    * @returns Blob of the template file
    */
   downloadTemplate: async (token?: string | null): Promise<Blob> => {
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -1282,7 +1282,7 @@ export const dataManagementApi = {
    * @returns Object with success status and counts of deleted records
    */
   clearAllData: async (token?: string | null): Promise<{ success: boolean; deleted_counts: Record<string, number> }> => {
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -1309,7 +1309,7 @@ export const dataManagementApi = {
    * @returns FullBackup object (frontend adds settings before download)
    */
   exportFullBackup: async (token?: string | null): Promise<FullBackup> => {
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -1337,7 +1337,7 @@ export const dataManagementApi = {
     const formData = new FormData();
     formData.append("file", file);
 
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -1374,7 +1374,7 @@ export const dataManagementApi = {
     const formData = new FormData();
     formData.append("file", file);
 
-    const headers: HeadersInit = {};
+    const headers: Record<string, string> = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
