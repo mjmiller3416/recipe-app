@@ -1,43 +1,19 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
 import { Lightbulb, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cookingTipApi } from "@/lib/api";
+import { useCookingTip, useRefreshCookingTip } from "@/hooks/api";
 
 export function ChefTipWidget() {
-  const [tip, setTip] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { data, isLoading, isFetching, refetch } = useCookingTip();
+  const refreshTip = useRefreshCookingTip();
 
-  const fetchTip = useCallback(async (showRefreshing = false) => {
-    if (showRefreshing) {
-      setIsRefreshing(true);
-    }
-
-    try {
-      const data = await cookingTipApi.getTip();
-      if (data.success && data.tip) {
-        // Debug logging for tip consistency testing
-        console.log("[ChefTip]", new Date().toLocaleTimeString(), "Received:", data.tip);
-        setTip(data.tip);
-      }
-    } catch (error) {
-      console.error("Failed to fetch cooking tip:", error);
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, []);
-
-  // Initial fetch only - users can manually refresh if they want a new tip
-  useEffect(() => {
-    fetchTip();
-  }, [fetchTip]);
+  const tip = data?.success && data.tip ? data.tip : null;
+  const isRefreshing = isFetching && !isLoading;
 
   const handleManualRefresh = () => {
     if (!isRefreshing) {
-      fetchTip(true);
+      refreshTip();
     }
   };
 

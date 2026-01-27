@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@clerk/nextjs";
 import { shoppingApi, plannerApi } from "@/lib/api";
 import type {
   ShoppingListResponseDTO,
@@ -22,9 +23,14 @@ export const shoppingQueryKeys = {
  * Uses the combined endpoint to reduce API calls.
  */
 export function useShoppingList() {
+  const { getToken } = useAuth();
+
   return useQuery({
     queryKey: shoppingQueryKeys.list(),
-    queryFn: () => shoppingApi.getList(undefined, true), // auto_generate=true
+    queryFn: async () => {
+      const token = await getToken();
+      return shoppingApi.getList(undefined, true, token); // auto_generate=true
+    },
     staleTime: 0, // Always fresh
   });
 }
@@ -34,9 +40,14 @@ export function useShoppingList() {
  * Only fetches if recipeIds are provided.
  */
 export function useIngredientBreakdown(recipeIds: number[]) {
+  const { getToken } = useAuth();
+
   return useQuery({
     queryKey: shoppingQueryKeys.breakdown(recipeIds),
-    queryFn: () => shoppingApi.getBreakdown(recipeIds),
+    queryFn: async () => {
+      const token = await getToken();
+      return shoppingApi.getBreakdown(recipeIds, token);
+    },
     enabled: recipeIds.length > 0,
     staleTime: 30000, // Cache breakdown for 30 seconds (less volatile)
   });
@@ -46,10 +57,14 @@ export function useIngredientBreakdown(recipeIds: number[]) {
  * Hook to toggle item's "have" status with optimistic updates.
  */
 export function useToggleItem() {
+  const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (itemId: number) => shoppingApi.toggleItem(itemId),
+    mutationFn: async (itemId: number) => {
+      const token = await getToken();
+      return shoppingApi.toggleItem(itemId, token);
+    },
 
     // Optimistic update
     onMutate: async (itemId) => {
@@ -99,10 +114,14 @@ export function useToggleItem() {
  * Hook to toggle item's "flagged" status with optimistic updates.
  */
 export function useToggleFlagged() {
+  const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (itemId: number) => shoppingApi.toggleFlagged(itemId),
+    mutationFn: async (itemId: number) => {
+      const token = await getToken();
+      return shoppingApi.toggleFlagged(itemId, token);
+    },
 
     onMutate: async (itemId) => {
       await queryClient.cancelQueries({ queryKey: shoppingQueryKeys.list() });
@@ -138,10 +157,14 @@ export function useToggleFlagged() {
  * Hook to add a manual item.
  */
 export function useAddManualItem() {
+  const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: ManualItemCreateDTO) => shoppingApi.addItem(data),
+    mutationFn: async (data: ManualItemCreateDTO) => {
+      const token = await getToken();
+      return shoppingApi.addItem(data, token);
+    },
 
     onSuccess: (newItem) => {
       // Add the new item to the cache
@@ -170,10 +193,14 @@ export function useAddManualItem() {
  * Hook to delete a shopping item.
  */
 export function useDeleteItem() {
+  const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (itemId: number) => shoppingApi.deleteItem(itemId),
+    mutationFn: async (itemId: number) => {
+      const token = await getToken();
+      return shoppingApi.deleteItem(itemId, token);
+    },
 
     onMutate: async (itemId) => {
       await queryClient.cancelQueries({ queryKey: shoppingQueryKeys.list() });
@@ -224,10 +251,14 @@ export function useDeleteItem() {
  * Hook to clear manual items.
  */
 export function useClearManualItems() {
+  const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => shoppingApi.clearManual(),
+    mutationFn: async () => {
+      const token = await getToken();
+      return shoppingApi.clearManual(token);
+    },
 
     onSuccess: () => {
       // Refetch the list after clearing
@@ -241,10 +272,14 @@ export function useClearManualItems() {
  * Hook to clear completed items.
  */
 export function useClearCompletedItems() {
+  const { getToken } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => shoppingApi.clearCompleted(),
+    mutationFn: async () => {
+      const token = await getToken();
+      return shoppingApi.clearCompleted(token);
+    },
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: shoppingQueryKeys.list() });

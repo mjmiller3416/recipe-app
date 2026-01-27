@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import {
   unitConversionApi,
@@ -39,6 +40,7 @@ export interface UseUnitConversionRulesReturn {
  * await deleteRule(ruleId);
  */
 export function useUnitConversionRules(): UseUnitConversionRulesReturn {
+  const { getToken } = useAuth();
   const [rules, setRules] = useState<UnitConversionRuleDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -48,7 +50,8 @@ export function useUnitConversionRules(): UseUnitConversionRulesReturn {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await unitConversionApi.list();
+      const token = await getToken();
+      const data = await unitConversionApi.list(token);
       setRules(data);
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Failed to fetch rules");
@@ -57,7 +60,7 @@ export function useUnitConversionRules(): UseUnitConversionRulesReturn {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [getToken]);
 
   // Initial fetch
   useEffect(() => {
@@ -67,7 +70,8 @@ export function useUnitConversionRules(): UseUnitConversionRulesReturn {
   // Create a new rule
   const createRule = useCallback(async (data: UnitConversionRuleCreateDTO) => {
     try {
-      const newRule = await unitConversionApi.create(data);
+      const token = await getToken();
+      const newRule = await unitConversionApi.create(data, token);
       setRules((prev) => [...prev, newRule]);
       toast.success(`Conversion rule for "${data.ingredient_name}" created`);
     } catch (err) {
@@ -75,12 +79,13 @@ export function useUnitConversionRules(): UseUnitConversionRulesReturn {
       toast.error(message);
       throw err;
     }
-  }, []);
+  }, [getToken]);
 
   // Delete a rule
   const deleteRule = useCallback(async (id: number) => {
     try {
-      await unitConversionApi.delete(id);
+      const token = await getToken();
+      await unitConversionApi.delete(id, token);
       setRules((prev) => prev.filter((rule) => rule.id !== id));
       toast.success("Conversion rule deleted");
     } catch (err) {
@@ -88,7 +93,7 @@ export function useUnitConversionRules(): UseUnitConversionRulesReturn {
       toast.error(message);
       throw err;
     }
-  }, []);
+  }, [getToken]);
 
   return {
     rules,
