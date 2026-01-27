@@ -198,6 +198,23 @@ These commands in `.claude/commands/` are **only run when explicitly invoked**:
 - `/fix` - Fix a TODO item
 - `/sync-issues` - Sync GitHub issues to TODOs
 
+## Authentication Testing
+
+Before deploying auth changes, test with real JWT validation locally:
+
+```bash
+# Switch to production-like auth mode
+python backend/scripts/toggle_auth.py prod
+
+# Restart backend, then test through Clerk sign-in
+```
+
+See **[docs/AUTH_TESTING_GUIDE.md](../docs/AUTH_TESTING_GUIDE.md)** for:
+- Full testing workflow
+- Pre-deploy checklist
+- Debugging tips
+- Common issues & solutions
+
 ## Deployment
 
 Uses Railway with Dockerfiles in `frontend/` and `backend/` directories. Configuration in `railway.json`.
