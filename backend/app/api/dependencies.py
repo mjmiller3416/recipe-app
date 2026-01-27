@@ -77,33 +77,32 @@ async def get_clerk_jwks(
     # Fetch fresh JWKS from Clerk
     # NOTE: The JWKS endpoint is PUBLIC - no Authorization header needed
     try:
-        logger.info(f"Fetching JWKS from: {jwks_url}")
+        print(f"[JWKS] Fetching from: {jwks_url}")
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 jwks_url,
                 timeout=10.0,
             )
+            print(f"[JWKS] Response status: {response.status_code}")
             response.raise_for_status()
             _jwks_cache = response.json()
             _jwks_cache_time = current_time
-            logger.info(f"Refreshed Clerk JWKS cache from {jwks_url}")
+            print(f"[JWKS] SUCCESS - cached {len(_jwks_cache.get('keys', []))} keys")
             return _jwks_cache
     except httpx.HTTPStatusError as e:
-        logger.error(
-            f"JWKS fetch failed with status {e.response.status_code}: {e.response.text}"
-        )
+        print(f"[JWKS] HTTP ERROR: status={e.response.status_code}, body={e.response.text[:200]}")
         if _jwks_cache:
-            logger.warning("Using stale JWKS cache")
+            print("[JWKS] Using stale cache")
             return _jwks_cache
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Authentication service unavailable",
         )
-    except httpx.HTTPError as e:
-        logger.error(f"Failed to fetch Clerk JWKS from {jwks_url}: {e}")
+    except Exception as e:
+        print(f"[JWKS] EXCEPTION: {type(e).__name__}: {e}")
         # Return stale cache if available
         if _jwks_cache:
-            logger.warning("Using stale JWKS cache")
+            print("[JWKS] Using stale cache")
             return _jwks_cache
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -128,17 +127,20 @@ def _get_signing_key(jwks: dict, token: str) -> dict:
     try:
         unverified_header = jwt.get_unverified_header(token)
         kid = unverified_header.get("kid")
+        print(f"[AUTH] Token kid={kid}, JWKS has kids={[k.get('kid') for k in jwks.get('keys', [])]}")
 
         for key in jwks.get("keys", []):
             if key.get("kid") == kid:
                 return key
 
+        print(f"[AUTH] ERROR: No matching key found for kid={kid}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Unable to find signing key",
             headers={"WWW-Authenticate": "Bearer"},
         )
     except JWTError as e:
+        print(f"[AUTH] ERROR: Invalid token header: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid token header: {e}",
@@ -201,12 +203,15 @@ async def get_current_user(
         )
 
     token = credentials.credentials
-    print(f"[AUTH] Token received, length={len(token)}, starts_with={token[:20]}...")
+    print(f"[AUTH] Token received, length={len(token)}")
 
     # Get JWKS and find matching signing key
-    print(f"[AUTH] Fetching JWKS, effective_url={settings.effective_jwks_url}")
+    print(f"[AUTH] Fetching JWKS...")
     jwks = await get_clerk_jwks(settings)
+    print(f"[AUTH] Got JWKS with {len(jwks.get('keys', []))} keys")
+
     signing_key = _get_signing_key(jwks, token)
+    print(f"[AUTH] Found signing key: kid={signing_key.get('kid', 'unknown')}")
 
     # Decode and verify JWT
     try:
@@ -219,8 +224,9 @@ async def get_current_user(
                 "verify_iss": False,  # We trust Clerk's signature
             },
         )
+        print(f"[AUTH] JWT decoded successfully, sub={payload.get('sub', 'unknown')}")
     except JWTError as e:
-        logger.warning(f"JWT verification failed: {e}")
+        print(f"[AUTH] JWT DECODE FAILED: {type(e).__name__}: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication token",

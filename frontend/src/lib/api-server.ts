@@ -54,9 +54,9 @@ export async function apiServerFetch<T>(
 
   const url = `${API_BASE}${endpoint}`;
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...options?.headers,
+    ...(options?.headers as Record<string, string>),
   };
 
   // Add Authorization header if token is available
@@ -128,9 +128,9 @@ export async function apiServerFetchWithToken<T>(
 ): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...options?.headers,
+    ...(options?.headers as Record<string, string>),
   };
 
   // Add Authorization header if token is provided

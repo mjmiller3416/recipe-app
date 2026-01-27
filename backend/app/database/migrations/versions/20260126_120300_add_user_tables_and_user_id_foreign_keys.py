@@ -118,6 +118,7 @@ def upgrade() -> None:
     op.add_column('planner_entries', sa.Column('user_id', sa.Integer(), nullable=True))
     op.add_column('shopping_items', sa.Column('user_id', sa.Integer(), nullable=True))
     op.add_column('recipe_history', sa.Column('user_id', sa.Integer(), nullable=True))
+    op.add_column('ingredients', sa.Column('user_id', sa.Integer(), nullable=True))
 
     # ==========================================================================
     # STEP 5: Migrate existing data to Maryann (user_id = 1)
@@ -127,6 +128,45 @@ def upgrade() -> None:
     op.execute("UPDATE planner_entries SET user_id = 1 WHERE user_id IS NULL")
     op.execute("UPDATE shopping_items SET user_id = 1 WHERE user_id IS NULL")
     op.execute("UPDATE recipe_history SET user_id = 1 WHERE user_id IS NULL")
+    op.execute("UPDATE ingredients SET user_id = 1 WHERE user_id IS NULL")
+
+    # Remove duplicate ingredients (keep the one with lowest id for each name+category combo)
+    # This is necessary because the new unique constraint includes user_id
+    # STEP 5a: First, update recipe_ingredients to point to the "keeper" ingredient
+    # This avoids foreign key violations when we delete duplicates
+    op.execute("""
+        UPDATE recipe_ingredients
+        SET ingredient_id = dups.keep_id
+        FROM ingredients i
+        JOIN (
+            SELECT user_id, ingredient_name, ingredient_category, MIN(id) as keep_id
+            FROM ingredients
+            GROUP BY user_id, ingredient_name, ingredient_category
+            HAVING COUNT(*) > 1
+        ) dups ON i.user_id = dups.user_id
+              AND i.ingredient_name = dups.ingredient_name
+              AND i.ingredient_category = dups.ingredient_category
+              AND i.id != dups.keep_id
+        WHERE recipe_ingredients.ingredient_id = i.id
+    """)
+
+    # STEP 5b: Now delete duplicate ingredients (using PostgreSQL-compatible pattern)
+    op.execute("""
+        DELETE FROM ingredients
+        WHERE id IN (
+            SELECT i.id
+            FROM ingredients i
+            JOIN (
+                SELECT user_id, ingredient_name, ingredient_category, MIN(id) as keep_id
+                FROM ingredients
+                GROUP BY user_id, ingredient_name, ingredient_category
+                HAVING COUNT(*) > 1
+            ) dups ON i.user_id = dups.user_id
+                  AND i.ingredient_name = dups.ingredient_name
+                  AND i.ingredient_category = dups.ingredient_category
+                  AND i.id != dups.keep_id
+        )
+    """)
 
     # ==========================================================================
     # STEP 6: Alter columns to NOT NULL (now that all rows have values)
@@ -147,6 +187,9 @@ def upgrade() -> None:
         batch_op.alter_column('user_id', nullable=False)
 
     with op.batch_alter_table('recipe_history') as batch_op:
+        batch_op.alter_column('user_id', nullable=False)
+
+    with op.batch_alter_table('ingredients') as batch_op:
         batch_op.alter_column('user_id', nullable=False)
 
     # ==========================================================================
@@ -175,6 +218,12 @@ def upgrade() -> None:
         # Note: Existing recipe_id FK doesn't have CASCADE, but SQLite anonymous FKs
         # can't be easily modified. CASCADE behavior handled at app level.
 
+    with op.batch_alter_table('ingredients') as batch_op:
+        batch_op.create_index('ix_ingredients_user_id', ['user_id'], unique=False)
+        batch_op.create_index('ix_ingredients_ingredient_name', ['ingredient_name'], unique=False)
+        batch_op.create_index('ix_ingredients_ingredient_category', ['ingredient_category'], unique=False)
+        batch_op.create_foreign_key('fk_ingredients_user_id', 'users', ['user_id'], ['id'], ondelete='CASCADE')
+
     # ==========================================================================
     # STEP 8: Add missing indexes on recipe table (detected by autogenerate)
     # ==========================================================================
@@ -183,13 +232,12 @@ def upgrade() -> None:
     op.create_index(op.f('ix_recipe_recipe_category'), 'recipe', ['recipe_category'], unique=False)
 
     # ==========================================================================
-    # STEP 9: Add missing indexes and constraint on ingredients table
-    # Using batch mode for SQLite unique constraint support
+    # STEP 9: Add missing indexes and unique constraint on ingredients table
+    # Unique constraint includes user_id for per-user ingredient uniqueness
+    # Note: Index creation on ingredient_name and ingredient_category already handled above
     # ==========================================================================
     with op.batch_alter_table('ingredients') as batch_op:
-        batch_op.create_index('ix_ingredients_ingredient_category', ['ingredient_category'], unique=False)
-        batch_op.create_index('ix_ingredients_ingredient_name', ['ingredient_name'], unique=False)
-        batch_op.create_unique_constraint('uq_ingredient_name_category', ['ingredient_name', 'ingredient_category'])
+        batch_op.create_unique_constraint('uq_ingredient_user_name_category', ['user_id', 'ingredient_name', 'ingredient_category'])
 
     # Note: STEP 10 (recipe_ingredients FK CASCADE) removed - SQLite anonymous FKs
     # can't be modified by name. Will be handled in PostgreSQL migration or app level.
@@ -200,12 +248,10 @@ def downgrade() -> None:
     # Note: STEP 10 was removed (recipe_ingredients FK) - nothing to reverse
 
     # ==========================================================================
-    # Reverse STEP 9: Remove ingredient indexes and constraint
+    # Reverse STEP 9: Remove ingredient unique constraint
     # ==========================================================================
     with op.batch_alter_table('ingredients') as batch_op:
-        batch_op.drop_constraint('uq_ingredient_name_category', type_='unique')
-        batch_op.drop_index('ix_ingredients_ingredient_name')
-        batch_op.drop_index('ix_ingredients_ingredient_category')
+        batch_op.drop_constraint('uq_ingredient_user_name_category', type_='unique')
 
     # ==========================================================================
     # Reverse STEP 8: Remove recipe indexes
@@ -217,6 +263,12 @@ def downgrade() -> None:
     # ==========================================================================
     # Reverse STEP 7: Remove foreign keys and indexes
     # ==========================================================================
+    with op.batch_alter_table('ingredients') as batch_op:
+        batch_op.drop_constraint('fk_ingredients_user_id', type_='foreignkey')
+        batch_op.drop_index('ix_ingredients_ingredient_category')
+        batch_op.drop_index('ix_ingredients_ingredient_name')
+        batch_op.drop_index('ix_ingredients_user_id')
+
     with op.batch_alter_table('recipe_history') as batch_op:
         batch_op.drop_constraint('fk_recipe_history_user_id', type_='foreignkey')
         batch_op.drop_index('ix_recipe_history_user_id')
@@ -241,6 +293,9 @@ def downgrade() -> None:
     # Reverse STEPS 4-6: Remove user_id columns
     # Note: Data loss is expected - existing data will lose user association
     # ==========================================================================
+    with op.batch_alter_table('ingredients') as batch_op:
+        batch_op.drop_column('user_id')
+
     with op.batch_alter_table('recipe_history') as batch_op:
         batch_op.drop_column('user_id')
 
