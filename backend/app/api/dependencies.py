@@ -40,6 +40,9 @@ async def get_clerk_jwks(
     The JWKS contains public keys used to verify JWT signatures.
     Keys are cached for 1 hour to minimize external API calls.
 
+    The JWKS endpoint is PUBLIC and does NOT require authentication.
+    The URL is derived from the Clerk publishable key (see auth_config.py).
+
     If the fetch fails, returns stale cache if available.
 
     Returns:
@@ -56,21 +59,48 @@ async def get_clerk_jwks(
     if _jwks_cache and (current_time - _jwks_cache_time) < JWKS_CACHE_TTL:
         return _jwks_cache
 
+    # Get the effective JWKS URL (derived from publishable key or explicit override)
+    jwks_url = settings.effective_jwks_url
+    if not jwks_url:
+        logger.error(
+            "No JWKS URL available. Ensure CLERK_PUBLISHABLE_KEY is set, "
+            "or provide an explicit CLERK_JWKS_URL."
+        )
+        if _jwks_cache:
+            logger.warning("Using stale JWKS cache due to missing URL")
+            return _jwks_cache
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication not configured",
+        )
+
     # Fetch fresh JWKS from Clerk
+    # NOTE: The JWKS endpoint is PUBLIC - no Authorization header needed
     try:
+        logger.info(f"Fetching JWKS from: {jwks_url}")
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                settings.clerk_jwks_url,
-                headers={"Authorization": f"Bearer {settings.clerk_secret_key}"},
+                jwks_url,
                 timeout=10.0,
             )
             response.raise_for_status()
             _jwks_cache = response.json()
             _jwks_cache_time = current_time
-            logger.info("Refreshed Clerk JWKS cache")
+            logger.info(f"Refreshed Clerk JWKS cache from {jwks_url}")
             return _jwks_cache
+    except httpx.HTTPStatusError as e:
+        logger.error(
+            f"JWKS fetch failed with status {e.response.status_code}: {e.response.text}"
+        )
+        if _jwks_cache:
+            logger.warning("Using stale JWKS cache")
+            return _jwks_cache
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication service unavailable",
+        )
     except httpx.HTTPError as e:
-        logger.error(f"Failed to fetch Clerk JWKS: {e}")
+        logger.error(f"Failed to fetch Clerk JWKS from {jwks_url}: {e}")
         # Return stale cache if available
         if _jwks_cache:
             logger.warning("Using stale JWKS cache")
