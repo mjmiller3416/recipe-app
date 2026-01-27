@@ -19,15 +19,16 @@ export default function SSOCallbackPage() {
   useEffect(() => {
     async function handleCallback() {
       // Check if this is a sign-in or sign-up flow
-      const signInAttempt = signIn?.firstFactorVerification?.status;
-      const signUpAttempt = signUp?.status;
+      // Use signIn.status for OAuth flows (not firstFactorVerification which is for password/OTP)
+      const signInStatus = signIn?.status;
+      const signUpStatus = signUp?.status;
 
       try {
-        if (signInAttempt === "complete" && signIn?.createdSessionId) {
+        if (signInStatus === "complete" && signIn?.createdSessionId) {
           // Sign-in completed successfully
           await setSignInActive({ session: signIn.createdSessionId });
           router.push("/dashboard");
-        } else if (signUpAttempt === "complete" && signUp?.createdSessionId) {
+        } else if (signUpStatus === "complete" && signUp?.createdSessionId) {
           // Sign-up completed successfully
           await setSignUpActive({ session: signUp.createdSessionId });
           router.push("/dashboard");
