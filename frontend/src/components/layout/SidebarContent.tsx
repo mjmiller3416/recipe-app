@@ -13,14 +13,9 @@ import {
   MessageSquarePlus,
   Newspaper,
   Sparkles,
-  Settings,
 } from "lucide-react";
-import {
-  SignedIn,
-  SignedOut,
-  UserButton,
-  SignInButton,
-} from "@clerk/nextjs";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { UserMenu } from "@/components/auth";
 import { Logo } from "@/components/layout/Logo";
 import { NavButton } from "@/components/layout/NavButton";
 import { RecentRecipesSection } from "@/components/layout/RecentRecipeChip";
@@ -29,7 +24,7 @@ import { IconButton } from "@/components/common/IconButton";
 import { FeedbackDialog } from "@/components/common/FeedbackDialog";
 import { ChangelogDialog } from "@/components/common/ChangelogDialog";
 import { CHANGELOG_TOTAL_ITEMS } from "@/data/changelog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { appConfig } from "@/lib/config";
 import { useSettings } from "@/hooks/useSettings";
 import { shoppingApi } from "@/lib/api";
@@ -155,7 +150,7 @@ export function SidebarContent({ onNavigate, onOpenMealGenie }: SidebarContentPr
       {/* Bottom Section - User Profile */}
       <div className="p-4 border-t border-border space-y-3">
         {/* Meal Genie, Feedback & Changelog */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pt-1">
           {onOpenMealGenie && (
             <IconButton
               icon={Sparkles}
@@ -184,55 +179,29 @@ export function SidebarContent({ onNavigate, onOpenMealGenie }: SidebarContentPr
 
         {/* User Profile - Clerk Authentication */}
         <SignedIn>
-          <div className="flex items-center gap-3 rounded-lg p-3 bg-elevated">
-            <UserButton
-              afterSignOutUrl="/sign-in"
-              appearance={{
-                elements: {
-                  avatarBox: "h-10 w-10",
-                  userButtonPopoverCard: "bg-card border border-border shadow-lg",
-                  userButtonPopoverActions: "text-foreground",
-                  userButtonPopoverActionButton: "text-foreground hover:bg-accent",
-                  userButtonPopoverFooter: "hidden",
-                },
-              }}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground">
-                Account
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Manage profile
-              </p>
-            </div>
-            <Link
-              href="/settings"
-              onClick={onNavigate}
-              className="p-2 rounded-md hover:bg-hover transition-colors"
-            >
-              <Settings className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-            </Link>
-          </div>
+          <UserMenu onNavigate={onNavigate} />
         </SignedIn>
         <SignedOut>
-          <SignInButton mode="modal">
-            <button className="flex items-center gap-3 rounded-lg p-3 bg-elevated hover:bg-hover transition-colors w-full">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-muted text-muted-foreground">
-                  ?
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-sm font-medium text-foreground">
-                  Sign In
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Access your account
-                </p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </button>
-          </SignInButton>
+          <Link
+            href="/sign-in"
+            onClick={onNavigate}
+            className="flex items-center gap-3 rounded-lg p-3 bg-elevated hover:bg-hover transition-colors w-full"
+          >
+            <Avatar className="h-10 w-10">
+              <AvatarFallback className="bg-muted text-muted-foreground">
+                ?
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-sm font-medium text-foreground">
+                Sign In
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Access your account
+              </p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
         </SignedOut>
       </div>
 

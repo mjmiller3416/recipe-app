@@ -42,9 +42,9 @@ const cardHeaderVariants = cva(
   {
     variants: {
       size: {
-        sm: "gap-1.5 px-4",
-        default: "gap-2 px-6",
-        lg: "gap-3 px-8",
+        sm: "gap-1.5 px-4 pt-4",
+        default: "gap-2 px-6 pt-6",
+        lg: "gap-3 px-8 pt-8",
       },
     },
     defaultVariants: {
