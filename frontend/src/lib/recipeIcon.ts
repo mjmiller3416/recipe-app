@@ -122,6 +122,8 @@ const ICON_KEYWORDS: ReadonlyArray<[string, string | null]> = [
   ["pretzel", "pretzel"],
   ["sub", "baguette"],
   ["wrap", "wrap"],
+  ["roll", "bread"],
+  ["bun", "bread"],
   ["bread", "bread"],
 
   // Desserts (specific before generic)
