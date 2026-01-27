@@ -26,12 +26,30 @@ from ..repositories.ingredient_repo import IngredientRepo
 class RecipeRepo:
     """Handles direct DB queries for the Recipe model."""
 
-    def __init__(self, session: Session, ingredient_repo: Optional[IngredientRepo] = None):
+    def __init__(
+        self,
+        session: Session,
+        ingredient_repo: Optional[IngredientRepo] = None,
+        user_id: Optional[int] = None
+    ):
         """Initialize Recipe Repository with a database session and ingredient repository.
-        If no ingredient_repo is provided, a default IngredientRepo is created."""
+
+        Args:
+            session: SQLAlchemy database session
+            ingredient_repo: Optional IngredientRepo (if not provided and user_id is given,
+                             creates a new user-scoped IngredientRepo)
+            user_id: Optional user ID for multi-tenant ingredient operations
+        """
         self.session = session
-        # allow defaulting to a new IngredientRepo for backward compatibility
-        self.ingredient_repo = ingredient_repo or IngredientRepo(session)
+        self.user_id = user_id
+        # If user_id is provided but no ingredient_repo, create a user-scoped one
+        if ingredient_repo:
+            self.ingredient_repo = ingredient_repo
+        elif user_id:
+            self.ingredient_repo = IngredientRepo(session, user_id)
+        else:
+            # Fallback for backward compatibility (should not be used in production)
+            self.ingredient_repo = None
 
     def persist_recipe_and_links(self, recipe_dto: RecipeCreateDTO, user_id: int) -> Recipe:
         """
@@ -43,7 +61,15 @@ class RecipeRepo:
 
         Returns:
             Recipe: The newly created recipe.
+
+        Raises:
+            RuntimeError: If ingredient_repo is not initialized.
         """
+        if not self.ingredient_repo:
+            raise RuntimeError(
+                "RecipeRepo requires user_id or ingredient_repo for persist_recipe_and_links"
+            )
+
         recipe = Recipe(
             recipe_name=recipe_dto.recipe_name,
             recipe_category=recipe_dto.recipe_category,
@@ -196,6 +222,10 @@ class RecipeRepo:
                 setattr(recipe, field, update_data[field])
 
         if "ingredients" in update_data and update_data["ingredients"] is not None:
+            if not self.ingredient_repo:
+                raise RuntimeError(
+                    "RecipeRepo requires user_id or ingredient_repo for updating ingredients"
+                )
             recipe.ingredients.clear()
             # flush to persist removal of old links before adding replacements
             self.session.flush()

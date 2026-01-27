@@ -92,11 +92,23 @@ INGREDIENT_COLUMNS = [
 class DataManagementService:
     """Service layer for importing and exporting recipe data."""
 
-    def __init__(self, session: Session):
-        """Initialize the service with a database session."""
+    def __init__(self, session: Session, user_id: int = None):
+        """Initialize the service with a database session and optional user ID.
+
+        Args:
+            session: SQLAlchemy database session
+            user_id: ID of the current user for multi-tenant operations (required for write operations)
+        """
         self.session = session
-        self.ingredient_repo = IngredientRepo(session)
-        self.recipe_repo = RecipeRepo(session, self.ingredient_repo)
+        self.user_id = user_id
+        # Ingredient repo requires user_id for user-scoped operations
+        # For read-only operations (template generation), user_id can be None
+        if user_id:
+            self.ingredient_repo = IngredientRepo(session, user_id)
+            self.recipe_repo = RecipeRepo(session, self.ingredient_repo, user_id)
+        else:
+            self.ingredient_repo = None
+            self.recipe_repo = RecipeRepo(session, user_id=None)
 
     # ── Parsing ─────────────────────────────────────────────────────────────────────────────────────────────
     def parse_xlsx(

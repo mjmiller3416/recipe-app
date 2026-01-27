@@ -63,7 +63,7 @@ async def preview_import(
             detail="File too large. Maximum size is 10MB",
         )
 
-    service = DataManagementService(session)
+    service = DataManagementService(session, current_user.id)
 
     # Parse xlsx
     recipes, validation_errors = service.parse_xlsx(content)
@@ -127,7 +127,7 @@ async def execute_import(
             detail=f"Invalid resolutions format: {str(e)}",
         )
 
-    service = DataManagementService(session)
+    service = DataManagementService(session, current_user.id)
 
     # Parse xlsx
     recipes, validation_errors = service.parse_xlsx(content)
@@ -169,7 +169,7 @@ async def export_recipes(
         favorites_only=favorites_only,
     )
 
-    service = DataManagementService(session)
+    service = DataManagementService(session, current_user.id)
     xlsx_bytes = service.export_recipes_to_xlsx(filter_dto)
 
     return StreamingResponse(
@@ -212,7 +212,7 @@ async def clear_all_data(
 
     Returns counts of deleted records per table.
     """
-    service = DataManagementService(session)
+    service = DataManagementService(session, current_user.id)
     counts = service.clear_all_data()
     return {"success": True, "deleted_counts": counts}
 
@@ -233,7 +233,7 @@ async def export_full_backup(
 
     Returns a FullBackupDTO with all data.
     """
-    service = DataManagementService(session)
+    service = DataManagementService(session, current_user.id)
     backup = service.export_full_backup()
     return backup.model_dump(mode="json")
 
@@ -277,7 +277,7 @@ async def preview_restore(
             detail=f"Invalid backup file: {str(e)}",
         )
 
-    service = DataManagementService(session)
+    service = DataManagementService(session, current_user.id)
     preview = service.preview_restore(backup)
 
     return preview
@@ -325,7 +325,7 @@ async def execute_restore(
             detail=f"Invalid backup file: {str(e)}",
         )
 
-    service = DataManagementService(session)
+    service = DataManagementService(session, current_user.id)
     result = service.execute_restore(backup, clear_existing)
 
     return result.model_dump(mode="json")

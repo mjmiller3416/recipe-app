@@ -12,33 +12,47 @@ from ..models.ingredient import Ingredient
 
 # ── Ingredient Repository ───────────────────────────────────────────────────────────────────────────────────
 class IngredientRepo:
-    """Handles ingredient-specific database operations."""
+    """Handles ingredient-specific database operations.
 
-    def __init__(self, session: Session):
-        """Initialize the Ingredient Repository with a database session."""
+    All operations are scoped to a specific user for multi-tenant isolation.
+    """
+
+    def __init__(self, session: Session, user_id: int):
+        """Initialize the Ingredient Repository with a database session and user ID.
+
+        Args:
+            session: SQLAlchemy database session
+            user_id: The ID of the current user for data isolation
+        """
         self.session = session
+        self.user_id = user_id
 
     # ── CRUD Operations ─────────────────────────────────────────────────────────────────────────────────────
     def get_all(self) -> list[Ingredient]:
         """
-        Return all ingredients.
+        Return all ingredients for the current user.
 
         Returns:
-            list[Ingredient]: A list of all ingredients in the database.
+            list[Ingredient]: A list of all ingredients owned by the current user.
         """
-        return self.session.execute(select(Ingredient)).scalars().unique().all()
+        stmt = select(Ingredient).where(Ingredient.user_id == self.user_id)
+        return self.session.execute(stmt).scalars().unique().all()
 
     def get_by_id(self, ingredient_id: int) -> Ingredient | None:
         """
-        Fetch a single ingredient by ID.
+        Fetch a single ingredient by ID, scoped to current user.
 
         Args:
             ingredient_id (int): The ID of the ingredient to retrieve.
 
         Returns:
-            Ingredient | None: The ingredient with the given ID, or None if not found.
+            Ingredient | None: The ingredient if owned by current user, or None.
         """
-        return self.session.get(Ingredient, ingredient_id)
+        stmt = select(Ingredient).where(
+            Ingredient.id == ingredient_id,
+            Ingredient.user_id == self.user_id
+        )
+        return self.session.execute(stmt).scalars().first()
 
     def delete(self, ingredient: Ingredient) -> None:
         """Delete the provided ingredient."""
@@ -62,6 +76,7 @@ class IngredientRepo:
         """
         stmt = (
             select(Ingredient)
+            .where(Ingredient.user_id == self.user_id)
             .where(Ingredient.ingredient_name.ilike(name.strip()))
             .where(Ingredient.ingredient_category.ilike(category.strip()))
         )
@@ -78,19 +93,26 @@ class IngredientRepo:
         Returns:
             list[Ingredient]: A list of ingredients matching the search criteria.
         """
-        stmt = select(Ingredient).where(Ingredient.ingredient_name.ilike(f"%{term.strip()}%"))
+        stmt = select(Ingredient).where(
+            Ingredient.user_id == self.user_id,
+            Ingredient.ingredient_name.ilike(f"%{term.strip()}%")
+        )
         if category:
             stmt = stmt.where(Ingredient.ingredient_category.ilike(category.strip()))
         return self.session.execute(stmt).scalars().unique().all()
 
     def get_distinct_names(self) -> list[str]:
         """
-        Return a list of all unique ingredient names.
+        Return a list of all unique ingredient names for the current user.
 
         Returns:
             list[str]: A list of distinct ingredient names.
         """
-        stmt = select(Ingredient.ingredient_name).distinct()
+        stmt = (
+            select(Ingredient.ingredient_name)
+            .where(Ingredient.user_id == self.user_id)
+            .distinct()
+        )
         results = self.session.execute(stmt).scalars().all()
         return results
 
@@ -110,7 +132,8 @@ class IngredientRepo:
 
         new_ingredient = Ingredient(
             ingredient_name=dto.ingredient_name,
-            ingredient_category=dto.ingredient_category
+            ingredient_category=dto.ingredient_category,
+            user_id=self.user_id
         )
         self.add(new_ingredient)
         # flush so SQLAlchemy assigns an ID and the new ingredient is queryable immediately

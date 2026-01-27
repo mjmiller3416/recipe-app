@@ -25,9 +25,15 @@ from ..services.unit_conversion_service import UnitConversionService
 class ShoppingRepo:
     """Repository for shopping list operations."""
 
-    def __init__(self, session: Session):
-        """Initialize the Shopping Repository with a database session."""
+    def __init__(self, session: Session, user_id: int):
+        """Initialize the Shopping Repository with a database session and user ID.
+
+        Args:
+            session: SQLAlchemy database session
+            user_id: The ID of the current user for multi-tenant isolation
+        """
         self.session = session
+        self.user_id = user_id
 
     # ── Recipe Ingredient Aggregation ───────────────────────────────────────────────────────────────────────
     def get_recipe_ingredients(self, recipe_ids: List[int]) -> List[RecipeIngredient]:
@@ -119,7 +125,7 @@ class ShoppingRepo:
 
         # convert to ShoppingItem objects
         items: List[ShoppingItem] = []
-        conversion_service = UnitConversionService(self.session)
+        conversion_service = UnitConversionService(self.session, self.user_id)
 
         for data in aggregation.values():
             # convert from base unit to display unit

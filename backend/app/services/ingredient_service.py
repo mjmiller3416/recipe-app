@@ -20,12 +20,21 @@ from ..repositories.ingredient_repo import IngredientRepo
 
 # ── Ingredient Service ──────────────────────────────────────────────────────────────────────────────────────
 class IngredientService:
-    """Provides higher-level ingredient operations and DTO handling."""
+    """Provides higher-level ingredient operations and DTO handling.
 
-    def __init__(self, session: Session):
-        """Initialize the IngredientService with a database session and repository."""
+    All operations are scoped to a specific user for multi-tenant isolation.
+    """
+
+    def __init__(self, session: Session, user_id: int):
+        """Initialize the IngredientService with a database session and user ID.
+
+        Args:
+            session: SQLAlchemy database session
+            user_id: The ID of the current user for data isolation
+        """
         self.session = session
-        self.repo = IngredientRepo(session)
+        self.user_id = user_id
+        self.repo = IngredientRepo(session, user_id)
 
     def get_or_create(self, dto: IngredientCreateDTO) -> Ingredient:
         """
@@ -47,6 +56,7 @@ class IngredientService:
         new_ingredient = Ingredient(
             ingredient_name=dto.ingredient_name.strip(),
             ingredient_category=dto.ingredient_category.strip(),
+            user_id=self.user_id,
         )
         self.repo.add(new_ingredient)
         self.session.flush()  # ensure ID is assigned if needed immediately

@@ -48,9 +48,9 @@ class RecipeService:
         """
         self.session = session
         self.user_id = user_id
-        # ensure ingredient repository is created before passing into recipe repository
-        self.ingredient_repo = IngredientRepo(self.session)
-        self.recipe_repo = RecipeRepo(self.session, self.ingredient_repo)
+        # ensure ingredient repository is created with user_id before passing to recipe repository
+        self.ingredient_repo = IngredientRepo(self.session, user_id)
+        self.recipe_repo = RecipeRepo(self.session, self.ingredient_repo, user_id)
         self.meal_repo = MealRepo(self.session)
 
     def create_recipe_with_ingredients(self, recipe_dto: RecipeCreateDTO) -> Recipe:

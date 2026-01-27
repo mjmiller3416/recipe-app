@@ -20,9 +20,9 @@ class UserContextBuilder:
         """Initialize with database session and user ID."""
         self.session = session
         self.user_id = user_id
-        self.recipe_repo = RecipeRepo(session)
+        self.recipe_repo = RecipeRepo(session, user_id=user_id)
         self.planner_repo = PlannerRepo(session)
-        self.shopping_repo = ShoppingRepo(session)
+        self.shopping_repo = ShoppingRepo(session, user_id)
 
     def build_context_data(
         self,

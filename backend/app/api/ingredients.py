@@ -1,6 +1,7 @@
 """app/api/ingredients.py
 
 FastAPI router for ingredient endpoints.
+All endpoints require authentication and are scoped to the current user.
 """
 
 from typing import List, Optional
@@ -8,6 +9,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import get_current_user
 from app.database.db import get_session
 from app.dtos.ingredient_dtos import (
     IngredientCreateDTO,
@@ -15,6 +17,7 @@ from app.dtos.ingredient_dtos import (
     IngredientSearchDTO,
     IngredientUpdateDTO,
 )
+from app.models.user import User
 from app.services.ingredient_service import IngredientService
 
 router = APIRouter()
@@ -30,15 +33,16 @@ def _ingredient_to_response_dto(ingredient) -> IngredientResponseDTO:
 
 
 @router.get("", response_model=List[IngredientResponseDTO])
-def list_ingredients(
+async def list_ingredients(
     search_term: Optional[str] = Query(None, min_length=1),
     category: Optional[str] = Query(None),
     limit: Optional[int] = Query(None, ge=1, le=100),
     offset: Optional[int] = Query(None, ge=0),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
-    """List or search ingredients."""
-    service = IngredientService(session)
+    """List or search ingredients for the current user."""
+    service = IngredientService(session, current_user.id)
 
     if search_term:
         ingredients = service.search_ingredients(search_term, category)
@@ -57,23 +61,33 @@ def list_ingredients(
 
 
 @router.get("/categories", response_model=List[str])
-def get_ingredient_categories(session: Session = Depends(get_session)):
-    """Get unique ingredient categories."""
-    service = IngredientService(session)
+async def get_ingredient_categories(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Get unique ingredient categories for the current user."""
+    service = IngredientService(session, current_user.id)
     return service.get_ingredient_categories()
 
 
 @router.get("/names", response_model=List[str])
-def get_ingredient_names(session: Session = Depends(get_session)):
+async def get_ingredient_names(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Get all unique ingredient names for autocomplete."""
-    service = IngredientService(session)
+    service = IngredientService(session, current_user.id)
     return service.list_all_ingredient_names()
 
 
 @router.get("/{ingredient_id}", response_model=IngredientResponseDTO)
-def get_ingredient(ingredient_id: int, session: Session = Depends(get_session)):
+async def get_ingredient(
+    ingredient_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Get a single ingredient by ID."""
-    service = IngredientService(session)
+    service = IngredientService(session, current_user.id)
     ingredient = service.get_ingredient_by_id(ingredient_id)
     if not ingredient:
         raise HTTPException(status_code=404, detail="Ingredient not found")
@@ -81,12 +95,13 @@ def get_ingredient(ingredient_id: int, session: Session = Depends(get_session)):
 
 
 @router.post("", response_model=IngredientResponseDTO, status_code=201)
-def create_ingredient(
+async def create_ingredient(
     ingredient_data: IngredientCreateDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """Create a new ingredient or return existing one."""
-    service = IngredientService(session)
+    service = IngredientService(session, current_user.id)
     try:
         ingredient = service.create_ingredient(ingredient_data)
         return _ingredient_to_response_dto(ingredient)
@@ -95,12 +110,13 @@ def create_ingredient(
 
 
 @router.post("/bulk", response_model=List[IngredientResponseDTO], status_code=201)
-def bulk_create_ingredients(
+async def bulk_create_ingredients(
     ingredients_data: List[IngredientCreateDTO],
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """Bulk create ingredients. Returns existing ingredients if they already exist."""
-    service = IngredientService(session)
+    service = IngredientService(session, current_user.id)
     try:
         ingredients = service.bulk_create_ingredients(ingredients_data)
         return [_ingredient_to_response_dto(ing) for ing in ingredients]
@@ -109,13 +125,14 @@ def bulk_create_ingredients(
 
 
 @router.put("/{ingredient_id}", response_model=IngredientResponseDTO)
-def update_ingredient(
+async def update_ingredient(
     ingredient_id: int,
     update_data: IngredientUpdateDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """Update an existing ingredient."""
-    service = IngredientService(session)
+    service = IngredientService(session, current_user.id)
     try:
         ingredient = service.update_ingredient(ingredient_id, update_data)
         if not ingredient:
@@ -126,9 +143,13 @@ def update_ingredient(
 
 
 @router.delete("/{ingredient_id}")
-def delete_ingredient(ingredient_id: int, session: Session = Depends(get_session)):
+async def delete_ingredient(
+    ingredient_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Delete an ingredient."""
-    service = IngredientService(session)
+    service = IngredientService(session, current_user.id)
     try:
         if not service.delete_ingredient(ingredient_id):
             raise HTTPException(status_code=404, detail="Ingredient not found")
@@ -138,12 +159,13 @@ def delete_ingredient(ingredient_id: int, session: Session = Depends(get_session
 
 
 @router.post("/search", response_model=List[IngredientResponseDTO])
-def search_ingredients(
+async def search_ingredients(
     search_data: IngredientSearchDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """Search ingredients using a search DTO."""
-    service = IngredientService(session)
+    service = IngredientService(session, current_user.id)
     ingredients = service.find_matching_ingredients(search_data)
 
     # Apply limit/offset if provided

@@ -59,7 +59,7 @@ class PlannerService:
         self.user_id = user_id
         self.repo = PlannerRepo(self.session)
         self.meal_repo = MealRepo(self.session)
-        self.recipe_repo = RecipeRepo(self.session)
+        self.recipe_repo = RecipeRepo(self.session, user_id=user_id)
 
     # -- Add to Planner --------------------------------------------------------------------------
     def add_meal_to_planner(

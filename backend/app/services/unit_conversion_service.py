@@ -20,12 +20,21 @@ from ..repositories.unit_conversion_repo import UnitConversionRepo
 
 # ── Unit Conversion Service ────────────────────────────────────────────────────────────────────────────────
 class UnitConversionService:
-    """Provides unit conversion rule operations."""
+    """Provides unit conversion rule operations.
 
-    def __init__(self, session: Session):
-        """Initialize with a database session."""
+    All operations are scoped to a specific user for multi-tenant isolation.
+    """
+
+    def __init__(self, session: Session, user_id: int):
+        """Initialize with a database session and user ID.
+
+        Args:
+            session: SQLAlchemy database session
+            user_id: The ID of the current user for data isolation
+        """
         self.session = session
-        self.repo = UnitConversionRepo(session)
+        self.user_id = user_id
+        self.repo = UnitConversionRepo(session, user_id)
 
     # ── CRUD Operations ─────────────────────────────────────────────────────────────────────────────────────
     def get_all(self) -> List[UnitConversionRule]:
@@ -45,6 +54,7 @@ class UnitConversionService:
                 to_unit=dto.to_unit.lower().strip(),
                 factor=dto.factor,
                 round_up=dto.round_up,
+                user_id=self.user_id,
             )
             self.repo.add(rule)
             self.session.commit()

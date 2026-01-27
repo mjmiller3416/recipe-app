@@ -60,7 +60,7 @@ class MealService:
         self.user_id = user_id
         self.repo = MealRepo(self.session)
         self.planner_repo = PlannerRepo(self.session)
-        self.recipe_repo = RecipeRepo(self.session)
+        self.recipe_repo = RecipeRepo(self.session, user_id=user_id)
 
     # -- Create Operations -----------------------------------------------------------------------
     def create_meal(self, create_dto: MealCreateDTO) -> MealResponseDTO:

@@ -1,11 +1,17 @@
-"""Upload API endpoints for image handling via Cloudinary."""
+"""Upload API endpoints for image handling via Cloudinary.
+
+All endpoints require authentication to prevent unauthorized uploads.
+"""
 
 import os
 import base64
-from fastapi import APIRouter, File, UploadFile, Form, HTTPException
+from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException
 import cloudinary
 import cloudinary.uploader
 from dotenv import load_dotenv
+
+from app.api.dependencies import get_current_user
+from app.models.user import User
 
 load_dotenv()
 
@@ -24,7 +30,8 @@ router = APIRouter()
 async def upload_recipe_image(
     file: UploadFile = File(...),
     recipeId: str = Form(...),
-    imageType: str = Form(default="reference")
+    imageType: str = Form(default="reference"),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Upload a recipe image to Cloudinary.
@@ -74,7 +81,10 @@ async def upload_recipe_image(
 
 
 @router.delete("/{public_id:path}")
-async def delete_recipe_image(public_id: str):
+async def delete_recipe_image(
+    public_id: str,
+    current_user: User = Depends(get_current_user),
+):
     """
     Delete an image from Cloudinary.
 
@@ -92,7 +102,8 @@ async def delete_recipe_image(public_id: str):
 async def upload_base64_image(
     image_data: str = Form(...),
     recipeId: str = Form(...),
-    imageType: str = Form(default="reference")
+    imageType: str = Form(default="reference"),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Upload a base64 encoded image to Cloudinary.

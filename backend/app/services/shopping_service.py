@@ -42,7 +42,7 @@ class ShoppingService:
         """
         self.session = session
         self.user_id = user_id
-        self.shopping_repo = ShoppingRepo(self.session)
+        self.shopping_repo = ShoppingRepo(self.session, user_id)
         self.meal_repo = MealRepo(self.session)
         self.planner_repo = PlannerRepo(self.session)
 
