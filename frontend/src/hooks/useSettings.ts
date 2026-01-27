@@ -35,6 +35,7 @@ export interface RecipePreferences {
 
 export interface ShoppingListSettings {
   categorySortOrder: "alphabetical" | "custom";
+  customCategoryOrder: string[]; // User-defined order for shopping list categories
   autoClearChecked: "manual" | "onRefresh" | "daily";
   combineDuplicates: boolean;
 }
@@ -87,6 +88,22 @@ export const DEFAULT_SETTINGS: AppSettings = {
   },
   shoppingList: {
     categorySortOrder: "alphabetical",
+    customCategoryOrder: [
+      "Produce",
+      "Bakery",
+      "Deli",
+      "Dairy",
+      "Meat",
+      "Seafood",
+      "Frozen",
+      "Pantry",
+      "Condiments",
+      "Oils and Vinegars",
+      "Spices",
+      "Baking",
+      "Beverages",
+      "Other",
+    ],
     autoClearChecked: "manual",
     combineDuplicates: true,
   },

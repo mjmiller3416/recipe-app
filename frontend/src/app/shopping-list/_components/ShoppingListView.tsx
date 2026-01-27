@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ShoppingCategory } from "./ShoppingCategory";
-import { plannerApi } from "@/lib/api";
+import { usePlannerEntries, useMeals } from "@/hooks/api";
 import type { ShoppingItemResponseDTO, IngredientBreakdownDTO } from "@/types";
 import { ShoppingCart, Eye, EyeOff, Filter, X, Plus, Trash2 } from "lucide-react";
 import {
@@ -39,6 +38,7 @@ import {
   useClearManualItems,
   useRefreshShoppingList,
 } from "@/hooks/useShoppingList";
+import { useSettings } from "@/hooks/useSettings";
 
 /**
  * StatCard - Individual stat card for the summary section
@@ -156,6 +156,10 @@ function AddManualItemForm({
  * - Loading skeleton during fetch
  */
 export function ShoppingListView() {
+  // Settings for category ordering
+  const { settings } = useSettings();
+  const { categorySortOrder, customCategoryOrder } = settings.shoppingList;
+
   // React Query hooks for data fetching and mutations
   const { data: shoppingData, isLoading, error, refetch } = useShoppingList();
   const toggleItem = useToggleItem();
@@ -164,16 +168,9 @@ export function ShoppingListView() {
   const clearManualItems = useClearManualItems();
   const refreshList = useRefreshShoppingList();
 
-  // Fetch planner entries and meals for recipe ordering
-  const { data: plannerEntries } = useQuery({
-    queryKey: ["planner", "entries"],
-    queryFn: () => plannerApi.getEntries(),
-  });
-
-  const { data: allMeals } = useQuery({
-    queryKey: ["meals"],
-    queryFn: () => plannerApi.getMeals(),
-  });
+  // Fetch planner entries and meals for recipe ordering (using authenticated hooks)
+  const { data: plannerEntries } = usePlannerEntries();
+  const { data: allMeals } = useMeals();
 
   // UI state
   const [filterRecipeName, setFilterRecipeName] = useState<string | null>(null);
@@ -366,10 +363,26 @@ export function ShoppingListView() {
     return items.filter((i) => i.recipe_sources?.includes(filterRecipeName));
   };
 
-  // Sort categories alphabetically, but put "Other" at the end
+  // Sort categories based on user preference
   const sortedCategories = Object.keys(groupedItems).sort((a, b) => {
+    // "Other" always goes to the end
     if (a === "Other") return 1;
     if (b === "Other") return -1;
+
+    if (categorySortOrder === "custom" && customCategoryOrder.length > 0) {
+      // Use custom order - items not in the list go after known items
+      const indexA = customCategoryOrder.indexOf(a);
+      const indexB = customCategoryOrder.indexOf(b);
+      // If both are in the custom order, sort by position
+      if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+      // If only one is in custom order, it comes first
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      // Neither in custom order - fallback to alphabetical
+      return a.localeCompare(b);
+    }
+
+    // Default: alphabetical sorting
     return a.localeCompare(b);
   });
 

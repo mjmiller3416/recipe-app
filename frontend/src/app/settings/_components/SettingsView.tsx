@@ -34,7 +34,7 @@ import { AppearanceSection } from "./sections/AppearanceSection";
 import { FeedbackSection } from "./sections/FeedbackSection";
 import { AIFeaturesSection } from "./sections/AIFeaturesSection";
 import { RecipePreferencesSection } from "./sections/RecipePreferencesSection";
-import { UnitConversionsSection } from "./sections/UnitConversionsSection";
+import { ShoppingListSection } from "./sections/ShoppingListSection";
 
 export function SettingsView() {
   const [activeCategory, setActiveCategory] =
@@ -132,7 +132,22 @@ export function SettingsView() {
         );
 
       case "shoppingList":
-        return <UnitConversionsSection />;
+        return (
+          <ShoppingListSection
+            autoClearChecked={settings.shoppingList.autoClearChecked}
+            onAutoClearChange={(value) =>
+              updateSettings("shoppingList", { autoClearChecked: value })
+            }
+            categorySortOrder={settings.shoppingList.categorySortOrder}
+            customCategoryOrder={settings.shoppingList.customCategoryOrder}
+            onCategorySortOrderChange={(value) =>
+              updateSettings("shoppingList", { categorySortOrder: value })
+            }
+            onCustomCategoryOrderChange={(order) =>
+              updateSettings("shoppingList", { customCategoryOrder: order })
+            }
+          />
+        );
 
       case "dataManagement":
         return <DataManagementSection />;

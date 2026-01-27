@@ -7,12 +7,18 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "../SectionHeader";
 import { UnitConversionsSection } from "./UnitConversionsSection";
+import { CategoryOrderSection } from "./CategoryOrderSection";
 
 type AutoClearOption = "manual" | "onRefresh" | "daily";
+type CategorySortOrder = "alphabetical" | "custom";
 
 interface ShoppingListSectionProps {
   autoClearChecked: AutoClearOption;
   onAutoClearChange: (value: AutoClearOption) => void;
+  categorySortOrder: CategorySortOrder;
+  customCategoryOrder: string[];
+  onCategorySortOrderChange: (value: CategorySortOrder) => void;
+  onCustomCategoryOrderChange: (order: string[]) => void;
 }
 
 const autoClearOptions = [
@@ -36,6 +42,10 @@ const autoClearOptions = [
 export function ShoppingListSection({
   autoClearChecked,
   onAutoClearChange,
+  categorySortOrder,
+  customCategoryOrder,
+  onCategorySortOrderChange,
+  onCustomCategoryOrderChange,
 }: ShoppingListSectionProps) {
   return (
     <div className="space-y-6">
@@ -49,6 +59,16 @@ export function ShoppingListSection({
           />
 
           <div className="space-y-6">
+            {/* Category Display Order */}
+            <CategoryOrderSection
+              categorySortOrder={categorySortOrder}
+              customCategoryOrder={customCategoryOrder}
+              onSortOrderChange={onCategorySortOrderChange}
+              onCategoryOrderChange={onCustomCategoryOrderChange}
+            />
+
+            <Separator />
+
             {/* Auto Clear Checked Items */}
             <div className="space-y-3">
               <Label className="flex items-center gap-2">
