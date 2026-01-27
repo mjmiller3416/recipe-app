@@ -44,6 +44,30 @@ def constraint_exists(table_name: str, constraint_name: str) -> bool:
     return False
 
 
+def column_exists(table_name: str, column_name: str) -> bool:
+    """Check if a column exists in a table."""
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    columns = [col['name'] for col in inspector.get_columns(table_name)]
+    return column_name in columns
+
+
+def index_exists(table_name: str, index_name: str) -> bool:
+    """Check if an index exists on a table."""
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    indexes = [idx['name'] for idx in inspector.get_indexes(table_name)]
+    return index_name in indexes
+
+
+def foreign_key_exists(table_name: str, fk_name: str) -> bool:
+    """Check if a foreign key exists on a table."""
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    fks = [fk['name'] for fk in inspector.get_foreign_keys(table_name)]
+    return fk_name in fks
+
+
 def upgrade() -> None:
     """Upgrade schema.
 
@@ -88,35 +112,41 @@ def upgrade() -> None:
             batch_op.alter_column('user_id', server_default=None)
     else:
         # PostgreSQL - use native ALTER TABLE operations
-        # Add user_id column with default
-        op.add_column('ingredients', sa.Column('user_id', sa.Integer(), nullable=False, server_default='1'))
+        # All operations are idempotent to handle partial migration state
 
-        # Create index
-        op.create_index('ix_ingredients_user_id', 'ingredients', ['user_id'], unique=False)
+        # Add user_id column with default (if not already added)
+        if not column_exists('ingredients', 'user_id'):
+            op.add_column('ingredients', sa.Column('user_id', sa.Integer(), nullable=False, server_default='1'))
 
-        # Add foreign key
-        op.create_foreign_key(
-            'fk_ingredients_user_id',
-            'ingredients',
-            'users',
-            ['user_id'],
-            ['id'],
-            ondelete='CASCADE'
-        )
+        # Create index (if not already created)
+        if not index_exists('ingredients', 'ix_ingredients_user_id'):
+            op.create_index('ix_ingredients_user_id', 'ingredients', ['user_id'], unique=False)
+
+        # Add foreign key (if not already added)
+        if not foreign_key_exists('ingredients', 'fk_ingredients_user_id'):
+            op.create_foreign_key(
+                'fk_ingredients_user_id',
+                'ingredients',
+                'users',
+                ['user_id'],
+                ['id'],
+                ondelete='CASCADE'
+            )
 
         # Drop old unique constraint if it exists (find actual name)
         old_constraint = get_unique_constraint_name('ingredients', ['ingredient_name', 'ingredient_category'])
         if old_constraint:
             op.drop_constraint(old_constraint, 'ingredients', type_='unique')
 
-        # Create new unique constraint with user_id
-        op.create_unique_constraint(
-            'uq_ingredient_user_name_category',
-            'ingredients',
-            ['user_id', 'ingredient_name', 'ingredient_category']
-        )
+        # Create new unique constraint with user_id (if not already created)
+        if not constraint_exists('ingredients', 'uq_ingredient_user_name_category'):
+            op.create_unique_constraint(
+                'uq_ingredient_user_name_category',
+                'ingredients',
+                ['user_id', 'ingredient_name', 'ingredient_category']
+            )
 
-        # Remove server default
+        # Remove server default (safe to run multiple times)
         op.alter_column('ingredients', 'user_id', server_default=None)
 
     # --- Unit Conversion Rules ---
@@ -142,19 +172,28 @@ def upgrade() -> None:
             batch_op.alter_column('user_id', server_default=None)
     else:
         # PostgreSQL - use native ALTER TABLE operations
-        op.add_column('unit_conversion_rules', sa.Column('user_id', sa.Integer(), nullable=False, server_default='1'))
+        # All operations are idempotent to handle partial migration state
 
-        op.create_index('ix_unit_conversion_rules_user_id', 'unit_conversion_rules', ['user_id'], unique=False)
+        # Add user_id column (if not already added)
+        if not column_exists('unit_conversion_rules', 'user_id'):
+            op.add_column('unit_conversion_rules', sa.Column('user_id', sa.Integer(), nullable=False, server_default='1'))
 
-        op.create_foreign_key(
-            'fk_unit_conversion_rules_user_id',
-            'unit_conversion_rules',
-            'users',
-            ['user_id'],
-            ['id'],
-            ondelete='CASCADE'
-        )
+        # Create index (if not already created)
+        if not index_exists('unit_conversion_rules', 'ix_unit_conversion_rules_user_id'):
+            op.create_index('ix_unit_conversion_rules_user_id', 'unit_conversion_rules', ['user_id'], unique=False)
 
+        # Add foreign key (if not already added)
+        if not foreign_key_exists('unit_conversion_rules', 'fk_unit_conversion_rules_user_id'):
+            op.create_foreign_key(
+                'fk_unit_conversion_rules_user_id',
+                'unit_conversion_rules',
+                'users',
+                ['user_id'],
+                ['id'],
+                ondelete='CASCADE'
+            )
+
+        # Remove server default (safe to run multiple times)
         op.alter_column('unit_conversion_rules', 'user_id', server_default=None)
 
 
