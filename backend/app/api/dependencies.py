@@ -175,8 +175,12 @@ async def get_current_user(
         HTTPException 401: Missing or invalid token.
         HTTPException 500: Dev user not found (only in dev mode).
     """
+    # Debug: Print auth state
+    print(f"[AUTH] auth_disabled={settings.auth_disabled}, has_credentials={credentials is not None}")
+
     # Dev mode bypass - return configured dev user
     if settings.auth_disabled:
+        print("[AUTH] Dev mode - bypassing authentication")
         user_service = UserService(session)
         dev_user = user_service.get_by_id(settings.dev_user_id)
         if not dev_user:
@@ -189,6 +193,7 @@ async def get_current_user(
 
     # Require token in production mode
     if not credentials:
+        print("[AUTH] No credentials provided - returning 401")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing authentication token",
@@ -196,8 +201,10 @@ async def get_current_user(
         )
 
     token = credentials.credentials
+    print(f"[AUTH] Token received, length={len(token)}, starts_with={token[:20]}...")
 
     # Get JWKS and find matching signing key
+    print(f"[AUTH] Fetching JWKS, effective_url={settings.effective_jwks_url}")
     jwks = await get_clerk_jwks(settings)
     signing_key = _get_signing_key(jwks, token)
 
