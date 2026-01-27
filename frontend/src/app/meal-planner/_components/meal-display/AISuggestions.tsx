@@ -5,7 +5,7 @@ import { Sparkles, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { mealSuggestionsApi } from "@/lib/api";
+import { useMealSuggestions } from "@/hooks/api";
 import type { MealSuggestionsResponseDTO } from "@/types";
 
 // ============================================================================
@@ -73,8 +73,9 @@ export function AISuggestions({
   className,
 }: AISuggestionsProps) {
   const [suggestions, setSuggestions] = useState<MealSuggestionsResponseDTO | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  // Use mutation hook with automatic token injection
+  const suggestionsMutation = useMealSuggestions();
 
   // Track which mealId we've already fetched to prevent duplicate requests
   const fetchedMealIdRef = useRef<number | null>(null);
@@ -90,7 +91,6 @@ export function AISuggestions({
       const cached = getCachedSuggestions(mealId);
       if (cached) {
         setSuggestions(cached);
-        setLoading(false);
         fetchedMealIdRef.current = mealId;
         return;
       }
@@ -98,28 +98,23 @@ export function AISuggestions({
 
     // Mark as fetching
     fetchedMealIdRef.current = mealId;
-    setLoading(true);
-    setError(null);
 
-    try {
-      const response = await mealSuggestionsApi.getSuggestions({
+    suggestionsMutation.mutate(
+      {
         main_recipe_name: mainRecipeName,
         main_recipe_category: mainRecipeCategory || undefined,
         meal_type: mealType || undefined,
-      });
-
-      if (response.success) {
-        setSuggestions(response);
-        setCachedSuggestions(mealId, response);
-      } else {
-        setError(response.error || "Failed to get tip");
+      },
+      {
+        onSuccess: (response) => {
+          if (response.success) {
+            setSuggestions(response);
+            setCachedSuggestions(mealId, response);
+          }
+        },
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to get tip");
-    } finally {
-      setLoading(false);
-    }
-  }, [mealId, mainRecipeName, mainRecipeCategory, mealType]);
+    );
+  }, [mealId, mainRecipeName, mainRecipeCategory, mealType, suggestionsMutation]);
 
   // Auto-load on mount or when mealId changes
   useEffect(() => {
@@ -129,6 +124,14 @@ export function AISuggestions({
   const handleRegenerate = () => {
     fetchSuggestions(true);
   };
+
+  // Derive loading and error state from mutation
+  const loading = suggestionsMutation.isPending;
+  const error = suggestionsMutation.isError
+    ? (suggestionsMutation.error instanceof Error ? suggestionsMutation.error.message : "Failed to get tip")
+    : (!suggestionsMutation.isPending && suggestionsMutation.data && !suggestionsMutation.data.success)
+      ? (suggestionsMutation.data.error || "Failed to get tip")
+      : null;
 
   return (
     <Card className={cn("p-4 bg-primary/10 border-primary/20 min-h-[120px]", className)}>
