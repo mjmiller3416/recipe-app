@@ -37,8 +37,7 @@ import { RecipeCard, RecipeCardGrid } from "@/components/recipe/RecipeCard";
 import { RecipeSelectCard } from "@/components/recipe/RecipeSelectCard";
 import { FilterBar } from "@/components/common/FilterBar";
 import { FilterSidebar } from "@/components/common/FilterSidebar";
-import { recipeApi } from "@/lib/api";
-import { useToggleFavorite } from "@/hooks/api";
+import { useRecipes, useToggleFavorite } from "@/hooks/api";
 import { applyFilters } from "@/lib/filterUtils";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
 import { RECIPE_CATEGORY_OPTIONS, MEAL_TYPE_OPTIONS, DIETARY_PREFERENCES, QUICK_FILTERS, type QuickFilter } from "@/lib/constants";
@@ -421,10 +420,16 @@ export function RecipeBrowserView({
   // Check for URL params on mount
   const initialFavoritesOnly = searchParams.get("favoritesOnly") === "true";
 
-  // Data and loading state
-  const [recipes, setRecipes] = useState<RecipeCardData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Fetch recipes with authentication via React Query hook
+  // React Query handles caching, and useToggleFavorite handles optimistic updates
+  const { data: recipesData, isLoading, error: queryError } = useRecipes();
+
+  // Map to card format - memoized to avoid unnecessary re-renders
+  const recipes = useMemo(() => {
+    return recipesData ? mapRecipesForCards(recipesData) : [];
+  }, [recipesData]);
+
+  const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to load recipes") : null;
 
   // Filter options from constants (already exclude "all")
   const categoryOptions = RECIPE_CATEGORY_OPTIONS;
@@ -484,24 +489,6 @@ export function RecipeBrowserView({
     }
   }, [mode, searchParams, filters.favoritesOnly]);
 
-  // Fetch recipes on mount
-  useEffect(() => {
-    const fetchRecipes = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const data = await recipeApi.list();
-        setRecipes(mapRecipesForCards(data));
-      } catch (err) {
-        console.error("Failed to fetch recipes:", err);
-        setError(err instanceof Error ? err.message : "Failed to load recipes");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchRecipes();
-  }, []);
 
   // Persist filter visibility preference
   useEffect(() => {
@@ -689,21 +676,11 @@ export function RecipeBrowserView({
   };
 
   const handleFavoriteToggle = (recipe: RecipeCardData) => {
-    // Optimistic update (local state)
-    setRecipes((prev) =>
-      prev.map((r) => (r.id === recipe.id ? { ...r, isFavorite: !r.isFavorite } : r))
-    );
-
-    // Use mutation hook (handles cache invalidation)
-    toggleFavoriteMutation.mutate(Number(recipe.id), {
-      onError: () => {
-        // Revert on error
-        setRecipes((prev) =>
-          prev.map((r) => (r.id === recipe.id ? { ...r, isFavorite: recipe.isFavorite } : r))
-        );
-        console.error("Failed to toggle favorite");
-      },
-    });
+    // useToggleFavorite hook handles:
+    // - Optimistic UI update via React Query cache
+    // - Server sync
+    // - Automatic rollback on error
+    toggleFavoriteMutation.mutate(Number(recipe.id));
   };
 
   // Scroll to show content right below sticky header when filters change
