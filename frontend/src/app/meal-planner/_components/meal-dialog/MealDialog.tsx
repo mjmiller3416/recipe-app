@@ -13,6 +13,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EditorView } from "./views/EditorView";
 import { SavedView } from "./views/SavedView";
 import { recipeApi, plannerApi } from "@/lib/api";
+import {
+  useCreateMeal,
+  useUpdateMeal,
+  useAddToPlanner,
+} from "@/hooks/api";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
 import {
   applyFilters,
@@ -114,6 +119,11 @@ export function MealDialog({
   onEntryCreated,
   onMealUpdated,
 }: MealDialogProps) {
+  // Mutation hooks
+  const createMealMutation = useCreateMeal();
+  const updateMealMutation = useUpdateMeal();
+  const addToPlannerMutation = useAddToPlanner();
+
   // Tab state (only used in create mode)
   const [activeTab, setActiveTab] = useState<"create" | "saved">(defaultTab);
 
@@ -344,15 +354,15 @@ export function MealDialog({
         .filter((r): r is RecipeCardData => r !== null)
         .map((r) => Number(r.id));
 
-      // Step 1: Create the meal
-      const meal = await plannerApi.createMeal({
+      // Step 1: Create the meal using mutation
+      const meal = await createMealMutation.mutateAsync({
         meal_name: mealName || mainRecipe.name,
         main_recipe_id: Number(mainRecipe.id),
         side_recipe_ids: sideRecipeIds,
       });
 
-      // Step 2: Add meal to planner (creates PlannerEntry)
-      const entry = await plannerApi.addToPlanner(meal.id);
+      // Step 2: Add meal to planner using mutation
+      const entry = await addToPlannerMutation.mutateAsync(meal.id);
 
       onEntryCreated?.(entry);
       onOpenChange(false);
@@ -372,10 +382,13 @@ export function MealDialog({
         .filter((r): r is RecipeCardData => r !== null)
         .map((r) => Number(r.id));
 
-      const updatedMeal = await plannerApi.updateMeal(mealId, {
-        meal_name: mealName,
-        main_recipe_id: Number(mainRecipe.id),
-        side_recipe_ids: sideRecipeIds,
+      const updatedMeal = await updateMealMutation.mutateAsync({
+        mealId,
+        data: {
+          meal_name: mealName,
+          main_recipe_id: Number(mainRecipe.id),
+          side_recipe_ids: sideRecipeIds,
+        },
       });
 
       onMealUpdated?.(updatedMeal);
