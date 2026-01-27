@@ -16,7 +16,7 @@ export function DashboardView() {
   // Fetch all data via React Query hooks (parallel fetching)
   const { data: statsData, isLoading: statsLoading } = useDashboardStats();
   const { data: plannerEntries } = usePlannerEntries();
-  const { shoppingList: shoppingData } = useShoppingList();
+  const { data: shoppingData } = useShoppingList();
 
   const isLoading = statsLoading;
   const stats = {
