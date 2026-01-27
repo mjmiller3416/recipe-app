@@ -23,3 +23,33 @@ node_modules/
 .mcp.json
 .mcp.json
 backup.sql
+frontend/public/ui_examples/add_recipe/direction_notes.png
+frontend/public/ui_examples/add_recipe/image_gen.png
+frontend/public/ui_examples/add_recipe/ingredients.png
+frontend/public/ui_examples/add_recipe/recipe_info.png
+frontend/public/ui_examples/dashboard/chefs_tip_widget.png
+frontend/public/ui_examples/dashboard/dark_mode.png
+frontend/public/ui_examples/dashboard/light_mode.png
+frontend/public/ui_examples/dashboard/quick_add_widget.png
+frontend/public/ui_examples/dashboard/random_recipe_widget.png
+frontend/public/ui_examples/dashboard/shopping_list_widget.png
+frontend/public/ui_examples/dashboard/stats.png
+frontend/public/ui_examples/dashboard/streak_counter.png
+frontend/public/ui_examples/dashboard/weekly_menu_widget.png
+frontend/public/ui_examples/generated images/banner_127.jpg
+frontend/public/ui_examples/generated images/reference_89.jpg
+frontend/public/ui_examples/generated images/reference_113.jpg
+frontend/public/ui_examples/generated images/reference_238.jpg
+frontend/public/ui_examples/meal_planner/create_meal.png
+frontend/public/ui_examples/meal_planner/selected_meal.png
+frontend/public/ui_examples/meal_planner/weekly_menu.png
+frontend/public/ui_examples/mga/conversation_starters.png
+frontend/public/ui_examples/mga/personality_context_example.png
+frontend/public/ui_examples/mga/recipe_gen.png
+frontend/public/ui_examples/recipe_browser/ingredients_directions.png
+frontend/public/ui_examples/recipe_browser/recipe_cards.png
+frontend/public/ui_examples/shopping_list/category_organization.png
+frontend/public/ui_examples/shopping_list/full_view.png
+frontend/public/ui_examples/shopping_list/item_aggregation.png
+frontend/public/ui_examples/shopping_list/progress_tracking.png
+frontend/public/ui_examples/shopping_list/recipe_filter.png
