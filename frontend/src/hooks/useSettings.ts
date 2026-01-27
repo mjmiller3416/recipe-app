@@ -337,7 +337,7 @@ export function useSettings(): UseSettingsReturn {
       setIsSyncing(true);
       try {
         const token = await getToken();
-        await settingsApi.replace(settings as Record<string, unknown>, token);
+        await settingsApi.replace(settings as unknown as Record<string, unknown>, token);
       } catch (error) {
         console.error("[useSettings] Failed to sync settings to API:", error);
         // Settings are already saved locally, so this is a silent failure
