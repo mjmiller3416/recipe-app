@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import { ShoppingCart, ArrowRight, CheckCircle2, Circle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { shoppingApi } from "@/lib/api";
+import { useShoppingList, useRefreshShoppingList } from "@/hooks/api";
 import { INGREDIENT_CATEGORY_ORDER } from "@/lib/constants";
 import type { ShoppingListResponseDTO } from "@/types";
 
@@ -19,29 +19,16 @@ interface ShoppingListWidgetProps {
 }
 
 export function ShoppingListWidget({ shoppingData: initialData }: ShoppingListWidgetProps) {
-  const [shoppingData, setShoppingData] = useState<ShoppingListResponseDTO | null>(initialData ?? null);
-  const [isLoading, setIsLoading] = useState(!initialData);
+  // Use React Query hook with automatic token injection
+  const { data: shoppingData, isLoading } = useShoppingList();
+  const refreshShoppingList = useRefreshShoppingList();
 
-  // Fetch shopping list data
-  const fetchShoppingList = useCallback(async () => {
-    try {
-      const data = await shoppingApi.getList();
-      setShoppingData(data);
-    } catch (error) {
-      console.error("Failed to fetch shopping list:", error);
-    }
-  }, []);
-
-  // Fetch on mount (only if no initial data) and listen for planner updates
+  // Listen for planner updates to refetch shopping list
   useEffect(() => {
-    if (!initialData) {
-      fetchShoppingList().finally(() => setIsLoading(false));
-    }
-
-    // Always listen for updates to refetch when shopping list changes
-    window.addEventListener("planner-updated", fetchShoppingList);
-    return () => window.removeEventListener("planner-updated", fetchShoppingList);
-  }, [fetchShoppingList, initialData]);
+    const handlePlannerUpdated = () => refreshShoppingList();
+    window.addEventListener("planner-updated", handlePlannerUpdated);
+    return () => window.removeEventListener("planner-updated", handlePlannerUpdated);
+  }, [refreshShoppingList]);
 
   // Group items by category and calculate progress
   const categoryProgress = useMemo((): CategoryProgress[] => {

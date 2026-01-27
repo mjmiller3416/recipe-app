@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { CalendarDays, BookOpen, Plus, ShoppingCart, Sparkles, LucideIcon } from "lucide-react";
 import { SafeLink } from "@/components/common/SafeLink";
 import { cn } from "@/lib/utils";
-import { shoppingApi } from "@/lib/api";
+import { useShoppingList, useRefreshShoppingList } from "@/hooks/api";
 
 interface NavItem {
   name: string;
@@ -27,24 +27,22 @@ interface MobileBottomNavProps {
 
 export function MobileBottomNav({ onOpenMealGenie }: MobileBottomNavProps) {
   const pathname = usePathname();
-  const [shoppingCount, setShoppingCount] = useState(0);
 
-  const fetchShoppingCount = useCallback(async () => {
-    try {
-      const data = await shoppingApi.getList();
-      setShoppingCount(data.total_items - data.checked_items);
-    } catch (error) {
-      console.error("[MobileBottomNav] Failed to fetch shopping list:", error);
-    }
-  }, []);
+  // Use React Query hook with automatic token injection
+  const { data: shoppingData } = useShoppingList();
+  const refreshShoppingList = useRefreshShoppingList();
+
+  // Calculate remaining items from query data
+  const shoppingCount = shoppingData
+    ? shoppingData.total_items - shoppingData.checked_items
+    : 0;
 
   useEffect(() => {
-    fetchShoppingCount();
-    window.addEventListener("shopping-list-updated", fetchShoppingCount);
+    window.addEventListener("shopping-list-updated", refreshShoppingList);
     return () => {
-      window.removeEventListener("shopping-list-updated", fetchShoppingCount);
+      window.removeEventListener("shopping-list-updated", refreshShoppingList);
     };
-  }, [fetchShoppingCount]);
+  }, [refreshShoppingList]);
 
   return (
     <nav

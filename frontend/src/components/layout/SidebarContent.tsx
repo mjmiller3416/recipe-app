@@ -27,7 +27,7 @@ import { CHANGELOG_TOTAL_ITEMS } from "@/data/changelog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { appConfig } from "@/lib/config";
 import { useSettings } from "@/hooks/useSettings";
-import { shoppingApi } from "@/lib/api";
+import { useShoppingList, useGenerateShoppingList, useRefreshShoppingList } from "@/hooks/api";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -55,27 +55,26 @@ export function SidebarContent({ onNavigate, onOpenMealGenie }: SidebarContentPr
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [hasNewUpdates, setHasNewUpdates] = useState(false);
   const [newItemCount, setNewItemCount] = useState(0);
-  const [shoppingListRemaining, setShoppingListRemaining] = useState(0);
 
-  // Fetch shopping list count
-  const fetchShoppingCount = useCallback(async () => {
-    try {
-      const data = await shoppingApi.getList();
-      setShoppingListRemaining(data.total_items - data.checked_items);
-    } catch (error) {
-      console.error("[Sidebar] Failed to fetch shopping list:", error);
-    }
-  }, []);
+  // Use React Query hooks with automatic token injection
+  const { data: shoppingData } = useShoppingList();
+  const generateShoppingList = useGenerateShoppingList();
+  const refreshShoppingList = useRefreshShoppingList();
+
+  // Calculate remaining items from query data
+  const shoppingListRemaining = shoppingData
+    ? shoppingData.total_items - shoppingData.checked_items
+    : 0;
 
   // Handle planner updates: regenerate shopping list then refresh count
   const handlePlannerUpdated = useCallback(async () => {
     try {
-      await shoppingApi.generateFromPlanner();
-      await fetchShoppingCount();
+      await generateShoppingList.mutateAsync();
+      // React Query cache is automatically invalidated by the mutation
     } catch (error) {
       console.error("[Sidebar] Failed to regenerate shopping list:", error);
     }
-  }, [fetchShoppingCount]);
+  }, [generateShoppingList]);
 
   useEffect(() => {
     // Check for new changelog items by comparing counts
@@ -89,18 +88,15 @@ export function SidebarContent({ onNavigate, onOpenMealGenie }: SidebarContentPr
       setNewItemCount(newItems);
     }
 
-    // Fetch shopping count on mount
-    fetchShoppingCount();
-
     // Listen for shopping list updates from other components
-    window.addEventListener("shopping-list-updated", fetchShoppingCount);
+    window.addEventListener("shopping-list-updated", refreshShoppingList);
     // Listen for planner updates to regenerate shopping list
     window.addEventListener("planner-updated", handlePlannerUpdated);
     return () => {
-      window.removeEventListener("shopping-list-updated", fetchShoppingCount);
+      window.removeEventListener("shopping-list-updated", refreshShoppingList);
       window.removeEventListener("planner-updated", handlePlannerUpdated);
     };
-  }, [fetchShoppingCount, handlePlannerUpdated]);
+  }, [refreshShoppingList, handlePlannerUpdated]);
 
   const handleChangelogOpenChange = (open: boolean) => {
     if (open) {

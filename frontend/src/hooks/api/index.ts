@@ -72,3 +72,16 @@ export {
   // Utilities
   useRefreshCookingTip,
 } from "./useAI";
+
+// Shopping Hooks
+export {
+  // Query Keys
+  shoppingQueryKeys,
+  // Queries
+  useShoppingList,
+  // Mutations
+  useGenerateShoppingList,
+  useToggleShoppingItem,
+  // Utilities
+  useRefreshShoppingList,
+} from "./useShopping";
