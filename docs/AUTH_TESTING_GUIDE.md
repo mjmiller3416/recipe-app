@@ -31,24 +31,34 @@ By default, the backend runs with `AUTH_DISABLED=true`, which bypasses all JWT v
 ## Quick Start
 
 ```bash
-# 1. Switch to production-like authentication
+# 1. Ensure frontend points to local backend
+# In frontend/.env.local, verify:
+#   NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# 2. Switch to production-like authentication
 python backend/scripts/toggle_auth.py prod
 
-# 2. Restart the backend (required after .env changes)
+# 3. Start the backend (uses SQLite locally)
 cd backend
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # macOS/Linux
 python -m uvicorn app.main:app --reload --port 8000
 
-# 3. Run frontend (in another terminal)
+# 4. Run frontend (in another terminal)
 cd frontend
 npm run dev
 
-# 4. Sign in through Clerk at http://localhost:3000/sign-in
+# 5. Sign in through Clerk at http://localhost:3000/sign-in
 
-# 5. Test your changes
+# 6. Test your changes
 
-# 6. Switch back to dev mode when done (optional)
+# 7. Switch back to dev mode when done (optional)
 python backend/scripts/toggle_auth.py dev
 ```
+
+> **Note:** Local development uses SQLite, while production uses PostgreSQL.
+> Database behavior should be identical, but if you encounter issues, check
+> that your SQLite database has been migrated: `alembic upgrade head`
 
 ---
 
@@ -230,6 +240,15 @@ Run through this checklist before deploying authentication changes:
 
 ## Common Issues & Solutions
 
+### Issue: "Failed to fetch" errors everywhere
+
+**Cause:** Frontend can't reach the backend.
+
+**Solution:**
+1. Verify backend is running: `curl http://localhost:8000/docs`
+2. Check `frontend/.env.local` has: `NEXT_PUBLIC_API_URL=http://localhost:8000`
+3. Restart frontend after changing `.env.local`
+
 ### Issue: 401 "Missing authentication token"
 
 **Cause:** Frontend not sending the Authorization header.
@@ -275,6 +294,40 @@ const { data } = useRecipes();
 **Cause:** Backend not allowing frontend origin.
 
 **Solution:** Check `app/main.py` CORS configuration includes your frontend URL.
+
+---
+
+## SQLite vs PostgreSQL
+
+| Environment | Database | Notes |
+|-------------|----------|-------|
+| Local dev | SQLite | File: `backend/app_data.db` |
+| Production | PostgreSQL | Via `SQLALCHEMY_DATABASE_URL` env var |
+
+### Database Differences to Watch
+
+Most operations work identically, but be aware of:
+
+- **Case sensitivity:** PostgreSQL is case-sensitive for string comparisons by default
+- **JSON fields:** Both support JSON, but syntax may vary slightly
+- **Migrations:** Always test migrations locally with SQLite before deploying
+
+### Reset Local Database
+
+If your local SQLite database gets corrupted or out of sync:
+
+```bash
+cd backend
+
+# Option 1: Re-run migrations
+alembic downgrade base
+alembic upgrade head
+
+# Option 2: Delete and recreate
+rm app_data.db
+alembic upgrade head
+python app/scripts/seed_database.py --mode replace
+```
 
 ---
 
