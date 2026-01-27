@@ -1,17 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Users, Clock, Plus, Check, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
-import { plannerApi } from "@/lib/api";
+import { useMeal } from "@/hooks/api";
 import { SideChip } from "./SideChip";
 import { AISuggestions } from "./AISuggestions";
 import { RecipeStats } from "./RecipeStats";
-import type { MealSelectionResponseDTO, RecipeCardDTO } from "@/types";
+import type { RecipeCardDTO } from "@/types";
 
 // ============================================================================
 // TYPES
@@ -102,34 +101,15 @@ export function SelectedMealCard({
   className,
 }: SelectedMealCardProps) {
   const router = useRouter();
-  const [meal, setMeal] = useState<MealSelectionResponseDTO | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: meal, isLoading, error } = useMeal(mealId);
 
   // Navigate to recipe detail page
   const handleRecipeClick = (recipeId: number) => {
     router.push(`/recipes/${recipeId}`);
   };
 
-  useEffect(() => {
-    async function fetchMeal() {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await plannerApi.getMeal(mealId);
-        setMeal(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load meal");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchMeal();
-  }, [mealId]);
-
   // Loading state
-  if (loading) {
+  if (isLoading) {
     return <SelectedMealSkeleton className={className} />;
   }
 
@@ -137,7 +117,9 @@ export function SelectedMealCard({
   if (error) {
     return (
       <Card className={cn("p-6 text-center", className)}>
-        <p className="text-destructive font-medium">{error}</p>
+        <p className="text-destructive font-medium">
+          {error instanceof Error ? error.message : "Failed to load meal"}
+        </p>
       </Card>
     );
   }

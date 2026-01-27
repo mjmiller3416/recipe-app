@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -15,6 +15,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  usePlannerEntries,
+  useCreateMeal,
+  useUpdateMeal,
+  useAddToPlanner,
+  useRemoveEntry,
+  useMarkComplete,
+  useMarkIncomplete,
+  useToggleSaveMeal,
+  useCycleShoppingMode,
+  useReorderEntries,
+  useClearCompleted,
+} from "@/hooks/api";
 import { plannerApi } from "@/lib/api";
 import { PlannerEntryResponseDTO, MealSelectionResponseDTO } from "@/types";
 import { MealGrid } from "./MealGrid";
@@ -37,10 +50,23 @@ export function MealPlannerPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // State for planner entries (not meals directly)
-  const [entries, setEntries] = useState<PlannerEntryResponseDTO[]>([]);
+  // Fetch planner entries via React Query
+  const { data: entries = [], isLoading } = usePlannerEntries();
+
+  // Mutation hooks
+  const createMealMutation = useCreateMeal();
+  const updateMealMutation = useUpdateMeal();
+  const addToPlannerMutation = useAddToPlanner();
+  const removeEntryMutation = useRemoveEntry();
+  const markCompleteMutation = useMarkComplete();
+  const markIncompleteMutation = useMarkIncomplete();
+  const toggleSaveMutation = useToggleSaveMeal();
+  const cycleShoppingModeMutation = useCycleShoppingMode();
+  const reorderEntriesMutation = useReorderEntries();
+  const clearCompletedMutation = useClearCompleted();
+
+  // Local UI state
   const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mealRefreshKey, setMealRefreshKey] = useState(0);
 
@@ -117,29 +143,15 @@ export function MealPlannerPage() {
     }
   }, [searchParams, router]);
 
-  // Fetch planner entries on mount
+  // Auto-select first uncompleted entry when entries load
+  const hasAutoSelected = useRef(false);
   useEffect(() => {
-    async function fetchEntries() {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const data = await plannerApi.getEntries();
-        setEntries(data);
-
-        // Auto-select first uncompleted entry, or first entry if all completed
-        if (data.length > 0 && selectedEntryId === null) {
-          const firstUncompleted = data.find((e) => !e.is_completed);
-          setSelectedEntryId(firstUncompleted?.id ?? data[0].id);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load planner");
-      } finally {
-        setIsLoading(false);
-      }
+    if (entries.length > 0 && selectedEntryId === null && !hasAutoSelected.current) {
+      hasAutoSelected.current = true;
+      const firstUncompleted = entries.find((e) => !e.is_completed);
+      setSelectedEntryId(firstUncompleted?.id ?? entries[0].id);
     }
-
-    fetchEntries();
-  }, []);
+  }, [entries, selectedEntryId]);
 
   // Get the selected entry to derive meal_id for SelectedMealCard
   const selectedEntry = entries.find((e) => e.id === selectedEntryId);
@@ -291,11 +303,14 @@ export function MealPlannerPage() {
       const sideRecipeIds = pendingSides.map((r) => Number(r.id));
 
       if (editingMealId) {
-        // Update existing meal
-        const updatedMeal = await plannerApi.updateMeal(editingMealId, {
-          meal_name: pendingMain.name,
-          main_recipe_id: Number(pendingMain.id),
-          side_recipe_ids: sideRecipeIds,
+        // Update existing meal using mutation
+        const updatedMeal = await updateMealMutation.mutateAsync({
+          mealId: editingMealId,
+          data: {
+            meal_name: pendingMain.name,
+            main_recipe_id: Number(pendingMain.id),
+            side_recipe_ids: sideRecipeIds,
+          },
         });
 
         // Update local entries state
@@ -304,31 +319,22 @@ export function MealPlannerPage() {
         // Close dialogs and reset state
         resetMealCreation();
       } else {
-        // Create new meal
-        const meal = await plannerApi.createMeal({
+        // Create new meal using mutation
+        const meal = await createMealMutation.mutateAsync({
           meal_name: pendingMain.name,
           main_recipe_id: Number(pendingMain.id),
           side_recipe_ids: sideRecipeIds,
         });
 
-        // Add to planner
-        await plannerApi.addToPlanner(meal.id);
+        // Add to planner using mutation
+        const newEntry = await addToPlannerMutation.mutateAsync(meal.id);
 
-        // Refresh entries
-        const data = await plannerApi.getEntries();
-        setEntries(data);
-
-        // Select the new entry
-        const newEntry = data.find((e) => e.meal_id === meal.id);
-        if (newEntry) {
-          setSelectedEntryId(newEntry.id);
-        }
+        // Select the new entry (cache will be automatically updated by mutations)
+        setSelectedEntryId(newEntry.id);
 
         // Close dialogs and reset state
         resetMealCreation();
       }
-
-      window.dispatchEvent(new Event("planner-updated"));
     } catch (err) {
       console.error("Failed to save meal:", err);
       const message = err instanceof Error ? err.message : "Failed to save meal";
@@ -347,41 +353,34 @@ export function MealPlannerPage() {
   };
 
   // Handle marking a meal as complete/incomplete (toggle)
-  const handleMarkComplete = async () => {
+  const handleMarkComplete = () => {
     if (selectedEntryId === null) return;
 
-    const previousEntries = entries;
     const currentEntry = entries.find((e) => e.id === selectedEntryId);
     if (!currentEntry) return;
 
-    // Optimistic UI update
-    setEntries((prev) =>
-      prev.map((entry) =>
-        entry.id === selectedEntryId
-          ? { ...entry, is_completed: !entry.is_completed }
-          : entry
-      )
-    );
-
-    try {
-      const updatedEntry = currentEntry.is_completed
-        ? await plannerApi.markIncomplete(selectedEntryId)
-        : await plannerApi.markComplete(selectedEntryId);
-      // Update with server response
-      setEntries((prev) =>
-        prev.map((entry) =>
-          entry.id === selectedEntryId
-            ? { ...entry, is_completed: updatedEntry.is_completed, completed_at: updatedEntry.completed_at }
-            : entry
-        )
-      );
-      // Refresh meal card to show updated recipe stats (times cooked, last cooked)
-      setMealRefreshKey((k) => k + 1);
-      window.dispatchEvent(new Event("planner-updated"));
-    } catch (err) {
-      // Rollback on error
-      setEntries(previousEntries);
-      setError(err instanceof Error ? err.message : "Failed to update completion status");
+    // Use the appropriate mutation based on current state
+    // Optimistic updates are handled by the hooks
+    if (currentEntry.is_completed) {
+      markIncompleteMutation.mutate(selectedEntryId, {
+        onSuccess: () => {
+          // Refresh meal card to show updated recipe stats
+          setMealRefreshKey((k) => k + 1);
+        },
+        onError: (err) => {
+          setError(err instanceof Error ? err.message : "Failed to update completion status");
+        },
+      });
+    } else {
+      markCompleteMutation.mutate(selectedEntryId, {
+        onSuccess: () => {
+          // Refresh meal card to show updated recipe stats (times cooked, last cooked)
+          setMealRefreshKey((k) => k + 1);
+        },
+        onError: (err) => {
+          setError(err instanceof Error ? err.message : "Failed to update completion status");
+        },
+      });
     }
   };
 
@@ -435,162 +434,91 @@ export function MealPlannerPage() {
 
   // Handle saved meal added to planner from SavedMealsDialog
   const handleSavedMealAdded = (entry: PlannerEntryResponseDTO) => {
-    setEntries((prev) => [...prev, entry]);
+    // Cache is automatically updated by the useAddToPlanner mutation in SavedMealsDialog
     setSelectedEntryId(entry.id);
-    window.dispatchEvent(new Event("planner-updated"));
   };
 
-  // Handle meal updated - refresh entry data in local state
+  // Handle meal updated - cache is automatically updated by mutation
   const handleMealUpdated = (updatedMeal: MealSelectionResponseDTO) => {
-    setEntries((prev) =>
-      prev.map((entry) =>
-        entry.meal_id === updatedMeal.id
-          ? {
-              ...entry,
-              meal_name: updatedMeal.meal_name,
-              main_recipe: updatedMeal.main_recipe,
-            }
-          : entry
-      )
-    );
     // Trigger SelectedMealCard to re-fetch by changing its key
     setMealRefreshKey((prev) => prev + 1);
-    window.dispatchEvent(new Event("planner-updated"));
   };
 
-  const handleRemoveFromMenu = async () => {
+  const handleRemoveFromMenu = () => {
     if (selectedEntryId === null) return;
 
-    const previousEntries = entries;
     const entryToRemove = selectedEntryId;
 
-    // Optimistic UI update
-    const updatedEntries = entries.filter((e) => e.id !== entryToRemove);
-    setEntries(updatedEntries);
-
-    // Select next entry or null
-    if (updatedEntries.length > 0) {
-      const firstUncompleted = updatedEntries.find((e) => !e.is_completed);
-      setSelectedEntryId(firstUncompleted?.id ?? updatedEntries[0].id);
+    // Select next entry before removal (optimistic UI handled by hook)
+    const remainingEntries = entries.filter((e) => e.id !== entryToRemove);
+    if (remainingEntries.length > 0) {
+      const firstUncompleted = remainingEntries.find((e) => !e.is_completed);
+      setSelectedEntryId(firstUncompleted?.id ?? remainingEntries[0].id);
     } else {
       setSelectedEntryId(null);
     }
 
-    try {
-      await plannerApi.removeEntry(entryToRemove);
-      window.dispatchEvent(new Event("planner-updated"));
-    } catch (err) {
-      // Rollback on error
-      setEntries(previousEntries);
-      setSelectedEntryId(entryToRemove);
-      setError(err instanceof Error ? err.message : "Failed to remove from menu");
-    }
+    removeEntryMutation.mutate(entryToRemove, {
+      onError: (err) => {
+        // Restore selection on error
+        setSelectedEntryId(entryToRemove);
+        setError(err instanceof Error ? err.message : "Failed to remove from menu");
+      },
+    });
   };
 
   // Handle toggling saved status for the selected meal
-  const handleToggleSave = async () => {
-    if (!selectedMealId || selectedEntryId === null) return;
+  const handleToggleSave = () => {
+    if (!selectedMealId) return;
 
-    const previousEntries = entries;
-
-    // Optimistic UI update
-    setEntries((prev) =>
-      prev.map((entry) =>
-        entry.id === selectedEntryId
-          ? { ...entry, meal_is_saved: !entry.meal_is_saved }
-          : entry
-      )
-    );
-
-    try {
-      await plannerApi.toggleSave(selectedMealId);
-    } catch (err) {
-      // Rollback on error
-      setEntries(previousEntries);
-      setError(err instanceof Error ? err.message : "Failed to update saved status");
-    }
+    // Optimistic update handled by the hook
+    toggleSaveMutation.mutate(selectedMealId, {
+      onError: (err) => {
+        setError(err instanceof Error ? err.message : "Failed to update saved status");
+      },
+    });
   };
 
   // Handle cycling shopping mode for a meal: all -> produce_only -> none -> all
-  const handleCycleShoppingMode = async (item: MealGridItem) => {
-    const previousEntries = entries;
-
-    // Calculate next mode for optimistic update
-    const currentMode = item.shoppingMode ?? "all";
-    const modes = ["all", "produce_only", "none"] as const;
-    const currentIndex = modes.indexOf(currentMode);
-    const nextMode = modes[(currentIndex + 1) % modes.length];
-
-    // Optimistic UI update
-    setEntries((prev) =>
-      prev.map((entry) =>
-        entry.id === item.id
-          ? { ...entry, shopping_mode: nextMode }
-          : entry
-      )
-    );
-
-    try {
-      await plannerApi.cycleShoppingMode(item.id);
-      window.dispatchEvent(new Event("planner-updated"));
-    } catch (err) {
-      // Rollback on error
-      setEntries(previousEntries);
-      setError(err instanceof Error ? err.message : "Failed to update shopping mode");
-    }
+  const handleCycleShoppingMode = (item: MealGridItem) => {
+    // Optimistic update handled by the hook
+    cycleShoppingModeMutation.mutate(item.id, {
+      onError: (err) => {
+        setError(err instanceof Error ? err.message : "Failed to update shopping mode");
+      },
+    });
   };
 
   // Handle drag-and-drop reorder of grid items
   const handleReorder = useCallback(
-    async (reorderedItems: MealGridItem[]) => {
+    (reorderedItems: MealGridItem[]) => {
       const reorderedIds = reorderedItems.map((item) => item.id);
-      const previousEntries = entries;
-
-      // Optimistic update: reorder entries to match new order
-      const reorderedEntries = reorderedIds
-        .map((id) => entries.find((e) => e.id === id))
-        .filter((e): e is PlannerEntryResponseDTO => e !== undefined);
-
-      // Merge reordered active entries with completed entries
-      setEntries([...reorderedEntries, ...completedEntries]);
-
-      try {
-        await plannerApi.reorderEntries(reorderedIds);
-        window.dispatchEvent(new Event("planner-updated"));
-      } catch (err) {
-        console.error("Failed to reorder entries:", err);
-        setEntries(previousEntries);
-      }
+      // Optimistic update handled by the hook
+      reorderEntriesMutation.mutate(reorderedIds);
     },
-    [entries, completedEntries]
+    [reorderEntriesMutation]
   );
 
   // Handle clearing all completed entries
-  const handleClearCompleted = async () => {
-    const previousEntries = entries;
+  const handleClearCompleted = () => {
     const completedIds = entries.filter((e) => e.is_completed).map((e) => e.id);
-
-    // Optimistic UI update
-    const updatedEntries = entries.filter((e) => !e.is_completed);
-    setEntries(updatedEntries);
+    const remainingEntries = entries.filter((e) => !e.is_completed);
 
     // Update selection if current selection was completed
     if (selectedEntryId && completedIds.includes(selectedEntryId)) {
-      if (updatedEntries.length > 0) {
-        setSelectedEntryId(updatedEntries[0].id);
+      if (remainingEntries.length > 0) {
+        setSelectedEntryId(remainingEntries[0].id);
       } else {
         setSelectedEntryId(null);
       }
     }
 
-    try {
-      await plannerApi.clearCompleted();
-      window.dispatchEvent(new Event("planner-updated"));
-    } catch (err) {
-      // Rollback on error
-      setEntries(previousEntries);
-      setError(err instanceof Error ? err.message : "Failed to clear completed");
-    }
+    // Optimistic update handled by the hook
+    clearCompletedMutation.mutate(undefined, {
+      onError: (err) => {
+        setError(err instanceof Error ? err.message : "Failed to clear completed");
+      },
+    });
   };
 
   // When recipe picker is open, render it directly without PageLayout header

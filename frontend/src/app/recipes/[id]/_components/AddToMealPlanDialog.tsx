@@ -14,7 +14,11 @@ import {
 } from "@/components/ui/dialog";
 import type { RecipeResponseDTO, PlannerEntryResponseDTO } from "@/types";
 import { cn } from "@/lib/utils";
-import { plannerApi } from "@/lib/api";
+import {
+  useAddSideToMeal,
+  useCreateMeal,
+  useAddToPlanner,
+} from "@/hooks/api";
 
 interface AddToMealPlanDialogProps {
   recipe: RecipeResponseDTO;
@@ -31,6 +35,11 @@ export function AddToMealPlanDialog({
   onOpenChange,
   onSuccess,
 }: AddToMealPlanDialogProps) {
+  // Mutation hooks
+  const addSideToMealMutation = useAddSideToMeal();
+  const createMealMutation = useCreateMeal();
+  const addToPlannerMutation = useAddToPlanner();
+
   // Track the planner entry ID (unique), not meal_id (can have duplicates)
   const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null);
   const [added, setAdded] = useState(false);
@@ -78,7 +87,10 @@ export function AddToMealPlanDialog({
     setError(null);
 
     try {
-      await plannerApi.addSideToMeal(selectedEntry.meal_id, recipe.id);
+      await addSideToMealMutation.mutateAsync({
+        mealId: selectedEntry.meal_id,
+        recipeId: recipe.id,
+      });
       showSuccess();
     } catch (err) {
       console.error("Failed to add to meal:", err);
@@ -96,7 +108,7 @@ export function AddToMealPlanDialog({
 
     try {
       // Create a new meal with this recipe as the main dish
-      const meal = await plannerApi.createMeal({
+      const meal = await createMealMutation.mutateAsync({
         meal_name: newMealName.trim(),
         main_recipe_id: recipe.id,
         side_recipe_ids: [],
@@ -104,7 +116,7 @@ export function AddToMealPlanDialog({
       });
 
       // Add the new meal to the planner
-      await plannerApi.addToPlanner(meal.id);
+      await addToPlannerMutation.mutateAsync(meal.id);
       showSuccess();
     } catch (err) {
       console.error("Failed to create meal:", err);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { feedbackApi } from "@/lib/api";
 
@@ -82,6 +83,7 @@ const MIN_MESSAGE_LENGTH = 10;
  * });
  */
 export function useFeedbackForm(options: UseFeedbackFormOptions = {}): UseFeedbackFormReturn {
+  const { getToken } = useAuth();
   const { metadata, onSuccess, onError } = options;
 
   // Form state
@@ -106,11 +108,12 @@ export function useFeedbackForm(options: UseFeedbackFormOptions = {}): UseFeedba
 
     setIsSubmitting(true);
     try {
+      const token = await getToken();
       const response = await feedbackApi.submit({
         category,
         message: trimmedMessage,
         metadata,
-      });
+      }, token);
 
       if (response.success) {
         toast.success(response.message);
@@ -127,7 +130,7 @@ export function useFeedbackForm(options: UseFeedbackFormOptions = {}): UseFeedba
     } finally {
       setIsSubmitting(false);
     }
-  }, [canSubmit, category, trimmedMessage, metadata, reset, onSuccess, onError]);
+  }, [canSubmit, category, trimmedMessage, metadata, reset, onSuccess, onError, getToken]);
 
   return {
     // State

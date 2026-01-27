@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dices, RefreshCw, Clock, Users, ChefHat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { recipeApi } from "@/lib/api";
+import { useRecipeCards } from "@/hooks/api";
 import { RecipeBannerImage } from "@/components/recipe/RecipeBannerImage";
 import type { RecipeCardDTO } from "@/types";
 
@@ -42,9 +42,8 @@ const metadataVariants = {
 
 export function RecipeRouletteWidget() {
   const router = useRouter();
-  const [recipes, setRecipes] = useState<RecipeCardDTO[]>([]);
+  const { data: recipes = [], isLoading } = useRecipeCards();
   const [currentRecipe, setCurrentRecipe] = useState<RecipeCardDTO | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
   const [displayKey, setDisplayKey] = useState(0); // Forces re-animation
   const spinIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -65,33 +64,12 @@ export function RecipeRouletteWidget() {
     []
   );
 
-  // Fetch recipes on mount
-  useEffect(() => {
-    async function fetchRecipes() {
-      try {
-        const data = await recipeApi.listCards();
-        setRecipes(data);
-        if (data.length > 0) {
-          setCurrentRecipe(pickRandomRecipe(data));
-        }
-      } catch (error) {
-        console.error("Failed to fetch recipes:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchRecipes();
-  }, [pickRandomRecipe]);
-
-  // Cleanup interval on unmount
-  useEffect(() => {
-    return () => {
-      if (spinIntervalRef.current) {
-        clearInterval(spinIntervalRef.current);
-      }
-    };
-  }, []);
+  // Initialize currentRecipe when recipes first load
+  const initializedRef = useRef(false);
+  if (!initializedRef.current && recipes.length > 0 && !currentRecipe) {
+    initializedRef.current = true;
+    setCurrentRecipe(pickRandomRecipe(recipes));
+  }
 
   // Handle spin with slot machine effect
   const handleSpin = () => {

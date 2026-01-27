@@ -38,6 +38,7 @@ import { RecipeSelectCard } from "@/components/recipe/RecipeSelectCard";
 import { FilterBar } from "@/components/common/FilterBar";
 import { FilterSidebar } from "@/components/common/FilterSidebar";
 import { recipeApi } from "@/lib/api";
+import { useToggleFavorite } from "@/hooks/api";
 import { applyFilters } from "@/lib/filterUtils";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
 import { RECIPE_CATEGORY_OPTIONS, MEAL_TYPE_OPTIONS, DIETARY_PREFERENCES, QUICK_FILTERS, type QuickFilter } from "@/lib/constants";
@@ -409,6 +410,7 @@ export function RecipeBrowserView({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { settings } = useSettings();
+  const toggleFavoriteMutation = useToggleFavorite();
 
   // Filter QUICK_FILTERS based on user's selected filters from settings
   const visibleQuickFilters = useMemo(() => {
@@ -686,22 +688,22 @@ export function RecipeBrowserView({
     }
   };
 
-  const handleFavoriteToggle = async (recipe: RecipeCardData) => {
-    try {
-      // Optimistic update
-      setRecipes((prev) =>
-        prev.map((r) => (r.id === recipe.id ? { ...r, isFavorite: !r.isFavorite } : r))
-      );
+  const handleFavoriteToggle = (recipe: RecipeCardData) => {
+    // Optimistic update (local state)
+    setRecipes((prev) =>
+      prev.map((r) => (r.id === recipe.id ? { ...r, isFavorite: !r.isFavorite } : r))
+    );
 
-      // Call API
-      await recipeApi.toggleFavorite(Number(recipe.id));
-    } catch (err) {
-      // Revert on error
-      setRecipes((prev) =>
-        prev.map((r) => (r.id === recipe.id ? { ...r, isFavorite: recipe.isFavorite } : r))
-      );
-      console.error("Failed to toggle favorite:", err);
-    }
+    // Use mutation hook (handles cache invalidation)
+    toggleFavoriteMutation.mutate(Number(recipe.id), {
+      onError: () => {
+        // Revert on error
+        setRecipes((prev) =>
+          prev.map((r) => (r.id === recipe.id ? { ...r, isFavorite: recipe.isFavorite } : r))
+        );
+        console.error("Failed to toggle favorite");
+      },
+    });
   };
 
   // Scroll to show content right below sticky header when filters change

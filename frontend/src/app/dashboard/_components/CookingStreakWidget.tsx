@@ -1,34 +1,22 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect } from "react";
 import { Flame, Check } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { plannerApi } from "@/lib/api";
-import type { CookingStreakDTO } from "@/types";
+import { useCookingStreak, useRefreshCookingStreak, PLANNER_EVENTS } from "@/hooks/api";
 
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
 export function CookingStreakWidget() {
-  const [streakData, setStreakData] = useState<CookingStreakDTO | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: streakData, isLoading } = useCookingStreak();
+  const refreshStreak = useRefreshCookingStreak();
 
-  // Fetch streak data
-  const fetchStreak = useCallback(async () => {
-    try {
-      const data = await plannerApi.getStreak();
-      setStreakData(data);
-    } catch (error) {
-      console.error("Failed to fetch cooking streak:", error);
-    }
-  }, []);
-
-  // Fetch on mount and listen for planner updates (completions affect streak)
+  // Listen for planner updates (completions affect streak)
   useEffect(() => {
-    fetchStreak().finally(() => setIsLoading(false));
-
-    window.addEventListener("planner-updated", fetchStreak);
-    return () => window.removeEventListener("planner-updated", fetchStreak);
-  }, [fetchStreak]);
+    const handlePlannerUpdate = () => refreshStreak();
+    window.addEventListener(PLANNER_EVENTS.UPDATED, handlePlannerUpdate);
+    return () => window.removeEventListener(PLANNER_EVENTS.UPDATED, handlePlannerUpdate);
+  }, [refreshStreak]);
 
   // Use server's today_index to ensure timezone consistency
   const todayIndex = streakData?.today_index ?? (new Date().getDay() + 6) % 7;

@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { UtensilsCrossed, ArrowRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { plannerApi } from "@/lib/api";
+import {
+  usePlannerEntries,
+  useMarkComplete,
+  useReorderEntries,
+  useRefreshPlannerEntries,
+  PLANNER_EVENTS,
+} from "@/hooks/api";
 import { MealQueueItem } from "./MealQueueItem";
 import type { PlannerEntryResponseDTO } from "@/types";
 import { cn } from "@/lib/utils";
@@ -26,52 +32,34 @@ interface MealQueueWidgetProps {
 }
 
 export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProps) {
-  // Filter to active (uncompleted) entries and sort by position
-  const getActiveEntries = (entries: PlannerEntryResponseDTO[]) =>
-    [...entries].sort((a, b) => a.position - b.position).filter((e) => !e.is_completed);
+  // Use React Query for fetching entries (only if no initialEntries provided)
+  const { data: fetchedEntries, isLoading: queryLoading } = usePlannerEntries();
+  const markComplete = useMarkComplete();
+  const reorderEntries = useReorderEntries();
+  const refreshEntries = useRefreshPlannerEntries();
 
-  const [activeEntries, setActiveEntries] = useState<PlannerEntryResponseDTO[]>(
-    initialEntries ? getActiveEntries(initialEntries) : []
-  );
-  const [isLoading, setIsLoading] = useState(!initialEntries);
+  // Determine which entries to use and derive active entries
+  const entries = initialEntries ?? fetchedEntries ?? [];
+  const activeEntries = useMemo(() => {
+    return [...entries]
+      .sort((a, b) => a.position - b.position)
+      .filter((e) => !e.is_completed);
+  }, [entries]);
+
+  const isLoading = !initialEntries && queryLoading;
+
   const [completingId, setCompletingId] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-
-  // Sync activeEntries when initialEntries prop changes (e.g., after parent fetch completes)
-  useEffect(() => {
-    if (initialEntries && initialEntries.length > 0) {
-      setActiveEntries(getActiveEntries(initialEntries));
-    }
-  }, [initialEntries]);
 
   // Drag and drop setup
   const { sensors, modifiers } = useSortableDnd();
 
-  // Fetch active entries from planner
-  const fetchActiveEntries = useCallback(async () => {
-    try {
-      const data = await plannerApi.getEntries();
-
-      // Sort by position and get all active (uncompleted) entries
-      const sorted = [...data].sort((a, b) => a.position - b.position);
-      const active = sorted.filter((e) => !e.is_completed);
-
-      setActiveEntries(active);
-    } catch (error) {
-      console.error("Failed to fetch meal queue:", error);
-    }
-  }, []);
-
-  // Fetch on mount (only if no initial entries) and listen for planner updates
+  // Listen for planner updates from other components
   useEffect(() => {
-    if (!initialEntries) {
-      fetchActiveEntries().finally(() => setIsLoading(false));
-    }
-
-    // Always listen for updates to refetch when planner changes
-    window.addEventListener("planner-updated", fetchActiveEntries);
-    return () => window.removeEventListener("planner-updated", fetchActiveEntries);
-  }, [fetchActiveEntries, initialEntries]);
+    const handlePlannerUpdate = () => refreshEntries();
+    window.addEventListener(PLANNER_EVENTS.UPDATED, handlePlannerUpdate);
+    return () => window.removeEventListener(PLANNER_EVENTS.UPDATED, handlePlannerUpdate);
+  }, [refreshEntries]);
 
   // Handle drag start
   const handleDragStart = useCallback(() => {
@@ -80,7 +68,7 @@ export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProp
 
   // Handle drag end for reordering (only active entries)
   const handleDragEnd = useCallback(
-    async (event: DragEndEvent) => {
+    (event: DragEndEvent) => {
       setIsDragging(false);
       const { active, over } = event;
       if (!over || active.id === over.id) return;
@@ -90,20 +78,11 @@ export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProp
 
       if (oldIndex === -1 || newIndex === -1) return;
 
-      // Optimistic update
-      const reorderedEntries = arrayMove(activeEntries, oldIndex, newIndex);
-      setActiveEntries(reorderedEntries);
-
-      // Call API
-      try {
-        await plannerApi.reorderEntries(reorderedEntries.map((e) => e.id));
-      } catch (error) {
-        console.error("Failed to reorder entries:", error);
-        // Rollback on error
-        setActiveEntries(activeEntries);
-      }
+      // Calculate reordered IDs for API call (optimistic update handled by mutation)
+      const reorderedIds = arrayMove(activeEntries, oldIndex, newIndex).map((e) => e.id);
+      reorderEntries.mutate(reorderedIds);
     },
-    [activeEntries]
+    [activeEntries, reorderEntries]
   );
 
   // Handle drag cancel
@@ -113,25 +92,18 @@ export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProp
 
   // Handle marking a meal as cooked
   const handleComplete = useCallback(
-    async (entryId: number) => {
+    (entryId: number) => {
       setCompletingId(entryId);
 
-      try {
-        await plannerApi.markComplete(entryId);
-
-        // Notify other components (Sidebar, CookingStreakWidget, etc.)
-        window.dispatchEvent(new Event("planner-updated"));
-
-        // Wait for fade animation, then remove from list
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        setActiveEntries((prev) => prev.filter((e) => e.id !== entryId));
-      } catch (error) {
-        console.error("Failed to complete meal:", error);
-      } finally {
-        setCompletingId(null);
-      }
+      markComplete.mutate(entryId, {
+        onSettled: async () => {
+          // Wait for fade animation, then clear completing state
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          setCompletingId(null);
+        },
+      });
     },
-    []
+    [markComplete]
   );
 
   const hasEntries = activeEntries.length > 0;

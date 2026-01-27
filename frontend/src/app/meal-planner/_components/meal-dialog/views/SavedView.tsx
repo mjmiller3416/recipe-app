@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Bookmark } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollableCardList } from "@/components/common/ScrollableCardList";
 import { SavedMealCard } from "../components/SavedMealCard";
-import { plannerApi } from "@/lib/api";
+import { useSavedMeals, useAddToPlanner } from "@/hooks/api";
 import type { MealSelectionResponseDTO, PlannerEntryResponseDTO } from "@/types";
 
 // ============================================================================
@@ -77,30 +77,12 @@ function EmptyNoMeals() {
  * Click a saved meal to instantly add it to your planner.
  */
 export function SavedView({ onEntryCreated }: SavedViewProps) {
-  // State
-  const [meals, setMeals] = useState<MealSelectionResponseDTO[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Data fetching with React Query
+  const { data: meals = [], isLoading } = useSavedMeals();
+  const addToPlanner = useAddToPlanner();
+
+  // Track which meal is being added (for loading state)
   const [addingMealId, setAddingMealId] = useState<number | null>(null);
-
-  // --------------------------------------------------------------------------
-  // Data Fetching
-  // --------------------------------------------------------------------------
-
-  useEffect(() => {
-    const fetchMeals = async () => {
-      setIsLoading(true);
-      try {
-        const data = await plannerApi.getMeals({ saved: true });
-        setMeals(data);
-      } catch (error) {
-        console.error("Failed to fetch meals:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchMeals();
-  }, []);
 
   // --------------------------------------------------------------------------
   // Handlers
@@ -110,13 +92,15 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
     if (addingMealId !== null) return; // Prevent double-clicks
 
     setAddingMealId(meal.id);
-    try {
-      const entry = await plannerApi.addToPlanner(meal.id);
-      onEntryCreated(entry);
-    } catch (error) {
-      console.error("Failed to add meal to planner:", error);
-      setAddingMealId(null);
-    }
+    addToPlanner.mutate(meal.id, {
+      onSuccess: (entry) => {
+        onEntryCreated(entry);
+      },
+      onError: (error) => {
+        console.error("Failed to add meal to planner:", error);
+        setAddingMealId(null);
+      },
+    });
   };
 
   // --------------------------------------------------------------------------
