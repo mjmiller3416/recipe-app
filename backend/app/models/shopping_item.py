@@ -7,13 +7,16 @@ Handles both recipe-generated and manually added shopping items.
 # ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import Boolean, Enum, Float, JSON, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, Enum, Float, ForeignKey, JSON, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database.base import Base
 from ..utils.unit_conversion import get_dimension
+
+if TYPE_CHECKING:
+    from .user import User
 
 
 # ── Shopping Item Model ─────────────────────────────────────────────────────────────────────────────────────
@@ -41,6 +44,12 @@ class ShoppingItem(Base):
 
     # store recipe names that contribute to this item (computed during generation)
     recipe_sources: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True, default=list)
+
+    # User ownership
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # ── Relationships ───────────────────────────────────────────────────────────────────────────────────────
+    user: Mapped["User"] = relationship("User", back_populates="shopping_items")
 
     # ── String Representation ───────────────────────────────────────────────────────────────────────────────
     def __repr__(self) -> str:

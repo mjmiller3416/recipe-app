@@ -17,6 +17,7 @@ from ..database.base import Base
 if TYPE_CHECKING:
     from .planner_entry import PlannerEntry
     from .recipe import Recipe
+    from .user import User
 
 
 def _utcnow() -> datetime:
@@ -70,6 +71,14 @@ class Meal(Base):
         default=_utcnow
     )
 
+    # User ownership
+    user_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
     # -- Relationships ---------------------------------------------------------------------------
     main_recipe: Mapped["Recipe"] = relationship(
         "Recipe",
@@ -83,6 +92,8 @@ class Meal(Base):
         cascade="all, delete-orphan",
         passive_deletes=True
     )
+
+    user: Mapped["User"] = relationship("User", back_populates="meals")
 
     # -- Properties for JSON fields --------------------------------------------------------------
     @property

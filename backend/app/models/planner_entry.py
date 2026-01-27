@@ -23,6 +23,7 @@ from ..database.base import Base
 
 if TYPE_CHECKING:
     from .meal import Meal
+    from .user import User
 
 
 def _utcnow() -> datetime:
@@ -50,6 +51,14 @@ class PlannerEntry(Base):
         nullable=False
     )
 
+    # User ownership
+    user_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
     # Position in the planner (0-indexed, for drag-drop ordering)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
@@ -75,6 +84,8 @@ class PlannerEntry(Base):
         back_populates="planner_entries",
         foreign_keys=[meal_id]
     )
+
+    user: Mapped["User"] = relationship("User", back_populates="planner_entries")
 
     # -- String Representation -------------------------------------------------------------------
     def __repr__(self) -> str:

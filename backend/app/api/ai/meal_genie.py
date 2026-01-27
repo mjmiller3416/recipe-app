@@ -5,6 +5,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import require_pro
 from app.database.db import get_session
 from app.ai.dtos import (
     MealGenieRequestDTO,
@@ -19,6 +20,8 @@ from app.ai.config.meal_genie_config import (
     should_include_ingredients,
     should_include_shopping_list,
 )
+from app.models.user import User
+from app.services.usage_service import UsageService
 
 router = APIRouter()
 
@@ -27,6 +30,7 @@ router = APIRouter()
 async def chat_with_meal_genie(
     request: MealGenieRequestDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(require_pro),
 ) -> MealGenieResponseDTO:
     """
     Unified chat endpoint for Meal Genie.
@@ -52,7 +56,7 @@ async def chat_with_meal_genie(
         include_shopping = should_include_shopping_list(request.message, history_dicts)
 
         # Build context data
-        context_builder = UserContextBuilder(session)
+        context_builder = UserContextBuilder(session, current_user.id)
         context_data = context_builder.build_context_data(
             include_ingredients=include_ingredients,
             include_shopping_list=include_shopping,
@@ -86,6 +90,20 @@ async def chat_with_meal_genie(
             except Exception as e:
                 print(f"Image generation failed: {e}")
 
+        # Track usage (silent fail - don't break AI feature for tracking issues)
+        try:
+            usage_service = UsageService(session, current_user.id)
+            # Always track the assistant message
+            usage_service.increment("ai_assistant_messages")
+            # Track recipe creation if a recipe was generated
+            if recipe:
+                usage_service.increment("recipes_created")
+            # Track image generation if images were generated
+            if reference_image_data or banner_image_data:
+                usage_service.increment("ai_images_generated")
+        except Exception:
+            pass
+
         return MealGenieResponseDTO(
             success=True,
             response=result.get("response"),
@@ -105,6 +123,7 @@ async def chat_with_meal_genie(
 async def ask_meal_genie(
     request: MealGenieRequestDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(require_pro),
 ) -> MealGenieResponseDTO:
     """
     Send a message to Meal Genie and get a response.
@@ -112,13 +131,14 @@ async def ask_meal_genie(
     This endpoint is an alias for /chat for backwards compatibility.
     The AI may decide to generate a recipe if the user asks for one.
     """
-    return await chat_with_meal_genie(request, session)
+    return await chat_with_meal_genie(request, session, current_user)
 
 
 @router.post("/generate-recipe", response_model=RecipeGenerationResponseDTO)
 async def generate_recipe(
     request: RecipeGenerationRequestDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(require_pro),
 ) -> RecipeGenerationResponseDTO:
     """
     Generate a complete recipe with optional AI image.
@@ -140,7 +160,7 @@ async def generate_recipe(
         include_shopping = should_include_shopping_list(request.message, history_dicts)
 
         # Build context
-        context_builder = UserContextBuilder(session)
+        context_builder = UserContextBuilder(session, current_user.id)
         context_data = context_builder.build_context_data(
             include_ingredients=include_ingredients,
             include_shopping_list=include_shopping,
@@ -187,6 +207,20 @@ async def generate_recipe(
                     print(f"Image generation errors: {image_result['errors']}")
             except Exception as e:
                 print(f"Image generation exception: {e}")
+
+        # Track usage (silent fail - don't break AI feature for tracking issues)
+        try:
+            usage_service = UsageService(session, current_user.id)
+            # Always track the assistant message
+            usage_service.increment("ai_assistant_messages")
+            # Track recipe creation if a recipe was generated
+            if recipe:
+                usage_service.increment("recipes_created")
+            # Track image generation if images were generated
+            if reference_image_data or banner_image_data:
+                usage_service.increment("ai_images_generated")
+        except Exception:
+            pass
 
         return RecipeGenerationResponseDTO(
             success=True,

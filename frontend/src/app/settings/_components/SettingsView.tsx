@@ -39,6 +39,7 @@ import { UnitConversionsSection } from "./sections/UnitConversionsSection";
 export function SettingsView() {
   const [activeCategory, setActiveCategory] =
     useState<SettingsCategory>("profile");
+  const [isSaving, setIsSaving] = useState(false);
   const {
     settings,
     isLoaded,
@@ -59,12 +60,15 @@ export function SettingsView() {
   });
 
   // Handle save
-  const handleSave = () => {
+  const handleSave = async () => {
+    setIsSaving(true);
     try {
-      saveSettings();
+      await saveSettings();
       toast.success("Settings saved successfully");
     } catch {
       toast.error("Failed to save settings");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -85,22 +89,8 @@ export function SettingsView() {
   const renderCategoryContent = () => {
     switch (activeCategory) {
       case "profile":
-        return (
-          <ProfileSection
-            userName={settings.profile.userName}
-            email={settings.profile.email}
-            avatar={settings.profile.avatar}
-            onuserNameChange={(value) =>
-              updateSettings("profile", { userName: value })
-            }
-            onEmailChange={(value) =>
-              updateSettings("profile", { email: value })
-            }
-            onAvatarChange={(value) =>
-              updateSettings("profile", { avatar: value })
-            }
-          />
-        );
+        // Profile is now managed by Clerk - no props needed
+        return <ProfileSection />;
 
       case "appearance":
         return (
@@ -197,11 +187,15 @@ export function SettingsView() {
             <Button
               variant="default"
               onClick={handleSave}
-              disabled={!hasUnsavedChanges}
+              disabled={!hasUnsavedChanges || isSaving}
               className="gap-2"
             >
-              <Save className="h-4 w-4" />
-              Save Changes
+              {isSaving ? (
+                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           </>
         }

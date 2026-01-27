@@ -8,13 +8,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, UniqueConstraint
+from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database.base import Base
 
 if TYPE_CHECKING:
     from .recipe_ingredient import RecipeIngredient
+    from .user import User
 
 
 # ── Ingredient Model ────────────────────────────────────────────────────────────────────────────────────────
@@ -23,19 +24,24 @@ class Ingredient(Base):
 
     __tablename__ = "ingredients"
 
-    # Add unique constraint for name + category combination
+    # Add unique constraint for user + name + category combination (per-user uniqueness)
     __table_args__ = (
         UniqueConstraint(
+            'user_id',
             'ingredient_name',
             'ingredient_category',
-            name='uq_ingredient_name_category'
+            name='uq_ingredient_user_name_category'
         ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     ingredient_name: Mapped[str] = mapped_column(String, nullable=False, index=True)
     ingredient_category: Mapped[str] = mapped_column(String, nullable=False, index=True)
-
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
 
     # ── Relationships ───────────────────────────────────────────────────────────────────────────────────────
     recipe_links: Mapped[list[RecipeIngredient]] = relationship(
@@ -44,6 +50,7 @@ class Ingredient(Base):
         cascade="all, delete-orphan",
         lazy="joined",
     )
+    user: Mapped["User"] = relationship("User", backref="ingredients")
 
     # ── Helper Methods ──────────────────────────────────────────────────────────────────────────────────────
     def display_label(self) -> str:

@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from io import BytesIO
 import json
 
+from app.api.dependencies import get_current_user
 from app.database.db import get_session
 from app.dtos.data_management_dtos import (
     DuplicateResolutionDTO,
@@ -21,6 +22,7 @@ from app.dtos.data_management_dtos import (
     RestorePreviewDTO,
     RestoreResultDTO,
 )
+from app.models.user import User
 from app.services.data_management_service import DataManagementService
 
 router = APIRouter()
@@ -33,6 +35,7 @@ MAX_FILE_SIZE = 10 * 1024 * 1024
 async def preview_import(
     file: UploadFile = File(...),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Upload an xlsx file and get a preview of what will be imported.
@@ -60,7 +63,7 @@ async def preview_import(
             detail="File too large. Maximum size is 10MB",
         )
 
-    service = DataManagementService(session)
+    service = DataManagementService(session, current_user.id)
 
     # Parse xlsx
     recipes, validation_errors = service.parse_xlsx(content)
@@ -86,6 +89,7 @@ async def execute_import(
     file: UploadFile = File(...),
     resolutions: str = Form(default="[]"),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Execute the import with user-specified duplicate resolutions.
@@ -123,7 +127,7 @@ async def execute_import(
             detail=f"Invalid resolutions format: {str(e)}",
         )
 
-    service = DataManagementService(session)
+    service = DataManagementService(session, current_user.id)
 
     # Parse xlsx
     recipes, validation_errors = service.parse_xlsx(content)
@@ -149,6 +153,7 @@ async def export_recipes(
     meal_type: Optional[str] = Query(None),
     favorites_only: bool = Query(False),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Export recipes to an xlsx file.
@@ -164,7 +169,7 @@ async def export_recipes(
         favorites_only=favorites_only,
     )
 
-    service = DataManagementService(session)
+    service = DataManagementService(session, current_user.id)
     xlsx_bytes = service.export_recipes_to_xlsx(filter_dto)
 
     return StreamingResponse(
@@ -197,6 +202,7 @@ async def download_template():
 @router.delete("/clear-all")
 async def clear_all_data(
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Delete all data from the database.
@@ -206,7 +212,7 @@ async def clear_all_data(
 
     Returns counts of deleted records per table.
     """
-    service = DataManagementService(session)
+    service = DataManagementService(session, current_user.id)
     counts = service.clear_all_data()
     return {"success": True, "deleted_counts": counts}
 
@@ -217,6 +223,7 @@ async def clear_all_data(
 @router.get("/backup/full")
 async def export_full_backup(
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Export all database data as JSON.
@@ -226,7 +233,7 @@ async def export_full_backup(
 
     Returns a FullBackupDTO with all data.
     """
-    service = DataManagementService(session)
+    service = DataManagementService(session, current_user.id)
     backup = service.export_full_backup()
     return backup.model_dump(mode="json")
 
@@ -235,6 +242,7 @@ async def export_full_backup(
 async def preview_restore(
     file: UploadFile = File(...),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Upload a backup file and get a preview of what will be restored.
@@ -269,7 +277,7 @@ async def preview_restore(
             detail=f"Invalid backup file: {str(e)}",
         )
 
-    service = DataManagementService(session)
+    service = DataManagementService(session, current_user.id)
     preview = service.preview_restore(backup)
 
     return preview
@@ -280,6 +288,7 @@ async def execute_restore(
     file: UploadFile = File(...),
     clear_existing: bool = Query(True, description="Clear existing data before restore"),
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Execute a full restore from backup file.
@@ -316,7 +325,7 @@ async def execute_restore(
             detail=f"Invalid backup file: {str(e)}",
         )
 
-    service = DataManagementService(session)
+    service = DataManagementService(session, current_user.id)
     result = service.execute_restore(backup, clear_existing)
 
     return result.model_dump(mode="json")

@@ -132,15 +132,15 @@ Then modify the generated migration file to handle existing data:
 
 2. Create user_settings table
 
-3. Insert Kelsey's user record - she owns all existing data:
+3. Insert Maryann's user record - she owns all existing data:
    INSERT INTO users (
        clerk_id, email, name, is_admin, 
        subscription_tier, subscription_status, 
        created_at, updated_at
    ) VALUES (
        'pending_claim',
-       'REPLACE_WITH_KELSEY_EMAIL',  -- ⚠️ Replace with her actual email
-       'Kelsey',
+       'mmaryannr@gmail.com', 
+       'Maryann',
        true,  -- Admin flag gives permanent full access
        'free',  -- Doesn't matter since is_admin=true
        'active',
@@ -150,7 +150,7 @@ Then modify the generated migration file to handle existing data:
 
 4. Add user_id columns as NULLABLE initially (not the NOT NULL that autogenerate creates)
 
-5. UPDATE all existing rows to set user_id = 1 (Kelsey's user ID):
+5. UPDATE all existing rows to set user_id = 1 (Maryann's user ID):
    UPDATE recipe SET user_id = 1 WHERE user_id IS NULL;
    UPDATE meals SET user_id = 1 WHERE user_id IS NULL;
    UPDATE planner_entries SET user_id = 1 WHERE user_id IS NULL;
@@ -163,7 +163,7 @@ Then modify the generated migration file to handle existing data:
 
 8. Add indexes on user_id columns
 
-When Kelsey signs in with Clerk using her email, the auth system will:
+When Maryann signs in with Clerk using her email, the auth system will:
 - See no user with her clerk_id
 - Find an unclaimed user (clerk_id='pending_claim') matching her email
 - Claim that account by updating clerk_id
@@ -175,7 +175,6 @@ Show me the migration file after autogenerate so I can help customize it.
 ```
 
 **⚠️ Important:** 
-- Replace `REPLACE_WITH_KELSEY_EMAIL` with Kelsey's actual email address
 - Review this migration carefully before running
 - Test on a local database copy first
 
@@ -196,7 +195,7 @@ Create the authentication configuration and FastAPI dependencies for Clerk JWT v
 
 Create `backend/app/core/auth_config.py`:
 - AuthSettings class using pydantic_settings.BaseSettings
-- Fields: clerk_secret_key (str), clerk_publishable_key (str), clerk_jwks_url (str, default "https://api.clerk.com/v1/jwks")
+- Fields: clerk_secret_key (str), CLERK_PUBLISHABLE_KEY (str), clerk_jwks_url (str, default "https://api.clerk.com/v1/jwks")
 - Add auth_disabled (bool, default False) and dev_user_id (int, default 1) for local development
 - Add get_auth_settings() function with @lru_cache decorator
 
@@ -489,7 +488,7 @@ Set up Clerk authentication in the Next.js frontend.
    - Style to match the app's design system
 
 6. Create/update `frontend/.env.example` with:
-   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxx
+   CLERK_PUBLISHABLE_KEY=pk_test_xxx
    CLERK_SECRET_KEY=sk_test_xxx
    NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
    NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up

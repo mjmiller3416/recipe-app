@@ -1,24 +1,13 @@
 # app/core/services/__init__.py
+"""
+Service layer - business logic and orchestration.
 
-from .ingredient_service import IngredientService
-from .meal_service import (
-    InvalidRecipeError,
-    MealNotFoundError,
-    MealSaveError,
-    MealService,
-)
-from .planner_service import (
-    EntryNotFoundError,
-    InvalidMealError,
-    PlannerFullError,
-    PlannerService,
-)
-from .recipe_service import (
-    DuplicateRecipeError,
-    RecipeSaveError,
-    RecipeService,
-)
-from .shopping_service import ShoppingService
+Services are imported directly from their modules to avoid circular dependencies:
+    from app.services.recipe_service import RecipeService
+
+Do NOT add eager imports here - they cause circular import issues
+when repositories import services (e.g., shopping_repo -> unit_conversion_service).
+"""
 
 __all__ = [
     "RecipeService",
@@ -34,4 +23,6 @@ __all__ = [
     "InvalidMealError",
     "EntryNotFoundError",
     "ShoppingService",
+    "UserService",
+    "UsageService",
 ]

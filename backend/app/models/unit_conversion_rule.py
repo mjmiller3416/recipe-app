@@ -7,11 +7,15 @@ SQLAlchemy model for ingredient-specific unit conversion rules.
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Float, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database.base import Base
+
+if TYPE_CHECKING:
+    from .user import User
 
 
 # ── UnitConversionRule Model ───────────────────────────────────────────────────────────────────────────────
@@ -32,3 +36,11 @@ class UnitConversionRule(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, nullable=False, server_default=func.now()
     )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    # ── Relationships ───────────────────────────────────────────────────────────────────────────────────────
+    user: Mapped["User"] = relationship("User", backref="unit_conversion_rules")

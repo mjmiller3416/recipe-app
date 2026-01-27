@@ -1,6 +1,7 @@
 """app/api/unit_conversions.py
 
 FastAPI router for unit conversion rule endpoints.
+All endpoints require authentication and are scoped to the current user.
 """
 
 from typing import List
@@ -8,12 +9,14 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import get_current_user
 from app.database.db import get_session
 from app.dtos.unit_conversion_dtos import (
     UnitConversionRuleCreateDTO,
     UnitConversionRuleResponseDTO,
     UnitConversionRuleUpdateDTO,
 )
+from app.models.user import User
 from app.services.unit_conversion_service import UnitConversionService
 
 router = APIRouter()
@@ -33,17 +36,24 @@ def _rule_to_response_dto(rule) -> UnitConversionRuleResponseDTO:
 
 
 @router.get("", response_model=List[UnitConversionRuleResponseDTO])
-def list_rules(session: Session = Depends(get_session)):
-    """List all unit conversion rules."""
-    service = UnitConversionService(session)
+async def list_rules(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """List all unit conversion rules for the current user."""
+    service = UnitConversionService(session, current_user.id)
     rules = service.get_all()
     return [_rule_to_response_dto(r) for r in rules]
 
 
 @router.get("/{rule_id}", response_model=UnitConversionRuleResponseDTO)
-def get_rule(rule_id: int, session: Session = Depends(get_session)):
+async def get_rule(
+    rule_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Get a single rule by ID."""
-    service = UnitConversionService(session)
+    service = UnitConversionService(session, current_user.id)
     rule = service.get_by_id(rule_id)
     if not rule:
         raise HTTPException(status_code=404, detail="Rule not found")
@@ -51,12 +61,13 @@ def get_rule(rule_id: int, session: Session = Depends(get_session)):
 
 
 @router.post("", response_model=UnitConversionRuleResponseDTO, status_code=201)
-def create_rule(
+async def create_rule(
     rule_data: UnitConversionRuleCreateDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """Create a new unit conversion rule."""
-    service = UnitConversionService(session)
+    service = UnitConversionService(session, current_user.id)
     try:
         rule = service.create_rule(rule_data)
         return _rule_to_response_dto(rule)
@@ -65,13 +76,14 @@ def create_rule(
 
 
 @router.put("/{rule_id}", response_model=UnitConversionRuleResponseDTO)
-def update_rule(
+async def update_rule(
     rule_id: int,
     update_data: UnitConversionRuleUpdateDTO,
     session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
     """Update an existing rule."""
-    service = UnitConversionService(session)
+    service = UnitConversionService(session, current_user.id)
     try:
         rule = service.update_rule(rule_id, update_data)
         if not rule:
@@ -82,9 +94,13 @@ def update_rule(
 
 
 @router.delete("/{rule_id}")
-def delete_rule(rule_id: int, session: Session = Depends(get_session)):
+async def delete_rule(
+    rule_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     """Delete a rule by ID."""
-    service = UnitConversionService(session)
+    service = UnitConversionService(session, current_user.id)
     try:
         if not service.delete_rule(rule_id):
             raise HTTPException(status_code=404, detail="Rule not found")

@@ -1,10 +1,13 @@
 # app/core/repositories/__init__.py
+"""
+Repository layer - data access and persistence.
 
-from .ingredient_repo import IngredientRepo
-from .meal_repo import MealRepo
-from .planner_repo import PlannerRepo
-from .recipe_repo import RecipeRepo
-from .shopping_repo import ShoppingRepo
+Repositories are imported directly from their modules to avoid circular dependencies:
+    from app.repositories.recipe_repo import RecipeRepo
+
+Do NOT add eager imports here - they can cause circular import issues
+when modules cross-reference between repositories and services.
+"""
 
 __all__ = [
     "RecipeRepo",
@@ -12,4 +15,5 @@ __all__ = [
     "MealRepo",
     "PlannerRepo",
     "ShoppingRepo",
+    "UserRepo",
 ]

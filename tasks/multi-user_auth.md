@@ -722,7 +722,7 @@ class AuthSettings(BaseSettings):
     
     # Clerk settings
     clerk_secret_key: str = ""
-    clerk_publishable_key: str = ""
+    CLERK_PUBLISHABLE_KEY: str = ""
     clerk_jwks_url: str = "https://api.clerk.com/v1/jwks"
     
     # For local development without auth
@@ -1512,7 +1512,7 @@ npm install @clerk/nextjs
 **File:** `frontend/.env.local` (create or update)
 
 ```bash
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxx
+CLERK_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxx
 CLERK_SECRET_KEY=sk_test_xxxxxxxxxxxxx
 
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
@@ -1817,7 +1817,7 @@ export function useSettings() {
 In Railway dashboard, add for frontend:
 
 ```
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_xxxxx
+CLERK_PUBLISHABLE_KEY=pk_live_xxxxx
 CLERK_SECRET_KEY=sk_live_xxxxx
 ```
 
@@ -1861,61 +1861,62 @@ Create a test file or manually verify:
 ## Checklist Summary
 
 ```
-Phase 1: Backend Models & Migrations
-[ ] 1.1   Create User model
-[ ] 1.2   Create UserSettings model
-[ ] 1.2b  Create UserUsage model
-[ ] 1.3   Update models __init__.py
-[ ] 1.4   Add user_id to Recipe
-[ ] 1.5   Add user_id to Meal
-[ ] 1.6   Add user_id to PlannerEntry
-[ ] 1.7   Add user_id to ShoppingItem
-[ ] 1.8   Add user_id to RecipeHistory
-[ ] 1.9   Update Alembic env.py
-[ ] 1.10  Generate Alembic migration
-[ ] 1.11  Modify migration for existing data (includes user_usage table)
-[ ] 1.12  Run migration
+Phase 1: Backend Models & Migrations ✅ COMPLETE
+[x] 1.1   Create User model (with is_admin, granted_pro_until, has_pro_access)
+[x] 1.2   Create UserSettings model (JSON-based settings storage)
+[x] 1.2b  Create UserUsage model (monthly AI feature tracking)
+[x] 1.3   Update models __init__.py (exports User, UserSettings, UserUsage)
+[x] 1.4   Add user_id to Recipe
+[x] 1.5   Add user_id to Meal
+[x] 1.6   Add user_id to PlannerEntry
+[x] 1.7   Add user_id to ShoppingItem
+[x] 1.8   Add user_id to RecipeHistory
+[x] 1.9   Update Alembic env.py
+[x] 1.10  Generate Alembic migration
+[x] 1.11  Modify migration for existing data (includes user_usage table)
+[ ] 1.12  Run migration (PENDING - migration file exists but needs to be applied)
 
-Phase 2: Auth Dependencies
-[ ] 2.1  Install auth dependencies
-[ ] 2.2  Create auth_config.py
-[ ] 2.3  Create dependencies.py
-[ ] 2.4  Add environment variables
+Phase 2: Auth Dependencies ✅ COMPLETE
+[x] 2.1  Install auth dependencies (python-jose, httpx)
+[x] 2.2  Create auth_config.py (AuthSettings with dev bypass)
+[x] 2.3  Create dependencies.py (get_current_user, require_pro)
+[x] 2.4  Add environment variables (.env and .env.example)
 
-Phase 3: Update Services
-[ ] 3.1   Create UserRepo
-[ ] 3.1b  Create UsageService
-[ ] 3.2   Update RecipeRepo
-[ ] 3.3   Update RecipeService
-[ ] 3.4   Update MealService
-[ ] 3.5   Update MealRepo
-[ ] 3.6   Update PlannerService
-[ ] 3.7   Update PlannerRepo
-[ ] 3.8   Update ShoppingService
-[ ] 3.9   Update ShoppingRepo
-[ ] 3.10  Update DashboardService
+Phase 3: Update Services ⚠️ PARTIAL (Recipe layer done, others pending)
+[x] 3.1   Create UserRepo (full CRUD + claiming support)
+[x] 3.1b  Create UserService (get_or_create_from_clerk flow)
+[ ] 3.1c  Create UsageService (tracking service - NOT FOUND)
+[x] 3.2   Update RecipeRepo (user_id filtering in get_by_id)
+[x] 3.3   Update RecipeService (accepts user_id in constructor)
+[ ] 3.4   Update MealService (needs user_id parameter)
+[ ] 3.5   Update MealRepo (needs user_id filtering)
+[ ] 3.6   Update PlannerService (needs user_id parameter)
+[ ] 3.7   Update PlannerRepo (needs user_id filtering)
+[ ] 3.8   Update ShoppingService (needs user_id parameter)
+[ ] 3.9   Update ShoppingRepo (needs user_id filtering)
+[ ] 3.10  Update DashboardService (needs user_id filtering)
 
-Phase 4: Update API Routes
-[ ] 4.1  Update recipes.py
+Phase 4: Update API Routes ❌ NOT STARTED
+[ ] 4.1  Update recipes.py (NOT using get_current_user - CRITICAL)
 [ ] 4.2  Update meals.py
 [ ] 4.3  Update planner.py
 [ ] 4.4  Update shopping.py
 [ ] 4.5  Update dashboard.py
-[ ] 4.6  Create settings.py
+[ ] 4.6  Create settings.py (MISSING)
 [ ] 4.7  Register settings router
 [ ] 4.8  Verify CORS config
 [ ] 4.9  Add usage tracking to AI endpoints
 
-Phase 5: Frontend Clerk
-[ ] 5.1  Install @clerk/nextjs
-[ ] 5.2  Configure environment
-[ ] 5.3  Add ClerkProvider
-[ ] 5.4  Create middleware
-[ ] 5.5  Create sign-in page
-[ ] 5.6  Create sign-up page
-[ ] 5.7  Update API client
-[ ] 5.8  Update navigation
-[ ] 5.9  Update useSettings hook
+Phase 5: Frontend Clerk ✅ MOSTLY COMPLETE
+[x] 5.1  Install @clerk/nextjs (v6.12.0)
+[x] 5.2  Configure environment
+[x] 5.3  Add ClerkProvider (in layout.tsx)
+[x] 5.4  Create middleware (protects all routes except sign-in/sign-up)
+[x] 5.5  Create sign-in page
+[x] 5.6  Create sign-up page
+[ ] 5.7  Update API client (needs Bearer token injection)
+[ ] 5.8  Update navigation (UserButton integration)
+[ ] 5.9  Update useSettings hook (API-backed settings)
 [ ] 5.10 Add Railway variables
 
 Phase 6: Testing

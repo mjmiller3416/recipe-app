@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from sqlalchemy import Boolean, Float, String
+from sqlalchemy import Boolean, Float, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..database.base import Base
@@ -18,9 +18,16 @@ from ..database.base import Base
 # ── Shopping State Model ────────────────────────────────────────────────────────────────────────────────────
 class ShoppingState(Base):
     __tablename__ = "shopping_states"
+    __table_args__ = (
+        # Unique constraint on (user_id, key) - each user has their own shopping states
+        UniqueConstraint("user_id", "key", name="uq_shopping_state_user_key"),
+        # Index for fast lookups by user
+        Index("ix_shopping_states_user_id", "user_id"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    key: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    key: Mapped[str] = mapped_column(String(255), nullable=False)
     quantity: Mapped[float] = mapped_column(Float, nullable=False)
     unit: Mapped[str] = mapped_column(String(50), nullable=False)
     checked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
