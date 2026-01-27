@@ -248,7 +248,7 @@ export function useSettings(): UseSettingsReturn {
 
             // Sync localStorage settings to API for first-time users
             try {
-              await settingsApi.replace(localSettings as Record<string, unknown>, token);
+              await settingsApi.replace(localSettings as unknown as Record<string, unknown>, token);
             } catch {
               console.warn("[useSettings] Failed to sync initial settings to API");
             }

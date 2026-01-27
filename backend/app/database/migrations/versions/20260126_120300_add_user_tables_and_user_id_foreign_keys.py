@@ -132,7 +132,25 @@ def upgrade() -> None:
 
     # Remove duplicate ingredients (keep the one with lowest id for each name+category combo)
     # This is necessary because the new unique constraint includes user_id
-    # Using PostgreSQL-compatible CTE pattern for self-referential delete
+    # STEP 5a: First, update recipe_ingredients to point to the "keeper" ingredient
+    # This avoids foreign key violations when we delete duplicates
+    op.execute("""
+        UPDATE recipe_ingredients
+        SET ingredient_id = dups.keep_id
+        FROM ingredients i
+        JOIN (
+            SELECT user_id, ingredient_name, ingredient_category, MIN(id) as keep_id
+            FROM ingredients
+            GROUP BY user_id, ingredient_name, ingredient_category
+            HAVING COUNT(*) > 1
+        ) dups ON i.user_id = dups.user_id
+              AND i.ingredient_name = dups.ingredient_name
+              AND i.ingredient_category = dups.ingredient_category
+              AND i.id != dups.keep_id
+        WHERE recipe_ingredients.ingredient_id = i.id
+    """)
+
+    # STEP 5b: Now delete duplicate ingredients (using PostgreSQL-compatible pattern)
     op.execute("""
         DELETE FROM ingredients
         WHERE id IN (
