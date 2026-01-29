@@ -57,7 +57,7 @@ export async function apiFetch<T>(
     headers,
   });
 
-  // Handle 401 Unauthorized - Clerk middleware will redirect
+  // Handle 401 Unauthorized - Clerk proxy will redirect
   if (response.status === 401) {
     throw new ApiError("Unauthorized - Please sign in", 401);
   }
