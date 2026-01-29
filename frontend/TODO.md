@@ -19,6 +19,25 @@
 
 ## 🟡 Medium Priority
 
+## 🔵 Low Priority
+
+### 2. Auto-Scroll to New Ingredient Row
+- **Location**: `frontend/src/components/add-recipe/IngredientRow.tsx`
+- **Issue**: When adding new ingredients, the window should scroll to the newly added ingredient row to improve user experience.
+- **Solution**: Implement a scrollIntoView call after adding a new ingredient row.
+
+### 3. Expose Unit Constants via API Endpoint
+- **Location**: `backend/app/api/conversion_rules.py`
+- **Issue**: Unit options are hardcoded in `frontend/src/lib/constants.ts` and must be manually synced with `backend/app/utils/unit_conversion.py` — no single source of truth exists.
+- **Solution**: Add a `GET /api/units` endpoint that returns available units from the backend. Frontend can then fetch dynamically instead of hardcoding, making the backend the authoritative source for allowed units.
+
+### Combine Manual and Recipe Item Quantities for Same Ingredient
+- **Location**: `backend/app/services/shopping_service.py`
+- **Issue**: When a user manually adds an ingredient that also exists as a recipe-sourced item (or vice versa), the shopping list shows two separate entries instead of combining quantities — manual items have no `aggregation_key` and `source="manual"`, so the diff-based sync never matches them with `source="recipe"` items.
+- **Solution**: In `add_manual_item()`, check if a recipe item with a matching `aggregation_key` already exists (compute the key from the manual item's name + unit dimension). If matched, add the manual quantity to the existing item and track the manual contribution. During `sync_shopping_list()`, also check for manual items that match a desired aggregation key and merge them. Add a **settings toggle** on the shopping list settings page (via `SettingsPage` / `ShoppingListSettings`) to enable/disable this combining behavior. The frontend `ShoppingItem.tsx` may also need to display an "includes manual addition" indicator when items are merged.
+
+## ✅ Completed
+
 ### #42 [Feature Request] Add All Recipe Filters to Meal Planner Dialog
 - **Location**: `src/app/meal-planner/_components/MealDialog.tsx`, `FilterBar.tsx`
 - **Issue**: From the meal planner when adding a new meal, users need all the filters such as beef, chicken, pork, seafood, etc. — the same filters available in the recipe browser.
@@ -33,35 +52,6 @@
 - **Location**: `src/app/meal-planner/_components/MealPlannerView.tsx`
 - **Issue**: Users want to reorder meals in the meal planner via drag and drop.
 - **Solution**: Implement drag-and-drop reordering using `@dnd-kit` (already in project) for meal entries.
-
-### 2. Auto-Scroll to New Ingredient Row
-- **Location**: `frontend/src/components/add-recipe/IngredientRow.tsx`
-- **Issue**: When adding new ingredients, the window should scroll to the newly added ingredient row to improve user experience.
-- **Solution**: Implement a scrollIntoView call after adding a new ingredient row.
-
-### Fix Recipe Usage Count in Shopping List Tooltip
-- **Location**: `src/app/shopping-list/_components/ShoppingListView.tsx`
-- **Issue**: When the same recipe appears in multiple meals, the shopping list tooltip should show usage count (e.g., "Classic Burgers (×2)") — but the `breakdownMap` is created empty and never populated with recipe contribution data.
-- **Solution**: Populate the `breakdownMap` with `IngredientBreakdownDTO` data (either from the API response or by computing it from `recipe_sources` on each item), so the existing tooltip logic in `ShoppingItem.tsx:135` can display the `usage_count`.
-
-## 🔵 Low Priority
-
-### 3. Prevent Accidental Ingredient Deletion via Keyboard
-- **Location**: `frontend/src/components/add-recipe/IngredientRow.tsx`
-- **Issue**: When using keyboard navigation to add ingredients, user can accidentally delete an ingredient row by pressing spacebar on the delete button — can occur while tabbing through fields to add a new ingredient.
-- **Solution**: Update the delete button to only trigger deletion on Enter or Click events.
-
-### 4. Enable Tab Key Selection in Autocomplete
-- **Location**: `frontend/src/components/add-recipe/IngredientAutoComplete.tsx`
-- **Issue**: Selections cannot be selected via the Tab key, only via mouse click or Enter key. This makes keyboard navigation slower.
-- **Solution**: Update the autocomplete selection logic to allow Tab key selection of highlighted suggestions, then move focus to the next input field.
-
-### 5. Add Zoom-on-Hover to Side Dish Cards
-- **Location**: `src/app/meal-planner/_components/meal-display/SideDishSlots.tsx`
-- **Issue**: Side dish recipe cards in the meal planner lack the subtle zoom effect on hover that main dish cards have — making the interaction feel less polished.
-- **Solution**: Add `transition-transform duration-500 group-hover:scale-105` to the `RecipeCardImage` component (line 86), matching the pattern used in `MainDishCard.tsx`.
-
-## ✅ Completed
 
 ### #47 [Bug Report] Print Layout Separates Image and Recipe
 - **Location**: `src/app/recipes/[id]/_components/FullRecipeView.tsx` (print styles)

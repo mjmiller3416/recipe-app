@@ -301,6 +301,27 @@ class MealRepo:
                 count += 1
         return count
 
+    # -- Recipe Lookup Methods -------------------------------------------------------------------
+    def get_meals_using_recipe(self, recipe_id: int) -> List[Meal]:
+        """
+        Get all meals that use a specific recipe (as main or side).
+
+        Args:
+            recipe_id: ID of the recipe to search for
+
+        Returns:
+            List of meals that use this recipe
+        """
+        # Find meals where recipe is the main recipe OR in side_recipe_ids
+        stmt = select(Meal).where(
+            or_(
+                Meal.main_recipe_id == recipe_id,
+                Meal.side_recipe_ids.contains([recipe_id])
+            )
+        )
+        result = self.session.execute(stmt)
+        return result.scalars().all()
+
     # -- Validation Methods ----------------------------------------------------------------------
     def validate_meal_ids(self, meal_ids: List[int], user_id: int) -> List[int]:
         """

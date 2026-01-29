@@ -53,6 +53,34 @@ class RecipeService:
         self.recipe_repo = RecipeRepo(self.session, self.ingredient_repo, user_id)
         self.meal_repo = MealRepo(self.session)
 
+    # -- Shopping List Sync Helper ---------------------------------------------------------------
+    def _sync_shopping_list_if_recipe_in_planner(self, recipe_id: int) -> None:
+        """
+        Sync shopping list if the recipe is used in any active planner entry.
+
+        Args:
+            recipe_id: ID of the recipe to check
+        """
+        from ..repositories.planner_repo import PlannerRepo
+
+        planner_repo = PlannerRepo(self.session)
+
+        # Get meals that use this recipe (as main or side)
+        meals_with_recipe = self.meal_repo.get_meals_using_recipe(recipe_id)
+        if not meals_with_recipe:
+            return
+
+        # Check if any of those meals are in active planner entries
+        for meal in meals_with_recipe:
+            entries = planner_repo.get_by_meal_id(meal.id)
+            active_entries = [e for e in entries if not e.is_completed and not e.is_cleared]
+            if active_entries:
+                # Found at least one active entry, sync and return
+                from ..services.shopping_service import ShoppingService
+                shopping_service = ShoppingService(self.session)
+                shopping_service.sync_shopping_list()
+                return
+
     def create_recipe_with_ingredients(self, recipe_dto: RecipeCreateDTO) -> Recipe:
         if self.recipe_repo.recipe_exists(
             name=recipe_dto.recipe_name,
@@ -270,6 +298,11 @@ class RecipeService:
             if not updated_recipe:
                 raise RecipeSaveError(f"Recipe {recipe_id} not found.")
             self.session.commit()
+
+            # Sync shopping list if recipe's ingredients changed and it's in planner
+            if update_dto.ingredients is not None:
+                self._sync_shopping_list_if_recipe_in_planner(recipe_id)
+
             return updated_recipe
         except SQLAlchemyError as err:
             self.session.rollback()

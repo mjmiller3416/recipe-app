@@ -73,6 +73,15 @@ class ShoppingItemUpdateDTO(BaseModel):
         return v
 
 # ── Response DTOs ───────────────────────────────────────────────────────────────────────────────────────────
+class RecipeSourceDTO(BaseModel):
+    """DTO for a recipe source with usage count."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    recipe_name: str
+    count: int = 1  # How many times this recipe contributes (e.g., same side dish used twice)
+
+
 class ShoppingItemResponseDTO(ShoppingItemBaseDTO):
     """DTO for shopping item responses."""
 
@@ -81,7 +90,7 @@ class ShoppingItemResponseDTO(ShoppingItemBaseDTO):
     have: bool = False
     flagged: bool = False
     state_key: Optional[str] = None
-    recipe_sources: List[str] = []  # List of recipe names this ingredient comes from
+    recipe_sources: List[RecipeSourceDTO] = []  # Recipe sources with usage counts
 
 class ShoppingListResponseDTO(BaseModel):
     """DTO for complete shopping list response."""
@@ -118,7 +127,7 @@ class IngredientAggregationDTO(BaseModel):
     total_quantity: float
     unit: Optional[str]
     category: Optional[str]
-    recipe_sources: List[str]  # recipe names that contribute to this ingredient
+    recipe_sources: List[RecipeSourceDTO]  # Recipe sources with usage counts
 
 class ShoppingListGenerationDTO(BaseModel):
     """DTO for shopping list generation parameters."""

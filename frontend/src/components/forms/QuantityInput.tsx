@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { Input } from "@/components/ui/input";
-import { parseQuantity, formatQuantity } from "@/lib/quantityUtils";
+import { parseQuantity } from "@/lib/quantityUtils";
+import { formatQuantity } from "@/lib/utils";
 
 interface QuantityInputProps {
   value: number | null;

@@ -27,7 +27,7 @@ import { CHANGELOG_TOTAL_ITEMS } from "@/data/changelog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { appConfig } from "@/lib/config";
 import { useSettings } from "@/hooks/useSettings";
-import { useShoppingList, useGenerateShoppingList, useRefreshShoppingList } from "@/hooks/api";
+import { useShoppingList, useRefreshShoppingList } from "@/hooks/api";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -58,7 +58,6 @@ export function SidebarContent({ onNavigate, onOpenMealGenie }: SidebarContentPr
 
   // Use React Query hooks with automatic token injection
   const { data: shoppingData } = useShoppingList();
-  const generateShoppingList = useGenerateShoppingList();
   const refreshShoppingList = useRefreshShoppingList();
 
   // Calculate remaining items from query data
@@ -66,15 +65,16 @@ export function SidebarContent({ onNavigate, onOpenMealGenie }: SidebarContentPr
     ? shoppingData.total_items - shoppingData.checked_items
     : 0;
 
-  // Handle planner updates: regenerate shopping list then refresh count
+  // Handle planner updates: just refresh count since backend auto-syncs shopping list
   const handlePlannerUpdated = useCallback(async () => {
     try {
-      await generateShoppingList.mutateAsync();
-      // React Query cache is automatically invalidated by the mutation
+      // Shopping list is now automatically synced by backend on planner changes
+      // We just need to refresh the count via React Query
+      refreshShoppingList();
     } catch (error) {
-      console.error("[Sidebar] Failed to regenerate shopping list:", error);
+      console.error("[Sidebar] Failed to refresh shopping count:", error);
     }
-  }, [generateShoppingList]);
+  }, [refreshShoppingList]);
 
   useEffect(() => {
     // Check for new changelog items by comparing counts

@@ -184,6 +184,9 @@ This project has an extensive design system. **Always follow these rules**:
 - [patterns.md](.claude/skills/backend-dev/patterns.md) - Layer-specific code templates
 - [checklist.md](.claude/skills/backend-dev/checklist.md) - Code review checklist
 
+**Git Workflow** (`.claude/skills/git/`):
+- [SKILL.md](.claude/skills/git/SKILL.md) - Branch naming, commit message, and PR conventions
+
 ### Commands (User-Invoked Only)
 
 These commands in `.claude/commands/` are **only run when explicitly invoked**:
@@ -197,6 +200,7 @@ These commands in `.claude/commands/` are **only run when explicitly invoked**:
 - `/changelog` - Generate changelog entries
 - `/fix` - Fix a TODO item
 - `/sync-issues` - Sync GitHub issues to TODOs
+- `/git` - Git workflow automation (branches, commits, PRs)
 
 ## Authentication Testing
 

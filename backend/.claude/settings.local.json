@@ -1,7 +1,0 @@
-{
-  "disabledMcpjsonServers": [
-    "shadcn",
-    "next-devtools",
-    "cloudinary-asset-mgmt"
-  ]
-}

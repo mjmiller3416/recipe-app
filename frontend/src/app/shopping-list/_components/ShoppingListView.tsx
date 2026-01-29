@@ -6,8 +6,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ShoppingCategory } from "./ShoppingCategory";
-import { usePlannerEntries, useMeals } from "@/hooks/api";
-import type { ShoppingItemResponseDTO, IngredientBreakdownDTO } from "@/types";
+import {
+  usePlannerEntries,
+  useMeals,
+  useShoppingList,
+  useToggleItem,
+  useToggleFlagged,
+  useAddManualItem,
+  useClearManualItems,
+  useRefreshShoppingList,
+} from "@/hooks/api";
+import type { ShoppingItemResponseDTO } from "@/types";
 import { ShoppingCart, Eye, EyeOff, Filter, X, Plus, Trash2 } from "lucide-react";
 import {
   AlertDialog,
@@ -20,6 +29,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { QuantityInput } from "@/components/forms/QuantityInput";
+import { SmartIngredientInput } from "@/components/forms/SmartIngredientInput";
 import {
   Select,
   SelectContent,
@@ -27,17 +37,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { INGREDIENT_UNITS, INGREDIENT_CATEGORIES } from "@/lib/constants";
 import { IngredientSourceSidebar } from "./IngredientSourceSidebar";
-import {
-  useShoppingList,
-  useToggleItem,
-  useToggleFlagged,
-  useAddManualItem,
-  useClearManualItems,
-  useRefreshShoppingList,
-} from "@/hooks/useShoppingList";
 import { useSettings } from "@/hooks/useSettings";
 
 /**
@@ -62,6 +63,7 @@ function StatCard({
 
 /**
  * AddManualItemForm - Inline form for adding manual items to the shopping list
+ * Now with ingredient autocomplete for smart suggestions
  */
 function AddManualItemForm({
   itemName,
@@ -86,13 +88,6 @@ function AddManualItemForm({
   onAdd: () => void;
   isAdding: boolean;
 }) {
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && itemName.trim()) {
-      e.preventDefault();
-      onAdd();
-    }
-  };
-
   return (
     <Card className="flex flex-row flex-wrap items-center gap-2 p-3 mb-6">
       <QuantityInput
@@ -113,13 +108,14 @@ function AddManualItemForm({
           ))}
         </SelectContent>
       </Select>
-      <Input
+      <SmartIngredientInput
         value={itemName}
-        onChange={(e) => setItemName(e.target.value)}
-        onKeyDown={handleKeyDown}
+        onChange={setItemName}
+        onCategoryChange={setCategory}
+        onSubmit={() => itemName.trim() && onAdd()}
         placeholder="Add item..."
-        className="flex-1 min-w-40"
         disabled={isAdding}
+        className="min-w-40"
       />
       <Select value={category} onValueChange={setCategory}>
         <SelectTrigger className="w-28">
@@ -137,6 +133,7 @@ function AddManualItemForm({
         onClick={onAdd}
         disabled={!itemName.trim() || isAdding}
         size="icon"
+        aria-label="Add item to shopping list"
       >
         <Plus className="w-4 h-4" />
       </Button>
@@ -190,9 +187,6 @@ export function ShoppingListView() {
   // Clear manual items dialog state
   const [showClearManualDialog, setShowClearManualDialog] = useState(false);
 
-  // Breakdown map for tooltips - built from item.recipe_sources (now stored on items)
-  // For detailed breakdown, we'd need a separate query, but recipe_sources covers most use cases
-  const breakdownMap = new Map<string, IngredientBreakdownDTO>();
 
   // Handle toggling an item's checked state
   const handleToggleItem = (itemId: number) => {
@@ -278,24 +272,30 @@ export function ShoppingListView() {
     Record<string, { itemCount: number; collectedCount: number }>
   >((acc, item) => {
     if (item.source === "recipe" && item.recipe_sources) {
-      for (const recipeName of item.recipe_sources) {
-        if (!acc[recipeName]) {
-          acc[recipeName] = { itemCount: 0, collectedCount: 0 };
+      for (const source of item.recipe_sources) {
+        if (!acc[source.recipe_name]) {
+          acc[source.recipe_name] = { itemCount: 0, collectedCount: 0 };
         }
-        acc[recipeName].itemCount++;
+        acc[source.recipe_name].itemCount++;
         if (item.have) {
-          acc[recipeName].collectedCount++;
+          acc[source.recipe_name].collectedCount++;
         }
       }
     }
     return acc;
   }, {}) ?? {};
 
-  // Build recipe order map and track main recipes (first in each meal group)
-  const { recipeOrderMap, mainRecipeNames } = useMemo(() => {
-    const orderMap = new Map<string, number>();
-    const mainRecipes = new Set<string>();
-    if (!plannerEntries || !allMeals) return { recipeOrderMap: orderMap, mainRecipeNames: mainRecipes };
+  // Build ordered recipe entries preserving duplicates across meals
+  const { orderedRecipeEntries, duplicateRecipeNames } = useMemo(() => {
+    const entries: Array<{
+      recipeName: string;
+      mealId: number;
+      isFirstInMeal: boolean;
+      instanceKey: string;
+    }> = [];
+    const recipeNameCounts = new Map<string, number>();
+
+    if (!plannerEntries || !allMeals) return { orderedRecipeEntries: entries, duplicateRecipeNames: new Set<string>() };
 
     // Sort entries by position (meal planner order)
     // Include entries in "all" or "produce_only" mode (not "none")
@@ -303,7 +303,6 @@ export function ShoppingListView() {
       .filter((e) => e.shopping_mode !== "none" && !e.is_completed)
       .sort((a, b) => a.position - b.position);
 
-    let orderIndex = 0;
     for (const entry of sortedEntries) {
       // Find the full meal data to get side recipes
       const meal = allMeals.find((m) => m.id === entry.meal_id);
@@ -311,43 +310,51 @@ export function ShoppingListView() {
 
       // Add main recipe first (mark as first in meal)
       if (meal.main_recipe?.recipe_name) {
-        orderMap.set(meal.main_recipe.recipe_name, orderIndex++);
-        mainRecipes.add(meal.main_recipe.recipe_name);
+        const name = meal.main_recipe.recipe_name;
+        entries.push({
+          recipeName: name,
+          mealId: meal.id,
+          isFirstInMeal: true,
+          instanceKey: `meal-${meal.id}-${name}`,
+        });
+        recipeNameCounts.set(name, (recipeNameCounts.get(name) ?? 0) + 1);
       }
 
-      // Add sides in order
+      // Add sides in order (always — no dedup guard)
       for (const side of meal.side_recipes || []) {
-        if (side.recipe_name && !orderMap.has(side.recipe_name)) {
-          orderMap.set(side.recipe_name, orderIndex++);
+        if (side.recipe_name) {
+          const name = side.recipe_name;
+          entries.push({
+            recipeName: name,
+            mealId: meal.id,
+            isFirstInMeal: false,
+            instanceKey: `meal-${meal.id}-${name}`,
+          });
+          recipeNameCounts.set(name, (recipeNameCounts.get(name) ?? 0) + 1);
         }
       }
     }
 
-    return { recipeOrderMap: orderMap, mainRecipeNames: mainRecipes };
+    // Any recipe appearing in 2+ meals is a duplicate
+    const duplicates = new Set<string>();
+    for (const [name, count] of recipeNameCounts) {
+      if (count > 1) duplicates.add(name);
+    }
+
+    return { orderedRecipeEntries: entries, duplicateRecipeNames: duplicates };
   }, [plannerEntries, allMeals]);
 
-  // Convert to array and sort by meal order (falling back to alphabetical)
-  const recipes = Object.entries(recipeData)
-    .map(([name, counts]) => ({
-      name,
-      itemCount: counts.itemCount,
-      collectedCount: counts.collectedCount,
-      isFirstInMeal: mainRecipeNames.has(name),
-    }))
-    .sort((a, b) => {
-      const orderA = recipeOrderMap.get(a.name);
-      const orderB = recipeOrderMap.get(b.name);
-
-      // Both have order: sort by order
-      if (orderA !== undefined && orderB !== undefined) {
-        return orderA - orderB;
-      }
-      // Only one has order: the one with order comes first
-      if (orderA !== undefined) return -1;
-      if (orderB !== undefined) return 1;
-      // Neither has order: sort alphabetically
-      return a.name.localeCompare(b.name);
-    });
+  // Build recipes array from ordered entries (already in planner position order)
+  const recipes = orderedRecipeEntries
+    .filter((entry) => recipeData[entry.recipeName])
+    .map((entry) => ({
+      name: entry.recipeName,
+      itemCount: recipeData[entry.recipeName]?.itemCount ?? 0,
+      collectedCount: recipeData[entry.recipeName]?.collectedCount ?? 0,
+      isFirstInMeal: entry.isFirstInMeal,
+      isDuplicate: duplicateRecipeNames.has(entry.recipeName),
+      instanceKey: entry.instanceKey,
+    }));
 
   // Count manual items
   const manualItems = shoppingData?.items.filter((i) => i.source === "manual") ?? [];
@@ -360,7 +367,32 @@ export function ShoppingListView() {
     if (filterRecipeName === "__manual__") {
       return items.filter((i) => i.source === "manual");
     }
-    return items.filter((i) => i.recipe_sources?.includes(filterRecipeName));
+    return items.filter((i) =>
+      i.recipe_sources?.some((source) => source.recipe_name === filterRecipeName)
+    );
+  };
+
+  // Normalize category name for comparison (handles slug vs display name mismatches)
+  // e.g., "oils-and-vinegars" -> "Oils And Vinegars"
+  const normalizeCategoryForComparison = (category: string): string => {
+    return category
+      .replace(/-/g, " ")
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+  };
+
+  // Find category index in custom order (handles both exact match and normalized match)
+  const findCategoryIndex = (category: string, customOrder: string[]): number => {
+    // Try exact match first
+    const exactIndex = customOrder.indexOf(category);
+    if (exactIndex !== -1) return exactIndex;
+
+    // Try normalized comparison
+    const normalizedCategory = normalizeCategoryForComparison(category).toLowerCase();
+    return customOrder.findIndex(
+      (c) => normalizeCategoryForComparison(c).toLowerCase() === normalizedCategory
+    );
   };
 
   // Sort categories based on user preference
@@ -370,9 +402,9 @@ export function ShoppingListView() {
     if (b === "Other") return -1;
 
     if (categorySortOrder === "custom" && customCategoryOrder.length > 0) {
-      // Use custom order - items not in the list go after known items
-      const indexA = customCategoryOrder.indexOf(a);
-      const indexB = customCategoryOrder.indexOf(b);
+      // Use custom order with normalized matching
+      const indexA = findCategoryIndex(a, customCategoryOrder);
+      const indexB = findCategoryIndex(b, customCategoryOrder);
       // If both are in the custom order, sort by position
       if (indexA !== -1 && indexB !== -1) return indexA - indexB;
       // If only one is in custom order, it comes first
@@ -610,7 +642,6 @@ export function ShoppingListView() {
                 items={getFilteredItems(groupedItems[category])}
                 onToggleItem={handleToggleItem}
                 onToggleFlagged={handleToggleFlagged}
-                breakdownMap={breakdownMap}
               />
             ))}
           </div>

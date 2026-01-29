@@ -62,6 +62,33 @@ class MealService:
         self.planner_repo = PlannerRepo(self.session)
         self.recipe_repo = RecipeRepo(self.session, user_id=user_id)
 
+    # -- Shopping List Sync Helper ---------------------------------------------------------------
+    def _sync_shopping_list_if_meal_in_planner(self, meal_id: int) -> None:
+        """
+        Sync shopping list if the meal is currently in the planner.
+
+        Args:
+            meal_id: ID of the meal to check
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        # Check if this meal has any active planner entries
+        entries = self.planner_repo.get_by_meal_id(meal_id, self.user_id)
+        active_entries = [e for e in entries if not e.is_completed and not e.is_cleared]
+
+        logger.debug(f"Checking meal {meal_id} for shopping sync: {len(active_entries)} active entries")
+
+        if active_entries:
+            try:
+                from ..services.shopping_service import ShoppingService
+                shopping_service = ShoppingService(self.session, self.user_id)
+                shopping_service.sync_shopping_list()
+                logger.debug(f"Shopping sync completed for meal {meal_id}")
+            except Exception as e:
+                logger.error(f"Shopping sync failed for meal {meal_id}: {type(e).__name__}: {e}")
+                raise  # Re-raise so we see the error
+
     # -- Create Operations -----------------------------------------------------------------------
     def create_meal(self, create_dto: MealCreateDTO) -> MealResponseDTO:
         """
@@ -272,6 +299,10 @@ class MealService:
             updated_meal = self.repo.update(meal)
             self.session.commit()
 
+            # Sync shopping list if recipe IDs changed
+            if update_dto.main_recipe_id is not None or update_dto.side_recipe_ids is not None:
+                self._sync_shopping_list_if_meal_in_planner(meal_id)
+
             # Refresh to get relationships
             updated_meal = self.repo.get_by_id(updated_meal.id, self.user_id)
             return self._meal_to_response_dto(updated_meal)
@@ -346,6 +377,9 @@ class MealService:
             self.repo.update(meal)
             self.session.commit()
 
+            # Sync shopping list if meal is in planner
+            self._sync_shopping_list_if_meal_in_planner(meal_id)
+
             return self._meal_to_response_dto(meal)
         except InvalidRecipeError:
             self.session.rollback()
@@ -375,6 +409,9 @@ class MealService:
             meal.remove_side_recipe(recipe_id)
             self.repo.update(meal)
             self.session.commit()
+
+            # Sync shopping list if meal is in planner
+            self._sync_shopping_list_if_meal_in_planner(meal_id)
 
             return self._meal_to_response_dto(meal)
         except SQLAlchemyError as e:

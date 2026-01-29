@@ -38,7 +38,7 @@ def get_db_and_models():
         Recipe,
         RecipeIngredient,
         ShoppingItem,
-        ShoppingState,
+        ShoppingItemContribution,
     )
     return SessionLocal, {
         "Ingredient": Ingredient,
@@ -47,7 +47,7 @@ def get_db_and_models():
         "Recipe": Recipe,
         "RecipeIngredient": RecipeIngredient,
         "ShoppingItem": ShoppingItem,
-        "ShoppingState": ShoppingState,
+        "ShoppingItemContribution": ShoppingItemContribution,
     }
 
 
@@ -1320,7 +1320,7 @@ SHOPPING_ITEMS_DATA = [
 def clear_all_data(session: Session, models: Dict[str, Any], verbose: bool = False) -> None:
     """Clear all data from tables in correct order (respecting foreign keys)."""
     tables_to_clear = [
-        ("shopping_states", models["ShoppingState"]),
+        ("shopping_item_contributions", models["ShoppingItemContribution"]),
         ("shopping_items", models["ShoppingItem"]),
         ("planner_entries", models["PlannerEntry"]),
         ("meals", models["Meal"]),
@@ -1512,47 +1512,31 @@ def seed_shopping_data(
     models: Dict[str, Any],
     verbose: bool = False
 ) -> Tuple[List[Any], List[Any]]:
-    """Seed shopping items and states."""
+    """Seed shopping items (manual items only - recipe items come from sync)."""
     ShoppingItem = models["ShoppingItem"]
-    ShoppingState = models["ShoppingState"]
 
     created_items: List[Any] = []
-    created_states: List[Any] = []
 
     for item_data in SHOPPING_ITEMS_DATA:
-        state_key = None
-        if item_data["source"] == "recipe":
-            state_key = ShoppingState.create_key(item_data["name"], item_data["unit"])
-
-        item = ShoppingItem(
-            ingredient_name=item_data["name"],
-            quantity=item_data["qty"],
-            unit=item_data["unit"],
-            category=item_data.get("category"),
-            source=item_data["source"],
-            have=item_data["have"],
-            state_key=state_key,
-        )
-        session.add(item)
-        created_items.append(item)
-
-        # Create shopping state for recipe items
-        if item_data["source"] == "recipe" and state_key:
-            state = ShoppingState(
-                key=state_key,
+        # Only seed manual items - recipe items will be created by sync
+        if item_data["source"] == "manual":
+            item = ShoppingItem(
+                ingredient_name=item_data["name"],
                 quantity=item_data["qty"],
-                unit=item_data["unit"] or "",
-                checked=item_data["have"],
+                unit=item_data["unit"],
+                category=item_data.get("category"),
+                source=item_data["source"],
+                have=item_data["have"],
             )
-            session.add(state)
-            created_states.append(state)
+            session.add(item)
+            created_items.append(item)
 
     session.commit()
 
     if verbose:
-        print(f"  [OK] Created {len(created_items)} shopping items")
+        print(f"  [OK] Created {len(created_items)} manual shopping items")
 
-    return created_items, created_states
+    return created_items, []
 
 
 # ══════════════════════════════════════════════════════════════════════════════════════════════════

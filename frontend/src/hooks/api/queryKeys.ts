@@ -41,5 +41,5 @@ export const aiQueryKeys = {
   cookingTip: () => [...aiQueryKeys.all, "cooking-tip"] as const,
 };
 
-// Re-export shopping keys for consistency (they're defined in useShoppingList)
-export { shoppingQueryKeys } from "@/hooks/useShoppingList";
+// Re-export shopping keys for consistency
+export { shoppingQueryKeys } from "./useShopping";
