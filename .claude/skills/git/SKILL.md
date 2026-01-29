@@ -157,4 +157,11 @@ Derive from branch name or summarize commits:
 
 ## Related
 
-- [/git command](../../commands/git.md) - Automated workflow tool
+- [/git command](../../commands/git.md) - Dispatcher (routes to workflow files)
+- [workflows/start.md](workflows/start.md) - Create branch from staging
+- [workflows/commit.md](workflows/commit.md) - Stage, validate, and commit
+- [workflows/sync.md](workflows/sync.md) - Rebase on latest staging
+- [workflows/merge.md](workflows/merge.md) - Squash merge to staging
+- [workflows/deploy.md](workflows/deploy.md) - PR from staging to main
+- [workflows/pr.md](workflows/pr.md) - Push and create PR
+- [workflows/status.md](workflows/status.md) - Show status and suggest action
