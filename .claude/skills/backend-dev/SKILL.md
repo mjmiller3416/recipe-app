@@ -1,237 +1,180 @@
 ---
 name: Backend Development
-description: Follow layered architecture patterns when creating or modifying FastAPI routes, services, repositories, models, or DTOs
+description: Backend architecture patterns for FastAPI layered architecture. Use when making changes to or exploring backend directory.
 ---
 
 # Backend Development Skill
 
-## Purpose
+Backend architecture rules and patterns for Meal Genie. For code examples, reference existing implementations in the codebase.
 
-This skill provides comprehensive guidance for creating and modifying backend code in the Meal Genie application following the established layered architecture. It ensures consistency, maintainability, and proper separation of concerns across all Python/FastAPI code.
-
-## When to Use
-
-- Creating new API endpoints or features
-- Adding new database models or modifying existing ones
-- Implementing business logic in services
-- Creating or updating DTOs for request/response validation
-- Adding AI-powered features with Gemini integration
-- Writing database migrations
-
-## Quick Reference
-
-### Layered Architecture
+## Architecture
 
 ```
-API Routes (app/api/)          ← HTTP layer: validation, routing, error handling
+Routes (app/api/)           → HTTP concerns: validation, error mapping
     ↓
-Services (app/services/)       ← Business logic: orchestration, transactions
+Services (app/services/)    → Business logic: orchestration, transactions
     ↓
-Repositories (app/repositories/) ← Data access: queries, CRUD operations
+Repositories (app/repositories/) → Data access: queries, CRUD
     ↓
-Models (app/models/)           ← SQLAlchemy ORM: table definitions
+Models (app/models/)        → Schema: columns, relationships
 ```
 
-### Critical Rules (Never Violate)
+Every route injects `current_user` via dependency. Services and repos receive `(session, user_id)` for tenant isolation.
 
-| Rule | Bad | Good |
-|------|-----|------|
-| No raw SQL in services | `session.execute("SELECT...")` | Use repository methods |
-| No business logic in routes | Complex calculations in route | Move to service layer |
-| No direct model imports in routes | `from app.models import Recipe` | Use DTOs for responses |
-| No session management in repos | `session.commit()` in repo | Service handles transactions |
-| Always use DTOs for API | `return recipe.__dict__` | `return RecipeResponseDTO(...)` |
-| Type hints required | `def get(id):` | `def get(id: int) -> Recipe:` |
+## Layer Rules (Never Violate)
 
-### Import Patterns
+| Rule | Wrong | Right |
+|------|-------|-------|
+| Business logic location | Complex logic in route | Move to service |
+| Model imports in routes | `from app.models import Recipe` | Use DTOs for responses |
+| HTTP errors in services | `raise HTTPException(404)` | `raise RecipeNotFoundError()` |
+| Commits in repositories | `self.session.commit()` | Service commits, repo uses `flush()` |
+| Raw SQL in services | `session.execute("SELECT...")` | Call repository method |
+| Response types | `return recipe.__dict__` | `return RecipeResponseDTO.from_model(recipe)` |
 
-```python
-# API Routes
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from app.database.db import get_session
-from app.dtos.recipe_dtos import RecipeCreateDTO, RecipeResponseDTO
-from app.services.recipe_service import RecipeService
-
-# Services
-from sqlalchemy.orm import Session
-from app.repositories.recipe_repo import RecipeRepo
-from app.dtos.recipe_dtos import RecipeCreateDTO, RecipeUpdateDTO
-
-# Repositories
-from sqlalchemy import select, func
-from sqlalchemy.orm import Session, joinedload
-from app.models.recipe import Recipe
-
-# Models
-from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.database.base import Base
-```
-
-### DTO Naming Conventions
-
-| Purpose | Suffix | Example |
-|---------|--------|---------|
-| Create requests | `CreateDTO` | `RecipeCreateDTO` |
-| Update requests | `UpdateDTO` | `RecipeUpdateDTO` |
-| API responses | `ResponseDTO` | `RecipeResponseDTO` |
-| Filter/query params | `FilterDTO` | `RecipeFilterDTO` |
-| Lightweight cards | `CardDTO` | `RecipeCardDTO` |
-
-### Error Handling Pattern
-
-```python
-# In services - define domain exceptions
-class RecipeSaveError(Exception):
-    pass
-
-class DuplicateRecipeError(Exception):
-    pass
-
-# In routes - map to HTTP errors
-try:
-    recipe = service.create_recipe(data)
-    return RecipeResponseDTO.from_model(recipe)
-except DuplicateRecipeError as e:
-    raise HTTPException(status_code=409, detail=str(e))
-except RecipeSaveError as e:
-    raise HTTPException(status_code=500, detail=str(e))
-```
-
-### Session & Transaction Pattern
+## Transaction Pattern
 
 ```python
 # Service handles transactions
-class RecipeService:
-    def __init__(self, session: Session):
+class ThingService:
+    def __init__(self, session: Session, user_id: int):
         self.session = session
-        self.repo = RecipeRepo(session)
+        self.repo = ThingRepo(session, user_id)
 
-    def create_recipe(self, dto: RecipeCreateDTO) -> Recipe:
+    def create(self, dto: ThingCreateDTO) -> Thing:
         try:
-            recipe = self.repo.persist_recipe(dto)
-            self.session.commit()  # ✅ Service commits
-            return recipe
-        except Exception as e:
-            self.session.rollback()  # ✅ Service rolls back
+            thing = self.repo.create(dto)
+            self.session.commit()
+            return thing
+        except Exception:
+            self.session.rollback()
             raise
 
 # Repository does NOT commit
-class RecipeRepo:
-    def persist_recipe(self, dto: RecipeCreateDTO) -> Recipe:
-        recipe = Recipe(**dto.model_dump())
-        self.session.add(recipe)
-        self.session.flush()  # ✅ Flush to get ID, but don't commit
-        return recipe
+class ThingRepo:
+    def create(self, dto: ThingCreateDTO) -> Thing:
+        thing = Thing(**dto.model_dump())
+        self.session.add(thing)
+        self.session.flush()  # Get ID without committing
+        return thing
 ```
 
-## Workflow
+## Exception Pattern
 
-### 1. Determine the Scope
+Services define domain exceptions. Routes map them to HTTP status codes.
 
-Before coding, identify which layers need changes:
+```python
+# In service
+class RecipeNotFoundError(Exception): pass
+class DuplicateRecipeError(Exception): pass
 
-- **New endpoint?** → API route + possibly service + DTOs
-- **New entity?** → Model + Repository + Service + DTOs + Route + Migration
-- **Business logic change?** → Service layer only
-- **Query optimization?** → Repository layer only
-
-### 2. Start Bottom-Up
-
-When creating new features:
-
-1. **Model** - Define the SQLAlchemy model
-2. **Migration** - Create Alembic migration
-3. **DTOs** - Define request/response schemas
-4. **Repository** - Implement data access
-5. **Service** - Implement business logic
-6. **Route** - Expose via API
-
-### 3. Follow Existing Patterns
-
-Check similar existing code for patterns:
-
-```bash
-# Find similar services
-grep -r "class.*Service" backend/app/services/
-
-# Find similar routes
-grep -r "@router\." backend/app/api/
-
-# Find similar DTOs
-grep -r "class.*DTO" backend/app/dtos/
+# In route
+except RecipeNotFoundError:
+    raise HTTPException(status_code=404, detail="Recipe not found")
+except DuplicateRecipeError as e:
+    raise HTTPException(status_code=409, detail=str(e))
 ```
 
-### 4. Self-Audit Checklist
+## Naming Conventions
 
-Before completing any backend code:
+| Layer | File | Class |
+|-------|------|-------|
+| Model | `shopping_item.py` | `ShoppingItem` |
+| DTO | `shopping_item_dtos.py` | `ShoppingItemCreateDTO`, `ShoppingItemResponseDTO` |
+| Repository | `shopping_item_repo.py` | `ShoppingItemRepo` |
+| Service | `shopping_item_service.py` | `ShoppingItemService` |
+| Route | `shopping_items.py` (plural) | `router = APIRouter()` |
 
-- [ ] Using layered architecture (route → service → repo → model)?
-- [ ] DTOs for all API request/response bodies?
-- [ ] Type hints on all function signatures?
-- [ ] Transaction management in service layer?
-- [ ] Domain exceptions (not HTTPException) in services?
-- [ ] Proper eager loading to avoid N+1 queries?
-- [ ] Migration created for model changes?
+### DTO Suffixes
+
+| Purpose | Suffix | Notes |
+|---------|--------|-------|
+| Creation | `CreateDTO` | Required fields |
+| Updates | `UpdateDTO` | All Optional fields |
+| Responses | `ResponseDTO` | Has `from_model()` classmethod |
+| List views | `CardDTO` | Lightweight subset |
+| Query params | `FilterDTO` | Includes pagination |
+
+## New Feature Workflow
+
+Create in this order:
+
+1. **Model** (`app/models/`) — SQLAlchemy 2.0 style with `Mapped` annotations
+2. **Migration** — `alembic revision --autogenerate -m "description"`
+3. **DTOs** (`app/dtos/`) — Create, Update, Response, optionally Card/Filter
+4. **Repository** (`app/repositories/`) — Takes `(session, user_id)`
+5. **Service** (`app/services/`) — Takes `(session, user_id)`, creates repo internally
+6. **Route** (`app/api/`) — Uses `Depends(get_current_user)`
+7. **Register** in `main.py`
+
+Always include `user_id` FK with `ondelete="CASCADE"` and `index=True` on domain models.
+
+## Key Patterns (Reference Existing Code)
+
+| Pattern | Reference File |
+|---------|----------------|
+| Model with relationships | `app/models/recipe.py` |
+| Repository with eager loading | `app/repositories/recipe_repo.py` |
+| Service with transactions | `app/services/recipe_service.py` |
+| Route with error handling | `app/api/recipes.py` |
+| Full DTO set | `app/dtos/recipe_dtos.py` |
+| AI service | `app/ai/services/meal_genie_service.py` |
+
+## SQLAlchemy 2.0 Style
+
+```python
+# Required
+from sqlalchemy.orm import Mapped, mapped_column
+
+# Field definitions
+id: Mapped[int] = mapped_column(primary_key=True)
+name: Mapped[str] = mapped_column(String(255), nullable=False)
+description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+
+# Relationships
+recipes: Mapped[List["Recipe"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+```
+
+## Query Patterns
+
+```python
+# Eager loading (avoid N+1)
+stmt = select(Recipe).options(joinedload(Recipe.ingredients)).where(Recipe.id == id)
+result = self.session.scalars(stmt).unique().first()
+
+# Always .unique() after joinedload on collections
+```
+
+## Domain Constraints
+
+| Feature | Limit | Enforced In |
+|---------|-------|-------------|
+| Planner entries | 15 max | `planner_service.py` |
+| Side recipes per meal | 3 max | `meal_service.py` |
+| Meal tags | 20 max, 50 chars each | `meal_dtos.py` |
 
 ## AI Module Structure
 
-For AI-powered features, follow this structure:
-
 ```
 app/ai/
-├── config/           # AI configuration (prompts, model settings)
-│   └── feature_config.py
-├── dtos/             # AI-specific DTOs
-│   └── feature_dtos.py
+├── config/           # Prompts, model settings
+├── dtos/             # AI-specific request/response
 └── services/         # AI service implementations
-    └── feature_service.py
 ```
 
-### AI Service Pattern
+AI services return DTOs with `success: bool` and either result or `error: str`.
 
-```python
-# config/cooking_tips_config.py
-MODEL_NAME = "gemini-2.0-flash"
-TEMPERATURE = 0.9
-API_KEY_ENV_VAR = "GEMINI_API_KEY"
+## Quick Audit Checklist
 
-# services/cooking_tip_service.py
-class CookingTipService:
-    def __init__(self):
-        self.client = self._init_client()
+Before completing backend work:
 
-    def generate_tip(self) -> CookingTipResponseDTO:
-        try:
-            response = self.client.generate_content(...)
-            return CookingTipResponseDTO(success=True, tip=response.text)
-        except Exception as e:
-            return CookingTipResponseDTO(success=False, error=str(e))
-```
-
-## Related Files
-
-- [patterns.md](patterns.md) - Detailed layer-specific patterns and examples
-- [checklist.md](checklist.md) - Full compliance checklist for code reviews
-
-## Development Commands
-
-```bash
-# Activate virtual environment
-venv\Scripts\activate  # Windows
-source venv/bin/activate  # Linux/macOS
-
-# Run dev server
-python -m uvicorn app.main:app --reload --port 8000
-
-# Create migration
-alembic revision --autogenerate -m "description"
-
-# Apply migrations
-alembic upgrade head
-
-# Run tests
-pytest
-pytest tests/test_file.py -v
-```
+- [ ] Routes only handle HTTP (no business logic)?
+- [ ] Services handle transactions (commit/rollback)?
+- [ ] Repos never commit (only flush)?
+- [ ] Domain exceptions in services, HTTPException only in routes?
+- [ ] All API bodies use DTOs?
+- [ ] Type hints on all signatures?
+- [ ] Eager loading where needed?
+- [ ] Migration created for model changes?
+- [ ] user_id FK with CASCADE and index?

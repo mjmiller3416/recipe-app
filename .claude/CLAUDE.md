@@ -81,27 +81,40 @@ src/
 │   ├── recipes/            # Recipe browser, detail, add/edit
 │   ├── meal-planner/       # Meal planning with drag-and-drop
 │   ├── shopping-list/      # Auto-generated shopping lists
-│   └── settings/           # User preferences
+│   ├── settings/           # User preferences
+│   ├── sign-in/            # Clerk sign-in
+│   └── sign-up/            # Clerk sign-up
 ├── components/
-│   ├── ui/                 # shadcn/ui base components
-│   ├── common/             # Shared components
+│   ├── ui/                 # shadcn/ui base components (26)
+│   ├── auth/               # Authentication (SignIn, SignUp, UserMenu)
+│   ├── common/             # Shared components (FilterBar, StatsCard, etc.)
+│   ├── forms/              # Form components (QuantityInput, SmartIngredientInput)
+│   ├── layout/             # App layout (sidebar, nav, page header, mobile nav)
+│   ├── meal-genie/         # AI chat interface
 │   ├── recipe/             # Recipe-specific components
-│   ├── layout/             # App layout (sidebar, nav)
-│   └── meal-genie/         # AI chat interface
+│   └── settings/           # Settings section (DataManagementSection)
+├── data/                   # Static data (changelog)
 ├── hooks/                  # Custom React hooks
+│   └── api/                # React Query hooks for all API calls
 ├── lib/                    # Utilities, API client, constants
-└── types/                  # TypeScript type definitions
+│   └── providers/          # React Query provider
+├── types/                  # TypeScript type definitions
+└── proxy.ts                # Clerk auth middleware
 ```
 
 ### Key Patterns
 
 **API Client** (`lib/api.ts`): All backend calls use typed API methods:
 ```typescript
-import { recipeApi, plannerApi, shoppingApi, mealGenieApi } from "@/lib/api";
+import { recipeApi, plannerApi, shoppingApi, mealGenieApi, dashboardApi, ingredientApi, dataManagementApi, uploadApi, imageGenerationApi, cookingTipApi, mealSuggestionsApi, feedbackApi, unitConversionApi, settingsApi } from "@/lib/api";
 ```
 
+**API Authentication Layer**:
+- `lib/api-client.ts`: Client-side authenticated fetch with Clerk token injection
+- `lib/api-server.ts`: Server-side authenticated fetch for RSC
+
 **State Management**:
-- Server state: React Query
+- Server state: React Query (hooks in `hooks/api/`)
 - Local state: React useState
 - Persisted state: Custom hooks with localStorage (`useSettings`, `useChatHistory`, `useRecentRecipes`)
 
@@ -162,15 +175,6 @@ This project has an extensive design system. **Always follow these rules**:
 
 ## Claude Code Skills & Commands
 
-### Skills vs Commands (IMPORTANT)
-
-| Folder | Purpose | Claude Access |
-|--------|---------|---------------|
-| `.claude/skills/` | Reference documentation (patterns, tokens, checklists) | ✅ **Auto-read** when relevant |
-| `.claude/commands/` | User-invoked slash commands | ❌ **Only when user explicitly invokes** |
-
-**Claude should automatically read skill documentation** when working on related tasks, but **never invoke commands** unless the user explicitly types them (e.g., `/design`, `/audit`).
-
 ### Skill Documentation (Auto-Read)
 
 **Frontend Design** (`.claude/skills/frontend-design/`):
@@ -187,37 +191,16 @@ This project has an extensive design system. **Always follow these rules**:
 **Git Workflow** (`.claude/skills/git/`):
 - [SKILL.md](.claude/skills/git/SKILL.md) - Branch naming, commit message, and PR conventions
 
-### Commands (User-Invoked Only)
+### Commands
 
 These commands in `.claude/commands/` are **only run when explicitly invoked**:
 
-- `/design` - Frontend design workflow
-- `/audit` - Audit a UI component
-- `/batch-audit` - Audit multiple components
-- `/ds-fix` - Fix design system violations
-- `/backend` - Backend development workflow
+- `/frontend` - Frontend design automation (scaffold, audit, lookup, add)
+- `/backend` - Backend architecture automation (scaffold, audit, migrate, test)
+- `/git` - Git workflow automation (start, commit, sync, merge, deploy, pr)
 - `/todo` - Generate TODO items
 - `/changelog` - Generate changelog entries
-- `/fix` - Fix a TODO item
 - `/sync-issues` - Sync GitHub issues to TODOs
-- `/git` - Git workflow automation (branches, commits, PRs)
-
-## Authentication Testing
-
-Before deploying auth changes, test with real JWT validation locally:
-
-```bash
-# Switch to production-like auth mode
-python backend/scripts/toggle_auth.py prod
-
-# Restart backend, then test through Clerk sign-in
-```
-
-See **[docs/AUTH_TESTING_GUIDE.md](../docs/AUTH_TESTING_GUIDE.md)** for:
-- Full testing workflow
-- Pre-deploy checklist
-- Debugging tips
-- Common issues & solutions
 
 ## Deployment
 
