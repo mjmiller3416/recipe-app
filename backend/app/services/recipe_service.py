@@ -72,7 +72,7 @@ class RecipeService:
 
         # Check if any of those meals are in active planner entries
         for meal in meals_with_recipe:
-            entries = planner_repo.get_by_meal_id(meal.id)
+            entries = planner_repo.get_by_meal_id(meal.id, self.user_id)
             active_entries = [e for e in entries if not e.is_completed and not e.is_cleared]
             if active_entries:
                 # Found at least one active entry, sync and return
