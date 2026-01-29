@@ -558,30 +558,6 @@ export function useAddSideToMeal() {
   });
 }
 
-/**
- * Delete a meal entirely.
- */
-export function useDeleteMeal() {
-  const { getToken } = useAuth();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (mealId: number) => {
-      const token = await getToken();
-      return plannerApi.deleteMeal(mealId, token);
-    },
-    onSuccess: (_data, mealId) => {
-      // Remove meal from cache
-      queryClient.removeQueries({ queryKey: plannerQueryKeys.meal(mealId) });
-      // Invalidate entries and saved meals
-      queryClient.invalidateQueries({ queryKey: plannerQueryKeys.entries() });
-      queryClient.invalidateQueries({ queryKey: plannerQueryKeys.savedMeals() });
-      queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.stats() });
-      dispatchPlannerUpdate();
-    },
-  });
-}
-
 // ============================================================================
 // UTILITY HOOKS
 // ============================================================================

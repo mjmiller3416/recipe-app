@@ -157,7 +157,7 @@ export function applyFilters(
 
 /**
  * Convert quick filter IDs (Set<string>) to RecipeFilters.
- * Used by components that store filters as a Set of filter IDs (e.g., MealDialog).
+ * Used by components that store filters as a Set of filter IDs.
  *
  * @example
  * const filters = quickFiltersToRecipeFilters(new Set(["breakfast", "under30"]));

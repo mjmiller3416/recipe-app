@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Bookmark } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollableCardList } from "@/components/common/ScrollableCardList";
-import { SavedMealCard } from "../components/SavedMealCard";
+import { SavedMealCard } from "./SavedMealCard";
 import { useSavedMeals, useAddToPlanner } from "@/hooks/api";
 import type { MealSelectionResponseDTO, PlannerEntryResponseDTO } from "@/types";
 

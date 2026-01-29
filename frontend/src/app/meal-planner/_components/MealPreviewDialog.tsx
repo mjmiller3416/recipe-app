@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { MealPreviewPanel } from "./meal-dialog/components/MealPreviewPanel";
+import { MealPreviewPanel } from "./MealPreviewPanel";
 import type { RecipeCardData } from "@/types";
 
 // ============================================================================
