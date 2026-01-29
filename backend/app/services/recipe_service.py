@@ -77,7 +77,7 @@ class RecipeService:
             if active_entries:
                 # Found at least one active entry, sync and return
                 from ..services.shopping_service import ShoppingService
-                shopping_service = ShoppingService(self.session)
+                shopping_service = ShoppingService(self.session, self.user_id)
                 shopping_service.sync_shopping_list()
                 return
 
