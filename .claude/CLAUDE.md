@@ -130,11 +130,6 @@ This project has an extensive design system. **Always follow these rules**:
 4. **Icon buttons need aria-label** - `<Button size="icon" aria-label="Close">`
 5. **Loading states required** - Buttons show spinner + disabled during async actions
 
-**Design System Documentation**:
-- [.claude/design-system-rules.md](.claude/design-system-rules.md) - Complete rules reference
-- [.claude/skills/frontend-design/tokens.md](.claude/skills/frontend-design/tokens.md) - CSS variable reference
-- [.claude/skills/frontend-design/component-usage.md](.claude/skills/frontend-design/component-usage.md) - Component patterns
-
 **Quick Reference - When to use what**:
 | Need | Use |
 |------|-----|
@@ -179,14 +174,9 @@ This project has an extensive design system. **Always follow these rules**:
 
 **Frontend Design** (`.claude/skills/frontend-design/`):
 - [SKILL.md](.claude/skills/frontend-design/SKILL.md) - Design skill overview
-- [tokens.md](.claude/skills/frontend-design/tokens.md) - CSS variable reference
-- [component-usage.md](.claude/skills/frontend-design/component-usage.md) - Component patterns
-- [audit-checklist.md](.claude/skills/frontend-design/audit-checklist.md) - Compliance checklist
 
 **Backend Development** (`.claude/skills/backend-dev/`):
 - [SKILL.md](.claude/skills/backend-dev/SKILL.md) - Quick reference and patterns
-- [patterns.md](.claude/skills/backend-dev/patterns.md) - Layer-specific code templates
-- [checklist.md](.claude/skills/backend-dev/checklist.md) - Code review checklist
 
 **Git Workflow** (`.claude/skills/git/`):
 - [SKILL.md](.claude/skills/git/SKILL.md) - Branch naming, commit message, and PR conventions
