@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { Save, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { recipeApi } from "@/lib/api";
@@ -80,6 +81,7 @@ function EditRecipeSkeleton() {
 
 export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
   const router = useRouter();
+  const { getToken } = useAuth();
   const isEditMode = mode === "edit";
 
   // State for edit mode - fetch existing recipe data
@@ -96,7 +98,8 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
 
     async function fetchRecipe() {
       try {
-        const recipe = await recipeApi.get(recipeId!);
+        const token = await getToken();
+        const recipe = await recipeApi.get(recipeId!, token);
         setInitialData(recipe);
       } catch (error) {
         console.error("Failed to fetch recipe:", error);
@@ -108,7 +111,7 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
       }
     }
     fetchRecipe();
-  }, [recipeId, isEditMode, router]);
+  }, [recipeId, isEditMode, router, getToken]);
 
   // Use the unified recipe form hook
   const form = useRecipeForm(

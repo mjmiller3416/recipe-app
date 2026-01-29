@@ -30,7 +30,6 @@ export {
   useReorderEntries,
   useClearCompleted,
   useAddSideToMeal,
-  useDeleteMeal,
   // Utilities
   useRefreshPlannerEntries,
   useRefreshCookingStreak,

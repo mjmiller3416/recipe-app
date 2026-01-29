@@ -312,15 +312,18 @@ class MealRepo:
         Returns:
             List of meals that use this recipe
         """
-        # Find meals where recipe is the main recipe OR in side_recipe_ids
+        # side_recipe_ids is a Python @property over a JSON Text column,
+        # so we query the underlying _side_recipe_ids_json column with LIKE,
+        # then filter in Python to eliminate partial-number false positives.
         stmt = select(Meal).where(
             or_(
                 Meal.main_recipe_id == recipe_id,
-                Meal.side_recipe_ids.contains([recipe_id])
+                Meal._side_recipe_ids_json.like(f"%{recipe_id}%")
             )
         )
         result = self.session.execute(stmt)
-        return result.scalars().all()
+        candidates = result.scalars().all()
+        return [m for m in candidates if m.has_recipe(recipe_id)]
 
     # -- Validation Methods ----------------------------------------------------------------------
     def validate_meal_ids(self, meal_ids: List[int], user_id: int) -> List[int]:

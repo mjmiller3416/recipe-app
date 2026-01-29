@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useId, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { recipeApi, ingredientApi, uploadApi } from "@/lib/api";
 import { base64ToFile } from "@/lib/utils";
@@ -126,6 +127,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
 
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { getToken } = useAuth();
 
   // Generate a stable ID for the initial ingredient (prevents hydration mismatch)
   const initialIngredientId = useId();
@@ -341,7 +343,8 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
   useEffect(() => {
     const fetchIngredients = async () => {
       try {
-        const ingredients = await ingredientApi.list();
+        const token = await getToken();
+        const ingredients = await ingredientApi.list(undefined, token);
         // Transform to autocomplete format
         const transformed: AutocompleteIngredient[] = ingredients.map((ing) => ({
           id: ing.id,
@@ -548,6 +551,9 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
 
     setIsSubmitting(true);
     try {
+      // Get fresh auth token for all API calls
+      const token = await getToken();
+
       // Transform ingredients to API format
       const apiIngredients: RecipeIngredientDTO[] = values.ingredients.map((ing) => ({
         ingredient_name: ing.name,
@@ -570,7 +576,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
           ingredients: apiIngredients,
         };
 
-        const createdRecipe = await recipeApi.create(payload);
+        const createdRecipe = await recipeApi.create(payload, token);
 
         // Upload images if they exist (AI-generated or user-uploaded)
         let referenceImagePath: string | undefined;
@@ -579,7 +585,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
         // Upload reference image (1:1 square)
         if (imageFile) {
           try {
-            const uploadResult = await uploadApi.uploadRecipeImage(imageFile, createdRecipe.id);
+            const uploadResult = await uploadApi.uploadRecipeImage(imageFile, createdRecipe.id, "reference", token);
             referenceImagePath = uploadResult.path;
           } catch (uploadError) {
             console.error("Failed to upload reference image:", uploadError);
@@ -592,7 +598,8 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
             const bannerUploadResult = await uploadApi.uploadRecipeImage(
               bannerImageFile,
               createdRecipe.id,
-              "banner"
+              "banner",
+              token
             );
             bannerImagePath = bannerUploadResult.path;
           } catch (uploadError) {
@@ -605,7 +612,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
           await recipeApi.update(createdRecipe.id, {
             ...(referenceImagePath && { reference_image_path: referenceImagePath }),
             ...(bannerImagePath && { banner_image_path: bannerImagePath }),
-          });
+          }, token);
         }
 
         // Warn if some images failed to upload
@@ -625,7 +632,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
         let imagePath = originalImagePath;
         if (imageFile) {
           try {
-            const uploadResult = await uploadApi.uploadRecipeImage(imageFile, recipeId);
+            const uploadResult = await uploadApi.uploadRecipeImage(imageFile, recipeId, "reference", token);
             imagePath = uploadResult.path;
           } catch (uploadError) {
             console.error("Failed to upload reference image:", uploadError);
@@ -640,7 +647,8 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
             const bannerUploadResult = await uploadApi.uploadRecipeImage(
               bannerImageFile,
               recipeId,
-              "banner"
+              "banner",
+              token
             );
             bannerPath = bannerUploadResult.path;
           } catch (uploadError) {
@@ -663,7 +671,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
           ingredients: apiIngredients,
         };
 
-        await recipeApi.update(recipeId, payload);
+        await recipeApi.update(recipeId, payload, token);
 
         // Reset dirty state after successful save
         setIsDirty(false);
