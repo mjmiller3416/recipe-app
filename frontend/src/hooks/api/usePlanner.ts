@@ -143,6 +143,8 @@ export function useUpdateMeal() {
       // Invalidate entries as meal name/recipes may have changed
       queryClient.invalidateQueries({ queryKey: plannerQueryKeys.entries() });
       queryClient.invalidateQueries({ queryKey: plannerQueryKeys.savedMeals() });
+      // Invalidate shopping list as ingredients may have changed
+      queryClient.invalidateQueries({ queryKey: shoppingQueryKeys.list() });
       dispatchPlannerUpdate();
     },
   });
@@ -196,6 +198,10 @@ export function useRemoveEntry() {
         plannerQueryKeys.entries()
       );
 
+      // Capture the meal_id before removing (needed for cache cleanup)
+      const entryToRemove = previousEntries?.find((e) => e.id === entryId);
+      const removedMealId = entryToRemove?.meal_id ?? null;
+
       // Optimistically remove the entry
       if (previousEntries) {
         queryClient.setQueryData<PlannerEntryResponseDTO[]>(
@@ -204,7 +210,7 @@ export function useRemoveEntry() {
         );
       }
 
-      return { previousEntries };
+      return { previousEntries, removedMealId };
     },
     onError: (_err, _entryId, context) => {
       // Rollback on error
@@ -212,7 +218,14 @@ export function useRemoveEntry() {
         queryClient.setQueryData(plannerQueryKeys.entries(), context.previousEntries);
       }
     },
-    onSettled: () => {
+    onSettled: (_data, _error, _entryId, context) => {
+      // Remove the meal from cache to prevent stale data (ghost selection bug fix)
+      if (context?.removedMealId) {
+        queryClient.removeQueries({
+          queryKey: plannerQueryKeys.meal(context.removedMealId),
+        });
+      }
+
       queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.stats() });
       queryClient.invalidateQueries({ queryKey: shoppingQueryKeys.list() });
       dispatchPlannerUpdate();
@@ -538,6 +551,8 @@ export function useAddSideToMeal() {
       );
       // Invalidate entries as side recipes may show in preview
       queryClient.invalidateQueries({ queryKey: plannerQueryKeys.entries() });
+      // Invalidate shopping list as new side dish ingredients need to be added
+      queryClient.invalidateQueries({ queryKey: shoppingQueryKeys.list() });
       dispatchPlannerUpdate();
     },
   });

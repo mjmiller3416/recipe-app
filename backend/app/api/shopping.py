@@ -35,20 +35,16 @@ def get_shopping_list(
     search_term: Optional[str] = Query(None),
     limit: Optional[int] = Query(None, ge=1, le=100),
     offset: Optional[int] = Query(None, ge=0),
-    auto_generate: bool = Query(False, description="Generate from planner before returning list"),
+    auto_generate: bool = Query(False, description="DEPRECATED: no longer used, kept for API compatibility"),
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
     """Get the shopping list with optional filters.
 
-    Set auto_generate=true to regenerate from active planner entries before returning.
-    This combines the generate + get operations into a single request.
+    Note: auto_generate parameter is deprecated. Shopping list is now automatically
+    synced when planner changes occur. This parameter is accepted but ignored.
     """
     service = ShoppingService(session, current_user.id)
-
-    # Optionally regenerate from planner before fetching
-    if auto_generate:
-        service.generate_from_active_planner()
 
     filters = ShoppingListFilterDTO(
         source=source,
@@ -162,7 +158,12 @@ def generate_from_planner(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    """Generate shopping list from active (non-completed) planner entries."""
+    """DEPRECATED: Trigger manual shopping list sync.
+
+    Note: This endpoint is deprecated. Shopping list is now automatically synced
+    when planner changes occur. This endpoint still works for backwards compatibility
+    but is no longer necessary to call.
+    """
     service = ShoppingService(session, current_user.id)
     return service.generate_from_active_planner()
 

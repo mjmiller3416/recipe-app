@@ -479,18 +479,16 @@ export const plannerApi = {
 
 export const shoppingApi = {
   /**
-   * Get shopping list with optional filters
+   * Get shopping list with optional filters.
+   * Shopping list is automatically synced when planner changes occur.
    * @param filters - Optional filter parameters
-   * @param autoGenerate - If true, regenerates from planner before returning
    * @param token - Optional auth token for authenticated requests
    */
   getList: (
     filters?: ShoppingListFilterDTO,
-    autoGenerate = false,
     token?: string | null
   ): Promise<ShoppingListResponseDTO> => {
-    const params = { ...(filters || {}), auto_generate: autoGenerate };
-    const query = buildQueryString(params as Record<string, unknown>);
+    const query = filters ? buildQueryString(filters as Record<string, unknown>) : "";
     return fetchApi<ShoppingListResponseDTO>(`/api/shopping${query}`, undefined, token);
   },
 
@@ -592,7 +590,9 @@ export const shoppingApi = {
     ),
 
   /**
-   * Generate shopping list from active planner entries
+   * Generate shopping list from active planner entries.
+   * @deprecated Shopping list is now automatically synced when planner changes.
+   * This method is kept for backwards compatibility but is no longer necessary.
    * @param token - Optional auth token for authenticated requests
    */
   generateFromPlanner: (token?: string | null): Promise<ShoppingListGenerationResultDTO> =>

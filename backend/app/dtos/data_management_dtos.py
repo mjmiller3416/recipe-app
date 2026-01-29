@@ -251,6 +251,8 @@ class BackupDataDTO(BaseModel):
     meals: List[MealBackupDTO] = []
     planner_entries: List[PlannerEntryBackupDTO] = []
     shopping_items: List[ShoppingItemBackupDTO] = []
+    # shopping_states kept for backwards compatibility with older backups
+    # New backups will have an empty list, state is now stored on ShoppingItem
     shopping_states: List[ShoppingStateBackupDTO] = []
 
 

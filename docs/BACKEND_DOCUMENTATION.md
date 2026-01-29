@@ -72,7 +72,7 @@ backend/
 │   │   ├── planner.py                   # Planner endpoints
 │   │   ├── shopping.py                  # Shopping list endpoints
 │   │   ├── ingredients.py               # Ingredient endpoints
-│   │   ├── unit_conversions.py          # Unit conversion endpoints
+│   │   ├── conversion_rules.py          # Unit conversion endpoints
 │   │   ├── dashboard.py                 # Dashboard statistics endpoints
 │   │   ├── data_management.py           # Import/export endpoints
 │   │   ├── feedback.py                  # User feedback endpoints

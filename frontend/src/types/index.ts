@@ -170,13 +170,19 @@ export interface ShoppingItemBaseDTO {
   category: string | null;
 }
 
+/** A recipe source with usage count (e.g., same side dish used twice) */
+export interface RecipeSourceDTO {
+  recipe_name: string;
+  count: number;
+}
+
 export interface ShoppingItemResponseDTO extends ShoppingItemBaseDTO {
   id: number;
   source: ShoppingSource;
   have: boolean;
   flagged: boolean;
   state_key: string | null;
-  recipe_sources: string[];  // List of recipe names this ingredient comes from
+  recipe_sources: RecipeSourceDTO[];  // Recipe sources with usage counts
 }
 
 export interface ShoppingListResponseDTO {
@@ -459,7 +465,7 @@ export interface ShoppingItemBackup {
   have: boolean;
   flagged: boolean;
   state_key: string | null;
-  recipe_sources: string[] | null;
+  recipe_sources: RecipeSourceDTO[] | null;
 }
 
 export interface ShoppingStateBackup {

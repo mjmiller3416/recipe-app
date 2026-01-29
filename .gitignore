@@ -53,3 +53,4 @@ frontend/public/ui_examples/shopping_list/full_view.png
 frontend/public/ui_examples/shopping_list/item_aggregation.png
 frontend/public/ui_examples/shopping_list/progress_tracking.png
 frontend/public/ui_examples/shopping_list/recipe_filter.png
+backend/app/scripts/copy_prod_to_local.py

@@ -79,9 +79,15 @@ export {
   shoppingQueryKeys,
   // Queries
   useShoppingList,
+  useIngredientBreakdown,
   // Mutations
+  useToggleItem,
+  useToggleFlagged,
+  useAddManualItem,
+  useDeleteItem,
+  useClearManualItems,
+  useClearCompletedItems,
   useGenerateShoppingList,
-  useToggleShoppingItem,
   // Utilities
   useRefreshShoppingList,
 } from "./useShopping";

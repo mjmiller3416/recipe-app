@@ -1,3 +1,8 @@
+---
+name: Frontend Design
+description: Apply Meal Genie design system patterns when creating or modifying React UI components, pages, or styling
+---
+
 # Frontend Design Skill
 
 ## Purpose

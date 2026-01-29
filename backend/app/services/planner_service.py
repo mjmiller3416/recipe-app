@@ -61,6 +61,17 @@ class PlannerService:
         self.meal_repo = MealRepo(self.session)
         self.recipe_repo = RecipeRepo(self.session, user_id=user_id)
 
+    # -- Shopping List Sync Helper ---------------------------------------------------------------
+    def _sync_shopping_list(self) -> None:
+        """
+        Sync the shopping list after planner mutations.
+        This is called automatically after any operation that affects what should
+        be in the shopping list.
+        """
+        from ..services.shopping_service import ShoppingService
+        shopping_service = ShoppingService(self.session, self.user_id)
+        shopping_service.sync_shopping_list()
+
     # -- Add to Planner --------------------------------------------------------------------------
     def add_meal_to_planner(
         self, meal_id: int, position: Optional[int] = None
@@ -94,6 +105,9 @@ class PlannerService:
             # Add entry
             entry = self.repo.add_entry(meal_id, self.user_id, position)
             self.session.commit()
+
+            # Sync shopping list after adding meal
+            self._sync_shopping_list()
 
             # Refresh to get relationships
             entry = self.repo.get_by_id(entry.id, self.user_id)
@@ -141,6 +155,9 @@ class PlannerService:
                 entries.append(entry)
 
             self.session.commit()
+
+            # Sync shopping list after adding meals
+            self._sync_shopping_list()
 
             # Refresh and convert to DTOs
             result = []
@@ -417,6 +434,10 @@ class PlannerService:
                 return None
 
             self.session.commit()
+
+            # Sync shopping list after mode change
+            self._sync_shopping_list()
+
             entry = self.repo.get_by_id(entry.id, self.user_id)
             return self._entry_to_response_dto(entry)
         except SQLAlchemyError:
@@ -433,8 +454,15 @@ class PlannerService:
         Returns:
             Updated entry as DTO or None if not found/not owned
         """
+        import logging
+
         try:
+            logging.info(f"mark_completed: entry_id={entry_id}, user_id={self.user_id}")
+
             entry = self.repo.mark_completed(entry_id, self.user_id)
+
+            logging.info(f"mark_completed: repo returned entry={entry}")
+
             if not entry:
                 return None
 
@@ -443,9 +471,18 @@ class PlannerService:
                 self.recipe_repo.record_cooked(entry.meal.main_recipe_id, self.user_id)
 
             self.session.commit()
+
+            # Sync shopping list (completed entries are excluded from shopping)
+            # Non-blocking: don't let sync failures block meal completion
+            try:
+                self._sync_shopping_list()
+            except Exception as e:
+                logging.warning(f"Shopping list sync failed after meal completion: {e}")
+
             entry = self.repo.get_by_id(entry.id, self.user_id)
             return self._entry_to_response_dto(entry)
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            logging.error(f"mark_completed SQLAlchemyError: {e}")
             self.session.rollback()
             return None
 
@@ -465,6 +502,10 @@ class PlannerService:
                 return None
 
             self.session.commit()
+
+            # Sync shopping list (now this entry contributes to shopping again)
+            self._sync_shopping_list()
+
             entry = self.repo.get_by_id(entry.id, self.user_id)
             return self._entry_to_response_dto(entry)
         except SQLAlchemyError:
@@ -514,6 +555,11 @@ class PlannerService:
                 self._cleanup_transient_meal(meal_id)
 
             self.session.commit()
+
+            # Sync shopping list after removing entry
+            if result:
+                self._sync_shopping_list()
+
             return result
         except SQLAlchemyError:
             self.session.rollback()
@@ -532,6 +578,11 @@ class PlannerService:
         try:
             count = self.repo.remove_entries_by_meal_id(meal_id, self.user_id)
             self.session.commit()
+
+            # Sync shopping list after removing entries
+            if count > 0:
+                self._sync_shopping_list()
+
             return count
         except SQLAlchemyError:
             self.session.rollback()
@@ -557,6 +608,11 @@ class PlannerService:
                 self._cleanup_transient_meal(meal_id)
 
             self.session.commit()
+
+            # Sync shopping list (will remove all recipe items since planner is empty)
+            if count > 0:
+                self._sync_shopping_list()
+
             return count
         except SQLAlchemyError:
             self.session.rollback()
@@ -582,6 +638,12 @@ class PlannerService:
                 self._cleanup_transient_meal(meal_id)
 
             self.session.commit()
+
+            # Sync shopping list after clearing completed entries
+            # (completed entries weren't contributing, but clearing might allow orphan cleanup)
+            if count > 0:
+                self._sync_shopping_list()
+
             return count
         except SQLAlchemyError:
             self.session.rollback()

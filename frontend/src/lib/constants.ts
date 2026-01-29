@@ -38,6 +38,8 @@ export const DIETARY_PREFERENCES = [
   { value: "diabetic", label: "Diabetic" },
 ] as const;
 
+// NOTE: If you add/remove units here, also update COUNT_UNITS in
+// backend/app/utils/unit_conversion.py to keep them in sync
 export const INGREDIENT_UNITS = [
   { value: "tbs", label: "Tbs" },
   { value: "tsp", label: "tsp" },

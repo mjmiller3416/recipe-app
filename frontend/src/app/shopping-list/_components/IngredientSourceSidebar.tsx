@@ -6,12 +6,15 @@ import { RecipeIcon } from "@/components/common/RecipeIcon";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Link2 } from "lucide-react";
 
 interface RecipeInfo {
   name: string;
   itemCount: number;
   collectedCount: number;
   isFirstInMeal?: boolean; // True if this recipe starts a new meal grouping
+  isDuplicate?: boolean; // True if this recipe appears in multiple meals
+  instanceKey: string; // Unique key per meal instance (e.g., "meal-5-Air Fryer Potatoes")
 }
 
 interface IngredientSourceSidebarProps {
@@ -69,7 +72,7 @@ export function IngredientSourceSidebar({
             const showSeparator = recipe.isFirstInMeal && index > 0;
 
             return (
-              <div key={recipe.name}>
+              <div key={recipe.instanceKey}>
                 {showSeparator && <Separator className="my-2" />}
                 <Button
                   variant="ghost"
@@ -84,13 +87,18 @@ export function IngredientSourceSidebar({
 
                   {/* Recipe info */}
                   <div className="flex-1 min-w-0 text-left">
-                    <div
-                      className={cn(
-                        "font-medium text-sm truncate",
-                        isActive ? "text-primary" : "text-foreground"
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={cn(
+                          "font-medium text-sm truncate",
+                          isActive ? "text-primary" : "text-foreground"
+                        )}
+                      >
+                        {recipe.name}
+                      </span>
+                      {recipe.isDuplicate && (
+                        <Link2 className="w-3 h-3 flex-shrink-0 text-primary" strokeWidth={1.5} />
                       )}
-                    >
-                      {recipe.name}
                     </div>
                     <div className="text-xs text-muted-foreground font-normal">
                       {recipe.collectedCount}/{recipe.itemCount} items

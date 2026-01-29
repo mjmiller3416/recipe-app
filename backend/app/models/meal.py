@@ -38,6 +38,9 @@ class Meal(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     meal_name: Mapped[str] = mapped_column(String(255), nullable=False)
 
+    # User ID - defaults to 1 for single-user/auth-disabled testing
+    user_id: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+
     # Main recipe (required) - CASCADE delete when recipe is deleted
     main_recipe_id: Mapped[int] = mapped_column(
         Integer,

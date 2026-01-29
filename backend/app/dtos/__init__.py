@@ -53,7 +53,6 @@ from .shopping_dtos import (
     ShoppingListGenerationDTO,
     ShoppingListGenerationResultDTO,
     ShoppingListResponseDTO,
-    ShoppingStateDTO,
 )
 
 __all__ = [
@@ -102,7 +101,6 @@ __all__ = [
     "IngredientAggregationDTO",
     "IngredientBreakdownDTO",
     "IngredientBreakdownItemDTO",
-    "ShoppingStateDTO",
     "BulkStateUpdateDTO",
     "BulkOperationResultDTO",
 

@@ -1,36 +1,44 @@
 """app/core/services/shopping_service.py
 
 Service layer for shopping list operations and business logic.
-Orchestrates repository operations and coordinates with meal planning.
+Uses diff-based sync to keep shopping items in sync with planner state.
 """
 
 # ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union
+import logging
+from collections import defaultdict
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 from ..dtos.shopping_dtos import (
     BulkOperationResultDTO,
     BulkStateUpdateDTO,
     ManualItemCreateDTO,
+    RecipeSourceDTO,
     ShoppingItemResponseDTO,
     ShoppingItemUpdateDTO,
     ShoppingListFilterDTO,
     ShoppingListGenerationDTO,
     ShoppingListGenerationResultDTO,
-    ShoppingListResponseDTO)
+    ShoppingListResponseDTO,
+)
 from ..models.shopping_item import ShoppingItem
 from ..repositories.meal_repo import MealRepo
 from ..repositories.planner_repo import PlannerRepo
 from ..repositories.shopping_repo import ShoppingRepo
+from ..services.unit_conversion_service import UnitConversionService
+from ..utils.unit_conversion import get_dimension, to_base_unit, to_display_unit
 
 
 # ── Shopping Service ────────────────────────────────────────────────────────────────────────────────────────
 class ShoppingService:
-    """Service for shopping list operations with business logic."""
+    """Service for shopping list operations with diff-based sync."""
 
     def __init__(self, session: Session, user_id: int):
         """
@@ -46,335 +54,206 @@ class ShoppingService:
         self.meal_repo = MealRepo(self.session)
         self.planner_repo = PlannerRepo(self.session)
 
-    # ── Shopping List Generation ────────────────────────────────────────────────────────────────────────────
-    def generate_shopping_list(
-        self,
-        meal_ids_or_dto: Union[List[int], ShoppingListGenerationDTO]
-        ) -> ShoppingListGenerationResultDTO:
+    # ── Core Sync Method ────────────────────────────────────────────────────────────────────────────────────
+    def sync_shopping_list(self) -> Dict[str, int]:
         """
-        Generate shopping list from meal selections or from a ShoppingListGenerationDTO for the current user.
+        Synchronize shopping list with current planner state using diff-based algorithm.
 
-        Args:
-            meal_ids_or_dto (List[int] or ShoppingListGenerationDTO): List of meal selection IDs or DTO.
+        This is the core method that should be called after ANY planner mutation.
+        It compares desired state (from active planner entries) with current state
+        and applies minimal updates.
 
         Returns:
-            An object with attributes 'success', 'items_created', and 'items' (list of ShoppingItemResponseDTO).
+            Dict with counts: items_created, items_updated, items_deleted, contributions_synced
         """
-         # Extract recipe IDs from DTO if needed
-        if isinstance(meal_ids_or_dto, ShoppingListGenerationDTO):
-            recipe_ids = meal_ids_or_dto.recipe_ids
-        else:
-            recipe_ids = meal_ids_or_dto
-
         try:
-            # Empty selection: clear recipe items and all states, then return
-            if not recipe_ids:
-                self.shopping_repo.clear_shopping_items(self.user_id, source="recipe")
-                # Delete all orphaned states since there are no recipe items
-                self.shopping_repo.delete_orphaned_states([], self.user_id)
-                self.session.commit()
-                # Count remaining items (manual items only)
-                total_items = len(self.shopping_repo.get_all_shopping_items(self.user_id))
-                return ShoppingListGenerationResultDTO(
-                    success=True,
-                    items_created=0,
-                    items_updated=0,
-                    total_items=total_items,
-                    message="Cleared recipe items (no active meals)"
+            # 1. Get active planner entries (not completed, not cleared, shopping_mode != 'none')
+            active_entries = self.planner_repo.get_shopping_entries(self.user_id)
+
+            # 2. Calculate desired contributions from all active entries
+            # Structure: {aggregation_key: {(entry_id, recipe_id): {base_qty, dimension, category, name}}}
+            desired_contributions: Dict[str, Dict[tuple, Dict[str, Any]]] = defaultdict(dict)
+
+            conversion_service = UnitConversionService(self.session, self.user_id)
+
+            for entry in active_entries:
+                if not entry.meal:
+                    continue
+
+                recipe_ids = entry.meal.get_all_recipe_ids()
+                category_filter = "produce" if entry.shopping_mode == "produce_only" else None
+
+                # Get contributions for this entry
+                entry_contributions = self.shopping_repo.aggregate_ingredients_for_entry(
+                    recipe_ids, entry.id, category_filter
                 )
 
-            # Generate shopping list items
-            result = self.generate_shopping_list_from_recipes(recipe_ids)
-            return result
+                # Merge into desired state
+                for agg_key, contrib_list in entry_contributions.items():
+                    for contrib in contrib_list:
+                        key = (entry.id, contrib.recipe_id)
+                        if key not in desired_contributions[agg_key]:
+                            desired_contributions[agg_key][key] = {
+                                "base_quantity": 0.0,
+                                "dimension": contrib.dimension,
+                                "planner_entry_id": entry.id,
+                                "recipe_id": contrib.recipe_id,
+                                "original_unit": contrib.original_unit,
+                            }
+                        desired_contributions[agg_key][key]["base_quantity"] += contrib.base_quantity
+                        # Keep track of original_unit (prefer non-None)
+                        if contrib.original_unit and not desired_contributions[agg_key][key].get("original_unit"):
+                            desired_contributions[agg_key][key]["original_unit"] = contrib.original_unit
 
-        except SQLAlchemyError as e:
-            return ShoppingListGenerationResultDTO(
-                success=False,
-                items_created=0,
-                items_updated=0,
-                total_items=0,
-                message="Failed to generate shopping list",
-                errors=[str(e)]
+            # 3. Get current recipe items from database
+            current_items = self.shopping_repo.get_items_by_aggregation_keys(
+                list(desired_contributions.keys())
             )
 
-    def generate_shopping_list_from_recipes(self, recipe_ids: List[int]) -> ShoppingListGenerationResultDTO:
-        """
-        Generate shopping list from recipes with state restoration for the current user.
+            # Also get any recipe items that might be orphaned (not in desired state)
+            all_recipe_items = {
+                item.aggregation_key: item
+                for item in self.shopping_repo.get_all_shopping_items(source="recipe")
+                if item.aggregation_key
+            }
 
-        Args:
-            recipe_ids (List[int]): List of recipe IDs.
+            stats = {
+                "items_created": 0,
+                "items_updated": 0,
+                "items_deleted": 0,
+                "contributions_synced": 0,
+            }
 
-        Returns:
-            ShoppingListGenerationResultDTO: Generation result with statistics.
-        """
-        try:
-            # clear existing recipe-generated items for user
-            deleted_count = self.shopping_repo.clear_shopping_items(self.user_id, source="recipe")
+            # 4. Process each desired aggregation key
+            for agg_key, contributions in desired_contributions.items():
+                # Calculate total base quantity
+                total_base_qty = sum(c["base_quantity"] for c in contributions.values())
 
-            # aggregate ingredients from recipes
-            recipe_items = self.shopping_repo.aggregate_ingredients(recipe_ids)
+                # Get sample contribution for metadata
+                sample_contrib = next(iter(contributions.values()))
+                dimension = sample_contrib["dimension"]
 
-            # Batch load all saved states in a single query (fixes N+1 problem)
-            state_keys = [item.state_key for item in recipe_items if item.state_key]
-            saved_states = self.shopping_repo.get_shopping_states_batch(state_keys, self.user_id)
+                # Find the first non-None original_unit from all contributions
+                original_unit = None
+                for contrib_data in contributions.values():
+                    if contrib_data.get("original_unit"):
+                        original_unit = contrib_data["original_unit"]
+                        break
 
-            # Apply saved states to items (only if quantity hasn't increased)
-            for item in recipe_items:
-                if item.state_key:
-                    normalized_key = item.state_key.lower().strip()
-                    saved_state = saved_states.get(normalized_key)
-                    if saved_state:
-                        # If quantity increased, uncheck - user needs to collect more
-                        # Use 0.01 tolerance to account for floating point rounding in unit conversion
-                        if item.quantity > saved_state.quantity + 0.01:
-                            item.have = False
-                        else:
-                            item.have = saved_state.checked
-                        # Always restore flagged status (flags are user preference, not quantity-dependent)
-                        item.flagged = saved_state.flagged
+                # Get ingredient info from the aggregation key
+                parts = agg_key.split("::")
+                ingredient_name = parts[0] if parts else "Unknown"
 
-            # Update saved state quantities to match current quantities
-            # This ensures future regenerations compare against accurate values
-            # Save state for items that are checked OR flagged
-            for item in recipe_items:
-                if item.state_key and (item.have or item.flagged):
-                    self.shopping_repo.save_shopping_state(
-                        item.state_key, item.quantity, item.unit or "", item.have, self.user_id, item.flagged
-                    )
+                # Look up category from first recipe ingredient
+                category = self._get_ingredient_category(ingredient_name)
 
-            # save new items for user
-            items_created = 0
-            for item in recipe_items:
-                self.shopping_repo.create_shopping_item(item, self.user_id)
-                items_created += 1
-
-            # Clean up orphaned states that no longer have corresponding items
-            valid_state_keys = [item.state_key for item in recipe_items if item.state_key]
-            self.shopping_repo.delete_orphaned_states(valid_state_keys, self.user_id)
-
-            # commit transaction after creating all items
-            self.session.commit()
-
-            # get total count including manual items
-            total_items = len(self.shopping_repo.get_all_shopping_items(self.user_id))
-
-            return ShoppingListGenerationResultDTO(
-                success=True,
-                items_created=items_created,
-                items_updated=0,
-                total_items=total_items,
-                message=f"Successfully generated shopping list with {items_created} recipe items"
-            )
-
-        except SQLAlchemyError as e:
-            self.session.rollback()
-            return ShoppingListGenerationResultDTO(
-                success=False,
-                items_created=0,
-                items_updated=0,
-                total_items=0,
-                message=f"Database error: {e}",
-                errors=[str(e)]
-            )
-
-    def _extract_recipe_ids_from_meals(self, meal_ids: List[int]) -> List[int]:
-        """
-        Extract all recipe IDs from meals for the current user.
-
-        Args:
-            meal_ids (List[int]): List of meal IDs.
-
-        Returns:
-            List[int]: List of recipe IDs used in the meals.
-        """
-        recipe_ids = []
-        for meal_id in meal_ids:
-            meal = self.meal_repo.get_by_id(meal_id, self.user_id)
-            if meal:
-                recipe_ids.extend(meal.get_all_recipe_ids())
-        return recipe_ids
-
-    def get_recipe_ids_from_meals(self, meal_ids: List[int]) -> List[int]:
-        """
-        Public alias for extracting all recipe IDs from meals for the current user.
-
-        Args:
-            meal_ids (List[int]): List of meal IDs.
-
-        Returns:
-            List[int]: Flattened list of recipe IDs used in those meals.
-        """
-        return self._extract_recipe_ids_from_meals(meal_ids)
-
-    def generate_from_active_planner(self) -> ShoppingListGenerationResultDTO:
-        """
-        Generate shopping list from active planner entries with mode-aware filtering for the current user.
-
-        Shopping modes:
-        - 'all': Include all ingredients from the meal
-        - 'produce_only': Include only produce category ingredients
-        - 'none': Excluded (filtered out by get_shopping_entries)
-
-        Returns:
-            ShoppingListGenerationResultDTO: Generation result with statistics.
-        """
-        try:
-            # Get planner entries (excludes 'none' mode entries)
-            entries = self.planner_repo.get_shopping_entries(self.user_id)
-
-            # Group recipe IDs by shopping mode
-            all_recipe_ids: List[int] = []
-            produce_only_recipe_ids: List[int] = []
-
-            for entry in entries:
-                if entry.meal:
-                    recipe_ids = entry.meal.get_all_recipe_ids()
-                    if entry.shopping_mode == "produce_only":
-                        produce_only_recipe_ids.extend(recipe_ids)
-                    else:  # 'all' mode (default)
-                        all_recipe_ids.extend(recipe_ids)
-
-            # Generate shopping list with mode-aware aggregation
-            return self._generate_mode_aware_shopping_list(
-                all_recipe_ids, produce_only_recipe_ids
-            )
-
-        except SQLAlchemyError as e:
-            return ShoppingListGenerationResultDTO(
-                success=False,
-                items_created=0,
-                items_updated=0,
-                total_items=0,
-                message="Failed to generate shopping list from planner",
-                errors=[str(e)]
-            )
-
-    def _generate_mode_aware_shopping_list(
-        self,
-        all_recipe_ids: List[int],
-        produce_only_recipe_ids: List[int]
-    ) -> ShoppingListGenerationResultDTO:
-        """
-        Generate shopping list with mode-aware ingredient filtering for the current user.
-
-        Args:
-            all_recipe_ids: Recipe IDs to include all ingredients from
-            produce_only_recipe_ids: Recipe IDs to include only produce from
-
-        Returns:
-            ShoppingListGenerationResultDTO: Generation result.
-        """
-        try:
-            # Handle empty case
-            if not all_recipe_ids and not produce_only_recipe_ids:
-                self.shopping_repo.clear_shopping_items(self.user_id, source="recipe")
-                self.shopping_repo.delete_orphaned_states([], self.user_id)
-                self.session.commit()
-                total_items = len(self.shopping_repo.get_all_shopping_items(self.user_id))
-                return ShoppingListGenerationResultDTO(
-                    success=True,
-                    items_created=0,
-                    items_updated=0,
-                    total_items=total_items,
-                    message="Cleared recipe items (no active meals)"
+                # Calculate display quantity (pass original_unit for unit preservation)
+                display_qty, display_unit = to_display_unit(
+                    total_base_qty, dimension, original_unit
                 )
 
-            # Clear existing recipe items
-            self.shopping_repo.clear_shopping_items(self.user_id, source="recipe")
+                # Apply ingredient-specific conversion rules
+                display_qty, display_unit = conversion_service.apply_conversion(
+                    ingredient_name, display_qty, display_unit
+                )
 
-            # Aggregate ingredients from "all" mode entries
-            all_items = self.shopping_repo.aggregate_ingredients(all_recipe_ids) if all_recipe_ids else []
+                if agg_key in current_items:
+                    # Update existing item
+                    item = current_items[agg_key]
+                    old_qty = item.quantity
 
-            # Aggregate only produce from "produce_only" mode entries
-            produce_items = self.shopping_repo.aggregate_ingredients(
-                produce_only_recipe_ids, category_filter="produce"
-            ) if produce_only_recipe_ids else []
+                    # Update quantity and unit
+                    item.quantity = display_qty
+                    item.unit = display_unit
 
-            # Merge items (combine quantities for duplicates)
-            recipe_items = self._merge_shopping_items(all_items, produce_items)
+                    # If quantity INCREASED, uncheck (user needs to collect more)
+                    if display_qty > old_qty + 0.01:
+                        item.have = False
 
-            # Restore saved states (same logic as generate_shopping_list_from_recipes)
-            state_keys = [item.state_key for item in recipe_items if item.state_key]
-            saved_states = self.shopping_repo.get_shopping_states_batch(state_keys, self.user_id)
-
-            for item in recipe_items:
-                if item.state_key:
-                    normalized_key = item.state_key.lower().strip()
-                    saved_state = saved_states.get(normalized_key)
-                    if saved_state:
-                        if item.quantity > saved_state.quantity + 0.01:
-                            item.have = False
-                        else:
-                            item.have = saved_state.checked
-                        item.flagged = saved_state.flagged
-
-            # Save states for checked/flagged items
-            for item in recipe_items:
-                if item.state_key and (item.have or item.flagged):
-                    self.shopping_repo.save_shopping_state(
-                        item.state_key, item.quantity, item.unit or "", item.have, self.user_id, item.flagged
+                    # Sync contributions
+                    self._sync_item_contributions(item, contributions)
+                    stats["items_updated"] += 1
+                else:
+                    # Create new item
+                    item = ShoppingItem.create_from_recipe(
+                        ingredient_name=ingredient_name.capitalize(),
+                        quantity=display_qty,
+                        unit=display_unit,
+                        category=category,
+                        aggregation_key=agg_key.lower().strip()
                     )
+                    self.shopping_repo.create_shopping_item(item)
 
-            # Create shopping items
-            items_created = 0
-            for item in recipe_items:
-                self.shopping_repo.create_shopping_item(item, self.user_id)
-                items_created += 1
+                    # Create contributions
+                    self._sync_item_contributions(item, contributions)
+                    stats["items_created"] += 1
 
-            # Clean up orphaned states
-            valid_state_keys = [item.state_key for item in recipe_items if item.state_key]
-            self.shopping_repo.delete_orphaned_states(valid_state_keys, self.user_id)
+                stats["contributions_synced"] += len(contributions)
 
+                # Remove from all_recipe_items so we know it's not orphaned
+                if agg_key in all_recipe_items:
+                    del all_recipe_items[agg_key]
+
+            # 5. Delete orphaned items (items no longer in desired state)
+            for agg_key, item in all_recipe_items.items():
+                if agg_key not in desired_contributions:
+                    self.shopping_repo.delete_item(item.id)
+                    stats["items_deleted"] += 1
+
+            logger.debug(f"Sync complete - stats: {stats}")
             self.session.commit()
-            total_items = len(self.shopping_repo.get_all_shopping_items(self.user_id))
-
-            return ShoppingListGenerationResultDTO(
-                success=True,
-                items_created=items_created,
-                items_updated=0,
-                total_items=total_items,
-                message=f"Successfully generated shopping list with {items_created} recipe items"
-            )
+            return stats
 
         except SQLAlchemyError as e:
+            logger.error(f"Shopping sync SQLAlchemyError: {type(e).__name__}: {e}")
+            logger.error(f"Error details: {e.args}")
             self.session.rollback()
-            return ShoppingListGenerationResultDTO(
-                success=False,
-                items_created=0,
-                items_updated=0,
-                total_items=0,
-                message=f"Database error: {e}",
-                errors=[str(e)]
+            raise RuntimeError(f"Failed to sync shopping list: {e}") from e
+
+    def _sync_item_contributions(
+        self,
+        item: ShoppingItem,
+        desired_contributions: Dict[tuple, Dict[str, Any]]
+    ) -> None:
+        """
+        Sync contributions for a single shopping item.
+
+        Args:
+            item: The shopping item to sync contributions for
+            desired_contributions: Dict of (entry_id, recipe_id) -> contribution data
+        """
+        # Delete all existing contributions for this item
+        self.shopping_repo.delete_contributions_for_item(item.id)
+
+        # Create new contributions
+        for (entry_id, recipe_id), data in desired_contributions.items():
+            self.shopping_repo.add_contribution(
+                shopping_item_id=item.id,
+                recipe_id=recipe_id,
+                planner_entry_id=entry_id,
+                base_quantity=data["base_quantity"],
+                dimension=data["dimension"]
             )
 
-    def _merge_shopping_items(
-        self,
-        items1: List[ShoppingItem],
-        items2: List[ShoppingItem]
-    ) -> List[ShoppingItem]:
+    def _get_ingredient_category(self, ingredient_name: str) -> Optional[str]:
         """
-        Merge two lists of shopping items, combining quantities for duplicates.
-        Uses state_key as the unique identifier for merging.
+        Look up the category for an ingredient by name.
+
+        Args:
+            ingredient_name: Name of the ingredient
+
+        Returns:
+            Category string or None
         """
-        merged: Dict[str, ShoppingItem] = {}
+        from ..models.ingredient import Ingredient
+        from sqlalchemy import select
 
-        for item in items1:
-            key = item.state_key or f"{item.ingredient_name}::{item.unit}"
-            merged[key] = item
-
-        for item in items2:
-            key = item.state_key or f"{item.ingredient_name}::{item.unit}"
-            if key in merged:
-                # Combine quantities and recipe sources
-                existing = merged[key]
-                existing.quantity += item.quantity
-                existing_sources = set(existing.recipe_sources or [])
-                new_sources = set(item.recipe_sources or [])
-                existing.recipe_sources = sorted(list(existing_sources | new_sources))
-            else:
-                merged[key] = item
-
-        return list(merged.values())
+        stmt = select(Ingredient.ingredient_category).where(
+            Ingredient.ingredient_name.ilike(ingredient_name)
+        ).limit(1)
+        result = self.session.execute(stmt)
+        row = result.first()
+        return row[0] if row else None
 
     # ── Shopping List Retrieval ─────────────────────────────────────────────────────────────────────────────
     def get_shopping_list(
@@ -382,7 +261,8 @@ class ShoppingService:
             filters: Optional[ShoppingListFilterDTO] = None
         ) -> ShoppingListResponseDTO:
         """
-        Get the current shopping list with optional filters for the current user.
+        Get the current shopping list with optional filters.
+        This is now a pure read operation - no auto-generation.
 
         Args:
             filters (Optional[ShoppingListFilterDTO]): Filter criteria.
@@ -405,11 +285,11 @@ class ShoppingService:
             else:
                 items = self.shopping_repo.get_all_shopping_items(self.user_id)
 
-            # convert to response DTOs - recipe_sources is now stored on the item itself
-            item_dtos = [
-                self._item_to_response_dto(item, item.recipe_sources or [])
-                for item in items
-            ]
+            # convert to response DTOs with recipe sources from contributions
+            item_dtos = []
+            for item in items:
+                recipe_sources = self._get_recipe_sources_for_item(item)
+                item_dtos.append(self._item_to_response_dto(item, recipe_sources))
 
             # get summary statistics
             summary = self.shopping_repo.get_shopping_list_summary(self.user_id)
@@ -433,35 +313,40 @@ class ShoppingService:
                 categories=[]
             )
 
-    def _build_recipe_sources_map(self) -> Dict[str, List[str]]:
-        """
-        Build a mapping from state_key to list of recipe names for the current user.
-        Uses the active planner entries to get recipe IDs, then fetches breakdown.
-        """
-        try:
-            # Get recipe IDs from shopping entries (same as generate_from_active_planner)
-            entries = self.planner_repo.get_shopping_entries(self.user_id)
-            recipe_ids: List[int] = []
-            for entry in entries:
-                if entry.meal:
-                    recipe_ids.extend(entry.meal.get_all_recipe_ids())
+    def _get_recipe_sources_for_item(self, item: ShoppingItem) -> List[RecipeSourceDTO]:
+        """Get recipe sources with counts for a shopping item from its contributions."""
+        if item.source != "recipe":
+            return []
 
-            if not recipe_ids:
-                return {}
+        # Try to get from eagerly loaded contributions
+        if item.contributions:
+            from collections import Counter
 
-            # Get breakdown data
-            breakdown = self.shopping_repo.get_ingredient_breakdown(recipe_ids)
+            from sqlalchemy import select
 
-            # Build mapping from state_key -> list of recipe names
-            recipe_sources_map: Dict[str, List[str]] = {}
-            for state_key, contributions in breakdown.items():
-                # contributions is List[Tuple[recipe_name, quantity, unit, usage_count]]
-                recipe_names = list(set(name for name, _, _, _ in contributions))
-                recipe_sources_map[state_key] = recipe_names
+            from ..models.recipe import Recipe
 
-            return recipe_sources_map
-        except SQLAlchemyError:
-            return {}
+            # Count how many times each recipe_id appears in contributions
+            recipe_id_counts = Counter(c.recipe_id for c in item.contributions)
+
+            if recipe_id_counts:
+                # Fetch recipe names for the IDs
+                recipe_ids = list(recipe_id_counts.keys())
+                stmt = select(Recipe.id, Recipe.recipe_name).where(Recipe.id.in_(recipe_ids))
+                result = self.session.execute(stmt)
+                id_to_name = {row[0]: row[1] for row in result}
+
+                # Build RecipeSourceDTO list with counts, sorted by name
+                sources = [
+                    RecipeSourceDTO(recipe_name=id_to_name[rid], count=count)
+                    for rid, count in recipe_id_counts.items()
+                    if rid in id_to_name
+                ]
+                return sorted(sources, key=lambda s: s.recipe_name)
+
+        # Fallback to repo method (returns List[str], convert to DTOs with count=1)
+        names = self.shopping_repo.get_recipe_names_for_item(item.id)
+        return [RecipeSourceDTO(recipe_name=name, count=1) for name in names]
 
     # ── Manual Item Management ──────────────────────────────────────────────────────────────────────────────
     def add_manual_item(
@@ -521,11 +406,6 @@ class ShoppingService:
                 item.category = update_dto.category
             if update_dto.have is not None:
                 item.have = update_dto.have
-                # update state if this is a recipe item
-                if item.state_key and item.source == "recipe":
-                    self.shopping_repo.save_shopping_state(
-                        item.state_key, item.quantity, item.unit or "", item.have, self.user_id, item.flagged
-                    )
 
             updated_item = self.shopping_repo.update_item(item)
             self.session.commit()
@@ -612,7 +492,7 @@ class ShoppingService:
             item_id (int): ID of the item to toggle.
 
         Returns:
-            Optional[bool]: New have status or None if failed/not owned.
+            Optional[bool]: True if successful, None/False if failed.
         """
         try:
             item = self.shopping_repo.get_shopping_item_by_id(item_id, self.user_id)
@@ -620,13 +500,6 @@ class ShoppingService:
                 return False
 
             item.have = not item.have
-
-            # update state for recipe items
-            if item.state_key and item.source == "recipe":
-                self.shopping_repo.save_shopping_state(
-                    item.state_key, item.quantity, item.unit or "", item.have, self.user_id, item.flagged
-                )
-
             self.shopping_repo.update_item(item)
             self.session.commit()
             return True
@@ -651,13 +524,6 @@ class ShoppingService:
                 return None
 
             item.flagged = not item.flagged
-
-            # persist flagged state for recipe items so it survives regeneration
-            if item.state_key and item.source == "recipe":
-                self.shopping_repo.save_shopping_state(
-                    item.state_key, item.quantity, item.unit or "", item.have, self.user_id, item.flagged
-                )
-
             self.shopping_repo.update_item(item)
             self.session.commit()
             return item.flagged
@@ -671,8 +537,8 @@ class ShoppingService:
         Clear all completed (have=True) shopping items for the current user and return count deleted.
         """
         from sqlalchemy import delete
-
         from app.models.shopping_item import ShoppingItem
+
         try:
             stmt = (
                 delete(ShoppingItem)
@@ -683,6 +549,7 @@ class ShoppingService:
             self.session.commit()
             return result.rowcount
         except SQLAlchemyError:
+            self.session.rollback()
             return 0
 
     def bulk_update_status(self, update_dto: BulkStateUpdateDTO) -> BulkOperationResultDTO:
@@ -690,7 +557,7 @@ class ShoppingService:
         Bulk update 'have' status for multiple shopping items for the current user.
 
         Args:
-            update_dto (BulkStateUpdateDTO): DTO containing item_updates mapping (item_id -> have status).
+            update_dto (BulkStateUpdateDTO): DTO containing item_updates mapping.
 
         Returns:
             BulkOperationResultDTO: Operation result with count of updated items.
@@ -702,14 +569,9 @@ class ShoppingService:
                 if not item:
                     continue
                 item.have = have
-                # update state for recipe items
-                if item.state_key and item.source == "recipe":
-                    self.shopping_repo.save_shopping_state(
-                        item.state_key, item.quantity, item.unit or "", item.have, self.user_id, item.flagged
-                    )
                 self.shopping_repo.update_item(item)
                 updated_count += 1
-            # commit transaction after bulk updates
+
             self.session.commit()
             return BulkOperationResultDTO(
                 success=True,
@@ -728,7 +590,7 @@ class ShoppingService:
     # ── Analysis and Breakdown ──────────────────────────────────────────────────────────────────────────────
     def get_ingredient_breakdown(self, recipe_ids: List[int]) -> Any:
         """
-        Get detailed breakdown of ingredients by recipe, returned as an object with 'items'.
+        Get detailed breakdown of ingredients by recipe.
 
         Args:
             recipe_ids (List[int]): List of recipe IDs.
@@ -738,8 +600,10 @@ class ShoppingService:
         """
         try:
             raw = self.shopping_repo.get_ingredient_breakdown(recipe_ids)
+
             class _BreakdownResponse:
                 pass
+
             resp = _BreakdownResponse()
             resp.items = []
             for key, contributions in raw.items():
@@ -748,8 +612,10 @@ class ShoppingService:
                 ingredient_name = parts[0].capitalize() if parts else ""
                 unit = parts[1] if len(parts) > 1 else ""
                 total_qty = sum(qty for _, qty, _, _ in contributions)
+
                 class _Item:
                     pass
+
                 item = _Item()
                 item.ingredient_name = ingredient_name
                 item.total_quantity = total_qty
@@ -772,7 +638,7 @@ class ShoppingService:
     def _item_to_response_dto(
             self,
             item: ShoppingItem,
-            recipe_sources: Optional[List[str]] = None
+            recipe_sources: Optional[List[RecipeSourceDTO]] = None
         ) -> ShoppingItemResponseDTO:
         """Convert a ShoppingItem model to a response DTO."""
         return ShoppingItemResponseDTO(
@@ -784,7 +650,7 @@ class ShoppingService:
             source=item.source,
             have=item.have,
             flagged=item.flagged,
-            state_key=item.state_key,
+            state_key=item.aggregation_key,  # Use aggregation_key as state_key for API compatibility
             recipe_sources=recipe_sources or []
         )
 
@@ -867,3 +733,61 @@ class ShoppingService:
                 "categories": [],
                 "completion_percentage": 0
             }
+
+    # ── Generate Methods (for API compatibility) ────────────────────────────────────────────────────────────
+    def generate_shopping_list(self, generation_dto: ShoppingListGenerationDTO) -> ShoppingListGenerationResultDTO:
+        """
+        Generate shopping list from recipe IDs.
+        This now uses the sync mechanism internally.
+
+        Args:
+            generation_dto: DTO with recipe_ids to generate from.
+
+        Returns:
+            ShoppingListGenerationResultDTO with operation statistics.
+        """
+        # For now, this method is kept for API compatibility but uses sync internally
+        try:
+            stats = self.sync_shopping_list()
+            total_items = len(self.shopping_repo.get_all_shopping_items())
+            return ShoppingListGenerationResultDTO(
+                success=True,
+                items_created=stats["items_created"],
+                items_updated=stats["items_updated"],
+                total_items=total_items,
+                message=f"Synced shopping list: {stats['items_created']} created, {stats['items_updated']} updated, {stats['items_deleted']} deleted"
+            )
+        except Exception as e:
+            return ShoppingListGenerationResultDTO(
+                success=False,
+                items_created=0,
+                items_updated=0,
+                total_items=0,
+                message=str(e),
+                errors=[str(e)]
+            )
+
+    def generate_from_active_planner(self) -> ShoppingListGenerationResultDTO:
+        """
+        Generate shopping list from active planner entries.
+        This method now just calls sync_shopping_list() for backwards compatibility.
+        """
+        try:
+            stats = self.sync_shopping_list()
+            total_items = len(self.shopping_repo.get_all_shopping_items())
+            return ShoppingListGenerationResultDTO(
+                success=True,
+                items_created=stats["items_created"],
+                items_updated=stats["items_updated"],
+                total_items=total_items,
+                message=f"Synced shopping list: {stats['items_created']} created, {stats['items_updated']} updated, {stats['items_deleted']} deleted"
+            )
+        except Exception as e:
+            return ShoppingListGenerationResultDTO(
+                success=False,
+                items_created=0,
+                items_updated=0,
+                total_items=0,
+                message=str(e),
+                errors=[str(e)]
+            )

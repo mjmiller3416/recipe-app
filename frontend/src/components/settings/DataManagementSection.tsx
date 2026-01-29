@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
+import { useAuth } from "@clerk/nextjs";
 import {
   Database,
   Upload,
@@ -108,6 +109,9 @@ function DuplicateResolutionRow({
 // ============================================================================
 
 export function DataManagementSection() {
+  // Auth hook for API calls
+  const { getToken } = useAuth();
+
   // Settings hook for full backup
   const { settings } = useSettings();
 
@@ -155,7 +159,8 @@ export function DataManagementSection() {
     setIsCreatingBackup(true);
     try {
       // Get database backup from API
-      const backup = await dataManagementApi.exportFullBackup();
+      const token = await getToken();
+      const backup = await dataManagementApi.exportFullBackup(token);
 
       // Add localStorage settings if requested
       if (includeSettings) {
@@ -204,7 +209,8 @@ export function DataManagementSection() {
 
     setIsPreviewingRestore(true);
     try {
-      const preview = await dataManagementApi.previewRestore(restoreFile);
+      const token = await getToken();
+      const preview = await dataManagementApi.previewRestore(restoreFile, token);
       setRestorePreview(preview);
       setShowRestorePreviewDialog(true);
     } catch (error) {
@@ -219,7 +225,8 @@ export function DataManagementSection() {
 
     setIsRestoring(true);
     try {
-      const result = await dataManagementApi.executeRestore(restoreFile, true);
+      const token = await getToken();
+      const result = await dataManagementApi.executeRestore(restoreFile, true, token);
 
       // Restore localStorage settings if present
       if (result.settings) {
@@ -274,7 +281,8 @@ export function DataManagementSection() {
 
     setIsPreviewLoading(true);
     try {
-      const preview = await dataManagementApi.previewImport(importFile);
+      const token = await getToken();
+      const preview = await dataManagementApi.previewImport(importFile, token);
       setImportPreview(preview);
 
       // Initialize resolutions for duplicates (default to skip)
@@ -309,7 +317,8 @@ export function DataManagementSection() {
 
     setIsImporting(true);
     try {
-      const result = await dataManagementApi.executeImport(importFile, resolutions);
+      const token = await getToken();
+      const result = await dataManagementApi.executeImport(importFile, resolutions, token);
       setImportResult(result);
       setShowPreviewDialog(false);
       setShowResultDialog(true);
@@ -349,22 +358,24 @@ export function DataManagementSection() {
 
   // ── Export Handlers ──────────────────────────────────────────────────────
 
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
-      const cats = await recipeApi.getCategories();
+      const token = await getToken();
+      const cats = await recipeApi.getCategories(token);
       setCategories(cats);
     } catch {
       // Silently fail - categories are optional
     }
-  };
+  }, [getToken]);
 
   const handleExport = async () => {
     setIsExporting(true);
     try {
+      const token = await getToken();
       const blob = await dataManagementApi.exportRecipes({
         favorites_only: exportFavoritesOnly,
         recipe_category: selectedCategory || null,
-      });
+      }, token);
 
       // Trigger download
       const url = URL.createObjectURL(blob);
@@ -391,7 +402,8 @@ export function DataManagementSection() {
   const handleDownloadTemplate = async () => {
     setIsDownloadingTemplate(true);
     try {
-      const blob = await dataManagementApi.downloadTemplate();
+      const token = await getToken();
+      const blob = await dataManagementApi.downloadTemplate(token);
 
       // Trigger download
       const url = URL.createObjectURL(blob);
@@ -418,7 +430,8 @@ export function DataManagementSection() {
   const handleDeleteAll = async () => {
     setIsDeleting(true);
     try {
-      const result = await dataManagementApi.clearAllData();
+      const token = await getToken();
+      const result = await dataManagementApi.clearAllData(token);
       if (result.success) {
         const totalDeleted = Object.values(result.deleted_counts).reduce(
           (sum, count) => sum + count,

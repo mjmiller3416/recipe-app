@@ -9,13 +9,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import Boolean, Enum, Float, ForeignKey, JSON, String
+from sqlalchemy import Boolean, Enum, Float, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database.base import Base
 from ..utils.unit_conversion import get_dimension
 
 if TYPE_CHECKING:
+    from .shopping_item_contribution import ShoppingItemContribution
     from .user import User
 
 
@@ -24,6 +25,7 @@ class ShoppingItem(Base):
     __tablename__ = "shopping_items"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+
     ingredient_name: Mapped[str] = mapped_column(String(255), nullable=False)
     quantity: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     unit: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
@@ -39,16 +41,23 @@ class ShoppingItem(Base):
     have: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
     flagged: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    # for recipe-generated items, store a key for state persistence
-    state_key: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-
-    # store recipe names that contribute to this item (computed during generation)
-    recipe_sources: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True, default=list)
+    # Unique key for aggregation: "ingredient_name::dimension"
+    # Used to identify items for diff-based sync (recipe items only)
+    aggregation_key: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, unique=True, index=True)
 
     # User ownership
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
 
-    # ── Relationships ───────────────────────────────────────────────────────────────────────────────────────
+    # ── Relationships ──────────────────────────────────────────────────────────────────────────────────────
+    # Contributions from planner entries (cascade delete when item is deleted)
+    contributions: Mapped[List["ShoppingItemContribution"]] = relationship(
+        "ShoppingItemContribution",
+        back_populates="shopping_item",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+
+    # User ownership
     user: Mapped["User"] = relationship("User", back_populates="shopping_items")
 
     # ── String Representation ───────────────────────────────────────────────────────────────────────────────
@@ -56,12 +65,30 @@ class ShoppingItem(Base):
         return f"<ShoppingItem(id={self.id}, name='{self.ingredient_name}', qty={self.quantity}, have={self.have})>"
 
     # ── Helper Methods ──────────────────────────────────────────────────────────────────────────────────────
-    def key(self) -> str:
-        """Generate a unique key for this shopping item using dimension."""
-        if self.state_key:
-            return self.state_key
+    def get_aggregation_key(self) -> str:
+        """Generate the aggregation key for this shopping item using dimension."""
+        if self.aggregation_key:
+            return self.aggregation_key
         dimension = get_dimension(self.unit)
         return f"{self.ingredient_name.lower().strip()}::{dimension}"
+
+    @staticmethod
+    def make_aggregation_key(ingredient_name: str, dimension: str) -> str:
+        """Create an aggregation key from ingredient name and dimension."""
+        return f"{ingredient_name.lower().strip()}::{dimension}"
+
+    def get_recipe_sources(self) -> List[str]:
+        """Get list of recipe names that contribute to this item from contributions."""
+        if not self.contributions:
+            return []
+        # We need to load recipe names from contributions
+        # This requires the relationship to be loaded
+        recipe_names: set[str] = set()
+        for contrib in self.contributions:
+            # Access recipe through lazy load if needed
+            if hasattr(contrib, 'recipe') and contrib.recipe:
+                recipe_names.add(contrib.recipe.recipe_name)
+        return sorted(list(recipe_names))
 
     def display_label(self) -> str:
         """Return a human-friendly label for UI display."""
@@ -82,7 +109,7 @@ class ShoppingItem(Base):
         quantity: float,
         unit: Optional[str] = None,
         category: Optional[str] = None,
-        recipe_sources: Optional[List[str]] = None
+        aggregation_key: Optional[str] = None
         ) -> "ShoppingItem":
         """
         Create a shopping item from recipe data.
@@ -92,11 +119,16 @@ class ShoppingItem(Base):
             quantity (float): The quantity of the ingredient.
             unit (Optional[str]): The unit of measurement, if any.
             category (Optional[str]): The category of the ingredient.
-            recipe_sources (Optional[List[str]]): Names of recipes that use this ingredient.
+            aggregation_key (Optional[str]): The aggregation key for this item.
 
         Returns:
             ShoppingItem: A new shopping item instance.
         """
+        # Generate aggregation key if not provided
+        if not aggregation_key:
+            dimension = get_dimension(unit)
+            aggregation_key = cls.make_aggregation_key(ingredient_name, dimension)
+
         return cls(
             ingredient_name=ingredient_name,
             quantity=quantity,
@@ -104,7 +136,7 @@ class ShoppingItem(Base):
             category=category,
             source="recipe",
             have=False,
-            recipe_sources=recipe_sources or []
+            aggregation_key=aggregation_key
         )
 
     @classmethod

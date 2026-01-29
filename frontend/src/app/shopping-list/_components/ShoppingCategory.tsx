@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ShoppingItem } from "./ShoppingItem";
-import type { ShoppingItemResponseDTO, IngredientBreakdownDTO } from "@/types";
+import type { ShoppingItemResponseDTO } from "@/types";
 import { cn } from "@/lib/utils";
 import { ChevronUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -55,7 +55,6 @@ interface ShoppingCategoryProps {
   items: ShoppingItemResponseDTO[];
   onToggleItem: (id: number) => void;
   onToggleFlagged: (id: number) => void;
-  breakdownMap?: Map<string, IngredientBreakdownDTO>;
 }
 
 /**
@@ -71,7 +70,6 @@ export function ShoppingCategory({
   items,
   onToggleItem,
   onToggleFlagged,
-  breakdownMap,
 }: ShoppingCategoryProps) {
   // Storage key for this specific category
   const storageKey = `${COLLAPSED_STORAGE_KEY}-${category}`;
@@ -198,7 +196,6 @@ export function ShoppingCategory({
               item={item}
               onToggle={onToggleItem}
               onToggleFlagged={onToggleFlagged}
-              breakdown={breakdownMap?.get(item.ingredient_name.toLowerCase())}
             />
           ))}
         </div>

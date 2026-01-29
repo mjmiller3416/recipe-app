@@ -7,9 +7,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import { formatQuantity } from "@/lib/quantityUtils";
-import type { ShoppingItemResponseDTO, IngredientBreakdownDTO } from "@/types";
+import { cn, formatQuantity } from "@/lib/utils";
+import type { ShoppingItemResponseDTO } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -17,7 +16,6 @@ interface ShoppingItemProps {
   item: ShoppingItemResponseDTO;
   onToggle: (id: number) => void;
   onToggleFlagged: (id: number) => void;
-  breakdown?: IngredientBreakdownDTO;
 }
 
 /**
@@ -27,9 +25,10 @@ interface ShoppingItemProps {
  * - Click anywhere on the row to toggle
  * - Checked items show strikethrough + faded appearance
  * - Recipe source display ("from Recipe Name" or "from Multiple recipes")
+ * - Tooltip shows recipe sources with usage counts (e.g., "Air Fryer Potatoes (×2)")
  * - Quantity badge on the right
  */
-export function ShoppingItem({ item, onToggle, onToggleFlagged, breakdown }: ShoppingItemProps) {
+export function ShoppingItem({ item, onToggle, onToggleFlagged }: ShoppingItemProps) {
   const handleClick = () => {
     onToggle(item.id);
   };
@@ -39,13 +38,10 @@ export function ShoppingItem({ item, onToggle, onToggleFlagged, breakdown }: Sho
     onToggleFlagged(item.id);
   };
 
-  // Format quantity for display (using fractions like 1/2, 1/4)
-  const formattedQuantity = formatQuantity(item.quantity);
-
   // Format quantity with unit for badge display
   const quantityBadge = item.unit
-    ? `${formattedQuantity} ${item.unit}`
-    : formattedQuantity;
+    ? `${formatQuantity(item.quantity)} ${item.unit}`
+    : formatQuantity(item.quantity);
 
   // Format recipe source display
   const getRecipeSourceText = () => {
@@ -56,7 +52,10 @@ export function ShoppingItem({ item, onToggle, onToggleFlagged, breakdown }: Sho
       return "from recipe";
     }
     if (item.recipe_sources.length === 1) {
-      return `from ${item.recipe_sources[0]}`;
+      const source = item.recipe_sources[0];
+      // Show count if > 1, e.g., "from Air Fryer Potatoes (×2)"
+      const countSuffix = source.count > 1 ? ` (×${source.count})` : "";
+      return `from ${source.recipe_name}${countSuffix}`;
     }
     return "from Multiple recipes";
   };
@@ -129,13 +128,9 @@ export function ShoppingItem({ item, onToggle, onToggleFlagged, breakdown }: Sho
             <TooltipContent side="bottom" align="start" className="max-w-xs">
               <p className="font-medium mb-1">Used in:</p>
               <ul className="space-y-0.5">
-                {breakdown?.recipe_contributions.map((contrib) => (
-                  <li key={contrib.recipe_name} className="text-muted-foreground">
-                    • {contrib.recipe_name}{contrib.usage_count > 1 ? ` (x${contrib.usage_count})` : ""}: {formatQuantity(contrib.quantity)} {contrib.unit || ""}
-                  </li>
-                )) ?? item.recipe_sources.map((recipe) => (
-                  <li key={recipe} className="text-muted-foreground">
-                    • {recipe}
+                {item.recipe_sources.map((source) => (
+                  <li key={source.recipe_name} className="text-muted-foreground">
+                    • {source.recipe_name}{source.count > 1 ? ` (×${source.count})` : ""}
                   </li>
                 ))}
               </ul>

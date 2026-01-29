@@ -1,7 +1,11 @@
-"""app/api/unit_conversions.py
+"""app/api/conversion_rules.py
 
 FastAPI router for unit conversion rule endpoints.
 All endpoints require authentication and are scoped to the current user.
+
+TODO: Add GET /units endpoint to expose available units from unit_conversion.py
+      This would allow frontend to fetch units dynamically instead of hardcoding
+      in constants.ts. See: frontend/TODO.md for details.
 """
 
 from typing import List

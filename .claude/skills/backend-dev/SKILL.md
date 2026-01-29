@@ -1,3 +1,8 @@
+---
+name: Backend Development
+description: Follow layered architecture patterns when creating or modifying FastAPI routes, services, repositories, models, or DTOs
+---
+
 # Backend Development Skill
 
 ## Purpose

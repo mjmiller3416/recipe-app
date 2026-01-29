@@ -56,7 +56,7 @@ from app.models.recipe import Recipe
 from app.models.recipe_history import RecipeHistory
 from app.models.recipe_ingredient import RecipeIngredient
 from app.models.shopping_item import ShoppingItem
-from app.models.shopping_state import ShoppingState
+from app.models.shopping_item_contribution import ShoppingItemContribution
 from app.models.user import User
 from app.models.user_settings import UserSettings
 

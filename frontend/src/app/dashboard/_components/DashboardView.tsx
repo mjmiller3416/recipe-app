@@ -9,8 +9,7 @@ import { ChefTipWidget } from "./ChefTipWidget";
 import { CookingStreakWidget } from "./CookingStreakWidget";
 import { RecipeRouletteWidget } from "./RecipeRouletteWidget";
 import { QuickAddWidget } from "./QuickAddWidget";
-import { useDashboardStats, usePlannerEntries } from "@/hooks/api";
-import { useShoppingList } from "@/hooks/useShoppingList";
+import { useDashboardStats, usePlannerEntries, useShoppingList } from "@/hooks/api";
 
 export function DashboardView() {
   // Fetch all data via React Query hooks (parallel fetching)
