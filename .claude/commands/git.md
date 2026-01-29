@@ -601,24 +601,46 @@ Merges your current feature branch directly into staging. This is the **primary 
 
    Squashed from: feature/shopping-list (4 commits)
    Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
-   git push origin staging
    ```
 
    > **Why squash merge?** It keeps staging history clean — one commit per feature
    > instead of all your WIP commits. The detailed history lives in git reflog
    > if you ever need it.
 
-5. **Clean up**
+5. **Push merge to remote**
+
+   After a successful merge, immediately push staging to origin:
+   ```bash
+   git push origin staging
+   ```
+
+   **If push fails:**
+   ```
+   ⚠️ Failed to push staging to origin.
+
+   Options:
+   1. Pull and retry (may have new remote commits)
+   2. Abort (your local staging has the merge — push manually later)
+   ```
+
+6. **Delete feature branch**
+
+   Once the merge is pushed, clean up the feature branch:
    ```bash
    git branch -d feature/shopping-list           # Delete local branch
    git push origin --delete feature/shopping-list # Delete remote branch (if pushed)
    ```
 
+   > **Note:** `git branch -d` (lowercase) is a safe delete — it only works
+   > if the branch has been fully merged. This prevents accidental data loss.
+
+7. **Confirm success**
    ```
    ✅ Merged to staging!
 
    Commit: xyz7890 feat: shopping list sync and filtering
-   Branch: feature/shopping-list (deleted)
+   Pushed: origin/staging ✓
+   Branch: feature/shopping-list (deleted local + remote)
 
    Staging is now ready for testing.
 
