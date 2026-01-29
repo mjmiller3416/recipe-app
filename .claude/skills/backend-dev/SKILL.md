@@ -1,6 +1,6 @@
 ---
-name: Backend Development
-description: Backend architecture patterns for FastAPI layered architecture. Use when making changes to or exploring backend directory.
+name: backend-dev
+description: Use when creating, modifying, or reviewing any files in the backend/ directory. Provides layered architecture rules, transaction patterns, naming conventions, DTO templates, and code review checklist for the FastAPI + SQLAlchemy backend.
 ---
 
 # Backend Development Skill

@@ -1,6 +1,6 @@
 ---
-name: frontend-design
-description: Apply Meal Genie design system when creating or modifying React components, pages, or styling. Use when working with UI, Tailwind classes, shadcn/ui components, or visual design.
+name: Frontend Design
+description: Use when creating, modifying, or reviewing any files in the frontend/ directory. Provides design system rules, component patterns, semantic tokens, shadcn/ui usage, and file organization conventions for the Next.js + React frontend.
 ---
 
 # Frontend Design Skill
