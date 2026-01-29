@@ -1,5 +1,3 @@
-
-
 # Frontend TODO
 
 ## 🟠 High Priority
@@ -17,7 +15,42 @@
   2. Restore the `isInvalid` styling in `QuantityInput.tsx`
   3. Consider making validation less strict or only on submit
 
+### Fix AI suggestions auth failure on Meal Planner cards
+- **Location**: `src/hooks/api/useAI.ts`
+- **Issue**: AI suggestions on the selected meal card in the Meal Planner are not loading — likely a token auth issue introduced during the multi-user implementation. The issue predates the `middleware.ts` → `proxy.ts` rename, so the proxy convention is not the root cause (though Clerk compatibility with `proxy.ts` should still be verified separately).
+- **Solution**: Debug the `useMealSuggestions` hook — add logging to confirm `getToken()` returns a valid token and inspect the network request/response for the `/api/ai/meal-suggestions` endpoint. Check whether the backend AI route requires auth headers that were added during the multi-user update. Also inspect `AISuggestions.tsx` for any rendering or state issues preventing the mutation from firing.
+
+### Fix Meal Completion Reverting on Meal Planner
+- **Location**: `src/hooks/api/usePlanner.ts`
+- **Issue**: Marking a meal as complete on the Meal Planner optimistically updates the UI, but the API call fails silently (likely a 401 auth error from the multi-user update), causing the `onError` rollback to revert the completion state — the meal appears to "uncomplete" itself moments after clicking. This issue predates the `middleware.ts` → `proxy.ts` rename, so the proxy convention is not the root cause.
+- **Solution**: Debug the `useMarkComplete` hook (line 246) — add logging to confirm `getToken()` returns a valid token and inspect the network request/response for `/api/planner/entries/{id}/complete`. Check whether the backend planner route's auth requirements changed during the multi-user update. Also check `useMarkIncomplete` (line 297) for the same regression.
+
+### Fix AI recipe generation auth on add/edit recipes page
+- **Location**: `src/app/recipes/_components/add-edit/ImageUploadCard.tsx`
+- **Issue**: AI image generation on the add/edit recipe page fails because `imageGenerationApi.generate()` and `imageGenerationApi.generateBanner()` are called without a Clerk JWT token — all API calls now require authentication after the multi-user auth rollout.
+- **Solution**: Use the existing `useGenerateImage()` and `useGenerateBanner()` hooks from `hooks/api/useAI.ts` (which already handle auth correctly), or add `useAuth()` + `getToken()` directly in `ImageUploadCard.tsx`. Also audit `useRecipeForm.ts` for similar unauthenticated recipe CRUD calls.
+
+### Fix Meal Genie Assistant auth failure after multi-user rollout
+- **Location**: `src/components/meal-genie/MealGenieChatContent.tsx`
+- **Issue**: The Meal Genie chat components (`MealGenieChatContent.tsx` and `MealGenieAssistant.tsx`) call `mealGenieApi.chat()` and `mealGenieApi.ask()` directly without passing a Clerk JWT token — all API calls now require authentication after the multi-user auth rollout, so the backend rejects these unauthenticated requests.
+- **Solution**: Refactor both components to use the existing `useMealGenieChat` / `useMealGenieAsk` hooks from `hooks/api/useAI.ts`, which already handle `getToken()` and pass the Clerk JWT to the API. Also check if `MealGenieAssistant.tsx` needs an equivalent `useMealGenieAsk` hook (create one if missing, following the same pattern).
+
+### Fix recipe add/edit CRUD auth after multi-user rollout
+- **Location**: `src/app/recipes/_components/add-edit/useRecipeForm.ts`
+- **Issue**: Recipe creation, editing, and image uploads all fail with 401 Unauthorized — `useRecipeForm` calls `recipeApi.create()`, `recipeApi.update()`, and `uploadApi.uploadRecipeImage()` without passing a Clerk JWT token. `AddEditRecipeView.tsx` also loads recipes for edit via `recipeApi.get()` without a token.
+- **Solution**: Import `useAuth` from `@clerk/nextjs` in `useRecipeForm` (or consume a token from the parent component), call `getToken()` before each API call, and pass the token to `recipeApi.create(payload, token)`, `recipeApi.update(id, data, token)`, `uploadApi.uploadRecipeImage(file, id, type, token)`, and `recipeApi.get(id, token)`. Follow the existing pattern in `useApiClient()` from `api-client.ts`.
+
 ## 🟡 Medium Priority
+
+### Fix Recipe Card Size Mismatch in Meal Selection
+- **Location**: `src/components/recipe/RecipeSelectCard.tsx`
+- **Issue**: Recipe cards in the meal planner's recipe picker are significantly smaller than those on the Recipe Browser page — `RecipeSelectCard` uses a fixed `h-32` image and `p-4` padding, while the browse mode's `RecipeCard` medium uses `aspect-[4/3]` images and `p-6` padding.
+- **Solution**: Add selection state support (checkmark overlay, outline, Main/Side badge) directly to `RecipeCard` medium variant instead of using a separate `RecipeSelectCard` component, ensuring identical card dimensions in both browse and select modes.
+
+### Fix Meals Planned Stat to Count Only Active Planner Entries
+- **Location**: `backend/app/api/dashboard.py`
+- **Issue**: The "Meals Planned" stat card on the Dashboard counts all `PlannerEntry` rows for the user — including cleared (soft-deleted) entries — causing an inflated count that doesn't reflect the active planner.
+- **Solution**: Add `.filter(PlannerEntry.is_cleared == False)` to the `meals_planned` query at line 47 so only non-cleared entries are counted. Also consider excluding completed entries (`is_completed == False`) if the stat should reflect only upcoming meals.
 
 ## 🔵 Low Priority
 
@@ -35,6 +68,16 @@
 - **Location**: `backend/app/services/shopping_service.py`
 - **Issue**: When a user manually adds an ingredient that also exists as a recipe-sourced item (or vice versa), the shopping list shows two separate entries instead of combining quantities — manual items have no `aggregation_key` and `source="manual"`, so the diff-based sync never matches them with `source="recipe"` items.
 - **Solution**: In `add_manual_item()`, check if a recipe item with a matching `aggregation_key` already exists (compute the key from the manual item's name + unit dimension). If matched, add the manual quantity to the existing item and track the manual contribution. During `sync_shopping_list()`, also check for manual items that match a desired aggregation key and merge them. Add a **settings toggle** on the shopping list settings page (via `SettingsPage` / `ShoppingListSettings`) to enable/disable this combining behavior. The frontend `ShoppingItem.tsx` may also need to display an "includes manual addition" indicator when items are merged.
+
+### Implement Custom Recipe Groups for Filtering
+- **Location**: `src/lib/filterUtils.ts`
+- **Issue**: Users have no way to create custom collections or groups of recipes — filtering is limited to predefined categories (Beef, Chicken, etc.), meal types, and dietary preferences. Users want to organize recipes into personal groups (e.g., "Weeknight Favorites", "Holiday Meals") and filter by them.
+- **Solution**: Add a new `RecipeGroup` model on the backend (many-to-many with Recipe), a settings UI section for CRUD operations on groups (following the `CategoryOrderSection` drag-and-drop pattern), a recipe-level UI to assign/remove groups, and extend `applyFilters()` in `filterUtils.ts` to support group-based filtering. Also add a group filter option to `FilterSidebar.tsx` and `RecipeBrowserView.tsx`.
+
+### Auto-Populate Meal Name with Recipe Name on Create
+- **Location**: `src/app/recipes/[id]/_components/AddToMealPlanDialog.tsx`
+- **Issue**: When creating a new meal from a recipe's "Add to Meal Plan" dialog, the meal name input starts blank — users must manually type a name even though the recipe name is a natural default.
+- **Solution**: Pre-fill `newMealName` with `recipe.recipe_name` when switching to `"create"` mode (in the `onClick` handler at line 198), so the input is ready with a sensible default while remaining fully editable.
 
 ## ✅ Completed
 
