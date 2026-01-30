@@ -34,7 +34,6 @@ import {
 } from "@/components/ui/select";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { RecipeCard, RecipeCardGrid } from "@/components/recipe/RecipeCard";
-import { RecipeSelectCard } from "@/components/recipe/RecipeSelectCard";
 import { FilterBar } from "@/components/common/FilterBar";
 import { FilterSidebar } from "@/components/common/FilterSidebar";
 import { useRecipes, useToggleFavorite } from "@/hooks/api";
@@ -897,25 +896,17 @@ export function RecipeBrowserView({
           {/* Results */}
           {filteredRecipes.length > 0 ? (
             <RecipeCardGrid size="medium">
-              {filteredRecipes.map((recipe) =>
-                mode === "select" ? (
-                  <RecipeSelectCard
-                    key={recipe.id}
-                    recipe={recipe}
-                    isSelected={selectedIds.has(recipe.id)}
-                    onSelect={handleRecipeClick}
-                    selectionType={recipe.mealType === "side" ? "side" : "main"}
-                  />
-                ) : (
-                  <RecipeCard
-                    key={recipe.id}
-                    recipe={recipe}
-                    size="medium"
-                    onClick={handleRecipeClick}
-                    onFavoriteToggle={handleFavoriteToggle}
-                  />
-                )
-              )}
+              {filteredRecipes.map((recipe) => (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  size="medium"
+                  onClick={handleRecipeClick}
+                  onFavoriteToggle={handleFavoriteToggle}
+                  isSelected={mode === "select" && selectedIds.has(recipe.id)}
+                  selectionType={recipe.mealType === "side" ? "side" : "main"}
+                />
+              ))}
             </RecipeCardGrid>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
