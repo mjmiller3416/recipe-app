@@ -25,17 +25,23 @@ feature/xxx ─┬─► staging ─────► main (production)
 fix/xxx     ─┤   (direct)   (PR)     │
 chore/xxx   ─┘                       ▼
                               Railway auto-deploy
+                                     ▲
+hotfix/xxx ──────────────────────────┘
+(emergency)      (direct PR)    (then backport to staging)
 ```
 
 | Branch | Purpose | How to Integrate |
 |--------|---------|------------------|
-| `main` | Production (auto-deploys) | PR from staging only |
+| `main` | Production (auto-deploys) | PR from staging OR hotfix |
 | `staging` | Integration/testing | Direct merge from features |
 | Feature branches | Development | Squash merge to staging |
+| Hotfix branches | Emergency production fixes | PR to main, then backport to staging |
 
 **Solo workflow:** Feature → staging is direct (no PR). Staging → main uses PR for deploy checkpoint.
 
-⚠️ **Never merge feature branches directly to main**
+**Hotfix workflow:** Hotfix branches from main → PR to main → backport to staging.
+
+⚠️ **Never merge feature branches directly to main** (use hotfix for emergencies)
 
 ### Branch Format
 
@@ -47,6 +53,7 @@ chore/xxx   ─┘                       ▼
 |------|---------|---------|
 | `feature` | New functionality | `feature/shopping-sync` |
 | `fix` | Bug fixes | `fix/auth-token-refresh` |
+| `hotfix` | **Emergency production fixes** | `hotfix/auth-token-leak` |
 | `chore` | Maintenance, deps | `chore/update-deps` |
 | `refactor` | Code restructuring | `refactor/api-client` |
 | `docs` | Documentation | `docs/api-reference` |
@@ -132,7 +139,9 @@ Derive from branch name or summarize commits:
 
 1. Ensure clean working tree or stash changes
 2. Fetch latest from origin
-3. Create branch from staging: `/git start <type> <description>`
+3. Create branch:
+   - **Normal work:** `/git start <type> <description>` (from staging)
+   - **Emergency fix:** `/git hotfix <description>` (from main)
 
 ### Committing
 
@@ -155,10 +164,19 @@ Derive from branch name or summarize commits:
 3. Review and merge PR in GitHub
 4. Railway auto-deploys from main
 
+### Emergency Hotfix (Production)
+
+1. Create hotfix branch from main: `/git hotfix <description>`
+2. Make minimal fix and commit: `/git commit`
+3. Create PR to main (bypasses staging)
+4. Merge PR (triggers auto-deploy)
+5. **Critical:** Backport fix to staging to keep branches in sync
+
 ## Related
 
 - [/git command](../../commands/git.md) - Dispatcher (routes to workflow files)
 - [workflows/start.md](workflows/start.md) - Create branch from staging
+- [workflows/hotfix.md](workflows/hotfix.md) - Create emergency fix from main
 - [workflows/commit.md](workflows/commit.md) - Stage, validate, and commit
 - [workflows/sync.md](workflows/sync.md) - Rebase on latest staging
 - [workflows/merge.md](workflows/merge.md) - Squash merge to staging

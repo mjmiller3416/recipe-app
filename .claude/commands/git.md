@@ -18,6 +18,7 @@ $ARGUMENTS
 | Argument | Workflow File | Description |
 |----------|---------------|-------------|
 | `start <type> <desc>` | `workflows/start.md` | Create a new branch from staging |
+| `hotfix <desc>` | `workflows/hotfix.md` | Create emergency fix branch from main (production) |
 | `commit [message]` | `workflows/commit.md` | Stage, validate, and commit changes |
 | `sync` | `workflows/sync.md` | Rebase current branch onto latest staging |
 | `merge` | `workflows/merge.md` | Squash merge current branch into staging |
