@@ -136,6 +136,10 @@ export function SettingsView() {
             onCustomCategoryOrderChange={(order) =>
               updateSettings("shoppingList", { customCategoryOrder: order })
             }
+            combineDuplicates={settings.shoppingList.combineDuplicates}
+            onCombineDuplicatesChange={(value) =>
+              updateSettings("shoppingList", { combineDuplicates: value })
+            }
           />
         );
 

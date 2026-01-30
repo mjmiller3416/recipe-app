@@ -1,9 +1,10 @@
 "use client";
 
-import { ShoppingCart, Trash2, Check } from "lucide-react";
+import { ShoppingCart, Trash2, Check, Merge } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "../SectionHeader";
 import { UnitConversionsSection } from "./UnitConversionsSection";
@@ -19,6 +20,8 @@ interface ShoppingListSectionProps {
   customCategoryOrder: string[];
   onCategorySortOrderChange: (value: CategorySortOrder) => void;
   onCustomCategoryOrderChange: (order: string[]) => void;
+  combineDuplicates: boolean;
+  onCombineDuplicatesChange: (value: boolean) => void;
 }
 
 const autoClearOptions = [
@@ -46,6 +49,8 @@ export function ShoppingListSection({
   customCategoryOrder,
   onCategorySortOrderChange,
   onCustomCategoryOrderChange,
+  combineDuplicates,
+  onCombineDuplicatesChange,
 }: ShoppingListSectionProps) {
   return (
     <div className="space-y-6">
@@ -66,6 +71,28 @@ export function ShoppingListSection({
               onSortOrderChange={onCategorySortOrderChange}
               onCategoryOrderChange={onCustomCategoryOrderChange}
             />
+
+            <Separator />
+
+            {/* Combine Duplicates */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label htmlFor="combine-duplicates" className="flex items-center gap-2">
+                    <Merge className="h-3.5 w-3.5 text-muted-foreground" />
+                    Combine Manual and Recipe Items
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    When enabled, manual items with the same ingredient and unit type are automatically merged with recipe items
+                  </p>
+                </div>
+                <Switch
+                  id="combine-duplicates"
+                  checked={combineDuplicates}
+                  onCheckedChange={onCombineDuplicatesChange}
+                />
+              </div>
+            </div>
 
             <Separator />
 

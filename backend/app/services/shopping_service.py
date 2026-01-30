@@ -32,6 +32,7 @@ from ..models.shopping_item import ShoppingItem
 from ..repositories.meal_repo import MealRepo
 from ..repositories.planner_repo import PlannerRepo
 from ..repositories.shopping_repo import ShoppingRepo
+from ..repositories.user_repo import UserRepo
 from ..services.unit_conversion_service import UnitConversionService
 from ..utils.unit_conversion import get_dimension, to_base_unit, to_display_unit
 
@@ -53,6 +54,15 @@ class ShoppingService:
         self.shopping_repo = ShoppingRepo(self.session, user_id)
         self.meal_repo = MealRepo(self.session)
         self.planner_repo = PlannerRepo(self.session)
+        self.user_repo = UserRepo(self.session)
+
+    # ── Helper Methods ──────────────────────────────────────────────────────────────────────────────────────
+    def _is_combining_enabled(self) -> bool:
+        """Check if the user has enabled combining manual and recipe items."""
+        user_settings = self.user_repo.get_or_create_settings(self.user_id)
+        settings_dict = user_settings.settings
+        shopping_list_settings = settings_dict.get("shoppingList", {})
+        return shopping_list_settings.get("combineDuplicates", False)
 
     # ── Core Sync Method ────────────────────────────────────────────────────────────────────────────────────
     def sync_shopping_list(self) -> Dict[str, int]:
@@ -117,6 +127,19 @@ class ShoppingService:
                 if item.aggregation_key
             }
 
+            # 3.5. If combining is enabled, check for manual items that match recipe aggregation keys
+            manual_items_to_merge = {}
+            if self._is_combining_enabled():
+                all_manual_items = self.shopping_repo.get_all_shopping_items(source="manual")
+                for manual_item in all_manual_items:
+                    # Generate aggregation key for this manual item
+                    dimension = get_dimension(manual_item.unit)
+                    agg_key = ShoppingItem.make_aggregation_key(manual_item.ingredient_name, dimension)
+
+                    # If this manual item matches a desired recipe item, track it for merging
+                    if agg_key in desired_contributions:
+                        manual_items_to_merge[agg_key] = manual_item
+
             stats = {
                 "items_created": 0,
                 "items_updated": 0,
@@ -126,7 +149,7 @@ class ShoppingService:
 
             # 4. Process each desired aggregation key
             for agg_key, contributions in desired_contributions.items():
-                # Calculate total base quantity
+                # Calculate total base quantity from recipe contributions
                 total_base_qty = sum(c["base_quantity"] for c in contributions.values())
 
                 # Get sample contribution for metadata
@@ -146,6 +169,14 @@ class ShoppingService:
 
                 # Look up category from first recipe ingredient
                 category = self._get_ingredient_category(ingredient_name)
+
+                # Check if there's a manual item to merge
+                manual_item = manual_items_to_merge.get(agg_key)
+                manual_quantity_base = 0.0
+                if manual_item:
+                    # Convert manual item quantity to base units for combining
+                    manual_quantity_base, _ = to_base_unit(manual_item.quantity, manual_item.unit)
+                    total_base_qty += manual_quantity_base
 
                 # Calculate display quantity (pass original_unit for unit preservation)
                 display_qty, display_unit = to_display_unit(
@@ -173,6 +204,11 @@ class ShoppingService:
                     # Sync contributions
                     self._sync_item_contributions(item, contributions)
                     stats["items_updated"] += 1
+
+                    # If we merged a manual item, delete it now
+                    if manual_item:
+                        self.shopping_repo.delete_item(manual_item.id)
+                        stats["items_deleted"] += 1  # Track that we removed the manual duplicate
                 else:
                     # Create new item
                     item = ShoppingItem.create_from_recipe(
@@ -187,6 +223,10 @@ class ShoppingService:
                     # Create contributions
                     self._sync_item_contributions(item, contributions)
                     stats["items_created"] += 1
+
+                    # If we merged a manual item, delete it now
+                    if manual_item:
+                        self.shopping_repo.delete_item(manual_item.id)
 
                 stats["contributions_synced"] += len(contributions)
 
@@ -356,13 +396,63 @@ class ShoppingService:
         """
         Add a manual item to the shopping list for the current user.
 
+        If combining is enabled and a recipe item with matching ingredient/dimension exists,
+        the manual quantity is added to the existing recipe item instead of creating a new item.
+
         Args:
             create_dto (ManualItemCreateDTO): Manual item data.
 
         Returns:
-            Optional[ShoppingItemResponseDTO]: Created item or None if failed.
+            Optional[ShoppingItemResponseDTO]: Created/updated item or None if failed.
         """
         try:
+            # Check if combining is enabled
+            if self._is_combining_enabled():
+                # Generate aggregation key for this manual item
+                dimension = get_dimension(create_dto.unit)
+                agg_key = ShoppingItem.make_aggregation_key(create_dto.ingredient_name, dimension)
+
+                # Check if a recipe item with this aggregation key exists
+                existing_items = self.shopping_repo.get_items_by_aggregation_keys([agg_key])
+                if agg_key in existing_items:
+                    # Merge with existing recipe item
+                    existing_item = existing_items[agg_key]
+
+                    # Convert manual quantity to base units
+                    manual_base_qty, _ = to_base_unit(create_dto.quantity, create_dto.unit)
+
+                    # Convert existing quantity to base units
+                    existing_base_qty, _ = to_base_unit(existing_item.quantity, existing_item.unit)
+
+                    # Combine quantities
+                    total_base_qty = existing_base_qty + manual_base_qty
+
+                    # Convert back to display units
+                    conversion_service = UnitConversionService(self.session, self.user_id)
+                    display_qty, display_unit = to_display_unit(
+                        total_base_qty,
+                        dimension,
+                        existing_item.unit  # Preserve existing unit
+                    )
+
+                    # Apply ingredient-specific conversion rules
+                    display_qty, display_unit = conversion_service.apply_conversion(
+                        existing_item.ingredient_name, display_qty, display_unit
+                    )
+
+                    # Update existing item
+                    existing_item.quantity = display_qty
+                    existing_item.unit = display_unit
+                    existing_item.have = False  # Uncheck since quantity increased
+
+                    updated_item = self.shopping_repo.update_item(existing_item)
+                    self.session.commit()
+
+                    # Get recipe sources for response
+                    recipe_sources = self._get_recipe_sources_for_item(updated_item)
+                    return self._item_to_response_dto(updated_item, recipe_sources)
+
+            # If combining is disabled or no matching recipe item, create a new manual item
             manual_item = ShoppingItem.create_manual(
                 ingredient_name=create_dto.ingredient_name,
                 quantity=create_dto.quantity,

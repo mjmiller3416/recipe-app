@@ -29,6 +29,27 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "preferredUnits": "imperial",
     "mealPlannerView": "list",
     "shoppingListGroupBy": "category",
+    "shoppingList": {
+        "categorySortOrder": "alphabetical",
+        "customCategoryOrder": [
+            "Produce",
+            "Bakery",
+            "Deli",
+            "Dairy",
+            "Meat",
+            "Seafood",
+            "Frozen",
+            "Pantry",
+            "Condiments",
+            "Oils and Vinegars",
+            "Spices",
+            "Baking",
+            "Beverages",
+            "Other",
+        ],
+        "autoClearChecked": "manual",
+        "combineDuplicates": True,  # Default enabled for new users
+    },
 }
 
 
