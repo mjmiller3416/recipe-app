@@ -195,7 +195,10 @@ export function AddToMealPlanDialog({
             <div className="space-y-2 max-h-[300px] overflow-y-auto py-2 px-6 -mx-6">
               {/* Create new meal button */}
               <button
-                onClick={() => setMode("create")}
+                onClick={() => {
+                  setMode("create");
+                  setNewMealName(recipe.recipe_name);
+                }}
                 className="w-full p-4 rounded-lg border border-dashed border-primary/50 bg-elevated text-left transition-colors hover:bg-hover hover:border-primary"
               >
                 <div className="flex items-center gap-2">
