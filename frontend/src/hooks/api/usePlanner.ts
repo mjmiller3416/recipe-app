@@ -525,6 +525,7 @@ export function useClearCompleted() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.stats() });
+      queryClient.invalidateQueries({ queryKey: plannerQueryKeys.streak() });
       dispatchPlannerUpdate();
     },
   });
