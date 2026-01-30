@@ -60,7 +60,7 @@ export function MealGenieChatContent({
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+  }, [messages, chatMutation.isPending]);
 
   // Track scroll position for fade indicators
   useEffect(() => {
