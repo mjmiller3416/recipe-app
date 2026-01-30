@@ -4,8 +4,8 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { Sparkles, Send, ChefHat, Lightbulb, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { mealGenieApi } from "@/lib/api";
 import { useChatHistory } from "@/hooks";
+import { useMealGenieAsk } from "@/hooks/api/useAI";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,7 @@ const SUGGESTIONS = [
 export function AskMealGenieWidget() {
   const [input, setInput] = useState("");
   const { messages, addMessage, clearHistory } = useChatHistory();
-  const [isLoading, setIsLoading] = useState(false);
+  const askMutation = useMealGenieAsk();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showTopFade, setShowTopFade] = useState(false);
@@ -49,14 +49,16 @@ export function AskMealGenieWidget() {
 
   const handleSubmit = useCallback(async (messageText?: string) => {
     const textToSend = messageText || input.trim();
-    if (!textToSend || isLoading) return;
+    if (!textToSend || askMutation.isPending) return;
 
     setInput("");
     addMessage({ role: "user", content: textToSend });
-    setIsLoading(true);
 
     try {
-      const response = await mealGenieApi.ask(textToSend, messages);
+      const response = await askMutation.mutateAsync({
+        message: textToSend,
+        conversationHistory: messages,
+      });
       if (response.success && response.response) {
         addMessage({ role: "assistant", content: response.response });
       } else {
@@ -65,10 +67,8 @@ export function AskMealGenieWidget() {
     } catch (error) {
       console.error("Failed to get response:", error);
       addMessage({ role: "assistant", content: "Sorry, something went wrong. Please try again." });
-    } finally {
-      setIsLoading(false);
     }
-  }, [input, isLoading, messages, addMessage]);
+  }, [input, askMutation, messages, addMessage]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -174,7 +174,7 @@ export function AskMealGenieWidget() {
 
                 {/* Loading indicator */}
                 <AnimatePresence>
-                  {isLoading && (
+                  {askMutation.isPending && (
                     <motion.div
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -211,7 +211,7 @@ export function AskMealGenieWidget() {
                       <Button
                         variant="outline"
                         onClick={() => handleSubmit(suggestion.text)}
-                        disabled={isLoading}
+                        disabled={askMutation.isPending}
                         className="w-full h-auto p-3 justify-start text-left group"
                       >
                         <div className="flex items-center gap-3">
@@ -245,7 +245,7 @@ export function AskMealGenieWidget() {
             <Button
               size="icon"
               onClick={() => handleSubmit()}
-              disabled={!input.trim() || isLoading}
+              disabled={!input.trim() || askMutation.isPending}
               aria-label="Send message"
               className="bg-primary hover:bg-primary-hover text-primary-foreground shadow-sm disabled:bg-muted disabled:text-muted-foreground"
             >

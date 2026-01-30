@@ -66,7 +66,7 @@ class RecipeService:
         planner_repo = PlannerRepo(self.session)
 
         # Get meals that use this recipe (as main or side)
-        meals_with_recipe = self.meal_repo.get_meals_using_recipe(recipe_id)
+        meals_with_recipe = self.meal_repo.get_meals_using_recipe(recipe_id, self.user_id)
         if not meals_with_recipe:
             return
 
@@ -228,7 +228,7 @@ class RecipeService:
 
             # Clean up side_recipe_ids in affected meals before deletion
             # (Meals with this as main will CASCADE delete automatically)
-            self.meal_repo.remove_side_recipe_from_all_meals(recipe_id)
+            self.meal_repo.remove_side_recipe_from_all_meals(recipe_id, self.user_id)
 
             self.recipe_repo.delete_recipe(recipe)
             self.session.commit()
@@ -253,8 +253,8 @@ class RecipeService:
             RecipeDeletionImpactDTO with affected meals
         """
         try:
-            meals_as_main = self.meal_repo.get_meals_by_main_recipe(recipe_id)
-            meals_as_side = self.meal_repo.get_meals_with_side_recipe(recipe_id)
+            meals_as_main = self.meal_repo.get_meals_by_main_recipe(recipe_id, self.user_id)
+            meals_as_side = self.meal_repo.get_meals_with_side_recipe(recipe_id, self.user_id)
 
             meals_to_delete = [self._meal_to_response_dto(m) for m in meals_as_main]
             meals_to_update = [self._meal_to_response_dto(m) for m in meals_as_side]

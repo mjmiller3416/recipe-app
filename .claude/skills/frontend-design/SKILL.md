@@ -1,6 +1,15 @@
 ---
 name: Frontend Design
-description: Use when creating, modifying, or reviewing any files in the frontend/ directory. Provides design system rules, component patterns, semantic tokens, shadcn/ui usage, and file organization conventions for the Next.js + React frontend.
+description: |
+  REQUIRED for ANY work involving frontend/ files. MUST invoke BEFORE making changes to:
+  - Files matching: frontend/src/**/*.{tsx,ts,css}
+  - React components, pages, layouts, hooks
+  - UI styling, design tokens, shadcn components
+  - Any bug fixes, features, or refactoring in frontend code
+  
+  Trigger phrases: "add component", "fix UI", "create page", "styling", "design", "button", "card", "form", "frontend bug"
+  
+  Provides: design system rules, component patterns, semantic tokens, shadcn/ui usage, file organization, accessibility guidelines.
 ---
 
 # Frontend Design Skill

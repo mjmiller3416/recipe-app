@@ -12,8 +12,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { imageGenerationApi } from "@/lib/api";
 import { useSettings } from "@/hooks/useSettings";
+import { useGenerateImage, useGenerateBanner } from "@/hooks/api/useAI";
 
 type ImageState = "empty" | "uploading" | "uploaded" | "generating" | "generated" | "error";
 
@@ -45,6 +45,8 @@ export function ImageUploadCard({
   onAiGeneratedChange,
 }: ImageUploadCardProps) {
   const { settings } = useSettings();
+  const generateImageMutation = useGenerateImage();
+  const generateBannerMutation = useGenerateBanner();
 
   // Determine initial state based on props
   const getInitialState = (): ImageState => {
@@ -117,23 +119,23 @@ export function ImageUploadCard({
     setPendingGeneratedImage(null);
 
     try {
-      // Step 1: Generate reference image
-      const refResult = await imageGenerationApi.generate(
+      // Step 1: Generate reference image using authenticated hook
+      const refResult = await generateImageMutation.mutateAsync({
         recipeName,
-        settings.aiFeatures.imageGenerationPrompt
-      );
+        customPrompt: settings.aiFeatures.imageGenerationPrompt,
+      });
 
       if (!refResult.success || !refResult.reference_image_data) {
         throw new Error(refResult.error || "Failed to generate reference image");
       }
 
-      // Step 2: Generate banner image from reference
+      // Step 2: Generate banner image from reference using authenticated hook
       setProgress(50); // Snap to 50% when reference completes
       setGenerationStep("banner");
-      const bannerResult = await imageGenerationApi.generateBanner(
+      const bannerResult = await generateBannerMutation.mutateAsync({
         recipeName,
-        refResult.reference_image_data
-      );
+        referenceImageData: refResult.reference_image_data,
+      });
 
       // Complete - display both images
       setProgress(100); // Snap to 100% when complete
