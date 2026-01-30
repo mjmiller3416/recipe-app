@@ -96,9 +96,6 @@ export function AISuggestions({
       }
     }
 
-    // Mark as fetching
-    fetchedMealIdRef.current = mealId;
-
     suggestionsMutation.mutate(
       {
         main_recipe_name: mainRecipeName,
@@ -110,11 +107,16 @@ export function AISuggestions({
           if (response.success) {
             setSuggestions(response);
             setCachedSuggestions(mealId, response);
+            fetchedMealIdRef.current = mealId; // Mark as fetched only on success
           }
+        },
+        onError: () => {
+          // Reset ref on error to allow retry
+          fetchedMealIdRef.current = null;
         },
       }
     );
-  }, [mealId, mainRecipeName, mainRecipeCategory, mealType, suggestionsMutation]);
+  }, [mealId, mainRecipeName, mainRecipeCategory, mealType, suggestionsMutation.mutate]);
 
   // Auto-load on mount or when mealId changes
   useEffect(() => {
