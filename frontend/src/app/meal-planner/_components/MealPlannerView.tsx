@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ import type { RecipeCardData } from "@/types";
 export function MealPlannerPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { getToken } = useAuth();
 
   // Fetch planner entries via React Query
   const { data: entries = [], isLoading } = usePlannerEntries();
@@ -391,7 +393,8 @@ export function MealPlannerPage() {
     if (!selectedMealId) return;
 
     try {
-      const meal = await plannerApi.getMeal(selectedMealId);
+      const token = await getToken();
+      const meal = await plannerApi.getMeal(selectedMealId, token);
 
       // Store the original meal name to preserve it during editing
       setEditingMealName(meal.meal_name);
