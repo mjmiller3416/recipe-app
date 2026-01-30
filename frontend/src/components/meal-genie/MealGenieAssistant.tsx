@@ -29,7 +29,7 @@ export function AskMealGenieWidget() {
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+  }, [messages, askMutation.isPending]);
 
   // Track scroll position for fade indicators
   useEffect(() => {
