@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Clock, Users } from "lucide-react";
+import { Clock, Users, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { RecipeCardData } from "@/types";
 import { getRecipeCardUrl } from "@/lib/imageUtils";
@@ -20,6 +21,10 @@ interface RecipeCardBaseProps {
   showCategory?: boolean;
   showFavorite?: boolean;
   maxIngredientsDisplay?: number; // For large card
+  /** Whether this card is currently selected (for select mode) */
+  isSelected?: boolean;
+  /** The type of selection - affects badge label ("Main" vs "Side") */
+  selectionType?: "main" | "side";
 }
 
 // ============================================================================
@@ -35,6 +40,8 @@ export function RecipeCard({
   showCategory = true,
   showFavorite = true,
   maxIngredientsDisplay = 8,
+  isSelected = false,
+  selectionType = "main",
 }: RecipeCardBaseProps) {
   const router = useRouter();
 
@@ -110,6 +117,8 @@ export function RecipeCard({
     className={className}
     showCategory={showCategory}
     showFavorite={showFavorite}
+    isSelected={isSelected}
+    selectionType={selectionType}
   />;
 }
 
@@ -127,6 +136,8 @@ interface CardVariantProps {
   showCategory: boolean;
   showFavorite: boolean;
   maxIngredientsDisplay?: number;
+  isSelected?: boolean;
+  selectionType?: "main" | "side";
 }
 
 function RecipeCardSmall({
@@ -209,6 +220,8 @@ function RecipeCardMedium({
   formatTime,
   className,
   showCategory,
+  isSelected = false,
+  selectionType = "main",
 }: CardVariantProps) {
   return (
     <Card
@@ -217,6 +230,8 @@ function RecipeCardMedium({
         "group overflow-hidden",
         "hover:-translate-y-2",
         "pb-0 pt-0 gap-0",
+        isSelected && "outline outline-2 outline-primary",
+        isSelected && "animate-bounce-subtle",
         className
       )}
       onClick={onClick}
@@ -242,7 +257,14 @@ function RecipeCardMedium({
           />
         )}
 
-        {/* Favorite Button */}
+        {/* Selection checkmark indicator - top left, overlays meal type badge when selected */}
+        {isSelected && (
+          <div className="absolute top-4 left-4 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg animate-scale-in z-20">
+            <Check className="w-5 h-5 text-primary-foreground" strokeWidth={2} />
+          </div>
+        )}
+
+        {/* Favorite Button - always in top-right corner */}
         <div className="absolute top-4 right-4">
           <FavoriteButton
             isFavorite={recipe.isFavorite || false}
@@ -252,8 +274,8 @@ function RecipeCardMedium({
           />
         </div>
 
-        {/* Meal Type Badge - top left */}
-        {showCategory && recipe.mealType && (
+        {/* Meal Type Badge - top left, hidden when selected (checkmark takes its place) */}
+        {showCategory && recipe.mealType && !isSelected && (
           <div className="absolute top-4 left-4">
             <RecipeBadge
               label={recipe.mealType}

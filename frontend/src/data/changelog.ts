@@ -2,6 +2,12 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-01-30 - Bug Fixes
+- Fixed duplicate badge display in meal planner selection screen — recipe cards no longer show redundant Main/Side badges
+- Improved selection UX in meal planner — checkmark now appears in top-left corner without shifting the favorite button
+- Fixed dashboard stats to properly exclude cleared and completed meals from the "Meals Planned" count
+- Auto-populate meal name with recipe name when creating meals from the planner
+
 ## 2026-01-29 - Bug Fixes
 - Fixed authentication for AI features — image generation and Meal Genie now properly authenticate requests to prevent unauthorized access
 - Resolved infinite loading issue with AI suggestions in the Meal Planner — suggestions now load correctly every time

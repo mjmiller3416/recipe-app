@@ -43,10 +43,12 @@ def get_dashboard_stats(
         .scalar() or 0
     )
 
-    # Count planner entries for user (all entries, not just active)
+    # Count active planner entries for user (exclude cleared and completed)
     meals_planned = (
         session.query(func.count(PlannerEntry.id))
         .filter(PlannerEntry.user_id == user_id)
+        .filter(PlannerEntry.is_cleared == False)
+        .filter(PlannerEntry.is_completed == False)
         .scalar() or 0
     )
 

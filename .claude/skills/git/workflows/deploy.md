@@ -48,7 +48,43 @@ Even solo, a PR for production deploys gives you:
    Create deploy PR? (yes / abort)
    ```
 
-3. **Create the PR**
+3. **Update changelog** (if user-facing changes exist)
+
+   Read `frontend/src/data/changelog.ts` and add a new section at the top with today's date.
+
+   **Only include user-facing changes:**
+   - ✅ Include: `feat:`, `fix:` (user-visible bugs)
+   - ❌ Skip: merge commits, `chore:`, `docs:` (internal), `refactor:`, `test:`
+
+   **Categorize by type:**
+   ```markdown
+   ## YYYY-MM-DD - New Features
+   - [User-facing description from feat commits]
+
+   ## YYYY-MM-DD - Bug Fixes
+   - [User-facing description from fix commits]
+
+   ## YYYY-MM-DD - Improvements
+   - [User-facing description from enhancement commits]
+   ```
+
+   **Guidelines:**
+   - Write in user-friendly language (avoid technical jargon)
+   - Focus on the "what changed for the user" not implementation details
+   - Use em dashes (—) for clarifications
+   - Be specific about what was fixed/added
+   - Combine related changes into a single bullet point if appropriate
+
+   **Commit and push changelog:**
+   ```bash
+   git add frontend/src/data/changelog.ts
+   git commit -m "docs: update changelog for YYYY-MM-DD release
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+   git push origin staging
+   ```
+
+4. **Create the PR**
    ```bash
    gh pr create --base main --head staging --title "Deploy: <summary>" --body "..."
    ```
@@ -61,11 +97,13 @@ Even solo, a PR for production deploys gives you:
    - feat: shopping list sync and filtering
    - feat: improved meal planner drag-drop
    - fix: resolve auth token refresh
+   - docs: update changelog for YYYY-MM-DD release
 
    ### Checklist
    - [ ] Tested on staging
    - [ ] No console errors
    - [ ] Verified on mobile
+   - [ ] Changelog updated
 
    ---
    Merging this PR will trigger Railway auto-deploy.
