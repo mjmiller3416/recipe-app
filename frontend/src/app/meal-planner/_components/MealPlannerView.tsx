@@ -81,6 +81,7 @@ export function MealPlannerPage() {
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [editingMealId, setEditingMealId] = useState<number | null>(null);
+  const [editingMealName, setEditingMealName] = useState<string | null>(null);
 
   // Track if user has started meal creation (selected a main dish)
   const hasPendingMeal = !!pendingMain;
@@ -92,6 +93,7 @@ export function MealPlannerPage() {
     setShowMealPreview(false);
     setShowRecipePicker(false);
     setEditingMealId(null);
+    setEditingMealName(null);
   }, []);
 
   // Unsaved changes hook - handles browser nav and sidebar via SafeLink
@@ -307,7 +309,7 @@ export function MealPlannerPage() {
         const updatedMeal = await updateMealMutation.mutateAsync({
           mealId: editingMealId,
           data: {
-            meal_name: pendingMain.name,
+            meal_name: editingMealName || pendingMain.name,
             main_recipe_id: Number(pendingMain.id),
             side_recipe_ids: sideRecipeIds,
           },
@@ -390,6 +392,9 @@ export function MealPlannerPage() {
 
     try {
       const meal = await plannerApi.getMeal(selectedMealId);
+
+      // Store the original meal name to preserve it during editing
+      setEditingMealName(meal.meal_name);
 
       // Convert main recipe to RecipeCardData format
       if (meal.main_recipe) {
