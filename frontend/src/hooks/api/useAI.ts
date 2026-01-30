@@ -119,6 +119,28 @@ export function useMealGenieChat() {
   });
 }
 
+/**
+ * Ask Meal Genie a question.
+ * Alias for useMealGenieChat - uses the same endpoint.
+ * Supports conversation history for context.
+ */
+export function useMealGenieAsk() {
+  const { getToken } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({
+      message,
+      conversationHistory,
+    }: {
+      message: string;
+      conversationHistory?: MealGenieMessage[];
+    }) => {
+      const token = await getToken();
+      return mealGenieApi.ask(message, conversationHistory, token);
+    },
+  });
+}
+
 // ============================================================================
 // UTILITY HOOKS
 // ============================================================================

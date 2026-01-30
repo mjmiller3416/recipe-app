@@ -162,7 +162,7 @@ class RecipeRepo:
         recipe = self.get_by_id(recipe_id, user_id)
         if not recipe:
             return None
-        history = RecipeHistory(recipe_id=recipe_id)
+        history = RecipeHistory(recipe_id=recipe_id, user_id=user_id)
         self.session.add(history)
         self.session.flush()
         return history

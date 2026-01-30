@@ -2,6 +2,12 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-01-29 - Bug Fixes
+- Fixed authentication for AI features — image generation and Meal Genie now properly authenticate requests to prevent unauthorized access
+- Resolved infinite loading issue with AI suggestions in the Meal Planner — suggestions now load correctly every time
+- Fixed meal name preservation when editing meals in the planner — names no longer revert to default values
+- Improved data isolation across user accounts — shopping lists, meal planners, and recipe history are now properly separated by user
+
 ## 2026-01-24 - New Features
 - Full Data Backup & Restore — create complete JSON backups of all your data (recipes, meals, planner entries, shopping lists, and settings) from Settings → Data Management
 - Configure your default recipe sort order in Settings → Recipe Preferences — choose between A-Z, Most Recent, or Cook Time
