@@ -2,10 +2,6 @@
 
 FastAPI router for unit conversion rule endpoints.
 All endpoints require authentication and are scoped to the current user.
-
-TODO: Add GET /units endpoint to expose available units from unit_conversion.py
-      This would allow frontend to fetch units dynamically instead of hardcoding
-      in constants.ts. See: frontend/TODO.md for details.
 """
 
 from typing import List
@@ -19,11 +15,60 @@ from app.dtos.unit_conversion_dtos import (
     UnitConversionRuleCreateDTO,
     UnitConversionRuleResponseDTO,
     UnitConversionRuleUpdateDTO,
+    UnitOptionDTO,
+    UnitsResponseDTO,
 )
 from app.models.user import User
 from app.services.unit_conversion_service import UnitConversionService
+from app.utils import unit_conversion
 
 router = APIRouter()
+
+
+@router.get("/units", response_model=UnitsResponseDTO)
+async def get_units(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get all available ingredient units.
+
+    Returns a list of units that can be used in recipes and shopping lists.
+    Backend is the authoritative source for available units.
+    """
+    # Collect all units from the conversion module
+    all_units = []
+
+    # Add mass units
+    for unit_code in unit_conversion.MASS_UNITS.keys():
+        all_units.append(UnitOptionDTO(value=unit_code, label=unit_code))
+
+    # Add volume units with proper display labels
+    volume_labels = {"tbs": "Tbs", "tsp": "tsp", "cup": "cup"}
+    for unit_code in unit_conversion.VOLUME_UNITS.keys():
+        label = volume_labels.get(unit_code, unit_code)
+        all_units.append(UnitOptionDTO(value=unit_code, label=label))
+
+    # Add count units (excluding empty string)
+    count_labels = {
+        "stick": "stick",
+        "bag": "bag",
+        "box": "box",
+        "can": "can",
+        "jar": "jar",
+        "package": "package",
+        "piece": "piece",
+        "slice": "slice",
+        "whole": "whole",
+        "pinch": "pinch",
+        "dash": "dash",
+        "to-taste": "to taste",
+    }
+    for unit_code in unit_conversion.COUNT_UNITS:
+        if unit_code:  # Skip empty string
+            label = count_labels.get(unit_code, unit_code)
+            all_units.append(UnitOptionDTO(value=unit_code, label=label))
+
+    return UnitsResponseDTO(units=all_units)
 
 
 def _rule_to_response_dto(rule) -> UnitConversionRuleResponseDTO:

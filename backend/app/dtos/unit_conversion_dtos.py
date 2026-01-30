@@ -64,3 +64,21 @@ class UnitConversionRuleResponseDTO(UnitConversionRuleBaseDTO):
 
     id: int
     created_at: datetime
+
+
+# ── Units List DTO ─────────────────────────────────────────────────────────────────────────────────────────
+class UnitOptionDTO(BaseModel):
+    """DTO for a single unit option."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    value: str = Field(..., description="Unit code (e.g., 'tsp', 'cup', 'oz')")
+    label: str = Field(..., description="Display label for the unit")
+
+
+class UnitsResponseDTO(BaseModel):
+    """DTO for GET /api/units response - exposes all available units."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    units: list[UnitOptionDTO] = Field(..., description="List of all available units")

@@ -662,3 +662,16 @@ export interface DashboardStatsDTO {
   meals_planned: number;
   shopping_items: number;
 }
+
+// ============================================================================
+// Unit Types
+// ============================================================================
+
+export interface UnitOptionDTO {
+  value: string;
+  label: string;
+}
+
+export interface UnitsResponseDTO {
+  units: UnitOptionDTO[];
+}
