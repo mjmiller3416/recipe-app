@@ -302,20 +302,22 @@ class MealRepo:
         return count
 
     # -- Recipe Lookup Methods -------------------------------------------------------------------
-    def get_meals_using_recipe(self, recipe_id: int) -> List[Meal]:
+    def get_meals_using_recipe(self, recipe_id: int, user_id: int) -> List[Meal]:
         """
-        Get all meals that use a specific recipe (as main or side).
+        Get all meals that use a specific recipe (as main or side) for a specific user.
 
         Args:
             recipe_id: ID of the recipe to search for
+            user_id: ID of the user whose meals to search
 
         Returns:
-            List of meals that use this recipe
+            List of meals that use this recipe belonging to the user
         """
         # side_recipe_ids is a Python @property over a JSON Text column,
         # so we query the underlying _side_recipe_ids_json column with LIKE,
         # then filter in Python to eliminate partial-number false positives.
         stmt = select(Meal).where(
+            Meal.user_id == user_id,
             or_(
                 Meal.main_recipe_id == recipe_id,
                 Meal._side_recipe_ids_json.like(f"%{recipe_id}%")

@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { Sparkles, Send, X, ChefHat, Lightbulb, Calendar, Minimize2, Maximize2, Minus, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { mealGenieApi } from "@/lib/api";
 import { useChatHistory } from "@/hooks";
+import { useMealGenieChat } from "@/hooks/api/useAI";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,7 @@ export function MealGenieChatContent({
   const router = useRouter();
   const [input, setInput] = useState("");
   const { messages, addMessage, clearHistory } = useChatHistory();
-  const [isLoading, setIsLoading] = useState(false);
+  const chatMutation = useMealGenieChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -87,7 +87,7 @@ export function MealGenieChatContent({
 
   const handleSubmit = useCallback(async (messageText?: string) => {
     const textToSend = messageText || input.trim();
-    if (!textToSend || isLoading) return;
+    if (!textToSend || chatMutation.isPending) return;
 
     // Expand if minimized when submitting
     if (isMinimized && onExpand) {
@@ -96,11 +96,13 @@ export function MealGenieChatContent({
 
     setInput("");
     addMessage({ role: "user", content: textToSend });
-    setIsLoading(true);
 
     try {
       // Single unified API call - AI decides what action to take
-      const response = await mealGenieApi.chat(textToSend, messages);
+      const response = await chatMutation.mutateAsync({
+        message: textToSend,
+        conversationHistory: messages,
+      });
 
       if (response.success) {
         // Check if AI generated a recipe
@@ -122,10 +124,8 @@ export function MealGenieChatContent({
     } catch (error) {
       console.error("Failed to get response:", error);
       addMessage({ role: "assistant", content: "Sorry, something went wrong. Please try again." });
-    } finally {
-      setIsLoading(false);
     }
-  }, [input, isLoading, messages, addMessage, isMinimized, onExpand]);
+  }, [input, chatMutation, messages, addMessage, isMinimized, onExpand]);
 
   // Navigate to recipe form when user clicks "View Recipe Draft"
   const handleViewRecipe = useCallback(() => {
@@ -287,7 +287,7 @@ export function MealGenieChatContent({
 
               {/* Loading indicator */}
               <AnimatePresence>
-                {isLoading && (
+                {chatMutation.isPending && (
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -307,7 +307,7 @@ export function MealGenieChatContent({
 
               {/* View Recipe Draft button - shown when a recipe is ready */}
               <AnimatePresence>
-                {pendingRecipe && !isLoading && (
+                {pendingRecipe && !chatMutation.isPending && (
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -345,7 +345,7 @@ export function MealGenieChatContent({
                     <Button
                       variant="outline"
                       onClick={() => handleSubmit(suggestion.text)}
-                      disabled={isLoading}
+                      disabled={chatMutation.isPending}
                       className="w-full h-auto p-3 justify-start text-left group"
                     >
                       <div className="flex items-center gap-3">
@@ -384,7 +384,7 @@ export function MealGenieChatContent({
           <Button
             size="icon"
             onClick={() => handleSubmit()}
-            disabled={!input.trim() || isLoading}
+            disabled={!input.trim() || chatMutation.isPending}
             aria-label="Send message"
             className="bg-primary hover:bg-primary-hover text-primary-foreground shadow-sm disabled:bg-muted disabled:text-muted-foreground"
           >

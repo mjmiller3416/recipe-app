@@ -1,6 +1,15 @@
 ---
 name: backend-dev
-description: Use when creating, modifying, or reviewing any files in the backend/ directory. Provides layered architecture rules, transaction patterns, naming conventions, DTO templates, and code review checklist for the FastAPI + SQLAlchemy backend.
+description: |
+  REQUIRED for ANY work involving backend/ files. MUST invoke BEFORE making changes to:
+  - Files matching: backend/app/**/*.py
+  - API routes, services, repositories, models, DTOs
+  - Database migrations, queries, transactions
+  - Any bug fixes, features, or refactoring in backend code
+  
+  Trigger phrases: "fix backend", "add endpoint", "update service", "database", "API", "repository", "500 error", "backend bug"
+  
+  Provides: layered architecture rules, transaction patterns, naming conventions, DTO templates, SQLAlchemy patterns, code review checklist.
 ---
 
 # Backend Development Skill
