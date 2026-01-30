@@ -114,7 +114,7 @@ export function AISuggestions({
         },
       }
     );
-  }, [mealId, mainRecipeName, mainRecipeCategory, mealType, suggestionsMutation]);
+  }, [mealId, mainRecipeName, mainRecipeCategory, mealType, suggestionsMutation.mutate]);
 
   // Auto-load on mount or when mealId changes
   useEffect(() => {
