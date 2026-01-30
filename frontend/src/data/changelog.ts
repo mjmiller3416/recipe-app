@@ -7,6 +7,7 @@ const CHANGELOG_MD = `
 - Improved selection UX in meal planner — checkmark now appears in top-left corner without shifting the favorite button
 - Fixed dashboard stats to properly exclude cleared and completed meals from the "Meals Planned" count
 - Auto-populate meal name with recipe name when creating meals from the planner
+- Fixed cooking streak widget to properly update when clearing completed meals from the planner
 
 ## 2026-01-29 - Bug Fixes
 - Fixed authentication for AI features — image generation and Meal Genie now properly authenticate requests to prevent unauthorized access
