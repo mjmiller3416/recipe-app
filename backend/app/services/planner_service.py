@@ -520,12 +520,16 @@ class PlannerService:
         Called after removing or clearing planner entries to clean up
         transient meals that are no longer in use.
 
+        IMPORTANT: Uses count_all_entries_for_meal to preserve cooking history.
+        Cleared entries with cooking streak data must prevent meal deletion.
+
         Args:
             meal_id: ID of the meal to potentially clean up
         """
         meal = self.meal_repo.get_by_id(meal_id, self.user_id)
         if meal and not meal.is_saved:
-            remaining = self.repo.count_active_entries_for_meal(meal_id, self.user_id)
+            # Check ALL entries (active + cleared) to preserve cooking history
+            remaining = self.repo.count_all_entries_for_meal(meal_id, self.user_id)
             if remaining == 0:
                 self.meal_repo.delete(meal_id, self.user_id)
 
