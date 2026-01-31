@@ -10,6 +10,7 @@ import {
   CalendarPlus,
   UtensilsCrossed,
   Share2,
+  FolderOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,11 +34,13 @@ import {
 import { RecipeBadge, RecipeBadgeGroup } from "@/components/recipe/RecipeBadge";
 import type { RecipeResponseDTO } from "@/types";
 import { formatTime } from "../recipe-utils";
+import { useRecipeGroupsForRecipe } from "@/hooks/api/useRecipeGroups";
 
 interface RecipeHeaderCardProps {
   recipe: RecipeResponseDTO;
   recipeId: number;
   onMealPlanClick: () => void;
+  onManageGroupsClick: () => void;
   onPrintClick: () => void;
   onShare: () => void;
   onDelete: () => void;
@@ -45,16 +48,20 @@ interface RecipeHeaderCardProps {
 
 /**
  * Header card component displaying recipe title, badges, stats, and action buttons.
- * Handles Edit, Print, Share, Delete, and Add to Meal Plan actions.
+ * Handles Edit, Print, Share, Delete, Add to Meal Plan, and Manage Groups actions.
  */
 export function RecipeHeaderCard({
   recipe,
   recipeId,
   onMealPlanClick,
+  onManageGroupsClick,
   onPrintClick,
   onShare,
   onDelete,
 }: RecipeHeaderCardProps) {
+  // Fetch recipe groups
+  const { data: recipeGroups = [] } = useRecipeGroupsForRecipe(recipeId);
+
   return (
     <Card className="mb-8 shadow-xl">
       <CardContent className="p-6 md:p-8">
@@ -84,6 +91,14 @@ export function RecipeHeaderCard({
               label={recipe.diet_pref}
               type="dietary"
               size="md"
+            />
+          )}
+          {recipeGroups.length > 0 && (
+            <RecipeBadge
+              label={recipeGroups[0].name}
+              type="group"
+              size="md"
+              groups={recipeGroups}
             />
           )}
         </RecipeBadgeGroup>
@@ -139,8 +154,17 @@ export function RecipeHeaderCard({
             Add to Meal Plan
           </Button>
 
+          <Button
+            onClick={onManageGroupsClick}
+            variant="secondary"
+            className="gap-2"
+          >
+            <FolderOpen className="w-4 h-4" />
+            Manage Groups
+          </Button>
+
           <Link href={`/recipes/${recipeId}/edit`}>
-            <Button variant="secondary" className="gap-2">
+            <Button variant="outline" className="gap-2">
               <Edit3 className="w-4 h-4" />
               Edit Recipe
             </Button>

@@ -1,18 +1,24 @@
 ---
 name: Frontend Design
 description: |
+  🚨 MANDATORY BEFORE ANY FRONTEND EDITS 🚨
+
   REQUIRED for ANY work involving frontend/ files. MUST invoke BEFORE making changes to:
   - Files matching: frontend/src/**/*.{tsx,ts,css}
   - React components, pages, layouts, hooks
   - UI styling, design tokens, shadcn components
   - Any bug fixes, features, or refactoring in frontend code
-  
+
+  ⚠️ EDITING WITHOUT THIS CONTEXT WILL BREAK DESIGN CONSISTENCY ⚠️
+
   Trigger phrases: "add component", "fix UI", "create page", "styling", "design", "button", "card", "form", "frontend bug"
-  
+
   Provides: design system rules, component patterns, semantic tokens, shadcn/ui usage, file organization, accessibility guidelines.
 ---
 
 # Frontend Design Skill
+
+**⚠️ THIS SKILL MUST BE INVOKED BEFORE ANY FRONTEND CODE CHANGES ⚠️**
 
 Design system rules and patterns for Meal Genie. For token values, see `globals.css`. For component examples, reference existing implementations.
 

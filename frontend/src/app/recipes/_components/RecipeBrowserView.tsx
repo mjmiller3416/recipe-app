@@ -37,6 +37,7 @@ import { RecipeCard, RecipeCardGrid } from "@/components/recipe/RecipeCard";
 import { FilterBar } from "@/components/common/FilterBar";
 import { FilterSidebar } from "@/components/common/FilterSidebar";
 import { useRecipes, useToggleFavorite } from "@/hooks/api";
+import { useRecipeGroups } from "@/hooks/api/useRecipeGroups";
 import { applyFilters } from "@/lib/filterUtils";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
 import { RECIPE_CATEGORY_OPTIONS, MEAL_TYPE_OPTIONS, DIETARY_PREFERENCES, QUICK_FILTERS, type QuickFilter } from "@/lib/constants";
@@ -55,13 +56,14 @@ interface FilterState {
   categories: string[];
   mealTypes: string[];
   dietaryPreferences: string[];
+  groupIds: number[];
   favoritesOnly: boolean;
   maxCookTime: number | null;
   newDays: number | null;
 }
 
 interface ActiveFilter {
-  type: "category" | "mealType" | "dietary" | "favorite" | "time" | "new";
+  type: "category" | "mealType" | "dietary" | "group" | "favorite" | "time" | "new";
   value: string;
   label: string;
 }
@@ -423,6 +425,9 @@ export function RecipeBrowserView({
   // React Query handles caching, and useToggleFavorite handles optimistic updates
   const { data: recipesData, isLoading, error: queryError } = useRecipes();
 
+  // Fetch recipe groups for filtering
+  const { data: recipeGroups = [] } = useRecipeGroups();
+
   // Map to card format - memoized to avoid unnecessary re-renders
   const recipes = useMemo(() => {
     return recipesData ? mapRecipesForCards(recipesData) : [];
@@ -434,6 +439,9 @@ export function RecipeBrowserView({
   const categoryOptions = RECIPE_CATEGORY_OPTIONS;
   const mealTypeOptions = MEAL_TYPE_OPTIONS;
   const dietaryOptions = [...DIETARY_PREFERENCES];
+  const groupOptions = useMemo(() => {
+    return recipeGroups.map((g) => ({ value: String(g.id), label: g.name }));
+  }, [recipeGroups]);
 
   // State
   const [searchTerm, setSearchTerm] = useState("");
@@ -441,6 +449,7 @@ export function RecipeBrowserView({
     categories: [],
     mealTypes: filterMealType === "side" ? ["side"] : [],
     dietaryPreferences: [],
+    groupIds: [],
     favoritesOnly: initialFavoritesOnly,
     maxCookTime: null,
     newDays: null,
@@ -579,6 +588,8 @@ export function RecipeBrowserView({
       mealTypeOptions.find((m) => m.value === value)?.label ?? value;
     const getDietaryLabel = (value: string) =>
       dietaryOptions.find((d) => d.value === value)?.label ?? value;
+    const getGroupLabel = (value: number) =>
+      groupOptions.find((g) => g.value === String(value))?.label ?? `Group ${value}`;
 
     filters.categories.forEach((cat) => {
       active.push({ type: "category", value: cat, label: getCategoryLabel(cat) });
@@ -588,6 +599,9 @@ export function RecipeBrowserView({
     });
     filters.dietaryPreferences.forEach((pref) => {
       active.push({ type: "dietary", value: pref, label: getDietaryLabel(pref) });
+    });
+    filters.groupIds.forEach((groupId) => {
+      active.push({ type: "group", value: String(groupId), label: getGroupLabel(groupId) });
     });
     if (filters.favoritesOnly) {
       active.push({ type: "favorite", value: "favorites", label: "Favorites Only" });
@@ -608,7 +622,7 @@ export function RecipeBrowserView({
     }
 
     return active;
-  }, [filters, categoryOptions, mealTypeOptions, dietaryOptions]);
+  }, [filters, categoryOptions, mealTypeOptions, dietaryOptions, groupOptions]);
 
   // Filter and sort recipes (using shared filter utils)
   const filteredRecipes = useMemo(() => {
@@ -618,6 +632,7 @@ export function RecipeBrowserView({
       categories: filters.categories,
       mealTypes: filters.mealTypes,
       dietaryPreferences: filters.dietaryPreferences,
+      groups: filters.groupIds,
       favoritesOnly: filters.favoritesOnly,
       maxCookTime: filters.maxCookTime,
       newDays: filters.newDays,
@@ -756,6 +771,16 @@ export function RecipeBrowserView({
     scrollToResults();
   };
 
+  const handleGroupChange = (value: number, checked: boolean) => {
+    setFilters((prev) => ({
+      ...prev,
+      groupIds: checked
+        ? [...prev.groupIds, value]
+        : prev.groupIds.filter((g) => g !== value),
+    }));
+    scrollToResults();
+  };
+
   const handleRemoveFilter = (filter: ActiveFilter) => {
     switch (filter.type) {
       case "category":
@@ -766,6 +791,9 @@ export function RecipeBrowserView({
         break;
       case "dietary":
         handleDietaryChange(filter.value, false);
+        break;
+      case "group":
+        handleGroupChange(Number(filter.value), false);
         break;
       case "favorite":
         setFilters((prev) => ({ ...prev, favoritesOnly: false }));
@@ -880,11 +908,14 @@ export function RecipeBrowserView({
                   onCategoryChange={handleCategoryChange}
                   onMealTypeChange={handleMealTypeChange}
                   onDietaryChange={handleDietaryChange}
+                  onGroupChange={handleGroupChange}
                   onFavoritesChange={handleFavoritesFilterChange}
                   onClearAll={handleClearAllFilters}
                   categoryOptions={categoryOptions}
                   mealTypeOptions={mealTypeOptions}
                   dietaryOptions={dietaryOptions}
+                  groupOptions={groupOptions}
+                  showGroups={groupOptions.length > 0}
                 />
               </CardContent>
             </Card>
@@ -944,11 +975,14 @@ export function RecipeBrowserView({
               onCategoryChange={handleCategoryChange}
               onMealTypeChange={handleMealTypeChange}
               onDietaryChange={handleDietaryChange}
+              onGroupChange={handleGroupChange}
               onFavoritesChange={handleFavoritesFilterChange}
               onClearAll={handleClearAllFilters}
               categoryOptions={categoryOptions}
               mealTypeOptions={mealTypeOptions}
               dietaryOptions={dietaryOptions}
+              groupOptions={groupOptions}
+              showGroups={groupOptions.length > 0}
             />
           </div>
         </SheetContent>

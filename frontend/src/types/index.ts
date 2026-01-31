@@ -32,6 +32,7 @@ export interface RecipeCardData {
   isFavorite?: boolean;
   ingredients?: RecipeIngredient[]; // For large card display
   createdAt?: string; // ISO date string for "new recipes" filter
+  groupIds?: number[]; // IDs of groups this recipe belongs to
 }
 
 // ============================================================================
@@ -650,6 +651,29 @@ export interface RecipeGenerationResponseDTO {
 export interface MealGenieChatMessage extends MealGenieMessage {
   recipe?: GeneratedRecipeDTO;
   imageData?: string;
+}
+
+// ============================================================================
+// Recipe Group Types
+// ============================================================================
+
+export interface RecipeGroupResponseDTO {
+  id: number;
+  name: string;
+  created_at: string | null;
+  recipe_count: number;
+}
+
+export interface RecipeGroupCreateDTO {
+  name: string;
+}
+
+export interface RecipeGroupUpdateDTO {
+  name: string;
+}
+
+export interface RecipeGroupAssignmentDTO {
+  group_ids: number[];
 }
 
 // ============================================================================

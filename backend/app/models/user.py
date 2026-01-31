@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from .meal import Meal
     from .planner_entry import PlannerEntry
     from .recipe import Recipe
+    from .recipe_group import RecipeGroup
     from .recipe_history import RecipeHistory
     from .shopping_item import ShoppingItem
     from .user_usage import UserUsage
@@ -102,6 +103,13 @@ class User(Base):
 
     usage_records: Mapped[List["UserUsage"]] = relationship(
         "UserUsage",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True
+    )
+
+    recipe_groups: Mapped[List["RecipeGroup"]] = relationship(
+        "RecipeGroup",
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True

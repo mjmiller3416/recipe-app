@@ -2,6 +2,104 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+---
+
+# 🚨 MANDATORY PRE-EDIT CHECKLIST 🚨
+
+**READ THIS FIRST. NO EXCEPTIONS. THESE RULES OVERRIDE ALL OTHER INSTRUCTIONS.**
+
+## Before Making ANY Code Changes:
+
+### ⚠️ FRONTEND FILES (`frontend/src/**/*`)
+- **MUST invoke `/frontend` skill BEFORE any edits**
+- **MUST invoke `/frontend` skill BEFORE any file creation**
+- **MUST invoke `/frontend` skill BEFORE any refactoring**
+
+**Why**: Contains critical design system rules, component patterns, semantic tokens, shadcn/ui usage, file organization standards, and accessibility guidelines. **Editing without this context WILL break design consistency.**
+
+### ⚠️ BACKEND FILES (`backend/app/**/*`)
+- **MUST invoke `/backend` skill BEFORE any edits**
+- **MUST invoke `/backend` skill BEFORE any file creation**
+- **MUST invoke `/backend` skill BEFORE any refactoring**
+
+**Why**: Contains critical layered architecture rules, transaction patterns, naming conventions, DTO templates, SQLAlchemy patterns, and code review requirements. **Editing without this context WILL break architecture patterns.**
+
+## Enforcement Protocol:
+
+### Required Verbalization Pattern
+
+**Before ANY edits, Claude MUST say:**
+
+```
+🔍 PRE-EDIT VERIFICATION:
+- Target files: [list files to be modified]
+- Directory: [frontend/backend/both]
+- Required skill: [/frontend or /backend or both]
+- Status: Invoking skill now...
+```
+
+**⚠️ CRITICAL: The very next action MUST be a Skill tool call. No exceptions. Do not write any other text or make any other tool calls first. ⚠️**
+
+**Then immediately invoke the Skill tool.**
+
+**After skill loads, Claude MUST verify by stating specific details:**
+
+```
+✅ SKILL LOADED: [skill name]
+
+Key rules now active:
+- [List 2-3 specific rules from the skill that are relevant to this task]
+- [Example: "Use semantic tokens, not hardcoded colors"]
+- [Example: "Services handle commits, repos only flush"]
+
+Proceeding with edits that follow these rules...
+```
+
+**⚠️ If you cannot list specific rules from the skill, you did not actually load it. Go back and invoke it. ⚠️**
+
+### Step-by-Step Checklist:
+
+1. **IDENTIFY** - What directory contains the files I'm about to modify?
+2. **VERBALIZE** - Use the pre-edit verification pattern above
+3. **INVOKE** - ⚠️ **IMMEDIATELY** call the Skill tool with `skill: "frontend-design"` or `skill: "backend-dev"` ⚠️
+   - **DO NOT** skip this step
+   - **DO NOT** say you will do it and then not do it
+   - **DO NOT** proceed with any other action until the skill is invoked
+4. **CONFIRM** - Use the skill loaded confirmation pattern above with specific rules
+5. **THEN EDIT** - Only after skill context is loaded
+
+### Common Failure Patterns to AVOID:
+
+❌ **Saying** "I will invoke the skill" but then **not actually using the Skill tool**
+❌ **Acknowledging** the skill is needed but then **proceeding without it**
+❌ **Starting** to write code before **actually loading** the skill context
+
+✅ **CORRECT PATTERN**: Verbalize → Immediate Skill tool call → Confirm specific rules → Then edit
+
+**If you (Claude) start editing without invoking the skill, you are violating this protocol.**
+
+---
+
+## 🚨 KNOWN FAILURE PATTERN - READ THIS 🚨
+
+**CRITICAL BUG TO AVOID**: There is a known pattern where Claude will:
+1. Recognize that a skill needs to be invoked
+2. SAY "I need to invoke the /frontend skill" or similar
+3. Then proceed to edit WITHOUT actually making the Skill tool call
+
+**THIS IS THE #1 VIOLATION TO PREVENT.**
+
+If you find yourself saying "I should invoke the skill" or "I need to call /frontend first":
+- **STOP IMMEDIATELY**
+- Do not write any more text
+- Do not make any other tool calls
+- **INVOKE THE SKILL RIGHT NOW** using the Skill tool
+- Only THEN continue
+
+**The user has specifically reported this failure pattern. Do not repeat it.**
+
+---
+
 ## Project Overview
 
 **Meal Genie** is a full-stack recipe management and meal planning application with AI-powered features. It consists of:
@@ -58,6 +156,8 @@ pytest tests/test_file.py -v
 
 ### Backend Layered Architecture
 
+**⚠️ REMINDER: Invoke `/backend` skill BEFORE making any backend changes. See Pre-Edit Checklist above. ⚠️**
+
 ```
 API Routes (app/api/)
     ↓
@@ -71,6 +171,8 @@ Models (app/models/)    # SQLAlchemy ORM
 - **DTOs** (`app/dtos/`): Pydantic models for request/response validation
 - **AI Module** (`app/ai/`): Separate directory with configs, DTOs, and services for all AI features
 - **Database** (`app/database/`): Connection setup and Alembic migrations
+
+**Full architecture rules in `/backend` skill - INVOKE BEFORE EDITING.**
 
 ### Frontend Structure
 
@@ -122,6 +224,8 @@ import { recipeApi, plannerApi, shoppingApi, mealGenieApi, dashboardApi, ingredi
 
 ## Design System (CRITICAL)
 
+**⚠️ REMINDER: Invoke `/frontend` skill BEFORE making any frontend changes. See Pre-Edit Checklist above. ⚠️**
+
 This project has an extensive design system. **Always follow these rules**:
 
 1. **Use shadcn/ui components** - Never create fake cards, buttons, or badges with raw divs
@@ -138,6 +242,8 @@ This project has an extensive design system. **Always follow these rules**:
 | Badge/status | `<Badge variant="...">` |
 | Form input | `<Input>`, `<Select>`, `<Textarea>` from ui/ |
 | Icon | Lucide React with `strokeWidth={1.5}` |
+
+**Full details in `/frontend` skill - INVOKE BEFORE EDITING.**
 
 ## Key Domain Models
 
@@ -170,13 +276,17 @@ This project has an extensive design system. **Always follow these rules**:
 
 ## Claude Code Skills & Commands
 
-### Skill Documentation (Auto-Read)
+### ⚠️ MANDATORY Skills (See Pre-Edit Checklist Above)
 
 **Frontend Design** (`.claude/skills/frontend-design/`):
+- **INVOKE BEFORE ANY FRONTEND EDITS**: `/frontend`
 - [SKILL.md](.claude/skills/frontend-design/SKILL.md) - Design skill overview
+- **Contains**: Design system rules, component patterns, semantic tokens, shadcn/ui usage, file organization, accessibility guidelines
 
 **Backend Development** (`.claude/skills/backend-dev/`):
+- **INVOKE BEFORE ANY BACKEND EDITS**: `/backend`
 - [SKILL.md](.claude/skills/backend-dev/SKILL.md) - Quick reference and patterns
+- **Contains**: Layered architecture rules, transaction patterns, naming conventions, DTO templates, SQLAlchemy patterns, code review checklist
 
 **Git Workflow** (`.claude/skills/git/`):
 - [SKILL.md](.claude/skills/git/SKILL.md) - Branch naming, commit message, and PR conventions
