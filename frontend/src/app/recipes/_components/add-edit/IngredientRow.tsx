@@ -9,11 +9,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { INGREDIENT_UNITS, INGREDIENT_CATEGORIES } from "@/lib/constants";
+import { INGREDIENT_CATEGORIES } from "@/lib/constants";
 import {
   IngredientAutocomplete,
   Ingredient as AutocompleteIngredient,
 } from "./IngredientAutocomplete";
+import { useUnits } from "@/hooks/api";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -64,6 +65,7 @@ export function IngredientRow({
   onDelete,
   showLabels = false,
 }: IngredientRowProps) {
+  const { data: units = [] } = useUnits();
   const {
     attributes,
     listeners,
@@ -136,7 +138,7 @@ export function IngredientRow({
               <SelectValue placeholder="Unit" />
             </SelectTrigger>
             <SelectContent>
-              {INGREDIENT_UNITS.map((unit) => (
+              {units.map((unit) => (
                 <SelectItem key={unit.value} value={unit.value}>
                   {unit.label}
                 </SelectItem>
@@ -200,7 +202,7 @@ export function IngredientRow({
                 <SelectValue placeholder="Unit" />
               </SelectTrigger>
               <SelectContent>
-                {INGREDIENT_UNITS.map((unit) => (
+                {units.map((unit) => (
                   <SelectItem key={unit.value} value={unit.value}>
                     {unit.label}
                   </SelectItem>

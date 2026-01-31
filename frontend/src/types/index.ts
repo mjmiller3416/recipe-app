@@ -677,6 +677,19 @@ export interface RecipeGroupAssignmentDTO {
 }
 
 // ============================================================================
+// Unit Conversion Types
+// ============================================================================
+
+export interface UnitOptionDTO {
+  value: string;
+  label: string;
+}
+
+export interface UnitsResponseDTO {
+  units: UnitOptionDTO[];
+}
+
+// ============================================================================
 // Dashboard Types
 // ============================================================================
 

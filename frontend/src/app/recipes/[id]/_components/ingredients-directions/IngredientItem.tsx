@@ -3,7 +3,7 @@
 import { Check } from "lucide-react";
 import type { RecipeResponseDTO } from "@/types";
 import { cn, formatQuantity } from "@/lib/utils";
-import { INGREDIENT_UNITS } from "@/lib/constants";
+import { useUnits } from "@/hooks/api";
 
 interface IngredientItemProps {
   ingredient: RecipeResponseDTO["ingredients"][0];
@@ -12,8 +12,9 @@ interface IngredientItemProps {
 }
 
 export function IngredientItem({ ingredient, checked, onToggle }: IngredientItemProps) {
+  const { data: units = [] } = useUnits();
   const quantity = formatQuantity(ingredient.quantity);
-  const unit = INGREDIENT_UNITS.find(u => u.value === ingredient.unit)?.label || ingredient.unit || "";
+  const unit = units.find(u => u.value === ingredient.unit)?.label || ingredient.unit || "";
 
   return (
     <>

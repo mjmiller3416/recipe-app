@@ -33,6 +33,7 @@ import type {
   RecipeGenerationResponseDTO,
   MealSuggestionsRequestDTO,
   MealSuggestionsResponseDTO,
+  UnitsResponseDTO,
 } from "@/types";
 
 // API base URL from environment variable or default to localhost
@@ -1462,6 +1463,13 @@ export interface UnitConversionRuleCreateDTO {
 }
 
 export const unitConversionApi = {
+  /**
+   * Get all available ingredient units
+   * @param token - Optional auth token for authenticated requests
+   */
+  getUnits: (token?: string | null): Promise<UnitsResponseDTO> =>
+    fetchApi<UnitsResponseDTO>("/api/unit-conversions/units", undefined, token),
+
   /**
    * List all unit conversion rules
    * @param token - Optional auth token for authenticated requests

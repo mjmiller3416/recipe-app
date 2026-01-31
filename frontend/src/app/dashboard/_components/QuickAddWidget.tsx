@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/select";
 import { QuantityInput } from "@/components/forms/QuantityInput";
 import { SmartIngredientInput } from "@/components/forms/SmartIngredientInput";
-import { INGREDIENT_UNITS, INGREDIENT_CATEGORIES } from "@/lib/constants";
-import { useAddManualItem } from "@/hooks/api";
+import { INGREDIENT_CATEGORIES } from "@/lib/constants";
+import { useAddManualItem, useUnits } from "@/hooks/api";
 
 export function QuickAddWidget() {
   const [itemName, setItemName] = useState("");
@@ -23,6 +23,7 @@ export function QuickAddWidget() {
   const [category, setCategory] = useState("");
 
   const addManualItem = useAddManualItem();
+  const { data: units = [] } = useUnits();
 
   const handleAdd = () => {
     const trimmedName = itemName.trim();
@@ -69,7 +70,7 @@ export function QuickAddWidget() {
               <SelectValue placeholder="Unit" />
             </SelectTrigger>
             <SelectContent>
-              {INGREDIENT_UNITS.map((u) => (
+              {units.map((u) => (
                 <SelectItem key={u.value} value={u.value}>
                   {u.label}
                 </SelectItem>

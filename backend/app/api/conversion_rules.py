@@ -2,10 +2,6 @@
 
 FastAPI router for unit conversion rule endpoints.
 All endpoints require authentication and are scoped to the current user.
-
-TODO: Add GET /units endpoint to expose available units from unit_conversion.py
-      This would allow frontend to fetch units dynamically instead of hardcoding
-      in constants.ts. See: frontend/TODO.md for details.
 """
 
 from typing import List
@@ -19,9 +15,12 @@ from app.dtos.unit_conversion_dtos import (
     UnitConversionRuleCreateDTO,
     UnitConversionRuleResponseDTO,
     UnitConversionRuleUpdateDTO,
+    UnitOptionDTO,
+    UnitsResponseDTO,
 )
 from app.models.user import User
 from app.services.unit_conversion_service import UnitConversionService
+from app.utils.unit_conversion import MASS_UNITS, VOLUME_UNITS, COUNT_UNITS
 
 router = APIRouter()
 
@@ -37,6 +36,61 @@ def _rule_to_response_dto(rule) -> UnitConversionRuleResponseDTO:
         round_up=rule.round_up,
         created_at=rule.created_at,
     )
+
+
+def _get_unit_label(value: str) -> str:
+    """Get display label for a unit value."""
+    # Map of unit values to their display labels
+    # This matches the labels used in frontend/src/lib/constants.ts
+    label_map = {
+        "tbs": "Tbs",
+        "tsp": "tsp",
+        "cup": "cup",
+        "oz": "oz",
+        "lbs": "lbs",
+        "stick": "stick",
+        "bag": "bag",
+        "box": "box",
+        "can": "can",
+        "jar": "jar",
+        "package": "package",
+        "piece": "piece",
+        "slice": "slice",
+        "whole": "whole",
+        "pinch": "pinch",
+        "dash": "dash",
+        "to-taste": "to taste",
+    }
+    return label_map.get(value, value)
+
+
+@router.get("/units", response_model=UnitsResponseDTO)
+async def get_units(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get all available ingredient units.
+
+    Returns a list of unit options with their values and display labels.
+    This endpoint serves as the single source of truth for allowed units,
+    eliminating the need to maintain duplicate unit lists in the frontend.
+    """
+    # Combine all unit types
+    all_units = set()
+    all_units.update(MASS_UNITS.keys())
+    all_units.update(VOLUME_UNITS.keys())
+    all_units.update(COUNT_UNITS)
+
+    # Remove empty string (it's internal-only for "no unit")
+    all_units.discard("")
+
+    # Convert to list of UnitOptionDTO
+    units = [
+        UnitOptionDTO(value=unit, label=_get_unit_label(unit))
+        for unit in sorted(all_units)
+    ]
+
+    return UnitsResponseDTO(units=units)
 
 
 @router.get("", response_model=List[UnitConversionRuleResponseDTO])
