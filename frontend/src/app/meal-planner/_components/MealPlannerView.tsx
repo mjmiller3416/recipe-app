@@ -380,6 +380,18 @@ export function MealPlannerPage() {
         onSuccess: () => {
           // Refresh meal card to show updated recipe stats (times cooked, last cooked)
           setMealRefreshKey((k) => k + 1);
+
+          // Auto-select next uncompleted meal after marking complete
+          // Filter out the current entry (now completed) to find remaining entries
+          const remainingEntries = entries.filter((e) => e.id !== selectedEntryId);
+          if (remainingEntries.length > 0) {
+            // Try to find the first uncompleted entry
+            const firstUncompleted = remainingEntries.find((e) => !e.is_completed);
+            setSelectedEntryId(firstUncompleted?.id ?? remainingEntries[0].id);
+          } else {
+            // No entries remain - clear selection to show empty state
+            setSelectedEntryId(null);
+          }
         },
         onError: (err) => {
           setError(err instanceof Error ? err.message : "Failed to update completion status");
