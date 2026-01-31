@@ -12,6 +12,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { useSettings } from "@/hooks/useSettings";
 import { useGenerateImage, useGenerateBanner } from "@/hooks/api/useAI";
 
@@ -65,6 +67,10 @@ export function ImageUploadCard({
   } | null>(null);
   const [progress, setProgress] = useState(0);
 
+  // Selection state for which images to regenerate
+  const [regenerateReference, setRegenerateReference] = useState(true);
+  const [regenerateBanner, setRegenerateBanner] = useState(true);
+
   // Update state when imagePreview changes externally
   useEffect(() => {
     if (imagePreview && imageState === "empty") {
@@ -81,10 +87,28 @@ export function ImageUploadCard({
       return;
     }
 
-    // Target: 0-50% for reference, 50-100% for banner
-    // Duration: ~15 seconds per step
-    const startProgress = generationStep === "reference" ? 0 : 50;
-    const targetProgress = generationStep === "reference" ? 50 : 100;
+    // Determine progress ranges based on what's being generated
+    const generatingBothImages = regenerateReference && regenerateBanner;
+    const generatingOnlyReference = regenerateReference && !regenerateBanner;
+    const generatingOnlyBanner = !regenerateReference && regenerateBanner;
+
+    let startProgress = 0;
+    let targetProgress = 100;
+
+    if (generatingBothImages) {
+      // Target: 0-50% for reference, 50-100% for banner
+      startProgress = generationStep === "reference" ? 0 : 50;
+      targetProgress = generationStep === "reference" ? 50 : 100;
+    } else if (generatingOnlyReference) {
+      // Single step: 0-100%
+      startProgress = 0;
+      targetProgress = 100;
+    } else if (generatingOnlyBanner) {
+      // Single step: 0-100%
+      startProgress = 0;
+      targetProgress = 100;
+    }
+
     const duration = 15000; // 15 seconds
     const intervalMs = 100; // Update every 100ms
     const increment = ((targetProgress - startProgress) / duration) * intervalMs;
@@ -104,7 +128,7 @@ export function ImageUploadCard({
     }, intervalMs);
 
     return () => clearInterval(interval);
-  }, [generationStep]);
+  }, [generationStep, regenerateReference, regenerateBanner]);
 
   const handleGenerate = async () => {
     if (!recipeName.trim()) {
@@ -113,38 +137,82 @@ export function ImageUploadCard({
       return;
     }
 
+    // Validate that at least one image type is selected
+    if (!regenerateReference && !regenerateBanner) {
+      setGeneratingError("Please select at least one image type to regenerate");
+      setImageState("error");
+      return;
+    }
+
     setImageState("generating");
-    setGenerationStep("reference");
     setGeneratingError(null);
     setPendingGeneratedImage(null);
 
     try {
-      // Step 1: Generate reference image using authenticated hook
-      const refResult = await generateImageMutation.mutateAsync({
-        recipeName,
-        customPrompt: settings.aiFeatures.imageGenerationPrompt,
-      });
+      let refImageData: string | undefined;
+      let bannerImageData: string | undefined;
 
-      if (!refResult.success || !refResult.reference_image_data) {
-        throw new Error(refResult.error || "Failed to generate reference image");
+      // Step 1: Generate reference image if selected
+      if (regenerateReference) {
+        setGenerationStep("reference");
+        const refResult = await generateImageMutation.mutateAsync({
+          recipeName,
+          customPrompt: settings.aiFeatures.imageGenerationPrompt,
+        });
+
+        if (!refResult.success || !refResult.reference_image_data) {
+          throw new Error(refResult.error || "Failed to generate reference image");
+        }
+
+        refImageData = refResult.reference_image_data;
+
+        // If only generating reference, snap to 100%
+        if (!regenerateBanner) {
+          setProgress(100);
+        } else {
+          // If generating both, snap to 50% after reference completes
+          setProgress(50);
+        }
       }
 
-      // Step 2: Generate banner image from reference using authenticated hook
-      setProgress(50); // Snap to 50% when reference completes
-      setGenerationStep("banner");
-      const bannerResult = await generateBannerMutation.mutateAsync({
-        recipeName,
-        referenceImageData: refResult.reference_image_data,
-      });
+      // Step 2: Generate banner image if selected
+      if (regenerateBanner) {
+        setGenerationStep("banner");
 
-      // Complete - display both images
-      setProgress(100); // Snap to 100% when complete
-      const dataUrl = `data:image/png;base64,${refResult.reference_image_data}`;
-      onGeneratedImageAccept(
-        refResult.reference_image_data,
-        dataUrl,
-        bannerResult.success ? bannerResult.banner_image_data : undefined
-      );
+        // If we just generated a reference image, use it for the banner
+        // Otherwise, use existing image data if available
+        const referenceDataForBanner = refImageData || generatedImageData;
+
+        if (!referenceDataForBanner) {
+          throw new Error("No reference image available for banner generation. Please regenerate the reference image first.");
+        }
+
+        const bannerResult = await generateBannerMutation.mutateAsync({
+          recipeName,
+          referenceImageData: referenceDataForBanner,
+        });
+
+        if (bannerResult.success) {
+          bannerImageData = bannerResult.banner_image_data;
+        }
+
+        setProgress(100); // Snap to 100% when banner completes
+      }
+
+      // Complete - display generated images
+      // Only update reference image if it was regenerated
+      if (refImageData) {
+        const dataUrl = `data:image/png;base64,${refImageData}`;
+        onGeneratedImageAccept(refImageData, dataUrl, bannerImageData);
+      } else {
+        // Only banner was regenerated - keep existing reference, just update banner
+        onGeneratedImageAccept(
+          generatedImageData || "",
+          imagePreview || "",
+          bannerImageData
+        );
+      }
+
       onAiGeneratedChange?.(true);
       setImageState("generated");
     } catch (error) {
@@ -227,9 +295,18 @@ export function ImageUploadCard({
                 <Sparkles className="h-12 w-12 text-primary animate-pulse" />
               </div>
               <p className="text-sm font-medium text-primary">
-                {generationStep === "reference"
-                  ? "Generating reference image (1 of 2)..."
-                  : "Generating banner image (2 of 2)..."}
+                {(() => {
+                  const generatingBothImages = regenerateReference && regenerateBanner;
+                  if (generatingBothImages) {
+                    return generationStep === "reference"
+                      ? "Generating reference image (1 of 2)..."
+                      : "Generating banner image (2 of 2)...";
+                  } else if (regenerateReference) {
+                    return "Generating reference image...";
+                  } else {
+                    return "Generating banner image...";
+                  }
+                })()}
               </p>
               {/* Progress Bar */}
               <div className="w-full max-w-[200px] mt-4">
@@ -293,25 +370,64 @@ export function ImageUploadCard({
         <div className="space-y-2">
           {/* Empty State Buttons */}
           {imageState === "empty" && (
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 gap-2"
-                onClick={handleUploadClick}
-              >
-                <Upload className="h-4 w-4" />
-                Upload
-              </Button>
-              <Button
-                type="button"
-                className="flex-1 gap-2"
-                onClick={handleGenerate}
-              >
-                <Sparkles className="h-4 w-4" />
-                Generate
-              </Button>
-            </div>
+            <>
+              {/* Image selection checkboxes */}
+              <div className="space-y-2 p-3 bg-muted rounded-lg">
+                <p className="text-xs font-medium text-muted-foreground mb-2">
+                  Select images to generate:
+                </p>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="generate-reference"
+                    checked={regenerateReference}
+                    onCheckedChange={(checked) =>
+                      setRegenerateReference(checked === true)
+                    }
+                  />
+                  <Label
+                    htmlFor="generate-reference"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Reference image (1:1 square)
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="generate-banner"
+                    checked={regenerateBanner}
+                    onCheckedChange={(checked) =>
+                      setRegenerateBanner(checked === true)
+                    }
+                  />
+                  <Label
+                    htmlFor="generate-banner"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Banner image (21:9 ultrawide)
+                  </Label>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={handleUploadClick}
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload
+                </Button>
+                <Button
+                  type="button"
+                  className="flex-1 gap-2"
+                  onClick={handleGenerate}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Generate
+                </Button>
+              </div>
+            </>
           )}
 
           {/* Generating State - No buttons, just the loading state */}
@@ -375,25 +491,64 @@ export function ImageUploadCard({
           {/* Uploaded State or Accepted Generated State */}
           {((imageState === "uploaded") ||
             (imageState === "generated" && !pendingGeneratedImage && imagePreview)) && (
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 gap-2"
-                onClick={handleUploadClick}
-              >
-                <Upload className="h-4 w-4" />
-                Change Image
-              </Button>
-              <Button
-                type="button"
-                className="flex-1 gap-2"
-                onClick={handleGenerate}
-              >
-                <Sparkles className="h-4 w-4" />
-                Regenerate
-              </Button>
-            </div>
+            <>
+              {/* Image selection checkboxes for regeneration */}
+              <div className="space-y-2 p-3 bg-muted rounded-lg">
+                <p className="text-xs font-medium text-muted-foreground mb-2">
+                  Select images to regenerate:
+                </p>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="regenerate-reference"
+                    checked={regenerateReference}
+                    onCheckedChange={(checked) =>
+                      setRegenerateReference(checked === true)
+                    }
+                  />
+                  <Label
+                    htmlFor="regenerate-reference"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Reference image (1:1 square)
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="regenerate-banner"
+                    checked={regenerateBanner}
+                    onCheckedChange={(checked) =>
+                      setRegenerateBanner(checked === true)
+                    }
+                  />
+                  <Label
+                    htmlFor="regenerate-banner"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Banner image (21:9 ultrawide)
+                  </Label>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={handleUploadClick}
+                >
+                  <Upload className="h-4 w-4" />
+                  Change Image
+                </Button>
+                <Button
+                  type="button"
+                  className="flex-1 gap-2"
+                  onClick={handleGenerate}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Regenerate
+                </Button>
+              </div>
+            </>
           )}
 
           {/* Error State - handled in the preview area */}
