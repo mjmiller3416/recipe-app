@@ -482,6 +482,26 @@ class PlannerRepo:
         )
         return self.session.execute(stmt).scalar() or 0
 
+    def count_all_entries_for_meal(self, meal_id: int, user_id: int) -> int:
+        """
+        Count all planner entries (active + cleared) for a specific meal belonging to a user.
+        Used to preserve cooking history when cleaning up transient meals.
+
+        Args:
+            meal_id: ID of the meal
+            user_id: ID of the user whose entries to count
+
+        Returns:
+            Count of all entries (including cleared) referencing this meal belonging to the user
+        """
+        stmt = (
+            select(func.count())
+            .select_from(PlannerEntry)
+            .where(PlannerEntry.user_id == user_id)
+            .where(PlannerEntry.meal_id == meal_id)
+        )
+        return self.session.execute(stmt).scalar() or 0
+
     def get_completion_stats_for_meal(self, meal_id: int, user_id: int) -> dict:
         """
         Get completion statistics for a specific meal belonging to a user.
