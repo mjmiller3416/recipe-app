@@ -9,6 +9,22 @@ INPUT=$(cat)
 FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "default"')
 
+# Setup logging
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOG_FILE="$SCRIPT_DIR/hooks.log"
+
+# Early exit for non-source files (performance optimization)
+case "$FILE_PATH" in
+    # Skip these file types entirely
+    *.json|*.md|*.lock|*.log|*.txt|*.yml|*.yaml|*.env*|*.sh)
+        exit 0
+        ;;
+    # Skip these directories
+    *node_modules/*|*dist/*|*build/*|*.next/*|*__pycache__/*|*.git/*|*venv/*)
+        exit 0
+        ;;
+esac
+
 # Use cross-platform temp directory
 # Windows: $TEMP, macOS/Linux: $TMPDIR or /tmp
 if [ -n "$TEMP" ]; then
@@ -24,28 +40,29 @@ FRONTEND_MARKER="$MARKER_DIR/claude-frontend-context-$SESSION_ID"
 BACKEND_MARKER="$MARKER_DIR/claude-backend-context-$SESSION_ID"
 
 # Get project root (assuming script is in .claude/hooks/)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-# Helper function to load context modules
+# Initialize context variable
+CONTEXT=""
+
+# Helper function to load frontend context modules
 load_frontend_context() {
     if [ -f "$FRONTEND_MARKER" ]; then
         return 0
     fi
     touch "$FRONTEND_MARKER" 2>/dev/null || true
 
-    echo "📦 Loading Frontend Context Modules"
-    echo ""
-
     # ========================================
     # ALWAYS LOAD (core context for ALL frontend files)
     # ========================================
-    cat "$PROJECT_ROOT/.claude/context/frontend/frontend-core.md"
-    echo ""
-    cat "$PROJECT_ROOT/.claude/context/frontend/design-tokens.md"
-    echo ""
-    cat "$PROJECT_ROOT/.claude/context/frontend/accessibility.md"
-    echo ""
+    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/frontend-core.md")
+    CONTEXT+=$'\n\n'
+    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/design-tokens.md")
+    CONTEXT+=$'\n\n'
+    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/accessibility.md")
+    CONTEXT+=$'\n\n'
+    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/component-inventory.md")
+    CONTEXT+=$'\n\n'
 
     # ========================================
     # CONDITIONALLY LOAD based on file path
@@ -54,27 +71,24 @@ load_frontend_context() {
     case "$FILE_PATH" in
         # Forms: Check BEFORE generic .tsx
         *Form.tsx|*forms/*.tsx|*/add/page.tsx|*/edit/*/page.tsx)
-            echo "📝 Loading form patterns..."
-            cat "$PROJECT_ROOT/.claude/context/frontend/form-patterns.md"
-            echo ""
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/form-patterns.md")
+            CONTEXT+=$'\n\n'
             ;;
 
         # Pages/Layouts: Check BEFORE generic .tsx
         *page.tsx|*layout.tsx)
-            echo "📐 Loading layout patterns..."
-            cat "$PROJECT_ROOT/.claude/context/frontend/layout-patterns.md"
-            echo ""
-            cat "$PROJECT_ROOT/.claude/context/frontend/component-patterns.md"
-            echo ""
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/layout-patterns.md")
+            CONTEXT+=$'\n\n'
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/component-patterns.md")
+            CONTEXT+=$'\n\n'
             ;;
 
         # Generic components: Catch-all for .tsx files
         *.tsx)
-            echo "🧩 Loading component patterns..."
-            cat "$PROJECT_ROOT/.claude/context/frontend/component-patterns.md"
-            echo ""
-            cat "$PROJECT_ROOT/.claude/context/frontend/shadcn-patterns.md"
-            echo ""
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/component-patterns.md")
+            CONTEXT+=$'\n\n'
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/shadcn-patterns.md")
+            CONTEXT+=$'\n\n'
             ;;
     esac
 
@@ -82,13 +96,12 @@ load_frontend_context() {
     # NEW FILE creation (file doesn't exist yet)
     # ========================================
     if [ ! -f "$PROJECT_ROOT/$FILE_PATH" ]; then
-        echo "📁 Loading file organization (new file)..."
-        cat "$PROJECT_ROOT/.claude/context/frontend/file-organization.md"
-        echo ""
+        CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/file-organization.md")
+        CONTEXT+=$'\n\n'
     fi
 
-    echo "✅ Frontend context loaded for session $SESSION_ID"
-    echo ""
+    # Log execution
+    echo "[$(date '+%H:%M:%S')] context-router | $(basename "$FILE_PATH") | Frontend context loaded" >> "$LOG_FILE"
 }
 
 load_backend_context() {
@@ -97,18 +110,17 @@ load_backend_context() {
     fi
     touch "$BACKEND_MARKER" 2>/dev/null || true
 
-    echo "📦 Loading Backend Context Modules"
-    echo ""
-
     # ========================================
     # ALWAYS LOAD (core + cross-cutting concerns)
     # ========================================
-    cat "$PROJECT_ROOT/.claude/context/backend/backend-core.md"
-    echo ""
-    cat "$PROJECT_ROOT/.claude/context/backend/architecture.md"
-    echo ""
-    cat "$PROJECT_ROOT/.claude/context/backend/exceptions.md"
-    echo ""
+    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/backend-core.md")
+    CONTEXT+=$'\n\n'
+    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/architecture.md")
+    CONTEXT+=$'\n\n'
+    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/exceptions.md")
+    CONTEXT+=$'\n\n'
+    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/architecture-patterns.md")
+    CONTEXT+=$'\n\n'
 
     # ========================================
     # CONDITIONALLY LOAD based on file path
@@ -116,66 +128,79 @@ load_backend_context() {
     # ========================================
     case "$FILE_PATH" in
         */models/*.py)
-            echo "🗄️ Loading models + DTOs..."
-            cat "$PROJECT_ROOT/.claude/context/backend/models.md"
-            echo ""
-            cat "$PROJECT_ROOT/.claude/context/backend/dtos.md"
-            echo ""
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/models.md")
+            CONTEXT+=$'\n\n'
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/dtos.md")
+            CONTEXT+=$'\n\n'
             ;;
 
         */services/*.py)
-            echo "⚙️ Loading services + repos + DTOs..."
-            cat "$PROJECT_ROOT/.claude/context/backend/services.md"
-            echo ""
-            cat "$PROJECT_ROOT/.claude/context/backend/repositories.md"
-            echo ""
-            cat "$PROJECT_ROOT/.claude/context/backend/dtos.md"
-            echo ""
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/services.md")
+            CONTEXT+=$'\n\n'
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/repositories.md")
+            CONTEXT+=$'\n\n'
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/dtos.md")
+            CONTEXT+=$'\n\n'
             ;;
 
         */repositories/*.py)
-            echo "📂 Loading repositories + models..."
-            cat "$PROJECT_ROOT/.claude/context/backend/repositories.md"
-            echo ""
-            cat "$PROJECT_ROOT/.claude/context/backend/models.md"
-            echo ""
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/repositories.md")
+            CONTEXT+=$'\n\n'
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/models.md")
+            CONTEXT+=$'\n\n'
             ;;
 
         */api/*.py)
-            echo "🛣️ Loading routes + DTOs..."
-            cat "$PROJECT_ROOT/.claude/context/backend/routes.md"
-            echo ""
-            cat "$PROJECT_ROOT/.claude/context/backend/dtos.md"
-            echo ""
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/routes.md")
+            CONTEXT+=$'\n\n'
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/dtos.md")
+            CONTEXT+=$'\n\n'
             ;;
 
         */dtos/*.py)
-            echo "📋 Loading DTOs + models..."
-            cat "$PROJECT_ROOT/.claude/context/backend/dtos.md"
-            echo ""
-            cat "$PROJECT_ROOT/.claude/context/backend/models.md"
-            echo ""
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/dtos.md")
+            CONTEXT+=$'\n\n'
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/models.md")
+            CONTEXT+=$'\n\n'
             ;;
 
         */migrations/*.py)
-            echo "🔄 Loading migrations + models..."
-            cat "$PROJECT_ROOT/.claude/context/backend/migrations.md"
-            echo ""
-            cat "$PROJECT_ROOT/.claude/context/backend/models.md"
-            echo ""
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/migrations.md")
+            CONTEXT+=$'\n\n'
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/models.md")
+            CONTEXT+=$'\n\n'
             ;;
     esac
 
-    echo "✅ Backend context loaded for session $SESSION_ID"
-    echo ""
+    # Log execution
+    echo "[$(date '+%H:%M:%S')] context-router | $(basename "$FILE_PATH") | Backend context loaded" >> "$LOG_FILE"
 }
 
 # Route based on file path
-if [[ "$FILE_PATH" == *"frontend/src"* ]]; then
+# Handle both forward slashes (Unix/Git) and backslashes (Windows)
+if [[ "$FILE_PATH" == *"frontend/src"* ]] || [[ "$FILE_PATH" == *"frontend\\src"* ]]; then
     load_frontend_context
-elif [[ "$FILE_PATH" == *"backend/app"* ]]; then
+elif [[ "$FILE_PATH" == *"backend/app"* ]] || [[ "$FILE_PATH" == *"backend\\app"* ]]; then
     load_backend_context
 fi
 
-# Always exit successfully
+# Output JSON with additionalContext if we loaded anything
+if [ -n "$CONTEXT" ]; then
+    # Determine which context was loaded for the message
+    if [[ "$FILE_PATH" == *"frontend"* ]]; then
+        CONTEXT_TYPE="Frontend"
+    else
+        CONTEXT_TYPE="Backend"
+    fi
+
+    # Use jq to create properly escaped JSON with user-visible message
+    jq -n --arg ctx "$CONTEXT" --arg msg "✓ $CONTEXT_TYPE context loaded for $(basename "$FILE_PATH")" '{
+        systemMessage: $msg,
+        hookSpecificOutput: {
+            hookEventName: "PreToolUse",
+            additionalContext: $ctx
+        }
+    }'
+fi
+
 exit 0

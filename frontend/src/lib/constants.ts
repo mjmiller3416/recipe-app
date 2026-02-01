@@ -105,7 +105,7 @@ export const QUICK_FILTERS = [
   { id: "under30", label: "Under 30m", type: "time", value: 30 },
   { id: "vegetarian", label: "Vegetarian", type: "dietary", value: "vegetarian" },
   { id: "favorites", label: "Favorites", type: "favorite", value: true },
-  { id: "new", label: "New", type: "new", value: 2 }, // Recipes added within last 2 days -- recently updated for testing
+  { id: "new", label: "New", type: "new", value: 2 }, // Recipes added within last 2 days
 ] as const;
 
 // Default quick filters shown in recipe browser (max 5)

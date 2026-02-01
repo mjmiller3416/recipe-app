@@ -19,21 +19,41 @@ if [ "$SOURCE" = "compact" ]; then
     echo "📂 Project: Recipe App (Next.js 16 + FastAPI)"
     echo ""
 
-    echo "⚡ Critical Reminders:"
+    # Get project root (assuming script is in .claude/hooks/)
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+    # ========================================
+    # RELOAD FULL CONTEXT MODULES
+    # ========================================
+    echo "⚡ Reloading Core Context:"
     echo ""
-    echo "Frontend:"
-    echo "  • Use shadcn components, semantic tokens, no arbitrary values"
-    echo "  • Icon buttons need aria-label"
-    echo "  • Loading states required for async actions"
+
+    # Frontend context (always load)
+    echo "# FRONTEND CONTEXT"
     echo ""
-    echo "Backend:"
-    echo "  • Services commit, repositories flush only"
-    echo "  • Use domain exceptions (never raise HTTPException in services)"
-    echo "  • Always use DTOs for request/response"
+    cat "$PROJECT_ROOT/.claude/context/frontend/frontend-core.md"
     echo ""
-    echo "Git:"
-    echo "  • Use conventional commits (feat:, fix:, refactor:, etc.)"
-    echo "  • Include co-author line: Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+    cat "$PROJECT_ROOT/.claude/context/frontend/design-tokens.md"
+    echo ""
+    cat "$PROJECT_ROOT/.claude/context/frontend/accessibility.md"
+    echo ""
+    cat "$PROJECT_ROOT/.claude/context/frontend/component-inventory.md"
+    echo ""
+
+    # Backend context (always load)
+    echo "# BACKEND CONTEXT"
+    echo ""
+    cat "$PROJECT_ROOT/.claude/context/backend/backend-core.md"
+    echo ""
+    cat "$PROJECT_ROOT/.claude/context/backend/architecture.md"
+    echo ""
+    cat "$PROJECT_ROOT/.claude/context/backend/exceptions.md"
+    echo ""
+    cat "$PROJECT_ROOT/.claude/context/backend/architecture-patterns.md"
+    echo ""
+
+    echo "✅ Full context reloaded after compaction"
     echo ""
 fi
 
