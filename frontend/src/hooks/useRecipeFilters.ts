@@ -19,7 +19,7 @@ import {
   removeFilter,
   quickFiltersToRecipeFilters,
 } from "@/lib/filterUtils";
-import type { RecipeCardData } from "@/types";
+import type { RecipeCardData } from "@/types/recipe";
 
 // ============================================================================
 // Types

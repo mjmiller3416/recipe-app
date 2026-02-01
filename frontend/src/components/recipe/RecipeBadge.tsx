@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { RecipeGroupResponseDTO } from "@/types";
+import type { RecipeGroupResponseDTO } from "@/types/recipe";
 
 type BadgeType = "category" | "mealType" | "dietary" | "group";
 type BadgeSize = "sm" | "md" | "lg";

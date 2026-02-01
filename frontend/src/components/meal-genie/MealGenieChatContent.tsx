@@ -10,7 +10,7 @@ import { useMealGenieChat } from "@/hooks/api/useAI";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import type { GeneratedRecipeDTO } from "@/types";
+import type { GeneratedRecipeDTO } from "@/types/ai";
 
 // Session storage key for AI-generated recipe (must match useRecipeForm.ts)
 const AI_RECIPE_STORAGE_KEY = "meal-genie-generated-recipe";

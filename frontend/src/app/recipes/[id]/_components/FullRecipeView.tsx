@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FavoriteButton } from "@/components/common/FavoriteButton";
-import type { RecipeResponseDTO } from "@/types";
+import type { RecipeResponseDTO } from "@/types/recipe";
 
 import { sortCategoryEntries } from "./recipe-utils";
 import { useRecipeView } from "./useRecipeView";

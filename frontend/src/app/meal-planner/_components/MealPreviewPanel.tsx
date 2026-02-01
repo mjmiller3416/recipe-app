@@ -13,7 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CircularImage } from "@/components/common/CircularImage";
 import { cn } from "@/lib/utils";
-import type { RecipeCardData } from "@/types";
+import type { RecipeCardData } from "@/types/recipe";
 
 // ============================================================================
 // TYPES

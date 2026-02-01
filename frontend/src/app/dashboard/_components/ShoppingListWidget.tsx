@@ -6,7 +6,7 @@ import { ShoppingCart, ArrowRight, CheckCircle2, Circle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useShoppingList, useRefreshShoppingList } from "@/hooks/api";
 import { INGREDIENT_CATEGORY_ORDER } from "@/lib/constants";
-import type { ShoppingListResponseDTO } from "@/types";
+import type { ShoppingListResponseDTO } from "@/types/shopping";
 
 interface CategoryProgress {
   name: string;

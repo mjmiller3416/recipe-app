@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
 import { unitConversionApi } from "@/lib/api";
-import type { UnitOptionDTO } from "@/types";
+import type { UnitOptionDTO } from "@/types/common";
 
 /**
  * Hook to fetch all available ingredient units

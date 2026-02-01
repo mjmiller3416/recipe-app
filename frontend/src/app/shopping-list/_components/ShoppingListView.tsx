@@ -17,7 +17,7 @@ import {
   useRefreshShoppingList,
   useUnits,
 } from "@/hooks/api";
-import type { ShoppingItemResponseDTO } from "@/types";
+import type { ShoppingItemResponseDTO } from "@/types/shopping";
 import { ShoppingCart, Eye, EyeOff, Filter, X, Plus, Trash2 } from "lucide-react";
 import {
   AlertDialog,

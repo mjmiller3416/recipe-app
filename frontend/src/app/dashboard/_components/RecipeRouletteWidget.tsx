@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRecipeCards } from "@/hooks/api";
 import { RecipeBannerImage } from "@/components/recipe/RecipeBannerImage";
-import type { RecipeCardDTO } from "@/types";
+import type { RecipeCardDTO } from "@/types/recipe";
 
 // Animation variants
 const cardVariants = {

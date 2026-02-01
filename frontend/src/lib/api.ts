@@ -9,13 +9,32 @@ import type {
   RecipeGroupCreateDTO,
   RecipeGroupUpdateDTO,
   RecipeGroupAssignmentDTO,
+  IngredientResponseDTO,
+  CookingStreakDTO,
+} from "@/types/recipe";
+import type {
   MealSelectionResponseDTO,
   MealPlanSummaryDTO,
+} from "@/types/meal";
+import type {
   PlannerEntryResponseDTO,
+} from "@/types/planner";
+import type {
   ShoppingListResponseDTO,
   ShoppingItemResponseDTO,
   ShoppingListGenerationResultDTO,
-  IngredientResponseDTO,
+} from "@/types/shopping";
+import type {
+  ImageGenerationResponseDTO,
+  BannerGenerationResponseDTO,
+  CookingTipResponseDTO,
+  MealGenieMessage,
+  MealGenieResponseDTO,
+  RecipeGenerationResponseDTO,
+  MealSuggestionsRequestDTO,
+  MealSuggestionsResponseDTO,
+} from "@/types/ai";
+import type {
   ImportPreviewDTO,
   ImportResultDTO,
   DuplicateResolutionDTO,
@@ -23,18 +42,9 @@ import type {
   FullBackup,
   RestorePreview,
   RestoreResult,
-  ImageGenerationResponseDTO,
-  BannerGenerationResponseDTO,
-  CookingTipResponseDTO,
-  CookingStreakDTO,
   DashboardStatsDTO,
-  MealGenieMessage,
-  MealGenieResponseDTO,
-  RecipeGenerationResponseDTO,
-  MealSuggestionsRequestDTO,
-  MealSuggestionsResponseDTO,
   UnitsResponseDTO,
-} from "@/types";
+} from "@/types/common";
 
 // API base URL from environment variable or default to localhost
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://192.168.1.213:8000";

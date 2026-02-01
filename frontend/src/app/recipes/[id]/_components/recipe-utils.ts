@@ -1,5 +1,5 @@
 import { INGREDIENT_CATEGORY_ORDER } from "@/lib/constants";
-import type { RecipeResponseDTO } from "@/types";
+import type { RecipeResponseDTO } from "@/types/recipe";
 
 /**
  * Formats minutes into a human-readable time string.

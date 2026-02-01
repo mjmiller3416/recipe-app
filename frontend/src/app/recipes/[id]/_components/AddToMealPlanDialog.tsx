@@ -12,7 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { RecipeResponseDTO, PlannerEntryResponseDTO } from "@/types";
+import type { RecipeResponseDTO } from "@/types/recipe";
+import type { PlannerEntryResponseDTO } from "@/types/planner";
 import { cn } from "@/lib/utils";
 import {
   useAddSideToMeal,

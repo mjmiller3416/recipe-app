@@ -6,7 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollableCardList } from "@/components/common/ScrollableCardList";
 import { SavedMealCard } from "./SavedMealCard";
 import { useSavedMeals, useAddToPlanner } from "@/hooks/api";
-import type { MealSelectionResponseDTO, PlannerEntryResponseDTO } from "@/types";
+import type { MealSelectionResponseDTO } from "@/types/meal";
+import type { PlannerEntryResponseDTO } from "@/types/planner";
 
 // ============================================================================
 // TYPES

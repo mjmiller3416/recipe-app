@@ -2,7 +2,7 @@ import "./print-styles.css";
 import { formatQuantity } from "@/lib/utils";
 import { formatTime, sortCategoryEntries } from "../recipe-utils";
 import type { PrintOptions } from "./PrintPreviewDialog";
-import type { RecipeResponseDTO } from "@/types";
+import type { RecipeResponseDTO } from "@/types/recipe";
 
 interface RecipePrintLayoutProps {
   recipe: RecipeResponseDTO;

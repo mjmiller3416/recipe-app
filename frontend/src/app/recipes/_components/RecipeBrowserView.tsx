@@ -42,7 +42,7 @@ import { applyFilters } from "@/lib/filterUtils";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
 import { RECIPE_CATEGORY_OPTIONS, MEAL_TYPE_OPTIONS, DIETARY_PREFERENCES, QUICK_FILTERS, type QuickFilter } from "@/lib/constants";
 import { useSettings } from "@/hooks/useSettings";
-import type { RecipeCardData } from "@/types";
+import type { RecipeCardData } from "@/types/recipe";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
@@ -834,6 +834,7 @@ export function RecipeBrowserView({
       categories: [],
       mealTypes: [],
       dietaryPreferences: [],
+      groupIds: [],
       favoritesOnly: false,
       maxCookTime: null,
       newDays: null,

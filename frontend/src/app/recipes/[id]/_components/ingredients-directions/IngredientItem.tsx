@@ -1,7 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
-import type { RecipeResponseDTO } from "@/types";
+import type { RecipeResponseDTO } from "@/types/recipe";
 import { cn, formatQuantity } from "@/lib/utils";
 import { useUnits } from "@/hooks/api";
 

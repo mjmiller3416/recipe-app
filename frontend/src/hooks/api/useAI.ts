@@ -12,7 +12,7 @@ import { aiQueryKeys } from "./queryKeys";
 import type {
   MealSuggestionsRequestDTO,
   MealGenieMessage,
-} from "@/types";
+} from "@/types/ai";
 
 // ============================================================================
 // QUERY HOOKS

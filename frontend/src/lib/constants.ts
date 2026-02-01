@@ -1,4 +1,5 @@
 // Recipe form constants and dropdown options
+// Test comment to verify hooks are working
 
 export const MEAL_TYPES = [
   { value: "all", label: "All" },

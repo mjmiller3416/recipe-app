@@ -30,7 +30,9 @@ import {
   useClearCompleted,
 } from "@/hooks/api";
 import { plannerApi } from "@/lib/api";
-import { PlannerEntryResponseDTO, MealSelectionResponseDTO } from "@/types";
+import type { PlannerEntryResponseDTO } from "@/types/planner";
+import type { MealSelectionResponseDTO } from "@/types/meal";
+import type { RecipeCardData } from "@/types/recipe";
 import { MealGrid } from "./MealGrid";
 import { MealGridItem } from "./MealGridCard";
 import { CompletedDropdown, CompletedMealItem } from "./CompletedDropdown";
@@ -41,7 +43,6 @@ import { SavedMealsDialog } from "./SavedMealsDialog";
 import { AlertTriangle, ChefHat, ArrowUpDown, Bookmark } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUnsavedChanges, setNavigationBypass } from "@/hooks/useUnsavedChanges";
-import type { RecipeCardData } from "@/types";
 
 // ============================================================================
 // MEAL PLANNER PAGE COMPONENT

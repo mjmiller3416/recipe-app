@@ -32,7 +32,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RecipeBadge, RecipeBadgeGroup } from "@/components/recipe/RecipeBadge";
-import type { RecipeResponseDTO } from "@/types";
+import type { RecipeResponseDTO } from "@/types/recipe";
 import { formatTime } from "../recipe-utils";
 import { useRecipeGroupsForRecipe } from "@/hooks/api/useRecipeGroups";
 

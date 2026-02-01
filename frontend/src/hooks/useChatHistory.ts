@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { MealGenieMessage } from "@/types";
+import type { MealGenieMessage } from "@/types/ai";
 
 // ============================================================================
 // CONSTANTS

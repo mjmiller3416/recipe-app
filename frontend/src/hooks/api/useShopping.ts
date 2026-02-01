@@ -6,7 +6,7 @@ import { shoppingApi } from "@/lib/api";
 import type {
   ShoppingListResponseDTO,
   ManualItemCreateDTO,
-} from "@/types";
+} from "@/types/shopping";
 
 // ============================================================================
 // QUERY KEYS

@@ -9,7 +9,7 @@ import type {
   RecipeGroupCreateDTO,
   RecipeGroupUpdateDTO,
   RecipeGroupAssignmentDTO,
-} from "@/types";
+} from "@/types/recipe";
 
 // ============================================================================
 // QUERY KEYS

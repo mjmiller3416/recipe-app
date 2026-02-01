@@ -4,7 +4,7 @@
  */
 
 import { QUICK_FILTERS, type QuickFilter } from "./constants";
-import type { RecipeCardData } from "@/types";
+import type { RecipeCardData } from "@/types/recipe";
 
 // ============================================================================
 // Types

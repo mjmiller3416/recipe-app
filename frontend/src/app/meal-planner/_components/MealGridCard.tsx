@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RecipeBannerImage } from "@/components/recipe/RecipeBannerImage";
 import { ShoppingCart, Users, Clock, Bookmark, GripVertical } from "lucide-react";
-import { ShoppingMode } from "@/types";
+import { ShoppingMode } from "@/types/shopping";
 
 // ============================================================================
 // TYPES

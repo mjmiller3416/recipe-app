@@ -48,7 +48,7 @@ import type {
   DuplicateRecipeDTO,
   RestorePreview,
   RestoreResult,
-} from "@/types";
+} from "@/types/common";
 
 // ============================================================================
 // DUPLICATE RESOLUTION ROW

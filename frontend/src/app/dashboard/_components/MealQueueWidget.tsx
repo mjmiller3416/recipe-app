@@ -13,7 +13,7 @@ import {
   PLANNER_EVENTS,
 } from "@/hooks/api";
 import { MealQueueItem } from "./MealQueueItem";
-import type { PlannerEntryResponseDTO } from "@/types";
+import type { PlannerEntryResponseDTO } from "@/types/planner";
 import { cn } from "@/lib/utils";
 import {
   DndContext,

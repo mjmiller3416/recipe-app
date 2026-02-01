@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn, formatQuantity } from "@/lib/utils";
-import type { ShoppingItemResponseDTO } from "@/types";
+import type { ShoppingItemResponseDTO } from "@/types/shopping";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
