@@ -12,6 +12,45 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Backend**: FastAPI + SQLAlchemy 2.0 with Pydantic v2, SQLite (dev) / PostgreSQL (prod)
 - **AI**: Google Gemini integration for recipe generation, cooking tips, meal suggestions, and image generation
 
+---
+
+## 🚨 CRITICAL RULES - ALWAYS ENFORCE 🚨
+
+**These rules MUST be followed in EVERY edit, regardless of context window state or session length.**
+
+### Frontend - Never Violate
+
+| ❌ WRONG | ✅ CORRECT | Rule |
+|---------|-----------|------|
+| `text-gray-500`, `bg-slate-800` | `text-muted-foreground`, `bg-card` | Use semantic tokens only |
+| `<div className="bg-card border">` | `<Card>` from `@/components/ui/card` | Use shadcn components |
+| `h-[38px]`, `gap-[15px]` | `h-10`, `gap-4` | Use Tailwind scale (no arbitrary values) |
+| `<Button size="icon"><X /></Button>` | `<Button size="icon" aria-label="Close">` | Icon buttons need aria-label |
+| Icons from `react-icons` | Icons from `lucide-react` with `strokeWidth={1.5}` | Lucide React only |
+| `<button onClick={...}>` | `<Button variant="..." onClick={...}>` | Use Button component |
+| Missing loading states | `<Button disabled={loading}><Loader2 className="animate-spin" /></Button>` | Show loading spinner |
+
+### Backend - Never Violate
+
+| ❌ WRONG | ✅ CORRECT | Rule |
+|---------|-----------|------|
+| Repository commits transaction | Repository only flushes | **Services commit, Repositories flush** |
+| Service raises `HTTPException` | Service raises domain exception (e.g., `RecipeNotFoundError`) | Domain exceptions in services |
+| Missing type hints | `def get_recipe(self, id: int) -> Recipe:` | All signatures need type hints |
+| Direct model manipulation in routes | Routes → Services → Repositories → Models | Follow layered architecture |
+| Pydantic v1 syntax (`class Config`) | Pydantic v2 syntax (`model_config`) | Use Pydantic v2 patterns |
+
+### Enforcement
+
+- **PreToolUse Hook** (`context-router.sh`) loads relevant patterns before edits
+- **PostToolUse Hook** (`design-auditor.sh`) blocks frontend violations automatically
+- **Session Hook** (`session-init.sh`) re-injects rules after compaction
+- **Periodic Hook** (`memory-refresh.sh`) reminds every 10 edits
+
+**If context feels lost during long sessions, STOP and re-read this section.**
+
+---
+
 ## Development Commands
 
 ### Frontend (from `frontend/`)

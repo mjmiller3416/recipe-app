@@ -189,12 +189,35 @@ if [ -n "$CONTEXT" ]; then
     # Determine which context was loaded for the message
     if [[ "$FILE_PATH" == *"frontend"* ]]; then
         CONTEXT_TYPE="Frontend"
+        BADGE_MESSAGE="
+╔══════════════════════════════════════════════════════════════════╗
+║  ✅ FRONTEND CONTEXT LOADED - $(basename "$FILE_PATH")
+╠══════════════════════════════════════════════════════════════════╣
+║  Active Rules:                                                   ║
+║    • Use semantic tokens (text-muted-foreground, NOT gray-500)   ║
+║    • shadcn components only (NO raw divs)                        ║
+║    • Tailwind scale (h-10, NOT h-[38px])                         ║
+║    • Icon buttons MUST have aria-label                           ║
+║    • Icons from lucide-react with strokeWidth={1.5}              ║
+╚══════════════════════════════════════════════════════════════════╝
+"
     else
         CONTEXT_TYPE="Backend"
+        BADGE_MESSAGE="
+╔══════════════════════════════════════════════════════════════════╗
+║  ✅ BACKEND CONTEXT LOADED - $(basename "$FILE_PATH")
+╠══════════════════════════════════════════════════════════════════╣
+║  Active Rules:                                                   ║
+║    • Services commit/rollback, Repositories ONLY flush           ║
+║    • Domain exceptions in services (NOT HTTPException)           ║
+║    • All signatures MUST have type hints                         ║
+║    • Follow layers: Routes → Services → Repos → Models           ║
+╚══════════════════════════════════════════════════════════════════╝
+"
     fi
 
-    # Use jq to create properly escaped JSON with user-visible message
-    jq -n --arg ctx "$CONTEXT" --arg msg "✓ $CONTEXT_TYPE context loaded for $(basename "$FILE_PATH")" '{
+    # Use jq to create properly escaped JSON with badge-style message
+    jq -n --arg ctx "$CONTEXT" --arg msg "$BADGE_MESSAGE" '{
         systemMessage: $msg,
         hookSpecificOutput: {
             hookEventName: "PreToolUse",
