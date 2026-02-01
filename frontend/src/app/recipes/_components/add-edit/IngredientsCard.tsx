@@ -39,6 +39,7 @@ export function IngredientsCard({
   // Track if the add was triggered via keyboard (spacebar)
   const addedViaKeyboardRef = useRef(false);
   const prevIngredientsLengthRef = useRef(ingredients.length);
+  const ingredientsContainerRef = useRef<HTMLDivElement>(null);
 
   // Drag and drop setup
   const { sensors, modifiers } = useSortableDnd();
@@ -50,21 +51,36 @@ export function IngredientsCard({
     }
   };
 
-  // Focus the qty input of the new ingredient row when added via keyboard
+  // Focus the qty input and scroll to the new ingredient row when added
   useEffect(() => {
-    if (
-      ingredients.length > prevIngredientsLengthRef.current &&
-      addedViaKeyboardRef.current
-    ) {
+    if (ingredients.length > prevIngredientsLengthRef.current) {
       // Small delay to ensure the new row is rendered
       setTimeout(() => {
-        const qtyInputs = document.querySelectorAll<HTMLInputElement>(
-          'input[placeholder="Qty"]'
-        );
-        const lastInput = qtyInputs[qtyInputs.length - 1];
-        lastInput?.focus();
+        const container = ingredientsContainerRef.current;
+        if (container) {
+          // Get the last ingredient row
+          const ingredientRows = container.children;
+          const lastRow = ingredientRows[ingredientRows.length - 1] as HTMLElement;
+
+          if (lastRow) {
+            // Scroll the new row into view with smooth behavior
+            lastRow.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+            });
+          }
+        }
+
+        // Focus the qty input if added via keyboard
+        if (addedViaKeyboardRef.current) {
+          const qtyInputs = document.querySelectorAll<HTMLInputElement>(
+            'input[placeholder="Qty"]'
+          );
+          const lastInput = qtyInputs[qtyInputs.length - 1];
+          lastInput?.focus();
+          addedViaKeyboardRef.current = false;
+        }
       }, 0);
-      addedViaKeyboardRef.current = false;
     }
     prevIngredientsLengthRef.current = ingredients.length;
   }, [ingredients.length]);
@@ -110,7 +126,7 @@ export function IngredientsCard({
             items={ingredients.map((ing) => ing.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className="space-y-2 mb-4">
+            <div ref={ingredientsContainerRef} className="space-y-2 mb-4">
               {ingredients.map((ingredient) => (
                 <IngredientRow
                   key={ingredient.id}
