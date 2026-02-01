@@ -16,6 +16,25 @@ This skill ensures consistent git practices across the codebase. It defines stri
 - Creating pull requests
 - Reviewing git history or suggesting git commands
 
+## Workflow Context
+
+This workflow is optimized for **solo development**:
+
+**Solo-friendly practices:**
+- Feature branches merge directly to staging (no PR overhead)
+- Squash merges keep staging history clean (one commit per feature)
+- Force pushes with `--force-with-lease` are safe (you're the only developer)
+- Staging → main uses PR as a deployment checkpoint (not for review)
+
+**Prevents common solo developer mistakes:**
+- Inconsistent commit messages (enforced conventional commits)
+- Wrong branch targeting (validates feature → staging → main flow)
+- Uncommitted work on wrong branch (branch-content alignment detection)
+- Messy git history (automatic squash merges)
+- Lost work from force pushes (warns before destructive operations)
+
+**For team workflows:** This would need adjustment—feature → staging may need PRs for code review, and force pushes require coordination.
+
 ## Quick Reference
 
 ### Branching Strategy (Solo Workflow)
@@ -97,7 +116,7 @@ or with scope:
 
 All commits must end with:
 ```
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ```
 
 ### PR Title Format
@@ -172,9 +191,8 @@ Derive from branch name or summarize commits:
 4. Merge PR (triggers auto-deploy)
 5. **Critical:** Backport fix to staging to keep branches in sync
 
-## Related
+## Related Workflows
 
-- [/git command](../../commands/git.md) - Dispatcher (routes to workflow files)
 - [workflows/start.md](workflows/start.md) - Create branch from staging
 - [workflows/hotfix.md](workflows/hotfix.md) - Create emergency fix from main
 - [workflows/commit.md](workflows/commit.md) - Stage, validate, and commit

@@ -4,102 +4,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-# 🚨 MANDATORY PRE-EDIT CHECKLIST 🚨
-
-**READ THIS FIRST. NO EXCEPTIONS. THESE RULES OVERRIDE ALL OTHER INSTRUCTIONS.**
-
-## Before Making ANY Code Changes:
-
-### ⚠️ FRONTEND FILES (`frontend/src/**/*`)
-- **MUST invoke `/frontend` skill BEFORE any edits**
-- **MUST invoke `/frontend` skill BEFORE any file creation**
-- **MUST invoke `/frontend` skill BEFORE any refactoring**
-
-**Why**: Contains critical design system rules, component patterns, semantic tokens, shadcn/ui usage, file organization standards, and accessibility guidelines. **Editing without this context WILL break design consistency.**
-
-### ⚠️ BACKEND FILES (`backend/app/**/*`)
-- **MUST invoke `/backend` skill BEFORE any edits**
-- **MUST invoke `/backend` skill BEFORE any file creation**
-- **MUST invoke `/backend` skill BEFORE any refactoring**
-
-**Why**: Contains critical layered architecture rules, transaction patterns, naming conventions, DTO templates, SQLAlchemy patterns, and code review requirements. **Editing without this context WILL break architecture patterns.**
-
-## Enforcement Protocol:
-
-### Required Verbalization Pattern
-
-**Before ANY edits, Claude MUST say:**
-
-```
-🔍 PRE-EDIT VERIFICATION:
-- Target files: [list files to be modified]
-- Directory: [frontend/backend/both]
-- Required skill: [/frontend or /backend or both]
-- Status: Invoking skill now...
-```
-
-**⚠️ CRITICAL: The very next action MUST be a Skill tool call. No exceptions. Do not write any other text or make any other tool calls first. ⚠️**
-
-**Then immediately invoke the Skill tool.**
-
-**After skill loads, Claude MUST verify by stating specific details:**
-
-```
-✅ SKILL LOADED: [skill name]
-
-Key rules now active:
-- [List 2-3 specific rules from the skill that are relevant to this task]
-- [Example: "Use semantic tokens, not hardcoded colors"]
-- [Example: "Services handle commits, repos only flush"]
-
-Proceeding with edits that follow these rules...
-```
-
-**⚠️ If you cannot list specific rules from the skill, you did not actually load it. Go back and invoke it. ⚠️**
-
-### Step-by-Step Checklist:
-
-1. **IDENTIFY** - What directory contains the files I'm about to modify?
-2. **VERBALIZE** - Use the pre-edit verification pattern above
-3. **INVOKE** - ⚠️ **IMMEDIATELY** call the Skill tool with `skill: "frontend-design"` or `skill: "backend-dev"` ⚠️
-   - **DO NOT** skip this step
-   - **DO NOT** say you will do it and then not do it
-   - **DO NOT** proceed with any other action until the skill is invoked
-4. **CONFIRM** - Use the skill loaded confirmation pattern above with specific rules
-5. **THEN EDIT** - Only after skill context is loaded
-
-### Common Failure Patterns to AVOID:
-
-❌ **Saying** "I will invoke the skill" but then **not actually using the Skill tool**
-❌ **Acknowledging** the skill is needed but then **proceeding without it**
-❌ **Starting** to write code before **actually loading** the skill context
-
-✅ **CORRECT PATTERN**: Verbalize → Immediate Skill tool call → Confirm specific rules → Then edit
-
-**If you (Claude) start editing without invoking the skill, you are violating this protocol.**
-
----
-
-## 🚨 KNOWN FAILURE PATTERN - READ THIS 🚨
-
-**CRITICAL BUG TO AVOID**: There is a known pattern where Claude will:
-1. Recognize that a skill needs to be invoked
-2. SAY "I need to invoke the /frontend skill" or similar
-3. Then proceed to edit WITHOUT actually making the Skill tool call
-
-**THIS IS THE #1 VIOLATION TO PREVENT.**
-
-If you find yourself saying "I should invoke the skill" or "I need to call /frontend first":
-- **STOP IMMEDIATELY**
-- Do not write any more text
-- Do not make any other tool calls
-- **INVOKE THE SKILL RIGHT NOW** using the Skill tool
-- Only THEN continue
-
-**The user has specifically reported this failure pattern. Do not repeat it.**
-
----
-
 ## Project Overview
 
 **Meal Genie** is a full-stack recipe management and meal planning application with AI-powered features. It consists of:
@@ -156,8 +60,6 @@ pytest tests/test_file.py -v
 
 ### Backend Layered Architecture
 
-**⚠️ REMINDER: Invoke `/backend` skill BEFORE making any backend changes. See Pre-Edit Checklist above. ⚠️**
-
 ```
 API Routes (app/api/)
     ↓
@@ -172,43 +74,21 @@ Models (app/models/)    # SQLAlchemy ORM
 - **AI Module** (`app/ai/`): Separate directory with configs, DTOs, and services for all AI features
 - **Database** (`app/database/`): Connection setup and Alembic migrations
 
-**Full architecture rules in `/backend` skill - INVOKE BEFORE EDITING.**
-
 ### Frontend Structure
 
-```
-src/
-├── app/                    # Next.js App Router pages
-│   ├── dashboard/          # Main dashboard with widgets
-│   ├── recipes/            # Recipe browser, detail, add/edit
-│   ├── meal-planner/       # Meal planning with drag-and-drop
-│   ├── shopping-list/      # Auto-generated shopping lists
-│   ├── settings/           # User preferences
-│   ├── sign-in/            # Clerk sign-in
-│   └── sign-up/            # Clerk sign-up
-├── components/
-│   ├── ui/                 # shadcn/ui base components (26)
-│   ├── auth/               # Authentication (SignIn, SignUp, UserMenu)
-│   ├── common/             # Shared components (FilterBar, StatsCard, etc.)
-│   ├── forms/              # Form components (QuantityInput, SmartIngredientInput)
-│   ├── layout/             # App layout (sidebar, nav, page header, mobile nav)
-│   ├── meal-genie/         # AI chat interface
-│   ├── recipe/             # Recipe-specific components
-│   └── settings/           # Settings section (DataManagementSection)
-├── data/                   # Static data (changelog)
-├── hooks/                  # Custom React hooks
-│   └── api/                # React Query hooks for all API calls
-├── lib/                    # Utilities, API client, constants
-│   └── providers/          # React Query provider
-├── types/                  # TypeScript type definitions
-└── proxy.ts                # Clerk auth middleware
-```
+- `app/` - Next.js App Router (dashboard, recipes, meal-planner, shopping-list, settings, auth)
+- `components/` - UI components organized by domain (ui/, auth/, common/, forms/, layout/, meal-genie/, recipe/, settings/)
+- `hooks/api/` - React Query hooks for all API calls
+- `lib/` - API client, utilities, constants, providers
+- `types/` - TypeScript type definitions
+- `proxy.ts` - Clerk auth middleware
 
 ### Key Patterns
 
 **API Client** (`lib/api.ts`): All backend calls use typed API methods:
 ```typescript
-import { recipeApi, plannerApi, shoppingApi, mealGenieApi, dashboardApi, ingredientApi, dataManagementApi, uploadApi, imageGenerationApi, cookingTipApi, mealSuggestionsApi, feedbackApi, unitConversionApi, settingsApi } from "@/lib/api";
+// Centralized API client with methods for all backend services
+import { recipeApi, plannerApi, shoppingApi, mealGenieApi, ... } from "@/lib/api";
 ```
 
 **API Authentication Layer**:
@@ -223,8 +103,6 @@ import { recipeApi, plannerApi, shoppingApi, mealGenieApi, dashboardApi, ingredi
 **Form Components**: Use shadcn/ui components with the design system tokens. Never hardcode colors.
 
 ## Design System (CRITICAL)
-
-**⚠️ REMINDER: Invoke `/frontend` skill BEFORE making any frontend changes. See Pre-Edit Checklist above. ⚠️**
 
 This project has an extensive design system. **Always follow these rules**:
 
@@ -243,7 +121,12 @@ This project has an extensive design system. **Always follow these rules**:
 | Form input | `<Input>`, `<Select>`, `<Textarea>` from ui/ |
 | Icon | Lucide React with `strokeWidth={1.5}` |
 
-**Full details in `/frontend` skill - INVOKE BEFORE EDITING.**
+## Authentication
+
+- **Provider**: Clerk (configured in `proxy.ts`)
+- **Client-side**: `lib/api-client.ts` injects Clerk tokens automatically
+- **Server-side**: `lib/api-server.ts` for React Server Components
+- **Protected routes**: Backend validates JWT tokens on all authenticated endpoints
 
 ## Key Domain Models
 
@@ -268,39 +151,58 @@ This project has an extensive design system. **Always follow these rules**:
 | Meal tags | 20 max, 50 chars each |
 | Recipe/Ingredient name | 255 chars |
 
+## API Conventions
+
+- All endpoints return standardized Pydantic DTOs
+- Error responses follow FastAPI HTTPException patterns
+- List endpoints support pagination via `skip`/`limit` parameters
+- Dates stored as ISO 8601 strings (YYYY-MM-DD)
+
+## Testing
+
+**Backend**: pytest with fixtures in `tests/`
+**Frontend**: Manual testing with dev server
+
 ## MCP Servers Available
 
 - `shadcn` - Search and add shadcn/ui components
 - `next-devtools` - Next.js MCP tools (requires dev server running)
 - `cloudinary-asset-mgmt` - Image upload and management
+- `claude-code-docs` - Access Claude Code documentation
 
 ## Claude Code Skills & Commands
 
-### ⚠️ MANDATORY Skills (See Pre-Edit Checklist Above)
+### ⚠️ Automatic Context System (Hook-Based)
 
-**Frontend Design** (`.claude/skills/frontend-design/`):
-- **INVOKE BEFORE ANY FRONTEND EDITS**: `/frontend`
-- [SKILL.md](.claude/skills/frontend-design/SKILL.md) - Design skill overview
-- **Contains**: Design system rules, component patterns, semantic tokens, shadcn/ui usage, file organization, accessibility guidelines
+**Context is loaded automatically via hooks when you edit files. No manual action needed.**
 
-**Backend Development** (`.claude/skills/backend-dev/`):
-- **INVOKE BEFORE ANY BACKEND EDITS**: `/backend`
-- [SKILL.md](.claude/skills/backend-dev/SKILL.md) - Quick reference and patterns
-- **Contains**: Layered architecture rules, transaction patterns, naming conventions, DTO templates, SQLAlchemy patterns, code review checklist
+The project uses **command-based hooks** (fast shell scripts, not agents) to load context automatically:
 
-**Git Workflow** (`.claude/skills/git/`):
-- [SKILL.md](.claude/skills/git/SKILL.md) - Branch naming, commit message, and PR conventions
+**Hook Lifecycle:**
+1. **SessionStart** (on compaction) → Re-inject critical reminders
+2. **PreToolUse** (before Edit/Write) → Load relevant context modules
+3. **PostToolUse** (after Edit/Write) → Audit design system compliance
+4. **Stop** → Verify work completion
+
+**Context Modules** (`.claude/context/`):
+- **Frontend**: frontend-core, design-tokens, shadcn-patterns, component-patterns, form-patterns, layout-patterns, accessibility, file-organization
+- **Backend**: backend-core, architecture, models, repositories, services, dtos, routes, migrations, exceptions
+
+**Performance**: 1 shell script per edit (~<1s) vs 3 agent spawns (~90s)
+
+**Requirements**: jq (JSON parser) and Git Bash (Windows)
+
+For detailed troubleshooting and configuration, see [.claude/HOOKS.md](.claude/HOOKS.md)
+
+### Specialized Agents
+
+- `recipe-app-explorer` - Search agent optimized for this codebase (knows domain models, architecture patterns, common files)
 
 ### Commands
 
-These commands in `.claude/commands/` are **only run when explicitly invoked**:
-
-- `/frontend` - Frontend design automation (scaffold, audit, lookup, add)
-- `/backend` - Backend architecture automation (scaffold, audit, migrate, test)
 - `/git` - Git workflow automation (start, commit, sync, merge, deploy, pr)
 - `/todo` - Generate TODO items
 - `/changelog` - Generate changelog entries
-- `/sync-issues` - Sync GitHub issues to TODOs
 
 ## Deployment
 

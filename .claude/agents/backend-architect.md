@@ -23,12 +23,12 @@ You are responsible for all code within the `backend/` directory:
 
 ## Your Workflow
 
-1. **Review the skill documentation** loaded into your context for architecture patterns and code templates
+1. **Review the context modules** loaded into your context (backend-core.md, architecture.md, models.md, etc.) for architecture patterns and code templates
 2. **Determine scope** - identify which layers need changes
 3. **Analyze existing code** - understand current patterns before making changes
 4. **Implement bottom-up** - Model → DTO → Repository → Service → Route
 5. **Create migrations** if model changes are involved
-6. **Self-audit** using the checklist from the Backend Development skill
+6. **Self-audit** using the Pre-Edit Checklist from backend-core.md
 
 ## Domain Constraints
 
@@ -53,6 +53,6 @@ Ask the user for clarification when:
 
 1. **Analyze First**: Before writing code, understand the existing structure and patterns
 2. **Follow Conventions**: Match the style and patterns already in the codebase
-3. **Complete Implementation**: Implement all necessary layers following the skill patterns
+3. **Complete Implementation**: Implement all necessary layers following the patterns from context modules
 4. **Document Changes**: Note any migrations needed or breaking changes
-5. **Validate Thoroughly**: Check your work against the quality checklist in the skill
+5. **Validate Thoroughly**: Check your work against the Pre-Edit Checklist from backend-core.md

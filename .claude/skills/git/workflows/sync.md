@@ -33,14 +33,40 @@ your-branch:                   E' -> F'  <-- (your work, rebased)
    You have uncommitted changes.
 
    Options:
-   1. Commit changes first, then sync (Recommended)
-   2. Stash changes, sync, then pop stash
-   3. Abort
+   1. Commit changes first, then sync (Recommended - cleanest history)
+   2. Stash changes and sync (Quick - manual git stash)
+   3. Auto-stash (Automatic - git rebase --autostash)
+   4. Abort
+
+   Which option? [1-4]
    ```
 
-   > **Why commit first?** Rebasing with uncommitted changes can lead to
-   > confusing states. It's cleaner to commit your work-in-progress first,
-   > even if it's not complete.
+   **Option 1: Commit first**
+   - Guide through `/git commit` workflow first
+   - Then proceed with sync
+   - Creates clean history with proper commit message
+
+   **Option 2: Manual stash**
+   ```bash
+   git stash push -m "WIP: sync changes"
+   # ... perform rebase ...
+   git stash pop
+   ```
+
+   **Option 3: Auto-stash**
+   ```bash
+   git rebase --autostash origin/staging
+   ```
+   - Git automatically stashes changes before rebase
+   - Automatically applies stash after successful rebase
+   - Fastest option for quick syncs
+
+   **Option 4: Abort**
+   - Exit and let user handle changes manually
+
+   > **Why commit first is recommended:** Rebasing with uncommitted changes
+   > can lead to confusing states. Committing your work-in-progress with a
+   > proper message creates cleaner history, even if the work isn't complete.
 
 2. **Check if already up-to-date**
    ```bash

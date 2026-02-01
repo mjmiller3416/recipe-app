@@ -1,6 +1,6 @@
 ---
 name: fix-issue
-description: Automatically fetch, analyze, and fix GitHub issues with proper branch management and architecture adherence. Integrates with git, frontend-design, and backend-dev skills.
+description: Automatically fetch, analyze, and fix GitHub issues with proper branch management and architecture adherence. Integrates with git, frontend-designer, and backend-architect agents.
 ---
 
 # Fix GitHub Issue Skill
@@ -20,7 +20,7 @@ description: Automatically fetch, analyze, and fix GitHub issues with proper bra
 2. **Creates Branch** - Invokes `/git start` with proper naming convention
 3. **Analyzes Issue Type** - Determines if it's frontend, backend, or full-stack based on labels and content
 4. **Plans the Fix** - Uses TodoWrite to create a detailed implementation plan
-5. **Implements the Fix** - Invokes appropriate skills (frontend-design, backend-dev) and makes changes
+5. **Implements the Fix** - Invokes appropriate agents and makes changes
 6. **Verifies the Fix** - Runs tests, builds, and checks the implementation
 7. **Prepares for Commit** - Leaves work ready for user to review and commit
 
@@ -29,14 +29,14 @@ description: Automatically fetch, analyze, and fix GitHub issues with proper bra
 The skill respects the project's layered architecture:
 
 **Frontend Issues** (labels: frontend, ui, design, Next.js, React):
-- Invokes `frontend-design` skill for scaffolding/patterns
+- Invokes `frontend-designer` agent for scaffolding/patterns
 - Uses shadcn/ui components and design tokens
 - Follows component patterns from SKILL.md
 - Updates types in `src/types/`
 - Updates API hooks in `hooks/api/`
 
 **Backend Issues** (labels: backend, api, database, FastAPI, SQLAlchemy):
-- Invokes `backend-dev` skill for layered architecture
+- Invokes `backend-architect` agent for layered architecture
 - Creates DTOs → Services → Repositories → Models
 - Follows transaction patterns
 - Creates Alembic migrations if needed
@@ -161,9 +161,9 @@ This skill acts as an orchestrator:
     ↓
   Analyze issue → Determine type
     ↓
-  /frontend-design (if frontend)
+  /frontend-designer (if frontend)
     OR
-  /backend-dev (if backend)
+  /backend-architect (if backend)
     OR
   Both (if full-stack)
     ↓
@@ -183,7 +183,7 @@ This skill acts as an orchestrator:
 Issue #57: "Recipe card image not displaying on mobile"
 - Creates branch: `claude/issue-57-20260130-1445`
 - Analyzes: Frontend issue (label: ui, bug)
-- Invokes: frontend-design skill patterns
+- Invokes: frontend-designer agent for scaffolding/patterns
 - Fixes: Responsive image sizing in RecipeCard component
 - Verifies: npm run lint, npx tsc, visual test
 - Summary: "Fixed responsive image in RecipeCard by using aspect-ratio utilities"
@@ -254,7 +254,7 @@ Issue #91: "Add favorite recipes feature"
 
 No configuration needed. Uses:
 - GitHub CLI (`gh`) for issue fetching
-- Existing git, frontend-design, backend-dev skills
+- Existing git, frontend-designer, backend-architect agents
 - Project's CLAUDE.md conventions
 
 ## Exit Conditions

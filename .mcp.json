@@ -17,6 +17,10 @@
         "CLOUDINARY_API_KEY": "898326138311578",
         "CLOUDINARY_API_SECRET": "y2JlvJ7UsRlTA71cRZzPQsI8VDU"
       }
+    },
+    "claude-code-docs": {
+      "type": "http",
+      "url": "https://code.claude.com/docs/mcp"
     }
   }
 }

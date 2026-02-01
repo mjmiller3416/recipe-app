@@ -127,3 +127,65 @@ The squash merge commit message should:
 - Summarize the feature (first line = PR title equivalent)
 - List key changes as bullet points
 - Reference the source branch
+- Include co-author line
+
+**Example commit message:**
+```
+feat: shopping list sync and filtering
+
+- Add real-time sync for shopping list items
+- Add list filtering by recipe source
+- Add sort options (A-Z, category, recipe)
+- Fix edge case in item quantity merging
+
+Squashed from: feature/shopping-list (4 commits)
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+```
+
+## Error Handling
+
+**Branch has conflicts with staging:**
+```
+Merge conflict detected
+
+Conflicting files:
+- frontend/src/hooks/api/useShopping.ts
+
+You need to resolve conflicts before merging.
+
+Options:
+1. Sync branch first (/git sync) then retry merge
+2. Manually resolve and continue
+3. Abort merge
+```
+
+**Failed to delete branch:**
+```
+Warning: Could not delete remote branch
+
+The merge succeeded but remote branch deletion failed.
+You can manually delete it later:
+   git push origin --delete feature/shopping-list
+```
+
+## Cleaning Up Old Branches
+
+If you accumulate stale branches over time:
+
+```bash
+# List branches that have been merged to staging
+git branch --merged staging
+
+# List branches that no longer exist on remote
+git fetch --prune
+git branch -vv | grep ': gone]'
+
+# Delete local branches merged to staging (safe)
+git branch --merged staging | grep -v "staging\|main" | xargs git branch -d
+
+# Delete local branches tracking deleted remotes
+git fetch --prune
+git branch -vv | grep ': gone]' | awk '{print $1}' | xargs git branch -D
+```
+
+**Warning**: Only delete branches you're certain are merged. The `-d` flag prevents deletion of unmerged work.

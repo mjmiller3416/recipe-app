@@ -32,11 +32,13 @@ Default base branch: `staging` (feature branches should never target main direct
    - Otherwise, default to `staging`
    - **Warn if user tries to target main:**
      ```
-     Feature branches should not target main directly.
+     ⚠️  Feature branches should not target main directly.
 
-     The branching strategy is: feature -> staging -> main
+     The normal flow is: feature → staging → main
 
-     Are you sure you want to target main? (yes / use staging instead)
+     Exception: Use `/git hotfix` for emergency production fixes that bypass staging.
+
+     Are you sure you want to target main? (yes / use staging / create hotfix)
      ```
 
    ```
