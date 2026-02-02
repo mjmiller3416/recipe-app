@@ -61,7 +61,7 @@ class RecipeService:
         Args:
             recipe_id: ID of the recipe to check
         """
-        from ..repositories.planner_repo import PlannerRepo
+        from ..repositories.planner import PlannerRepo
 
         planner_repo = PlannerRepo(self.session)
 
@@ -76,7 +76,7 @@ class RecipeService:
             active_entries = [e for e in entries if not e.is_completed and not e.is_cleared]
             if active_entries:
                 # Found at least one active entry, sync and return
-                from ..services.shopping_service import ShoppingService
+                from ..services.shopping import ShoppingService
                 shopping_service = ShoppingService(self.session, self.user_id)
                 shopping_service.sync_shopping_list()
                 return

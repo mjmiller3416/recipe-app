@@ -1,7 +1,7 @@
-"""app/core/repositories/shopping_repo.py
+"""app/repositories/shopping/aggregation_repo.py
 
-Repository for shopping list operations.
-Handles ingredient aggregation, manual items, and contribution management.
+Repository for shopping list aggregation operations.
+Handles recipe ingredient aggregation, queries, and summary statistics.
 """
 
 # ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -11,15 +11,15 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
-from sqlalchemy import and_, case, delete, func, select
+from sqlalchemy import and_, case, func, select
 from sqlalchemy.orm import Session, joinedload
 
-from ..models.ingredient import Ingredient
-from ..models.recipe_ingredient import RecipeIngredient
-from ..models.shopping_item import ShoppingItem
-from ..models.shopping_item_contribution import ShoppingItemContribution
-from ..services.unit_conversion_service import UnitConversionService
-from ..utils.unit_conversion import get_dimension, to_base_unit, to_display_unit
+from ...models.ingredient import Ingredient
+from ...models.recipe import Recipe
+from ...models.recipe_ingredient import RecipeIngredient
+from ...models.shopping_item import ShoppingItem
+from ...models.shopping_item_contribution import ShoppingItemContribution
+from ...utils.unit_conversion import get_dimension, to_base_unit, to_display_unit
 
 
 # ── Data Classes for Aggregation ────────────────────────────────────────────────────────────────────────────
@@ -44,12 +44,12 @@ class ContributionData:
     original_unit: str | None = None
 
 
-# ── Shopping Repository ─────────────────────────────────────────────────────────────────────────────────────
-class ShoppingRepo:
-    """Repository for shopping list operations."""
+# ── Shopping Aggregation Repository ─────────────────────────────────────────────────────────────────────────
+class ShoppingAggregationRepo:
+    """Repository for shopping list aggregation and query operations."""
 
     def __init__(self, session: Session, user_id: int):
-        """Initialize the Shopping Repository with a database session and user ID.
+        """Initialize the Shopping Aggregation Repository.
 
         Args:
             session: SQLAlchemy database session
@@ -245,323 +245,6 @@ class ShoppingRepo:
 
         return breakdown
 
-    # ── Shopping Item CRUD Operations ───────────────────────────────────────────────────────────────────────
-    def create_shopping_item(self, shopping_item: ShoppingItem, user_id: Optional[int] = None) -> ShoppingItem:
-        """
-        Create and persist a new shopping item for a user.
-
-        Args:
-            shopping_item (ShoppingItem): Shopping item to create.
-            user_id (Optional[int]): ID of the user who owns this shopping item. If not provided, uses self.user_id.
-
-        Returns:
-            ShoppingItem: Created shopping item with assigned ID.
-        """
-        shopping_item.user_id = user_id if user_id is not None else self.user_id
-        self.session.add(shopping_item)
-        # flush to assign primary key and persist the new item
-        self.session.flush()
-        self.session.refresh(shopping_item)
-        return shopping_item
-
-    def add_manual_item(self, shopping_item: ShoppingItem, user_id: int) -> ShoppingItem:
-        """
-        Alias to create a manual shopping item for a user.
-        """
-        return self.create_shopping_item(shopping_item, user_id)
-
-    def get_shopping_item_by_id(self, item_id: int, user_id: Optional[int] = None) -> Optional[ShoppingItem]:
-        """
-        Get a shopping item by ID.
-
-        Args:
-            item_id (int): ID of the shopping item.
-            user_id (Optional[int]): If provided, only return the item if it belongs to this user.
-                Returns None if the item exists but belongs to a different user (no existence leak).
-                If not provided, uses self.user_id.
-
-        Returns:
-            Optional[ShoppingItem]: Shopping item or None if not found/not owned.
-        """
-        effective_user_id = user_id if user_id is not None else self.user_id
-        stmt = select(ShoppingItem).where(
-            ShoppingItem.id == item_id,
-            ShoppingItem.user_id == effective_user_id
-        )
-        result = self.session.execute(stmt)
-        return result.scalar_one_or_none()
-
-    def get_shopping_item_by_aggregation_key(self, aggregation_key: str) -> Optional[ShoppingItem]:
-        """
-        Get a shopping item by its aggregation key.
-
-        Args:
-            aggregation_key: The aggregation key to look up.
-
-        Returns:
-            ShoppingItem or None if not found.
-        """
-        normalized_key = aggregation_key.lower().strip()
-        stmt = select(ShoppingItem).where(
-            ShoppingItem.aggregation_key == normalized_key,
-            ShoppingItem.user_id == self.user_id
-        )
-        result = self.session.execute(stmt)
-        return result.scalar_one_or_none()
-
-    def get_recipe_items_with_contributions(self) -> List[ShoppingItem]:
-        """
-        Get all recipe-source shopping items with their contributions eagerly loaded.
-
-        Returns:
-            List of ShoppingItem with contributions loaded.
-        """
-        stmt = select(ShoppingItem).where(
-            ShoppingItem.source == "recipe",
-            ShoppingItem.user_id == self.user_id
-        ).options(
-            joinedload(ShoppingItem.contributions)
-        )
-        result = self.session.execute(stmt)
-        return result.scalars().unique().all()
-
-    def get_items_by_aggregation_keys(self, keys: List[str]) -> Dict[str, ShoppingItem]:
-        """
-        Get multiple shopping items by their aggregation keys.
-
-        Args:
-            keys: List of aggregation keys.
-
-        Returns:
-            Dict mapping normalized key to ShoppingItem.
-        """
-        if not keys:
-            return {}
-
-        normalized_keys = [k.lower().strip() for k in keys]
-        stmt = select(ShoppingItem).where(
-            ShoppingItem.aggregation_key.in_(normalized_keys),
-            ShoppingItem.user_id == self.user_id
-        ).options(
-            joinedload(ShoppingItem.contributions)
-        )
-        result = self.session.execute(stmt)
-        items = result.scalars().unique().all()
-        return {item.aggregation_key: item for item in items if item.aggregation_key}
-
-    def update_item_status(self, item_id: int, have: bool, user_id: Optional[int] = None) -> bool:
-        """
-        Update the 'have' status of a shopping item by ID if owned by user.
-        """
-        effective_user_id = user_id if user_id is not None else self.user_id
-        item = self.get_shopping_item_by_id(item_id, effective_user_id)
-        if not item:
-            return False
-        item.have = have
-        return True
-
-    def get_all_shopping_items(self, user_id: Optional[int] = None, source: Optional[str] = None) -> List[ShoppingItem]:
-        """
-        Get all shopping items for a user, optionally filtered by source.
-
-        Args:
-            user_id (Optional[int]): ID of the user whose shopping items to retrieve. Defaults to self.user_id.
-            source (Optional[str]): Filter by source ("recipe" or "manual").
-
-        Returns:
-            List[ShoppingItem]: List of shopping items belonging to the user.
-        """
-        effective_user_id = user_id if user_id is not None else self.user_id
-        stmt = select(ShoppingItem).where(ShoppingItem.user_id == effective_user_id)
-        if source:
-            stmt = stmt.where(ShoppingItem.source == source)
-
-        result = self.session.execute(stmt)
-        return result.scalars().all()
-
-    def update_item(self, shopping_item: ShoppingItem) -> ShoppingItem:
-        """
-        Update an existing shopping item.
-
-        Args:
-            shopping_item (ShoppingItem): Shopping item to update.
-
-        Returns:
-            ShoppingItem: Updated shopping item.
-        """
-        merged_item = self.session.merge(shopping_item)
-        return merged_item
-
-    def delete_item(self, item_id: int, user_id: Optional[int] = None) -> bool:
-        """
-        Delete a shopping item by ID if owned by user.
-
-        Args:
-            item_id (int): ID of the shopping item to delete.
-            user_id (Optional[int]): ID of the user who owns the item. Defaults to self.user_id.
-
-        Returns:
-            bool: True if deleted, False if not found/not owned.
-        """
-        effective_user_id = user_id if user_id is not None else self.user_id
-        stmt = (
-            select(ShoppingItem)
-            .where(ShoppingItem.id == item_id)
-            .where(ShoppingItem.user_id == effective_user_id)
-        )
-        result = self.session.execute(stmt)
-        item = result.scalar_one_or_none()
-
-        if item:
-            self.session.delete(item)
-            # flush to persist deletion immediately
-            self.session.flush()
-            return True
-        return False
-
-    def clear_shopping_items(self, user_id: Optional[int] = None, source: Optional[str] = None) -> int:
-        """
-        Clear shopping items for a user, optionally filtered by source.
-
-        Args:
-            user_id (Optional[int]): ID of the user whose items to clear. Defaults to self.user_id.
-            source (Optional[str]): Clear only items from this source.
-
-        Returns:
-            int: Number of items deleted.
-        """
-        effective_user_id = user_id if user_id is not None else self.user_id
-        stmt = delete(ShoppingItem).where(ShoppingItem.user_id == effective_user_id)
-        if source:
-            stmt = stmt.where(ShoppingItem.source == source)
-
-        result = self.session.execute(stmt)
-        return result.rowcount
-
-    def clear_recipe_items(self, user_id: Optional[int] = None) -> int:
-        """
-        Clear all recipe-generated shopping items for a user.
-        """
-        effective_user_id = user_id if user_id is not None else self.user_id
-        return self.clear_shopping_items(effective_user_id, source="recipe")
-
-    # ── Contribution Management ─────────────────────────────────────────────────────────────────────────────
-    def add_contribution(
-        self,
-        shopping_item_id: int,
-        recipe_id: int,
-        planner_entry_id: int,
-        base_quantity: float,
-        dimension: str
-    ) -> ShoppingItemContribution:
-        """
-        Add a contribution to a shopping item.
-
-        Args:
-            shopping_item_id: ID of the shopping item
-            recipe_id: ID of the recipe
-            planner_entry_id: ID of the planner entry
-            base_quantity: Quantity in base units
-            dimension: Dimension (mass, volume, count, unknown)
-
-        Returns:
-            Created ShoppingItemContribution
-        """
-        contribution = ShoppingItemContribution(
-            shopping_item_id=shopping_item_id,
-            recipe_id=recipe_id,
-            planner_entry_id=planner_entry_id,
-            base_quantity=base_quantity,
-            dimension=dimension
-        )
-        self.session.add(contribution)
-        self.session.flush()
-        return contribution
-
-    def delete_contributions_for_entry(self, planner_entry_id: int) -> int:
-        """
-        Delete all contributions from a specific planner entry.
-
-        Args:
-            planner_entry_id: ID of the planner entry
-
-        Returns:
-            Number of contributions deleted
-        """
-        stmt = delete(ShoppingItemContribution).where(
-            ShoppingItemContribution.planner_entry_id == planner_entry_id
-        )
-        result = self.session.execute(stmt)
-        return result.rowcount
-
-    def delete_contributions_for_item(self, shopping_item_id: int) -> int:
-        """
-        Delete all contributions for a shopping item.
-
-        Args:
-            shopping_item_id: ID of the shopping item
-
-        Returns:
-            Number of contributions deleted
-        """
-        stmt = delete(ShoppingItemContribution).where(
-            ShoppingItemContribution.shopping_item_id == shopping_item_id
-        )
-        result = self.session.execute(stmt)
-        return result.rowcount
-
-    def get_contributions_by_entry(self, planner_entry_id: int) -> List[ShoppingItemContribution]:
-        """
-        Get all contributions from a specific planner entry.
-
-        Args:
-            planner_entry_id: ID of the planner entry
-
-        Returns:
-            List of contributions
-        """
-        stmt = select(ShoppingItemContribution).where(
-            ShoppingItemContribution.planner_entry_id == planner_entry_id
-        )
-        result = self.session.execute(stmt)
-        return result.scalars().all()
-
-    def get_items_without_contributions(self) -> List[ShoppingItem]:
-        """
-        Get recipe items that have no contributions (orphans to be deleted).
-
-        Returns:
-            List of ShoppingItem with no contributions
-        """
-        # Subquery to get item IDs with contributions
-        has_contributions = select(ShoppingItemContribution.shopping_item_id).distinct()
-
-        stmt = select(ShoppingItem).where(
-            and_(
-                ShoppingItem.source == "recipe",
-                ShoppingItem.user_id == self.user_id,
-                ~ShoppingItem.id.in_(has_contributions)
-            )
-        )
-        result = self.session.execute(stmt)
-        return result.scalars().all()
-
-    def delete_orphaned_recipe_items(self) -> int:
-        """
-        Delete recipe items that have no contributions.
-
-        Returns:
-            Number of items deleted
-        """
-        orphans = self.get_items_without_contributions()
-        count = 0
-        for item in orphans:
-            self.session.delete(item)
-            count += 1
-        if count > 0:
-            self.session.flush()
-        return count
-
     # ── Shopping Item Search and Filter ─────────────────────────────────────────────────────────────────────
     def search_shopping_items(
         self,
@@ -662,6 +345,9 @@ class ShoppingRepo:
         """
         Bulk update have status for multiple items belonging to a user.
 
+        Note: This method needs access to get_shopping_item_by_id from ShoppingItemRepo.
+        In practice, this should be called from the service layer which has access to both repos.
+
         Args:
             updates (List[Tuple[int, bool]]): List of (item_id, have_status) tuples.
             user_id (Optional[int]): ID of the user whose items to update. Defaults to self.user_id.
@@ -672,7 +358,14 @@ class ShoppingRepo:
         effective_user_id = user_id if user_id is not None else self.user_id
         updated_count = 0
         for item_id, have_status in updates:
-            item = self.get_shopping_item_by_id(item_id, effective_user_id)
+            # Query the item directly to avoid circular dependency
+            stmt = select(ShoppingItem).where(
+                ShoppingItem.id == item_id,
+                ShoppingItem.user_id == effective_user_id
+            )
+            result = self.session.execute(stmt)
+            item = result.scalar_one_or_none()
+
             if item:
                 item.have = have_status
                 updated_count += 1
@@ -689,8 +382,6 @@ class ShoppingRepo:
         Returns:
             List of recipe names
         """
-        from ..models.recipe import Recipe
-
         stmt = select(Recipe.recipe_name).distinct().join(
             ShoppingItemContribution,
             ShoppingItemContribution.recipe_id == Recipe.id

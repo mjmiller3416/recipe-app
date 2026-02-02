@@ -10,7 +10,7 @@ import cloudinary
 import cloudinary.uploader
 from dotenv import load_dotenv
 
-from app.api.dependencies import get_current_user
+from app.api.auth import get_current_user
 from app.models.user import User
 
 load_dotenv()

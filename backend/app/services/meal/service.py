@@ -1,7 +1,7 @@
-"""app/core/services/meal_service.py
+"""app/services/meal/service.py
 
-Service layer for managing meal CRUD operations.
-Orchestrates repository operations and business logic for meals.
+Core service logic for meal CRUD operations.
+Handles creation, basic reads, updates, deletion, and DTO conversion.
 """
 
 # -- Imports -------------------------------------------------------------------------------------
@@ -12,39 +12,41 @@ from typing import List, Optional
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from ..dtos.meal_dtos import (
+from ...dtos.meal_dtos import (
     MealCreateDTO,
-    MealFilterDTO,
     MealResponseDTO,
     MealUpdateDTO,
     RecipeCardDTO,
 )
-from ..models.meal import Meal
-from ..models.recipe import Recipe
-from ..repositories.meal_repo import MealRepo
-from ..repositories.planner_repo import PlannerRepo
-from ..repositories.recipe_repo import RecipeRepo
+from ...models.meal import Meal
+from ...models.recipe import Recipe
+from ...repositories.meal_repo import MealRepo
+from ...repositories.planner import PlannerRepo
+from ...repositories.recipe_repo import RecipeRepo
 
 
 # -- Exceptions ----------------------------------------------------------------------------------
 class MealSaveError(Exception):
     """Raised when a meal cannot be saved."""
+
     pass
 
 
 class MealNotFoundError(Exception):
     """Raised when a meal is not found."""
+
     pass
 
 
 class InvalidRecipeError(Exception):
     """Raised when a recipe ID is invalid."""
+
     pass
 
 
-# -- Meal Service --------------------------------------------------------------------------------
-class MealService:
-    """Service for meal operations with business logic."""
+# -- Core Service --------------------------------------------------------------------------------
+class MealServiceCore:
+    """Core meal service with CRUD operations and business logic."""
 
     MAX_SIDE_RECIPES = 3
 
@@ -71,22 +73,28 @@ class MealService:
             meal_id: ID of the meal to check
         """
         import logging
+
         logger = logging.getLogger(__name__)
 
         # Check if this meal has any active planner entries
         entries = self.planner_repo.get_by_meal_id(meal_id, self.user_id)
         active_entries = [e for e in entries if not e.is_completed and not e.is_cleared]
 
-        logger.debug(f"Checking meal {meal_id} for shopping sync: {len(active_entries)} active entries")
+        logger.debug(
+            f"Checking meal {meal_id} for shopping sync: {len(active_entries)} active entries"
+        )
 
         if active_entries:
             try:
-                from ..services.shopping_service import ShoppingService
+                from ..shopping import ShoppingService
+
                 shopping_service = ShoppingService(self.session, self.user_id)
                 shopping_service.sync_shopping_list()
                 logger.debug(f"Shopping sync completed for meal {meal_id}")
             except Exception as e:
-                logger.error(f"Shopping sync failed for meal {meal_id}: {type(e).__name__}: {e}")
+                logger.error(
+                    f"Shopping sync failed for meal {meal_id}: {type(e).__name__}: {e}"
+                )
                 raise  # Re-raise so we see the error
 
     # -- Create Operations -----------------------------------------------------------------------
@@ -106,7 +114,9 @@ class MealService:
         """
         try:
             # Validate main recipe exists and belongs to user
-            valid_ids = self.repo.validate_recipe_ids([create_dto.main_recipe_id], self.user_id)
+            valid_ids = self.repo.validate_recipe_ids(
+                [create_dto.main_recipe_id], self.user_id
+            )
             if create_dto.main_recipe_id not in valid_ids:
                 raise InvalidRecipeError(
                     f"Main recipe ID {create_dto.main_recipe_id} does not exist"
@@ -180,64 +190,6 @@ class MealService:
         except SQLAlchemyError:
             return []
 
-    def filter_meals(self, filter_dto: MealFilterDTO) -> List[MealResponseDTO]:
-        """
-        Filter meals with multiple criteria for the current user.
-
-        Args:
-            filter_dto: Filter criteria
-
-        Returns:
-            List of matching meals as DTOs
-        """
-        try:
-            meals = self.repo.filter_meals(
-                user_id=self.user_id,
-                name_pattern=filter_dto.name_pattern,
-                tags=filter_dto.tags,
-                saved_only=filter_dto.saved_only,
-                limit=filter_dto.limit,
-                offset=filter_dto.offset
-            )
-            return [self._meal_to_response_dto(m) for m in meals]
-        except SQLAlchemyError:
-            return []
-
-    def search_meals(self, search_term: str) -> List[MealResponseDTO]:
-        """
-        Search meals by name for the current user.
-
-        Args:
-            search_term: Search term
-
-        Returns:
-            List of matching meals as DTOs
-        """
-        try:
-            meals = self.repo.get_by_name_pattern(search_term, self.user_id)
-            return [self._meal_to_response_dto(m) for m in meals]
-        except SQLAlchemyError:
-            return []
-
-    def get_meals_by_tags(
-        self, tags: List[str], match_all: bool = True
-    ) -> List[MealResponseDTO]:
-        """
-        Get meals by tags for the current user.
-
-        Args:
-            tags: List of tags to filter by
-            match_all: If True, meals must have ALL tags
-
-        Returns:
-            List of matching meals as DTOs
-        """
-        try:
-            meals = self.repo.get_by_tags(tags, self.user_id, match_all)
-            return [self._meal_to_response_dto(m) for m in meals]
-        except SQLAlchemyError:
-            return []
-
     # -- Update Operations -----------------------------------------------------------------------
     def update_meal(
         self, meal_id: int, update_dto: MealUpdateDTO
@@ -267,7 +219,9 @@ class MealService:
 
             # Update main recipe if provided
             if update_dto.main_recipe_id is not None:
-                valid_ids = self.repo.validate_recipe_ids([update_dto.main_recipe_id], self.user_id)
+                valid_ids = self.repo.validate_recipe_ids(
+                    [update_dto.main_recipe_id], self.user_id
+                )
                 if update_dto.main_recipe_id not in valid_ids:
                     raise InvalidRecipeError(
                         f"Main recipe ID {update_dto.main_recipe_id} does not exist"
@@ -300,7 +254,10 @@ class MealService:
             self.session.commit()
 
             # Sync shopping list if recipe IDs changed
-            if update_dto.main_recipe_id is not None or update_dto.side_recipe_ids is not None:
+            if (
+                update_dto.main_recipe_id is not None
+                or update_dto.side_recipe_ids is not None
+            ):
                 self._sync_shopping_list_if_meal_in_planner(meal_id)
 
             # Refresh to get relationships
@@ -341,124 +298,6 @@ class MealService:
             self.session.rollback()
             return None
 
-    def add_side_recipe(
-        self, meal_id: int, recipe_id: int
-    ) -> Optional[MealResponseDTO]:
-        """
-        Add a side recipe to a meal for the current user.
-
-        Args:
-            meal_id: ID of the meal
-            recipe_id: ID of the recipe to add
-
-        Returns:
-            Updated meal as DTO or None if not found/not owned
-
-        Raises:
-            InvalidRecipeError: If recipe ID is invalid or at max capacity
-        """
-        try:
-            meal = self.repo.get_by_id(meal_id, self.user_id)
-            if not meal:
-                return None
-
-            # Validate recipe exists and belongs to user
-            valid_ids = self.repo.validate_recipe_ids([recipe_id], self.user_id)
-            if recipe_id not in valid_ids:
-                raise InvalidRecipeError(f"Recipe ID {recipe_id} does not exist")
-
-            # Try to add the side recipe
-            if not meal.add_side_recipe(recipe_id):
-                raise InvalidRecipeError(
-                    f"Cannot add recipe: either at max capacity ({self.MAX_SIDE_RECIPES}) "
-                    f"or recipe already exists in sides"
-                )
-
-            self.repo.update(meal)
-            self.session.commit()
-
-            # Sync shopping list if meal is in planner
-            self._sync_shopping_list_if_meal_in_planner(meal_id)
-
-            return self._meal_to_response_dto(meal)
-        except InvalidRecipeError:
-            self.session.rollback()
-            raise
-        except SQLAlchemyError as e:
-            self.session.rollback()
-            raise MealSaveError(f"Failed to add side recipe: {e}") from e
-
-    def remove_side_recipe(
-        self, meal_id: int, recipe_id: int
-    ) -> Optional[MealResponseDTO]:
-        """
-        Remove a side recipe from a meal for the current user.
-
-        Args:
-            meal_id: ID of the meal
-            recipe_id: ID of the recipe to remove
-
-        Returns:
-            Updated meal as DTO or None if not found/not owned
-        """
-        try:
-            meal = self.repo.get_by_id(meal_id, self.user_id)
-            if not meal:
-                return None
-
-            meal.remove_side_recipe(recipe_id)
-            self.repo.update(meal)
-            self.session.commit()
-
-            # Sync shopping list if meal is in planner
-            self._sync_shopping_list_if_meal_in_planner(meal_id)
-
-            return self._meal_to_response_dto(meal)
-        except SQLAlchemyError as e:
-            self.session.rollback()
-            raise MealSaveError(f"Failed to remove side recipe: {e}") from e
-
-    def reorder_side_recipes(
-        self, meal_id: int, side_recipe_ids: List[int]
-    ) -> Optional[MealResponseDTO]:
-        """
-        Reorder the side recipes of a meal for the current user.
-
-        Args:
-            meal_id: ID of the meal
-            side_recipe_ids: New order of side recipe IDs
-
-        Returns:
-            Updated meal as DTO or None if not found/not owned
-
-        Raises:
-            InvalidRecipeError: If the provided IDs don't match existing sides
-        """
-        try:
-            meal = self.repo.get_by_id(meal_id, self.user_id)
-            if not meal:
-                return None
-
-            # Validate that the new order contains the same IDs
-            current_sides = set(meal.side_recipe_ids)
-            new_sides = set(side_recipe_ids)
-            if current_sides != new_sides:
-                raise InvalidRecipeError(
-                    "New side recipe order must contain the same recipes"
-                )
-
-            meal.side_recipe_ids = side_recipe_ids
-            self.repo.update(meal)
-            self.session.commit()
-
-            return self._meal_to_response_dto(meal)
-        except InvalidRecipeError:
-            self.session.rollback()
-            raise
-        except SQLAlchemyError as e:
-            self.session.rollback()
-            raise MealSaveError(f"Failed to reorder side recipes: {e}") from e
-
     # -- Delete Operations -----------------------------------------------------------------------
     def delete_meal(self, meal_id: int) -> bool:
         """
@@ -478,74 +317,6 @@ class MealService:
         except SQLAlchemyError:
             self.session.rollback()
             return False
-
-    # -- Recipe Impact Methods -------------------------------------------------------------------
-    def get_meals_by_recipe(self, recipe_id: int) -> List[MealResponseDTO]:
-        """
-        Get all meals that contain a specific recipe (main or side) for the current user.
-
-        Args:
-            recipe_id: ID of the recipe
-
-        Returns:
-            List of meals containing the recipe
-        """
-        try:
-            meals = self.repo.get_meals_containing_recipe(recipe_id, self.user_id)
-            return [self._meal_to_response_dto(m) for m in meals]
-        except SQLAlchemyError:
-            return []
-
-    def get_meals_with_main_recipe(self, recipe_id: int) -> List[MealResponseDTO]:
-        """
-        Get all meals that use a recipe as main for the current user.
-
-        Args:
-            recipe_id: ID of the recipe
-
-        Returns:
-            List of meals with this recipe as main
-        """
-        try:
-            meals = self.repo.get_meals_by_main_recipe(recipe_id, self.user_id)
-            return [self._meal_to_response_dto(m) for m in meals]
-        except SQLAlchemyError:
-            return []
-
-    def get_meals_with_side_recipe(self, recipe_id: int) -> List[MealResponseDTO]:
-        """
-        Get all meals that have a recipe as a side for the current user.
-
-        Args:
-            recipe_id: ID of the recipe
-
-        Returns:
-            List of meals with this recipe as a side
-        """
-        try:
-            meals = self.repo.get_meals_with_side_recipe(recipe_id, self.user_id)
-            return [self._meal_to_response_dto(m) for m in meals]
-        except SQLAlchemyError:
-            return []
-
-    def clean_up_side_recipe(self, recipe_id: int) -> int:
-        """
-        Remove a recipe from all meals' side recipe lists for the current user.
-        Called before a recipe is deleted.
-
-        Args:
-            recipe_id: ID of the recipe being deleted
-
-        Returns:
-            Number of meals updated
-        """
-        try:
-            count = self.repo.remove_side_recipe_from_all_meals(recipe_id, self.user_id)
-            self.session.commit()
-            return count
-        except SQLAlchemyError:
-            self.session.rollback()
-            return 0
 
     # -- Helper Methods --------------------------------------------------------------------------
     def _meal_to_response_dto(self, meal: Meal) -> MealResponseDTO:
@@ -586,8 +357,12 @@ class MealService:
         times_cooked = 0
         last_cooked = None
         if meal.main_recipe_id:
-            times_cooked = self.recipe_repo.get_times_cooked(meal.main_recipe_id, self.user_id)
-            last_cooked = self.recipe_repo.get_last_cooked_date(meal.main_recipe_id, self.user_id)
+            times_cooked = self.recipe_repo.get_times_cooked(
+                meal.main_recipe_id, self.user_id
+            )
+            last_cooked = self.recipe_repo.get_last_cooked_date(
+                meal.main_recipe_id, self.user_id
+            )
 
         return MealResponseDTO(
             id=meal.id,

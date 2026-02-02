@@ -9,7 +9,7 @@ from typing import Any, Dict
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_user
+from app.api.auth import get_current_user
 from app.database.db import get_session
 from app.models.user import User
 from app.repositories.user_repo import UserRepo

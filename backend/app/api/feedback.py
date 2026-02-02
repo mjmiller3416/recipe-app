@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends
 
-from app.api.dependencies import get_current_user
+from app.api.auth import get_current_user
 from app.dtos.feedback import FeedbackCreateDTO, FeedbackResponseDTO
 from app.models.user import User
 from app.services.feedback_service import FeedbackService
