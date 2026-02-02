@@ -16,8 +16,7 @@ from .image_generation_config import (
     BANNER_ASPECT_RATIO as IMAGE_BANNER_ASPECT_RATIO,
     API_KEY_ENV_VAR as IMAGE_API_KEY_ENV,
 )
-from .meal_genie_config import (
-    BASE_SYSTEM_PROMPT,
+from .meal_genie import (
     TOOL_DEFINITIONS,
     MODEL_NAME as MEAL_GENIE_MODEL,
     API_KEY_ENV_VAR as MEAL_GENIE_API_KEY_ENV,
@@ -43,7 +42,6 @@ __all__ = [
     "IMAGE_BANNER_ASPECT_RATIO",
     "IMAGE_API_KEY_ENV",
     # Meal Genie
-    "BASE_SYSTEM_PROMPT",
     "TOOL_DEFINITIONS",
     "MEAL_GENIE_MODEL",
     "MEAL_GENIE_API_KEY_ENV",

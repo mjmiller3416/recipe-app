@@ -8,8 +8,8 @@ from typing import Dict, List, Optional
 from sqlalchemy.orm import Session
 
 from app.repositories.recipe_repo import RecipeRepo
-from app.repositories.planner_repo import PlannerRepo
-from app.repositories.shopping_repo import ShoppingRepo
+from app.repositories.planner import PlannerRepo
+from app.repositories.shopping import ShoppingRepo
 from app.dtos.recipe_dtos import RecipeFilterDTO
 
 
@@ -33,7 +33,7 @@ class UserContextBuilder:
         Build structured context data dict.
 
         This returns a dict that can be passed to build_user_context_prompt()
-        in meal_genie_config.py.
+        in meal_genie/context.py.
 
         Args:
             include_ingredients: Whether to include recipe ingredients.
@@ -98,8 +98,9 @@ class UserContextBuilder:
             return []
 
         # Sort by created_at desc (most recent first)
+        # Handle both timezone-aware and naive datetimes
         all_recipes.sort(
-            key=lambda r: r.created_at,
+            key=lambda r: r.created_at.replace(tzinfo=None) if r.created_at else None,
             reverse=True,
         )
 

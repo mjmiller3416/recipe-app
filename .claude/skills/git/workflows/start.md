@@ -12,8 +12,38 @@
               ^       ^
               type    description (kebab-case)
    ```
+
+   **Validate type:**
    - If type is invalid, show valid types and ask for correction
-   - If description missing, ask for it
+   - If type is missing, ask for it
+
+   **Validate description:**
+   - If description is missing, ask for it
+   - Check format requirements:
+     - Must be 2-4 words separated by hyphens
+     - Must be kebab-case (lowercase letters, numbers, hyphens only)
+     - No underscores, spaces, or special characters
+     - No leading/trailing hyphens
+
+   **Valid examples:**
+   ```
+   ✅ shopping-sync
+   ✅ fix-auth-bug
+   ✅ add-user-settings
+   ✅ update-meal-planner-ui
+   ```
+
+   **Invalid examples:**
+   ```
+   ❌ shopping_list          → Use hyphens, not underscores
+   ❌ shoppinglist           → Needs word separation (shopping-list)
+   ❌ shopping-list-feature-implementation → Too long, max 4 words
+   ❌ Shopping-List          → Must be lowercase
+   ❌ shopping-list!         → No special characters
+   ❌ -shopping-list         → No leading hyphens
+   ```
+
+   If invalid, show the issue and ask for correction.
 
 2. **Check git status**
    - If uncommitted changes exist, warn and ask:

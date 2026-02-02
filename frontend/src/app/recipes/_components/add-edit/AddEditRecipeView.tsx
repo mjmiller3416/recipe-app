@@ -6,7 +6,7 @@ import { useAuth } from "@clerk/nextjs";
 import { Save, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { recipeApi } from "@/lib/api";
-import type { RecipeResponseDTO } from "@/types";
+import type { RecipeResponseDTO } from "@/types/recipe";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,7 +26,7 @@ import { RecipeInfoCard } from "./RecipeInfoCard";
 import { IngredientsCard } from "./IngredientsCard";
 import { DirectionsNotesCard } from "./DirectionsNotesCard";
 import { ImageUploadCard } from "./ImageUploadCard";
-import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { useUnsavedChanges } from "@/hooks/ui/useUnsavedChanges";
 
 // ============================================================================
 // TYPES

@@ -6,7 +6,7 @@ import { GripVertical, CheckCircle2, Circle } from "lucide-react";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import type { PlannerEntryResponseDTO } from "@/types";
+import type { PlannerEntryResponseDTO } from "@/types/planner";
 
 interface MealQueueItemProps {
   entry: PlannerEntryResponseDTO;

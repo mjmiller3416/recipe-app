@@ -15,7 +15,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useSortableDnd } from "@/hooks";
+import { useSortableDnd } from "@/hooks/ui";
 
 interface IngredientsCardProps {
   ingredients: Ingredient[];

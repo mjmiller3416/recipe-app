@@ -5,13 +5,47 @@ import type {
   RecipeResponseDTO,
   RecipeCardDTO,
   RecipeFilterDTO,
+  RecipeGroupResponseDTO,
+  RecipeGroupCreateDTO,
+  RecipeGroupUpdateDTO,
+  RecipeGroupAssignmentDTO,
+  IngredientResponseDTO,
+  CookingStreakDTO,
+  RecipeCreateDTO,
+  RecipeUpdateDTO,
+  IngredientCreateDTO,
+  IngredientSearchDTO,
+  IngredientBreakdownDTO,
+} from "@/types/recipe";
+import type {
   MealSelectionResponseDTO,
+  MealSelectionCreateDTO,
+  MealSelectionUpdateDTO,
   MealPlanSummaryDTO,
+} from "@/types/meal";
+import type {
   PlannerEntryResponseDTO,
+} from "@/types/planner";
+import type {
   ShoppingListResponseDTO,
   ShoppingItemResponseDTO,
   ShoppingListGenerationResultDTO,
-  IngredientResponseDTO,
+  ManualItemCreateDTO,
+  ShoppingItemUpdateDTO,
+  ShoppingListFilterDTO,
+  ShoppingListGenerationDTO,
+} from "@/types/shopping";
+import type {
+  ImageGenerationResponseDTO,
+  BannerGenerationResponseDTO,
+  CookingTipResponseDTO,
+  MealGenieMessage,
+  MealGenieResponseDTO,
+  RecipeGenerationResponseDTO,
+  MealSuggestionsRequestDTO,
+  MealSuggestionsResponseDTO,
+} from "@/types/ai";
+import type {
   ImportPreviewDTO,
   ImportResultDTO,
   DuplicateResolutionDTO,
@@ -19,17 +53,14 @@ import type {
   FullBackup,
   RestorePreview,
   RestoreResult,
-  ImageGenerationResponseDTO,
-  BannerGenerationResponseDTO,
-  CookingTipResponseDTO,
-  CookingStreakDTO,
   DashboardStatsDTO,
-  MealGenieMessage,
-  MealGenieResponseDTO,
-  RecipeGenerationResponseDTO,
-  MealSuggestionsRequestDTO,
-  MealSuggestionsResponseDTO,
-} from "@/types";
+  UnitsResponseDTO,
+  BulkOperationResultDTO,
+  FeedbackSubmitDTO,
+  FeedbackResponseDTO,
+  UnitConversionRuleDTO,
+  UnitConversionRuleCreateDTO,
+} from "@/types/common";
 
 // API base URL from environment variable or default to localhost
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://192.168.1.213:8000";
@@ -749,129 +780,6 @@ export const ingredientApi = {
 };
 
 // ============================================================================
-// Type definitions for request DTOs (matching backend)
-// ============================================================================
-
-export interface RecipeIngredientDTO {
-  existing_ingredient_id?: number | null;
-  ingredient_name: string;
-  ingredient_category: string;
-  quantity?: number | null;
-  unit?: string | null;
-}
-
-export interface RecipeCreateDTO {
-  recipe_name: string;
-  recipe_category: string;
-  meal_type?: string;
-  diet_pref?: string | null;
-  total_time?: number | null;
-  servings?: number | null;
-  directions?: string | null;
-  notes?: string | null;
-  reference_image_path?: string | null;
-  banner_image_path?: string | null;
-  ingredients?: RecipeIngredientDTO[];
-}
-
-export interface RecipeUpdateDTO {
-  recipe_name?: string;
-  recipe_category?: string;
-  meal_type?: string;
-  diet_pref?: string | null;
-  total_time?: number | null;
-  servings?: number | null;
-  directions?: string | null;
-  notes?: string | null;
-  reference_image_path?: string | null;
-  banner_image_path?: string | null;
-  ingredients?: RecipeIngredientDTO[];
-  is_favorite?: boolean;
-}
-
-export interface MealSelectionCreateDTO {
-  meal_name: string;
-  main_recipe_id: number;
-  side_recipe_ids?: number[];
-  tags?: string[];
-}
-
-export interface MealSelectionUpdateDTO {
-  meal_name?: string;
-  main_recipe_id?: number;
-  side_recipe_ids?: number[];
-  tags?: string[];
-}
-
-export interface MealPlanSaveResultDTO {
-  success: boolean;
-  saved_count: number;
-  invalid_ids: number[];
-  message: string;
-}
-
-export interface ManualItemCreateDTO {
-  ingredient_name: string;
-  quantity: number;
-  unit?: string | null;
-  category?: string | null;
-}
-
-export interface ShoppingItemUpdateDTO {
-  ingredient_name?: string;
-  quantity?: number;
-  unit?: string | null;
-  category?: string | null;
-  have?: boolean;
-}
-
-export interface ShoppingListFilterDTO {
-  source?: "recipe" | "manual";
-  category?: string;
-  have?: boolean;
-  search_term?: string;
-  limit?: number;
-  offset?: number;
-}
-
-export interface ShoppingListGenerationDTO {
-  recipe_ids: number[];
-  include_manual_items?: boolean;
-  clear_existing?: boolean;
-}
-
-export interface BulkOperationResultDTO {
-  success: boolean;
-  updated_count: number;
-  message: string;
-  errors?: string[];
-}
-
-export interface IngredientCreateDTO {
-  ingredient_name: string;
-  ingredient_category: string;
-}
-
-export interface IngredientSearchDTO {
-  search_term: string;
-  category?: string | null;
-  limit?: number | null;
-  offset?: number | null;
-}
-
-export interface IngredientBreakdownDTO {
-  ingredient_name: string;
-  total_quantity: number;
-  unit: string;
-  recipe_contributions: {
-    recipe_name: string;
-    quantity: number;
-    unit: string | null;
-    usage_count: number;
-  }[];
-}
-
-// ============================================================================
 // Image Upload API
 // ============================================================================
 
@@ -1404,19 +1312,6 @@ export const dataManagementApi = {
 // Feedback API
 // ============================================================================
 
-export interface FeedbackSubmitDTO {
-  category: string;
-  message: string;
-  /** Optional metadata included with feedback (e.g., page URL, viewport) */
-  metadata?: Record<string, string | undefined>;
-}
-
-export interface FeedbackResponseDTO {
-  success: boolean;
-  issue_url?: string;
-  message: string;
-}
-
 export const feedbackApi = {
   /**
    * Submit user feedback as a GitHub issue
@@ -1439,25 +1334,14 @@ export const feedbackApi = {
 // Unit Conversion Rules API
 // ============================================================================
 
-export interface UnitConversionRuleDTO {
-  id: number;
-  ingredient_name: string;
-  from_unit: string;
-  to_unit: string;
-  factor: number;
-  round_up: boolean;
-  created_at: string;
-}
-
-export interface UnitConversionRuleCreateDTO {
-  ingredient_name: string;
-  from_unit: string;
-  to_unit: string;
-  factor: number;
-  round_up?: boolean;
-}
-
 export const unitConversionApi = {
+  /**
+   * Get all available ingredient units
+   * @param token - Optional auth token for authenticated requests
+   */
+  getUnits: (token?: string | null): Promise<UnitsResponseDTO> =>
+    fetchApi<UnitsResponseDTO>("/api/unit-conversions/units", undefined, token),
+
   /**
    * List all unit conversion rules
    * @param token - Optional auth token for authenticated requests
@@ -1544,6 +1428,150 @@ export const settingsApi = {
       {
         method: "PATCH",
         body: JSON.stringify(partialSettings),
+      },
+      token
+    ),
+};
+
+// ============================================================================
+// Recipe Groups API
+// ============================================================================
+
+export const recipeGroupApi = {
+  /**
+   * List all recipe groups for the current user
+   * @param token - Auth token for authenticated requests
+   * @returns Array of recipe groups with recipe counts
+   */
+  list: (token: string | null): Promise<RecipeGroupResponseDTO[]> =>
+    fetchApi<RecipeGroupResponseDTO[]>("/api/recipe-groups", undefined, token),
+
+  /**
+   * Get a single recipe group by ID
+   * @param id - Group ID
+   * @param token - Auth token for authenticated requests
+   * @returns Recipe group details
+   */
+  get: (id: number, token: string | null): Promise<RecipeGroupResponseDTO> =>
+    fetchApi<RecipeGroupResponseDTO>(`/api/recipe-groups/${id}`, undefined, token),
+
+  /**
+   * Create a new recipe group
+   * @param data - Group data (name)
+   * @param token - Auth token for authenticated requests
+   * @returns Created recipe group
+   */
+  create: (data: RecipeGroupCreateDTO, token: string | null): Promise<RecipeGroupResponseDTO> =>
+    fetchApi<RecipeGroupResponseDTO>(
+      "/api/recipe-groups",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      token
+    ),
+
+  /**
+   * Update a recipe group's name
+   * @param id - Group ID
+   * @param data - Updated group data
+   * @param token - Auth token for authenticated requests
+   * @returns Updated recipe group
+   */
+  update: (id: number, data: RecipeGroupUpdateDTO, token: string | null): Promise<RecipeGroupResponseDTO> =>
+    fetchApi<RecipeGroupResponseDTO>(
+      `/api/recipe-groups/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(data),
+      },
+      token
+    ),
+
+  /**
+   * Delete a recipe group
+   * @param id - Group ID
+   * @param token - Auth token for authenticated requests
+   */
+  delete: (id: number, token: string | null): Promise<void> =>
+    fetchApi<void>(
+      `/api/recipe-groups/${id}`,
+      {
+        method: "DELETE",
+      },
+      token
+    ),
+
+  /**
+   * Get all groups that contain a specific recipe
+   * @param recipeId - Recipe ID
+   * @param token - Auth token for authenticated requests
+   * @returns Array of groups containing this recipe
+   */
+  getGroupsForRecipe: (recipeId: number, token: string | null): Promise<RecipeGroupResponseDTO[]> =>
+    fetchApi<RecipeGroupResponseDTO[]>(
+      `/api/recipe-groups/by-recipe/${recipeId}`,
+      undefined,
+      token
+    ),
+
+  /**
+   * Assign a recipe to specific groups (replaces existing assignments)
+   * @param recipeId - Recipe ID
+   * @param data - Group IDs to assign
+   * @param token - Auth token for authenticated requests
+   * @returns Updated list of groups for the recipe
+   */
+  assignRecipeToGroups: (
+    recipeId: number,
+    data: RecipeGroupAssignmentDTO,
+    token: string | null
+  ): Promise<RecipeGroupResponseDTO[]> =>
+    fetchApi<RecipeGroupResponseDTO[]>(
+      `/api/recipe-groups/by-recipe/${recipeId}/assign`,
+      {
+        method: "PUT",
+        body: JSON.stringify(data),
+      },
+      token
+    ),
+
+  /**
+   * Add a recipe to a group
+   * @param groupId - Group ID
+   * @param recipeId - Recipe ID
+   * @param token - Auth token for authenticated requests
+   * @returns Updated recipe group
+   */
+  addRecipeToGroup: (
+    groupId: number,
+    recipeId: number,
+    token: string | null
+  ): Promise<RecipeGroupResponseDTO> =>
+    fetchApi<RecipeGroupResponseDTO>(
+      `/api/recipe-groups/${groupId}/recipes/${recipeId}`,
+      {
+        method: "POST",
+      },
+      token
+    ),
+
+  /**
+   * Remove a recipe from a group
+   * @param groupId - Group ID
+   * @param recipeId - Recipe ID
+   * @param token - Auth token for authenticated requests
+   * @returns Updated recipe group
+   */
+  removeRecipeFromGroup: (
+    groupId: number,
+    recipeId: number,
+    token: string | null
+  ): Promise<RecipeGroupResponseDTO> =>
+    fetchApi<RecipeGroupResponseDTO>(
+      `/api/recipe-groups/${groupId}/recipes/${recipeId}`,
+      {
+        method: "DELETE",
       },
       token
     ),

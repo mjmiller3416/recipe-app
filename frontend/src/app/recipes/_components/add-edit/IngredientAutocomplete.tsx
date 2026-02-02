@@ -12,14 +12,14 @@ import {
 import {
   useIngredientAutocomplete,
   type AutocompleteIngredient,
-} from "@/hooks/useIngredientAutocomplete";
+} from "@/hooks/forms/useIngredientAutocomplete";
 
 // ============================================================================
 // Types
 // ============================================================================
 
 // Re-export the type for backwards compatibility
-export type { AutocompleteIngredient as Ingredient } from "@/hooks/useIngredientAutocomplete";
+export type { AutocompleteIngredient as Ingredient } from "@/hooks/forms/useIngredientAutocomplete";
 
 export interface IngredientAutocompleteProps {
   /** Available ingredients to search/filter */

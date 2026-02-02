@@ -6,11 +6,11 @@ import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { recipeApi, ingredientApi, uploadApi } from "@/lib/api";
 import { base64ToFile } from "@/lib/utils";
-import type { GeneratedRecipeDTO } from "@/types";
+import type { GeneratedRecipeDTO } from "@/types/ai";
+import type { RecipeCreateDTO, RecipeUpdateDTO, RecipeIngredientDTO, RecipeResponseDTO } from "@/types/recipe";
 
 // Session storage key for AI-generated recipe (must match MealGenieChatContent)
 const AI_RECIPE_STORAGE_KEY = "meal-genie-generated-recipe";
-import type { RecipeCreateDTO, RecipeUpdateDTO, RecipeIngredientDTO, RecipeResponseDTO } from "@/types";
 import type { Ingredient } from "./IngredientRow";
 import type { Ingredient as AutocompleteIngredient } from "./IngredientAutocomplete";
 import {

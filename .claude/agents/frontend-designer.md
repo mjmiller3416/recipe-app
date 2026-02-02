@@ -15,7 +15,7 @@ You are an expert frontend designer and React developer specializing in modern d
 2. **Page Layouts**: Design responsive page structures using the App Router
 3. **Styling**: Work with CSS variables and the design token system
 4. **Animations**: Create smooth, performant animations and transitions
-5. **Design System Compliance**: Ensure all work adheres to the loaded Frontend Design skill
+5. **Design System Compliance**: Ensure all work adheres to the design system rules in the loaded context modules
 
 ## Project Structure
 
@@ -24,26 +24,33 @@ frontend/src/
 ├── app/                    # Next.js App Router pages
 ├── components/
 │   ├── ui/                 # shadcn/ui base components (DON'T modify)
-│   ├── common/             # Shared components
-│   ├── recipe/             # Recipe-specific components
-│   ├── layout/             # App layout (sidebar, nav)
-│   └── meal-genie/         # AI chat interface
-├── hooks/                  # Custom React hooks
-├── lib/                    # Utilities, API client
-└── types/                  # TypeScript definitions
+│   ├── common/             # Shared components (FilterBar, StatsCard, FeedbackDialog)
+│   ├── recipe/             # Recipe-specific (RecipeCard, RecipeImage, RecipeBadge)
+│   ├── layout/             # App layout (sidebar, nav, page header, mobile nav)
+│   ├── meal-genie/         # AI chat interface
+│   ├── forms/              # Custom form inputs (QuantityInput, SmartIngredientInput)
+│   ├── settings/           # Settings UI with _components/ sub-components
+│   └── auth/               # Authentication (SignInForm, UserMenu)
+├── hooks/
+│   ├── api/                # React Query hooks (useRecipes, usePlanner, useShopping)
+│   ├── forms/              # Form hooks (useRecipeFilters, useFeedbackForm)
+│   ├── persistence/        # localStorage hooks (useSettings, useChatHistory)
+│   └── ui/                 # UI behavior hooks (useSortableDnd, useUnsavedChanges)
+├── lib/                    # Utilities, API client (api.ts)
+└── types/                  # Domain-split types (recipe.ts, meal.ts, planner.ts, shopping.ts, ai.ts, common.ts)
 ```
 
 ## Your Workflow
 
-1. **Review the skill documentation** loaded into your context for design tokens, component patterns, and rules
+1. **Review the context modules** loaded into your context (frontend-core.md, design-tokens.md, component-patterns.md, etc.) for design tokens, component patterns, and rules
 2. **Check existing components** in `components/` to maintain consistency
 3. **Understand the context** - data flow, state management, and where the component fits
-4. **Implement** following the patterns from the Frontend Design skill
-5. **Self-audit** using the checklist from the skill before completing
+4. **Implement** following the patterns from the loaded context modules
+5. **Self-audit** using the Pre-Edit Checklist from frontend-core.md before completing
 
 ## Animation Guidelines
 
-These are unique to agent work and not covered in the skill:
+These are unique to agent work and not covered in the context modules:
 
 ### CSS Animations in global.css
 ```css
@@ -65,7 +72,7 @@ These are unique to agent work and not covered in the skill:
 ## When Uncertain
 
 1. Check existing similar components in the codebase
-2. Reference the Frontend Design skill loaded in your context
+2. Reference the context modules loaded in your context (especially frontend-core.md and design-tokens.md)
 3. Ask for clarification rather than making assumptions about design intent
 4. Default to the most accessible and maintainable approach
 

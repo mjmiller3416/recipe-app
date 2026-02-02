@@ -8,7 +8,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { SavedView } from "./SavedView";
-import type { PlannerEntryResponseDTO } from "@/types";
+import type { PlannerEntryResponseDTO } from "@/types/planner";
 
 // ============================================================================
 // Types

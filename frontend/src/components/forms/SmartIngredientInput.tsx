@@ -9,7 +9,7 @@ import { ingredientApi } from "@/lib/api";
 import {
   useIngredientAutocomplete,
   type AutocompleteIngredient,
-} from "@/hooks/useIngredientAutocomplete";
+} from "@/hooks/forms/useIngredientAutocomplete";
 import { cn } from "@/lib/utils";
 
 export interface SmartIngredientInputProps {

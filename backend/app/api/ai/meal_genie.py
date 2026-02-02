@@ -5,7 +5,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import require_pro
+from app.api.auth import require_pro
 from app.database.db import get_session
 from app.ai.dtos import (
     MealGenieRequestDTO,
@@ -16,7 +16,7 @@ from app.ai.dtos import (
 from app.ai.services import get_meal_genie_service
 from app.ai.services.image_generation_service import get_image_generation_service
 from app.ai.services.user_context_builder import UserContextBuilder
-from app.ai.config.meal_genie_config import (
+from app.ai.config.meal_genie import (
     should_include_ingredients,
     should_include_shopping_list,
 )

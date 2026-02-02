@@ -1,12 +1,12 @@
 // lib/recipeCardMapper.ts
 // Maps backend DTOs to frontend RecipeCardData format
 
-import type { 
-  RecipeResponseDTO, 
+import type {
+  RecipeResponseDTO,
   RecipeIngredientResponseDTO,
   RecipeCardData,
-  RecipeIngredient 
-} from "@/types";
+  RecipeIngredient
+} from "@/types/recipe";
 import { getRecipeImageUrl } from "./imageUtils";
 
 /**

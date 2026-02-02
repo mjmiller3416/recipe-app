@@ -19,6 +19,7 @@ import {
   BookOpen,
   Heart,
   ChevronDown,
+  FolderOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -43,6 +44,7 @@ export interface FilterSidebarFilters {
   categories: string[];
   mealTypes: string[];
   dietaryPreferences: string[];
+  groupIds: number[];
   favoritesOnly: boolean;
 }
 
@@ -54,6 +56,7 @@ export interface FilterSidebarProps {
   onCategoryChange: (value: string, checked: boolean) => void;
   onMealTypeChange: (value: string, checked: boolean) => void;
   onDietaryChange: (value: string, checked: boolean) => void;
+  onGroupChange?: (value: number, checked: boolean) => void;
   onFavoritesChange: (checked: boolean) => void;
   onClearAll: () => void;
 
@@ -62,11 +65,13 @@ export interface FilterSidebarProps {
   showCategories?: boolean;
   showMealTypes?: boolean;
   showDietary?: boolean;
+  showGroups?: boolean;
 
   /** Custom options (defaults to constants) */
   categoryOptions?: readonly FilterOption[] | FilterOption[];
   mealTypeOptions?: readonly FilterOption[] | FilterOption[];
   dietaryOptions?: readonly FilterOption[] | FilterOption[];
+  groupOptions?: FilterOption[];
 
   /** Custom header title */
   headerTitle?: string;
@@ -145,15 +150,18 @@ export function FilterSidebar({
   onCategoryChange,
   onMealTypeChange,
   onDietaryChange,
+  onGroupChange,
   onFavoritesChange,
   onClearAll,
   showFavorites = true,
   showCategories = true,
   showMealTypes = true,
   showDietary = true,
+  showGroups = false,
   categoryOptions = RECIPE_CATEGORY_OPTIONS,
   mealTypeOptions = MEAL_TYPE_OPTIONS,
   dietaryOptions = DIETARY_PREFERENCES.filter((d) => d.value !== "none"),
+  groupOptions = [],
   headerTitle = "Refine Results",
   className,
 }: FilterSidebarProps) {
@@ -162,6 +170,7 @@ export function FilterSidebar({
     filters.categories.length > 0 ||
     filters.mealTypes.length > 0 ||
     filters.dietaryPreferences.length > 0 ||
+    filters.groupIds.length > 0 ||
     filters.favoritesOnly;
 
   return (
@@ -231,6 +240,15 @@ export function FilterSidebar({
             options={dietaryOptions}
             selected={filters.dietaryPreferences}
             onChange={onDietaryChange}
+          />
+        )}
+        {showGroups && groupOptions.length > 0 && onGroupChange && (
+          <FilterSection
+            title="Recipe Groups"
+            icon={FolderOpen}
+            options={groupOptions}
+            selected={filters.groupIds.map(String)}
+            onChange={(value, checked) => onGroupChange(Number(value), checked)}
           />
         )}
       </div>

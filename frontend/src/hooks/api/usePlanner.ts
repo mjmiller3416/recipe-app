@@ -6,15 +6,15 @@ import { plannerApi } from "@/lib/api";
 import { plannerQueryKeys, shoppingQueryKeys, dashboardQueryKeys } from "./queryKeys";
 import { dispatchPlannerUpdate } from "./events";
 import type {
-  PlannerEntryResponseDTO,
-  MealSelectionResponseDTO,
-  CookingStreakDTO,
-  ShoppingMode,
-} from "@/types";
-import type {
   MealSelectionCreateDTO,
   MealSelectionUpdateDTO,
-} from "@/lib/api";
+} from "@/types/meal";
+import type {
+  PlannerEntryResponseDTO,
+} from "@/types/planner";
+import type {
+  ShoppingMode,
+} from "@/types/shopping";
 
 // ============================================================================
 // QUERY HOOKS
@@ -525,6 +525,7 @@ export function useClearCompleted() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.stats() });
+      queryClient.invalidateQueries({ queryKey: plannerQueryKeys.streak() });
       dispatchPlannerUpdate();
     },
   });

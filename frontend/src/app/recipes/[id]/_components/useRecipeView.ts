@@ -3,8 +3,9 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useRecipe, useDeleteRecipe, usePlannerEntries } from "@/hooks/api";
-import type { RecipeResponseDTO, PlannerEntryResponseDTO } from "@/types";
-import { useRecentRecipes } from "@/hooks";
+import type { RecipeResponseDTO } from "@/types/recipe";
+import type { PlannerEntryResponseDTO } from "@/types/planner";
+import { useRecentRecipes } from "@/hooks/persistence";
 import { parseDirections, groupIngredientsByCategory } from "./recipe-utils";
 
 /**

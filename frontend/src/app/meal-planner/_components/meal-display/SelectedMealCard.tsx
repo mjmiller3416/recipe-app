@@ -10,7 +10,7 @@ import { useMeal } from "@/hooks/api";
 import { SideChip } from "./SideChip";
 import { AISuggestions } from "./AISuggestions";
 import { RecipeStats } from "./RecipeStats";
-import type { RecipeCardDTO } from "@/types";
+import type { RecipeCardDTO } from "@/types/recipe";
 
 // ============================================================================
 // TYPES

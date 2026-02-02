@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { UtensilsCrossed, ArrowRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   usePlannerEntries,
@@ -13,7 +14,7 @@ import {
   PLANNER_EVENTS,
 } from "@/hooks/api";
 import { MealQueueItem } from "./MealQueueItem";
-import type { PlannerEntryResponseDTO } from "@/types";
+import type { PlannerEntryResponseDTO } from "@/types/planner";
 import { cn } from "@/lib/utils";
 import {
   DndContext,
@@ -25,7 +26,7 @@ import {
   verticalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import { useSortableDnd } from "@/hooks";
+import { useSortableDnd } from "@/hooks/ui";
 
 interface MealQueueWidgetProps {
   entries?: PlannerEntryResponseDTO[];
@@ -109,7 +110,7 @@ export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProp
   const hasEntries = activeEntries.length > 0;
 
   return (
-    <div className="flex flex-col h-full px-5 pt-5 pb-3 overflow-hidden border bg-card rounded-xl border-border shadow-raised">
+    <Card className="flex flex-col h-full px-5 pt-5 pb-3 overflow-hidden shadow-raised">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -186,6 +187,6 @@ export function MealQueueWidget({ entries: initialEntries }: MealQueueWidgetProp
           Add Meal
         </Button>
       </Link>
-    </div>
+    </Card>
   );
 }

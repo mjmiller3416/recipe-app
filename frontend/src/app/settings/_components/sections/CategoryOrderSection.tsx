@@ -16,8 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { RecipeIcon, type RecipeIconData } from "@/components/common/RecipeIcon";
-import { DEFAULT_SETTINGS } from "@/hooks/useSettings";
-import { useSortableDnd } from "@/hooks/useSortableDnd";
+import { DEFAULT_SETTINGS } from "@/hooks/persistence/useSettings";
+import { useSortableDnd } from "@/hooks/ui/useSortableDnd";
 
 // Category icon mapping (same as ShoppingCategory.tsx)
 const CATEGORY_ICONS: Record<string, RecipeIconData> = {

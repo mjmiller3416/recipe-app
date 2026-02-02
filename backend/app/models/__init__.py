@@ -4,6 +4,7 @@ from .ingredient import Ingredient
 from .meal import Meal
 from .planner_entry import PlannerEntry
 from .recipe import Recipe
+from .recipe_group import RecipeGroup
 from .recipe_history import RecipeHistory
 from .recipe_ingredient import RecipeIngredient
 from .shopping_item import ShoppingItem
@@ -15,6 +16,7 @@ from .user_usage import UserUsage
 
 __all__ = [
     "Recipe",
+    "RecipeGroup",
     "RecipeIngredient",
     "RecipeHistory",
     "Ingredient",

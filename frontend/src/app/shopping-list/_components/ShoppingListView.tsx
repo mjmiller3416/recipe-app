@@ -15,8 +15,9 @@ import {
   useAddManualItem,
   useClearManualItems,
   useRefreshShoppingList,
+  useUnits,
 } from "@/hooks/api";
-import type { ShoppingItemResponseDTO } from "@/types";
+import type { ShoppingItemResponseDTO } from "@/types/shopping";
 import { ShoppingCart, Eye, EyeOff, Filter, X, Plus, Trash2 } from "lucide-react";
 import {
   AlertDialog,
@@ -37,9 +38,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { INGREDIENT_UNITS, INGREDIENT_CATEGORIES } from "@/lib/constants";
+import { INGREDIENT_CATEGORIES } from "@/lib/constants";
 import { IngredientSourceSidebar } from "./IngredientSourceSidebar";
-import { useSettings } from "@/hooks/useSettings";
+import { useSettings } from "@/hooks/persistence/useSettings";
 
 /**
  * StatCard - Individual stat card for the summary section
@@ -88,6 +89,8 @@ function AddManualItemForm({
   onAdd: () => void;
   isAdding: boolean;
 }) {
+  const { data: units = [] } = useUnits();
+
   return (
     <Card className="flex flex-row flex-wrap items-center gap-2 p-3 mb-6">
       <QuantityInput
@@ -101,7 +104,7 @@ function AddManualItemForm({
           <SelectValue placeholder="Unit" />
         </SelectTrigger>
         <SelectContent>
-          {INGREDIENT_UNITS.map((u) => (
+          {units.map((u) => (
             <SelectItem key={u.value} value={u.value}>
               {u.label}
             </SelectItem>

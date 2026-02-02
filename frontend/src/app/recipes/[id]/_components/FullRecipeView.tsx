@@ -7,13 +7,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FavoriteButton } from "@/components/common/FavoriteButton";
-import type { RecipeResponseDTO } from "@/types";
+import type { RecipeResponseDTO } from "@/types/recipe";
 
 import { sortCategoryEntries } from "./recipe-utils";
 import { useRecipeView } from "./useRecipeView";
 import { RecipeHeroImage, RecipeSkeleton, RecipeNotFound, RecipeHeaderCard } from "./detail";
 import { IngredientItem, DirectionStep } from "./ingredients-directions";
 import { AddToMealPlanDialog } from "./AddToMealPlanDialog";
+import { ManageGroupsDialog } from "./ManageGroupsDialog";
 import { PrintPreviewDialog, RecipePrintLayout, usePrintRecipe } from "./print";
 
 // ============================================================================
@@ -47,8 +48,9 @@ export function FullRecipeView() {
   // Print functionality from custom hook
   const { printDialogOpen, setPrintDialogOpen, printOptions, handlePrint } = usePrintRecipe();
 
-  // Local state for meal plan dialog
+  // Local state for dialogs
   const [mealPlanDialogOpen, setMealPlanDialogOpen] = useState(false);
+  const [manageGroupsDialogOpen, setManageGroupsDialogOpen] = useState(false);
 
   // Share handler - copies URL to clipboard
   const handleShare = () => {
@@ -116,6 +118,7 @@ export function FullRecipeView() {
             recipe={recipe}
             recipeId={recipeId}
             onMealPlanClick={() => setMealPlanDialogOpen(true)}
+            onManageGroupsClick={() => setManageGroupsDialogOpen(true)}
             onPrintClick={() => setPrintDialogOpen(true)}
             onShare={handleShare}
             onDelete={handleDelete}
@@ -268,6 +271,14 @@ export function FullRecipeView() {
         open={mealPlanDialogOpen}
         onOpenChange={setMealPlanDialogOpen}
         onSuccess={handleMealAdded}
+      />
+
+      {/* Manage Groups Dialog */}
+      <ManageGroupsDialog
+        recipeId={recipeId}
+        recipeName={recipe.recipe_name}
+        open={manageGroupsDialogOpen}
+        onOpenChange={setManageGroupsDialogOpen}
       />
 
       {/* Print Preview Dialog */}

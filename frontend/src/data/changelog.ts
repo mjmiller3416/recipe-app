@@ -2,11 +2,19 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-02-01 - New Features
+- Custom Recipe Groups — organize your recipes into collections like "Weeknight Dinners" or "Holiday Favorites" and filter by group in the Recipe Browser
+- Meal Planner now auto-selects the next meal after completing one — no need to manually pick the next meal in your queue
+
+## 2026-02-01 - Bug Fixes
+- Fixed cooking streak not updating correctly when clearing completed meals from the planner
+
 ## 2026-01-30 - Bug Fixes
 - Fixed duplicate badge display in meal planner selection screen — recipe cards no longer show redundant Main/Side badges
 - Improved selection UX in meal planner — checkmark now appears in top-left corner without shifting the favorite button
 - Fixed dashboard stats to properly exclude cleared and completed meals from the "Meals Planned" count
 - Auto-populate meal name with recipe name when creating meals from the planner
+- Fixed cooking streak widget to properly update when clearing completed meals from the planner
 
 ## 2026-01-29 - Bug Fixes
 - Fixed authentication for AI features — image generation and Meal Genie now properly authenticate requests to prevent unauthorized access

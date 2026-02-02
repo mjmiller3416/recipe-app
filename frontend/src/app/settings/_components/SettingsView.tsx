@@ -24,8 +24,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { DataManagementSection } from "@/components/settings/DataManagementSection";
-import { useSettings, DEFAULT_SETTINGS } from "@/hooks/useSettings";
-import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { useSettings, DEFAULT_SETTINGS } from "@/hooks/persistence/useSettings";
+import { useUnsavedChanges } from "@/hooks/ui/useUnsavedChanges";
 
 import { CategoryNav, CATEGORIES, type SettingsCategory } from "./CategoryNav";
 import { PlaceholderSection } from "./PlaceholderSection";

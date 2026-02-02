@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useMealSuggestions } from "@/hooks/api";
-import type { MealSuggestionsResponseDTO } from "@/types";
+import type { MealSuggestionsResponseDTO } from "@/types/ai";
 
 // ============================================================================
 // TYPES

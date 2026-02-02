@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useFeedbackForm, FEEDBACK_CATEGORIES } from "@/hooks/useFeedbackForm";
+import { useFeedbackForm, FEEDBACK_CATEGORIES } from "@/hooks/forms/useFeedbackForm";
 import { SectionHeader } from "../SectionHeader";
 
 export function FeedbackSection() {

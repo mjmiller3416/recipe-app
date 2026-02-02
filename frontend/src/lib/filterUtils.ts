@@ -4,7 +4,7 @@
  */
 
 import { QUICK_FILTERS, type QuickFilter } from "./constants";
-import type { RecipeCardData } from "@/types";
+import type { RecipeCardData } from "@/types/recipe";
 
 // ============================================================================
 // Types
@@ -20,6 +20,7 @@ export interface RecipeFilters {
   categories: string[];
   mealTypes: string[];
   dietaryPreferences: string[];
+  groups: number[];            // Recipe group IDs to filter by
   favoritesOnly: boolean;
   maxCookTime: number | null;  // "Under 30m" filter uses this (value: 30)
   newDays: number | null;      // "New" filter uses this (value: 2 = last 2 days)
@@ -29,7 +30,7 @@ export interface RecipeFilters {
  * Active filter for display in filter chips/badges
  */
 export interface ActiveFilter {
-  type: "category" | "mealType" | "dietary" | "favorite" | "time" | "new";
+  type: "category" | "mealType" | "dietary" | "group" | "favorite" | "time" | "new";
   value: string;
   label: string;
 }
@@ -54,6 +55,7 @@ export const DEFAULT_FILTERS: RecipeFilters = {
   categories: [],
   mealTypes: [],
   dietaryPreferences: [],
+  groups: [],
   favoritesOnly: false,
   maxCookTime: null,
   newDays: null,
@@ -66,6 +68,7 @@ export const FILTER_CHIP_COLORS: Record<ActiveFilter["type"], string> = {
   category: "bg-primary/20 text-primary border-primary/30",
   mealType: "bg-accent/20 text-accent border-accent/30",
   dietary: "bg-success/20 text-success border-success/30",
+  group: "bg-warning/20 text-warning border-warning/30",
   favorite: "bg-destructive/20 text-destructive border-destructive/30",
   time: "bg-secondary/20 text-secondary border-secondary/30",
   new: "bg-info/20 text-info border-info/30",
@@ -122,6 +125,15 @@ export function applyFilters(
       (recipe) =>
         recipe.dietaryPreference &&
         filters.dietaryPreferences.includes(recipe.dietaryPreference)
+    );
+  }
+
+  // Group filter (OR logic within - recipe must be in at least one selected group)
+  if (filters.groups.length > 0) {
+    result = result.filter(
+      (recipe) =>
+        recipe.groupIds &&
+        recipe.groupIds.some((groupId) => filters.groups.includes(groupId))
     );
   }
 
@@ -249,6 +261,7 @@ export function hasActiveFilters(filters: RecipeFilters): boolean {
     filters.categories.length > 0 ||
     filters.mealTypes.length > 0 ||
     filters.dietaryPreferences.length > 0 ||
+    filters.groups.length > 0 ||
     filters.favoritesOnly ||
     filters.maxCookTime !== null ||
     filters.newDays !== null
@@ -266,7 +279,7 @@ export function hasActiveFiltersOrSearch(filters: RecipeFilters): boolean {
  * Build a display-friendly list of active filters for showing as chips/badges.
  *
  * @param filters - Current filter state
- * @param options - Optional label mappings for categories, meal types, dietary
+ * @param options - Optional label mappings for categories, meal types, dietary, and groups
  */
 export function getActiveFiltersList(
   filters: RecipeFilters,
@@ -274,6 +287,7 @@ export function getActiveFiltersList(
     categoryOptions?: FilterOption[];
     mealTypeOptions?: FilterOption[];
     dietaryOptions?: FilterOption[];
+    groupOptions?: FilterOption[];
   }
 ): ActiveFilter[] {
   const active: ActiveFilter[] = [];
@@ -294,6 +308,12 @@ export function getActiveFiltersList(
   for (const dp of filters.dietaryPreferences) {
     const label = options?.dietaryOptions?.find((o) => o.value === dp)?.label ?? dp;
     active.push({ type: "dietary", value: dp, label });
+  }
+
+  // Groups
+  for (const grp of filters.groups) {
+    const label = options?.groupOptions?.find((o) => o.value === String(grp))?.label ?? `Group ${grp}`;
+    active.push({ type: "group", value: String(grp), label });
   }
 
   // Favorites
@@ -345,6 +365,11 @@ export function removeFilter(
         ...filters,
         dietaryPreferences: filters.dietaryPreferences.filter((d) => d !== filter.value),
       };
+    case "group":
+      return {
+        ...filters,
+        groups: filters.groups.filter((g) => g !== Number(filter.value)),
+      };
     case "favorite":
       return { ...filters, favoritesOnly: false };
     case "time":
@@ -371,5 +396,6 @@ export function mergeFilters(
     categories: partial.categories ?? base.categories,
     mealTypes: partial.mealTypes ?? base.mealTypes,
     dietaryPreferences: partial.dietaryPreferences ?? base.dietaryPreferences,
+    groups: partial.groups ?? base.groups,
   };
 }

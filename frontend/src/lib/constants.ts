@@ -1,4 +1,5 @@
 // Recipe form constants and dropdown options
+// Test comment to verify hooks are working
 
 export const MEAL_TYPES = [
   { value: "all", label: "All" },
@@ -38,27 +39,9 @@ export const DIETARY_PREFERENCES = [
   { value: "diabetic", label: "Diabetic" },
 ] as const;
 
-// NOTE: If you add/remove units here, also update COUNT_UNITS in
-// backend/app/utils/unit_conversion.py to keep them in sync
-export const INGREDIENT_UNITS = [
-  { value: "tbs", label: "Tbs" },
-  { value: "tsp", label: "tsp" },
-  { value: "cup", label: "cup" },
-  { value: "oz", label: "oz" },
-  { value: "lbs", label: "lbs" },
-  { value: "stick", label: "stick" },
-  { value: "bag", label: "bag" },
-  { value: "box", label: "box" },
-  { value: "can", label: "can" },
-  { value: "jar", label: "jar" },
-  { value: "package", label: "package" },
-  { value: "piece", label: "piece" },
-  { value: "slice", label: "slice" },
-  { value: "whole", label: "whole" },
-  { value: "pinch", label: "pinch" },
-  { value: "dash", label: "dash" },
-  { value: "to-taste", label: "to taste" },
-] as const;
+// NOTE: Ingredient units are now fetched dynamically from the backend via the useUnits() hook.
+// This eliminates the need to maintain duplicate unit lists and ensures the backend is the
+// single source of truth. See: frontend/src/hooks/api/useUnits.ts
 
 export const INGREDIENT_CATEGORIES = [
 { value: "produce", label: "Produce" },
@@ -123,7 +106,7 @@ export const QUICK_FILTERS = [
   { id: "under30", label: "Under 30m", type: "time", value: 30 },
   { id: "vegetarian", label: "Vegetarian", type: "dietary", value: "vegetarian" },
   { id: "favorites", label: "Favorites", type: "favorite", value: true },
-  { id: "new", label: "New", type: "new", value: 2 }, // Recipes added within last 2 days -- recently updated for testing
+  { id: "new", label: "New", type: "new", value: 2 }, // Recipes added within last 2 days
 ] as const;
 
 // Default quick filters shown in recipe browser (max 5)
@@ -136,6 +119,7 @@ export const DEFAULT_QUICK_FILTER_IDS = ["breakfast", "lunch", "dinner", "sides"
 export type MealType = (typeof MEAL_TYPES)[number]["value"];
 export type RecipeCategory = (typeof RECIPE_CATEGORIES)[number]["value"];
 export type DietaryPreference = (typeof DIETARY_PREFERENCES)[number]["value"];
-export type IngredientUnit = (typeof INGREDIENT_UNITS)[number]["value"];
+// IngredientUnit type is now inferred from the UnitOptionDTO returned by the useUnits() hook
+export type IngredientUnit = string;
 export type IngredientCategory = (typeof INGREDIENT_CATEGORIES)[number]["value"];
 export type QuickFilter = (typeof QUICK_FILTERS)[number];

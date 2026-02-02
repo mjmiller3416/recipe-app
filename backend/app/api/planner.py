@@ -10,7 +10,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_current_user
+from app.api.auth import get_current_user
 from app.database.db import get_session
 from app.dtos.planner_dtos import (
     CookingStreakDTO,
@@ -21,7 +21,7 @@ from app.dtos.planner_dtos import (
     PlannerSummaryDTO,
 )
 from app.models.user import User
-from app.services.planner_service import (
+from app.services.planner import (
     InvalidMealError,
     PlannerFullError,
     PlannerService,

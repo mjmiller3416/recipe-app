@@ -24,6 +24,7 @@ from .recipe_ingredient import RecipeIngredient
 
 if TYPE_CHECKING:
     from .meal import Meal
+    from .recipe_group import RecipeGroup
     from .user import User
 
 
@@ -69,6 +70,12 @@ class Recipe(Base):
     )
 
     user: Mapped["User"] = relationship("User", back_populates="recipes")
+
+    groups: Mapped[List["RecipeGroup"]] = relationship(
+        "RecipeGroup",
+        secondary="recipe_group_association",
+        back_populates="recipes"
+    )
 
     # ── String Representation ───────────────────────────────────────────────────────────────────────────────
     def __repr__(self) -> str:

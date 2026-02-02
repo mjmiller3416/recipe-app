@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Clock } from "lucide-react";
-import { useRecentRecipes } from "@/hooks";
+import { useRecentRecipes } from "@/hooks/persistence";
 import { cn } from "@/lib/utils";
 import { RecipeIcon, type RecipeIconData } from "@/components/common/RecipeIcon";
 

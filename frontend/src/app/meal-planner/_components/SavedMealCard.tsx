@@ -6,7 +6,7 @@ import { RecipeImage } from "@/components/recipe/RecipeImage";
 import { getRecipeIcon } from "@/lib/recipeIcon";
 import { RecipeIcon } from "@/components/common/RecipeIcon";
 import { cn } from "@/lib/utils";
-import type { MealSelectionResponseDTO } from "@/types";
+import type { MealSelectionResponseDTO } from "@/types/meal";
 
 // ============================================================================
 // HELPERS

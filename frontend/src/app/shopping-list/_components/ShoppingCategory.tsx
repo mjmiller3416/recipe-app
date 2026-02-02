@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ShoppingItem } from "./ShoppingItem";
-import type { ShoppingItemResponseDTO } from "@/types";
+import type { ShoppingItemResponseDTO } from "@/types/shopping";
 import { cn } from "@/lib/utils";
 import { ChevronUp } from "lucide-react";
 import { Card } from "@/components/ui/card";

@@ -51,7 +51,7 @@
    Modified files:
    - frontend/src/app/shopping-list/_components/ShoppingListView.tsx
    - frontend/src/hooks/api/useShopping.ts
-   - backend/app/services/shopping_service.py
+   - backend/app/services/shopping/sync.py
 
    Found existing branch: feature/shopping-list
 
@@ -71,7 +71,7 @@
    Modified files:
    - frontend/src/app/shopping-list/_components/ShoppingListView.tsx
    - frontend/src/hooks/api/useShopping.ts
-   - backend/app/services/shopping_service.py
+   - backend/app/services/shopping/sync.py
 
    No existing branch found for "shopping-list"
 
@@ -117,7 +117,7 @@
 
    Non-matching files (meal-planner):
    - frontend/src/app/meal-planner/_components/PlannerEntry.tsx
-   - backend/app/services/planner_service.py
+   - backend/app/services/planner/core.py
 
    Found existing branch: feature/meal-planner
 
@@ -139,7 +139,7 @@
 
    Non-matching files (meal-planner):
    - frontend/src/app/meal-planner/_components/PlannerEntry.tsx
-   - backend/app/services/planner_service.py
+   - backend/app/services/planner/core.py
 
    No existing branch found for "meal-planner"
 
@@ -244,25 +244,58 @@
 
 5. **Validate commit message format**
 
-   Check the message follows Conventional Commits:
-   ```
-   Valid:   feat: add user authentication
-   Valid:   fix(auth): resolve token refresh bug
-   Valid:   chore: update dependencies
+   **Strict validation rules:**
 
-   Invalid: Added new feature (missing type prefix)
-   Invalid: feat - add feature (wrong separator)
-   Invalid: FEAT: add feature (type must be lowercase)
+   ✅ **Type validation:**
+   - Must be one of: `feat`, `fix`, `chore`, `refactor`, `docs`, `test`, `style`, `perf`
+   - Must be lowercase
+
+   ✅ **Format validation:**
+   - Format: `<type>: <description>` or `<type>(<scope>): <description>`
+   - Separator must be colon `:` not hyphen `-`
+   - Space required after colon
+
+   ✅ **Description validation:**
+   - Must start with lowercase letter
+   - No period at end
+   - Imperative mood (add not added, fix not fixed)
+   - Total first line ≤ 72 characters
+
+   ✅ **Scope validation (if present):**
+   - Must be lowercase
+   - Alphanumeric + hyphens only
+   - No empty scopes: `feat():` is invalid
+
+   **Valid examples:**
+   ```
+   ✅ feat: add user authentication
+   ✅ fix(auth): resolve token refresh bug
+   ✅ chore: update dependencies
+   ✅ refactor(api): simplify error handling
    ```
 
-   If invalid, show the issue and ask for correction.
+   **Invalid examples:**
+   ```
+   ❌ Added new feature              → Missing type prefix
+   ❌ feat - add feature              → Wrong separator (use :)
+   ❌ FEAT: add feature               → Type must be lowercase
+   ❌ feat: Add feature               → Description must start lowercase
+   ❌ feat: added feature             → Use imperative mood (add not added)
+   ❌ feat: add feature.              → No period at end
+   ❌ feat(): add feature             → Empty scope
+   ❌ feat(Front-End): add feature    → Scope must be lowercase
+   ❌ feat(front_end): add feature    → Scope uses underscores (use hyphens)
+   ❌ feat: this is a very long commit message that exceeds the seventy two character limit → Too long
+   ```
+
+   If invalid, show the specific issue and ask for correction.
 
 6. **Create commit**
    ```bash
    git add <files>  # if staging was requested
    git commit -m "<validated-message>
 
-   Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"
+   Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
    ```
 
 7. **Confirm success**

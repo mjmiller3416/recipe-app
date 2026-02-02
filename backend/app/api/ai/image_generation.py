@@ -12,7 +12,7 @@ from app.ai.dtos import (
     BannerGenerationResponseDTO,
 )
 from app.ai.services import get_image_generation_service
-from app.api.dependencies import require_pro
+from app.api.auth import require_pro
 from app.database.db import get_session
 from app.models.user import User
 from app.services.usage_service import UsageService

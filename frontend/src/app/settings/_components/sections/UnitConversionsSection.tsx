@@ -23,12 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useUnitConversionRules } from "@/hooks/useUnitConversionRules";
+import { useUnitConversionRules } from "@/hooks/persistence/useUnitConversionRules";
+import { useUnits } from "@/hooks/api";
 import { SectionHeader } from "../SectionHeader";
-import { INGREDIENT_UNITS } from "@/lib/constants";
 
 export function UnitConversionsSection() {
   const { rules, isLoading, createRule, deleteRule } = useUnitConversionRules();
+  const { data: units = [] } = useUnits();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -132,7 +133,7 @@ export function UnitConversionsSection() {
                         <SelectValue placeholder="Select unit..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {INGREDIENT_UNITS.map((unit) => (
+                        {units.map((unit) => (
                           <SelectItem key={unit.value} value={unit.value}>
                             {unit.label}
                           </SelectItem>
@@ -147,7 +148,7 @@ export function UnitConversionsSection() {
                         <SelectValue placeholder="Select unit..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {INGREDIENT_UNITS.map((unit) => (
+                        {units.map((unit) => (
                           <SelectItem key={unit.value} value={unit.value}>
                             {unit.label}
                           </SelectItem>
@@ -159,7 +160,7 @@ export function UnitConversionsSection() {
 
                 <div className="space-y-2">
                   <Label htmlFor="factor">
-                    Factor (how many {INGREDIENT_UNITS.find(u => u.value === fromUnit)?.label || "from"} = 1 {INGREDIENT_UNITS.find(u => u.value === toUnit)?.label || "to"})
+                    Factor (how many {units.find(u => u.value === fromUnit)?.label || "from"} = 1 {units.find(u => u.value === toUnit)?.label || "to"})
                   </Label>
                   <Input
                     id="factor"

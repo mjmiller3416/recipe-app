@@ -6,7 +6,7 @@ import { Clock, Users, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { RecipeCardData } from "@/types";
+import type { RecipeCardData } from "@/types/recipe";
 import { getRecipeCardUrl } from "@/lib/imageUtils";
 import { FavoriteButton } from "../common/FavoriteButton";
 import { RecipeBadge, RecipeBadgeGroup } from "./RecipeBadge";
