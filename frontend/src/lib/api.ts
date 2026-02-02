@@ -11,9 +11,16 @@ import type {
   RecipeGroupAssignmentDTO,
   IngredientResponseDTO,
   CookingStreakDTO,
+  RecipeCreateDTO,
+  RecipeUpdateDTO,
+  IngredientCreateDTO,
+  IngredientSearchDTO,
+  IngredientBreakdownDTO,
 } from "@/types/recipe";
 import type {
   MealSelectionResponseDTO,
+  MealSelectionCreateDTO,
+  MealSelectionUpdateDTO,
   MealPlanSummaryDTO,
 } from "@/types/meal";
 import type {
@@ -23,6 +30,10 @@ import type {
   ShoppingListResponseDTO,
   ShoppingItemResponseDTO,
   ShoppingListGenerationResultDTO,
+  ManualItemCreateDTO,
+  ShoppingItemUpdateDTO,
+  ShoppingListFilterDTO,
+  ShoppingListGenerationDTO,
 } from "@/types/shopping";
 import type {
   ImageGenerationResponseDTO,
@@ -44,6 +55,11 @@ import type {
   RestoreResult,
   DashboardStatsDTO,
   UnitsResponseDTO,
+  BulkOperationResultDTO,
+  FeedbackSubmitDTO,
+  FeedbackResponseDTO,
+  UnitConversionRuleDTO,
+  UnitConversionRuleCreateDTO,
 } from "@/types/common";
 
 // API base URL from environment variable or default to localhost
@@ -764,129 +780,6 @@ export const ingredientApi = {
 };
 
 // ============================================================================
-// Type definitions for request DTOs (matching backend)
-// ============================================================================
-
-export interface RecipeIngredientDTO {
-  existing_ingredient_id?: number | null;
-  ingredient_name: string;
-  ingredient_category: string;
-  quantity?: number | null;
-  unit?: string | null;
-}
-
-export interface RecipeCreateDTO {
-  recipe_name: string;
-  recipe_category: string;
-  meal_type?: string;
-  diet_pref?: string | null;
-  total_time?: number | null;
-  servings?: number | null;
-  directions?: string | null;
-  notes?: string | null;
-  reference_image_path?: string | null;
-  banner_image_path?: string | null;
-  ingredients?: RecipeIngredientDTO[];
-}
-
-export interface RecipeUpdateDTO {
-  recipe_name?: string;
-  recipe_category?: string;
-  meal_type?: string;
-  diet_pref?: string | null;
-  total_time?: number | null;
-  servings?: number | null;
-  directions?: string | null;
-  notes?: string | null;
-  reference_image_path?: string | null;
-  banner_image_path?: string | null;
-  ingredients?: RecipeIngredientDTO[];
-  is_favorite?: boolean;
-}
-
-export interface MealSelectionCreateDTO {
-  meal_name: string;
-  main_recipe_id: number;
-  side_recipe_ids?: number[];
-  tags?: string[];
-}
-
-export interface MealSelectionUpdateDTO {
-  meal_name?: string;
-  main_recipe_id?: number;
-  side_recipe_ids?: number[];
-  tags?: string[];
-}
-
-export interface MealPlanSaveResultDTO {
-  success: boolean;
-  saved_count: number;
-  invalid_ids: number[];
-  message: string;
-}
-
-export interface ManualItemCreateDTO {
-  ingredient_name: string;
-  quantity: number;
-  unit?: string | null;
-  category?: string | null;
-}
-
-export interface ShoppingItemUpdateDTO {
-  ingredient_name?: string;
-  quantity?: number;
-  unit?: string | null;
-  category?: string | null;
-  have?: boolean;
-}
-
-export interface ShoppingListFilterDTO {
-  source?: "recipe" | "manual";
-  category?: string;
-  have?: boolean;
-  search_term?: string;
-  limit?: number;
-  offset?: number;
-}
-
-export interface ShoppingListGenerationDTO {
-  recipe_ids: number[];
-  include_manual_items?: boolean;
-  clear_existing?: boolean;
-}
-
-export interface BulkOperationResultDTO {
-  success: boolean;
-  updated_count: number;
-  message: string;
-  errors?: string[];
-}
-
-export interface IngredientCreateDTO {
-  ingredient_name: string;
-  ingredient_category: string;
-}
-
-export interface IngredientSearchDTO {
-  search_term: string;
-  category?: string | null;
-  limit?: number | null;
-  offset?: number | null;
-}
-
-export interface IngredientBreakdownDTO {
-  ingredient_name: string;
-  total_quantity: number;
-  unit: string;
-  recipe_contributions: {
-    recipe_name: string;
-    quantity: number;
-    unit: string | null;
-    usage_count: number;
-  }[];
-}
-
-// ============================================================================
 // Image Upload API
 // ============================================================================
 
@@ -1419,19 +1312,6 @@ export const dataManagementApi = {
 // Feedback API
 // ============================================================================
 
-export interface FeedbackSubmitDTO {
-  category: string;
-  message: string;
-  /** Optional metadata included with feedback (e.g., page URL, viewport) */
-  metadata?: Record<string, string | undefined>;
-}
-
-export interface FeedbackResponseDTO {
-  success: boolean;
-  issue_url?: string;
-  message: string;
-}
-
 export const feedbackApi = {
   /**
    * Submit user feedback as a GitHub issue
@@ -1453,24 +1333,6 @@ export const feedbackApi = {
 // ============================================================================
 // Unit Conversion Rules API
 // ============================================================================
-
-export interface UnitConversionRuleDTO {
-  id: number;
-  ingredient_name: string;
-  from_unit: string;
-  to_unit: string;
-  factor: number;
-  round_up: boolean;
-  created_at: string;
-}
-
-export interface UnitConversionRuleCreateDTO {
-  ingredient_name: string;
-  from_unit: string;
-  to_unit: string;
-  factor: number;
-  round_up?: boolean;
-}
 
 export const unitConversionApi = {
   /**

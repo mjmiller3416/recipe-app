@@ -6,10 +6,8 @@ import { plannerApi } from "@/lib/api";
 import { plannerQueryKeys, shoppingQueryKeys, dashboardQueryKeys } from "./queryKeys";
 import { dispatchPlannerUpdate } from "./events";
 import type {
-  CookingStreakDTO,
-} from "@/types/recipe";
-import type {
-  MealSelectionResponseDTO,
+  MealSelectionCreateDTO,
+  MealSelectionUpdateDTO,
 } from "@/types/meal";
 import type {
   PlannerEntryResponseDTO,
@@ -17,10 +15,6 @@ import type {
 import type {
   ShoppingMode,
 } from "@/types/shopping";
-import type {
-  MealSelectionCreateDTO,
-  MealSelectionUpdateDTO,
-} from "@/lib/api";
 
 // ============================================================================
 // QUERY HOOKS

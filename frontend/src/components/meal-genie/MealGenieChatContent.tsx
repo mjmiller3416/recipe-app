@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Sparkles, Send, X, ChefHat, Lightbulb, Calendar, Minimize2, Maximize2, Minus, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { useChatHistory } from "@/hooks";
+import { useChatHistory } from "@/hooks/persistence";
 import { useMealGenieChat } from "@/hooks/api/useAI";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -366,7 +366,7 @@ export function MealGenieChatContent({
       </div>
 
       {/* Input Area */}
-      <div className="p-3 border-t border-border/50 bg-card/30">
+      <div className="p-3 border-t border-border/50 bg-muted/30">
         <div className="flex items-center gap-2">
           <Input
             ref={inputRef}

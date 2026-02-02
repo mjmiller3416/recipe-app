@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { Sparkles, Send, ChefHat, Lightbulb, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { useChatHistory } from "@/hooks";
+import { useChatHistory } from "@/hooks/persistence";
 import { useMealGenieAsk } from "@/hooks/api/useAI";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

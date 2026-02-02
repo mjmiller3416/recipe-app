@@ -9,11 +9,9 @@ import type {
   RecipeResponseDTO,
   RecipeCardDTO,
   RecipeFilterDTO,
-} from "@/types/recipe";
-import type {
   RecipeCreateDTO,
   RecipeUpdateDTO,
-} from "@/lib/api";
+} from "@/types/recipe";
 
 // ============================================================================
 // QUERY HOOKS

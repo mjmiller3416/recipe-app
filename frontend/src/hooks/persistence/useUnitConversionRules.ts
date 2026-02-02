@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
-import {
-  unitConversionApi,
+import { unitConversionApi } from "@/lib/api";
+import type {
   UnitConversionRuleDTO,
   UnitConversionRuleCreateDTO,
-} from "@/lib/api";
+} from "@/types/common";
 
 // ============================================================================
 // Types

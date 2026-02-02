@@ -186,6 +186,23 @@ export interface BulkOperationResultDTO {
 }
 
 // ============================================================================
+// Feedback Types
+// ============================================================================
+
+export interface FeedbackSubmitDTO {
+  category: string;
+  message: string;
+  /** Optional metadata included with feedback (e.g., page URL, viewport) */
+  metadata?: Record<string, string | undefined>;
+}
+
+export interface FeedbackResponseDTO {
+  success: boolean;
+  issue_url?: string;
+  message: string;
+}
+
+// ============================================================================
 // Unit Conversion Types
 // ============================================================================
 
@@ -196,6 +213,24 @@ export interface UnitOptionDTO {
 
 export interface UnitsResponseDTO {
   units: UnitOptionDTO[];
+}
+
+export interface UnitConversionRuleDTO {
+  id: number;
+  ingredient_name: string;
+  from_unit: string;
+  to_unit: string;
+  factor: number;
+  round_up: boolean;
+  created_at: string;
+}
+
+export interface UnitConversionRuleCreateDTO {
+  ingredient_name: string;
+  from_unit: string;
+  to_unit: string;
+  factor: number;
+  round_up?: boolean;
 }
 
 // ============================================================================
