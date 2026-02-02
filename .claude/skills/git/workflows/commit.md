@@ -51,7 +51,7 @@
    Modified files:
    - frontend/src/app/shopping-list/_components/ShoppingListView.tsx
    - frontend/src/hooks/api/useShopping.ts
-   - backend/app/services/shopping_service.py
+   - backend/app/services/shopping/sync.py
 
    Found existing branch: feature/shopping-list
 
@@ -71,7 +71,7 @@
    Modified files:
    - frontend/src/app/shopping-list/_components/ShoppingListView.tsx
    - frontend/src/hooks/api/useShopping.ts
-   - backend/app/services/shopping_service.py
+   - backend/app/services/shopping/sync.py
 
    No existing branch found for "shopping-list"
 
@@ -117,7 +117,7 @@
 
    Non-matching files (meal-planner):
    - frontend/src/app/meal-planner/_components/PlannerEntry.tsx
-   - backend/app/services/planner_service.py
+   - backend/app/services/planner/core.py
 
    Found existing branch: feature/meal-planner
 
@@ -139,7 +139,7 @@
 
    Non-matching files (meal-planner):
    - frontend/src/app/meal-planner/_components/PlannerEntry.tsx
-   - backend/app/services/planner_service.py
+   - backend/app/services/planner/core.py
 
    No existing branch found for "meal-planner"
 

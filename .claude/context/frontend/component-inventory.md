@@ -43,31 +43,53 @@ These components are already installed and MUST be reused:
 
 These exist in `frontend/src/components/` - **reuse before creating new:**
 
-### Recipe Domain
-- `RecipeCard` - Recipe list item display
-- `RecipeGrid` - Grid layout for recipes
-- `RecipeSearch` - Search bar with filters
-- `IngredientList` - Ingredient display
+### Recipe Domain (`components/recipe/`)
+- `RecipeCard` - Recipe list item display (supports multiple display modes)
+- `RecipeImage` - Recipe image with fallback
+- `RecipeBadge` - Category/meal-type badge
+- `RecipeBannerImage` - Full-width banner image
 
-### Meal Planner Domain
-- `PlannerCalendar` - Weekly meal planner view
-- `MealSlot` - Individual meal slot
-- `MealSelector` - Meal selection dialog
+### Meal Genie Domain (`components/meal-genie/`)
+- `MealGenieAssistant` - AI chat assistant wrapper
+- `MealGenieChatContent` - Chat message display
+- `MealGeniePopup` - Floating chat popup
 
-### Shopping Domain
-- `ShoppingList` - Shopping list view
-- `ShoppingItem` - Individual list item
+### Settings Domain (`components/settings/`)
+- `DataManagementSection` - Data import/export/backup settings
+  - `_components/data-management/BackupRestore` - Backup & restore UI
+  - `_components/data-management/DeleteData` - Data deletion UI
+  - `_components/data-management/ExportImport` - CSV export/import UI
 
-### Layout Components
-- `Navbar` - Main navigation
-- `Sidebar` - Side navigation
+### Common Components (`components/common/`)
+- `FilterBar` - Reusable filter bar
+- `FilterSidebar` - Sidebar with filters
+- `StatsCard` - Statistics display card
+- `FeedbackDialog` - User feedback dialog
+- `CircularImage` - Circular image display
+- `FavoriteButton` - Favorite toggle button
+- `IconButton` - Icon button wrapper
+- `ScrollableCardList` - Horizontally scrollable card list
+- `ThemeToggle` - Dark/light theme toggle
+- `SafeLink` - Safe external link
+
+### Layout Components (`components/layout/`)
+- `AppLayout` / `ConditionalAppLayout` - App shell layout
+- `Sidebar` / `SidebarContent` - Side navigation
 - `PageHeader` - Page title + actions
-- `EmptyState` - No data placeholder
+- `PageLayout` - Standardized page wrapper
+- `MobileBottomNav` - Mobile bottom navigation
+- `NavButton` - Navigation button
+- `RecentRecipeChip` - Recent recipe quick-access chip
+- `Logo` - App logo
 
-### Form Components
-- `RecipeForm` - Full recipe creation/edit form
-- `IngredientInput` - Ingredient entry field
-- `ImageUpload` - Cloudinary image upload
+### Form Components (`components/forms/`)
+- `QuantityInput` - Ingredient quantity input (fractions, decimals)
+- `SmartIngredientInput` - Autocomplete ingredient input
+
+### Auth Components (`components/auth/`)
+- `SignInForm` - Sign-in form
+- `SignUpForm` - Sign-up form
+- `UserMenu` - User dropdown menu
 
 ## Pre-Flight Checklist
 

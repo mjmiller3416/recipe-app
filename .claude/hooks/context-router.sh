@@ -134,7 +134,7 @@ load_backend_context() {
             CONTEXT+=$'\n\n'
             ;;
 
-        */services/*.py)
+        */services/*.py|*/services/*/*.py)
             CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/services.md")
             CONTEXT+=$'\n\n'
             CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/repositories.md")

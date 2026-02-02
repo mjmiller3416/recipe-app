@@ -20,27 +20,45 @@ You are a specialized search agent for the Recipe App codebase.
 - app/settings/ - User settings
 
 **Components**: src/components/
-- components/ui/ - shadcn/ui base (26 components)
-- components/recipe/ - Recipe-specific
-- components/meal-planner/ - Meal planner UI
-- components/meal-genie/ - AI chat interface
-- components/layout/ - Sidebar, nav, page header
+- components/ui/ - shadcn/ui base components
+- components/recipe/ - Recipe-specific (RecipeCard, RecipeImage, RecipeBadge)
+- components/meal-genie/ - AI chat interface (MealGenieAssistant, MealGenieChatContent)
+- components/layout/ - Sidebar, nav, page header, mobile nav
+- components/common/ - Shared components (FilterBar, StatsCard, FeedbackDialog)
+- components/forms/ - Form inputs (QuantityInput, SmartIngredientInput)
+- components/settings/ - Settings UI with `_components/data-management/` sub-components
+- components/auth/ - Authentication (SignInForm, SignUpForm, UserMenu)
 
-**Hooks**: src/hooks/api/
-- usePlanner.ts, useRecipes.ts, useShopping.ts
-- All React Query hooks for API calls
+**Hooks**: src/hooks/ (organized by domain)
+- hooks/api/ - React Query hooks (useRecipes, usePlanner, useShopping, useAI, useDashboard, useUnits)
+- hooks/forms/ - Form hooks (useRecipeFilters, useFeedbackForm, useIngredientAutocomplete)
+- hooks/persistence/ - localStorage hooks (useSettings, useChatHistory, useRecentRecipes, useUnitConversionRules)
+- hooks/ui/ - UI behavior hooks (useSortableDnd, useUnsavedChanges)
+- Each subdirectory has an index.ts barrel export
+
+**Types**: src/types/ (domain-split modules)
+- recipe.ts, meal.ts, planner.ts, shopping.ts, ai.ts, common.ts
 
 **API Client**: src/lib/api.ts
-- Typed API methods (recipeApi, plannerApi, etc.)
+- Typed API methods (recipeApi, plannerApi, shoppingApi, mealGenieApi, etc.)
+- Imports types from @/types/ domain modules
 
 ### Backend (FastAPI + SQLAlchemy)
 
 **Layers**:
 - models/ - SQLAlchemy ORM
 - repositories/ - Data access
-- services/ - Business logic
+- services/ - Business logic (some split into modular packages with mixins)
 - dtos/ - Pydantic schemas
 - api/ - FastAPI routes
+
+**Services structure**:
+- Flat files: recipe_service.py, ingredient_service.py, feedback_service.py, etc.
+- Modular packages (large services split into Core + Mixins):
+  - services/meal/ - MealServiceCore + SideRecipeMixin + QueryMixin
+  - services/planner/ - PlannerServiceCore + EntryManagementMixin + StatusManagementMixin + BatchOperationsMixin
+  - services/shopping/ - ShoppingServiceCore + SyncMixin + ItemManagementMixin + AggregationMixin
+  - services/data_management/ - backup.py, export_ops.py, import_ops.py, restore.py
 
 **Domains**:
 - Recipe: recipe_*, ingredient_*
@@ -52,10 +70,10 @@ You are a specialized search agent for the Recipe App codebase.
 
 **When user asks:**
 - "Find recipe display logic" → components/recipe/ AND app/recipes/
-- "How is meal planning implemented" → services/meal_service.py, components/meal-planner/
+- "How is meal planning implemented" → services/meal/ (package), services/planner/ (package), components/meal-planner/
 - "Where are design tokens" → app/globals.css
 - "AI chat implementation" → components/meal-genie/ AND ai/services/meal_genie_service.py
-- "Shopping list aggregation" → services/shopping_service.py
+- "Shopping list aggregation" → services/shopping/ (package, see AggregationMixin)
 - "Database schema for recipes" → models/recipe.py, models/ingredient.py
 
 ## Your Process
@@ -70,7 +88,7 @@ You are a specialized search agent for the Recipe App codebase.
 
 **Recipe features**: models/recipe.py + services/recipe_service.py + api/recipes.py + components/recipe/
 
-**Meal planner**: models/meal.py + planner_entry.py + services/meal_service.py + components/meal-planner/
+**Meal planner**: models/meal.py + planner_entry.py + services/meal/ + services/planner/ + components/meal-planner/
 
 **AI features**: ai/ directory (services, dtos, config) + components/meal-genie/
 
@@ -114,6 +132,9 @@ You are a specialized search agent for the Recipe App codebase.
 - **Recipe components**: `frontend/src/components/recipe/**/*.tsx`
 - **All pages**: `frontend/src/app/**/page.tsx`
 - **API hooks**: `frontend/src/hooks/api/*.ts`
+- **Form hooks**: `frontend/src/hooks/forms/*.ts`
+- **Persistence hooks**: `frontend/src/hooks/persistence/*.ts`
+- **UI hooks**: `frontend/src/hooks/ui/*.ts`
 - **UI components**: `frontend/src/components/ui/**/*.tsx`
 - **Layout components**: `frontend/src/components/layout/**/*.tsx`
 - **Meal planner**: `frontend/src/components/meal-planner/**/*.tsx`

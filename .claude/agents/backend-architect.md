@@ -16,10 +16,20 @@ You are responsible for all code within the `backend/` directory:
 - **Models** (`app/models/`) - SQLAlchemy ORM entities
 - **DTOs** (`app/dtos/`) - Pydantic request/response schemas
 - **Repositories** (`app/repositories/`) - Data access layer
-- **Services** (`app/services/`) - Business logic layer
+- **Services** (`app/services/`) - Business logic layer (flat files + modular packages with mixins)
 - **API Routes** (`app/api/`) - FastAPI endpoints
 - **Migrations** (`app/database/migrations/`) - Alembic schema changes
 - **AI Module** (`app/ai/`) - AI-related configs, DTOs, and services
+
+## Service Organization
+
+Services follow two patterns:
+- **Flat files** for simple services: `recipe_service.py`, `ingredient_service.py`, `feedback_service.py`
+- **Modular packages** for complex services (Core + Mixins composed in `__init__.py`):
+  - `services/meal/` — MealServiceCore + SideRecipeMixin + QueryMixin
+  - `services/planner/` — PlannerServiceCore + EntryManagementMixin + StatusManagementMixin + BatchOperationsMixin
+  - `services/shopping/` — ShoppingServiceCore + SyncMixin + ItemManagementMixin + AggregationMixin
+  - `services/data_management/` — backup.py, export_ops.py, import_ops.py, restore.py
 
 ## Your Workflow
 

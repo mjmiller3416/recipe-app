@@ -24,13 +24,20 @@ frontend/src/
 ├── app/                    # Next.js App Router pages
 ├── components/
 │   ├── ui/                 # shadcn/ui base components (DON'T modify)
-│   ├── common/             # Shared components
-│   ├── recipe/             # Recipe-specific components
-│   ├── layout/             # App layout (sidebar, nav)
-│   └── meal-genie/         # AI chat interface
-├── hooks/                  # Custom React hooks
-├── lib/                    # Utilities, API client
-└── types/                  # TypeScript definitions
+│   ├── common/             # Shared components (FilterBar, StatsCard, FeedbackDialog)
+│   ├── recipe/             # Recipe-specific (RecipeCard, RecipeImage, RecipeBadge)
+│   ├── layout/             # App layout (sidebar, nav, page header, mobile nav)
+│   ├── meal-genie/         # AI chat interface
+│   ├── forms/              # Custom form inputs (QuantityInput, SmartIngredientInput)
+│   ├── settings/           # Settings UI with _components/ sub-components
+│   └── auth/               # Authentication (SignInForm, UserMenu)
+├── hooks/
+│   ├── api/                # React Query hooks (useRecipes, usePlanner, useShopping)
+│   ├── forms/              # Form hooks (useRecipeFilters, useFeedbackForm)
+│   ├── persistence/        # localStorage hooks (useSettings, useChatHistory)
+│   └── ui/                 # UI behavior hooks (useSortableDnd, useUnsavedChanges)
+├── lib/                    # Utilities, API client (api.ts)
+└── types/                  # Domain-split types (recipe.ts, meal.ts, planner.ts, shopping.ts, ai.ts, common.ts)
 ```
 
 ## Your Workflow

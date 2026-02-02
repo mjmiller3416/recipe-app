@@ -61,7 +61,7 @@ Mark each task as you complete it.
 ### 5. Implement the Fix
 
 **For Frontend Issues**:
-1. Read the frontend-design skill: `.claude/skills/frontend-design/SKILL.md`
+1. Review the frontend-designer agent context (`.claude/agents/frontend-designer.md`)
 2. Follow design system patterns (shadcn/ui, semantic tokens, proper components)
 3. Read existing components to understand patterns
 4. Make minimal, focused changes
@@ -70,7 +70,7 @@ Mark each task as you complete it.
 7. Ensure responsive design
 
 **For Backend Issues**:
-1. Read the backend-dev skill: `.claude/skills/backend-dev/SKILL.md`
+1. Review the backend-architect agent context (`.claude/agents/backend-architect.md`)
 2. Follow layered architecture (DTOs → Services → Repositories → Models)
 3. Read existing code to understand patterns
 4. Create/update DTOs in `app/dtos/`
@@ -190,8 +190,8 @@ Please provide guidance on the preferred approach, or I can propose options for 
 ## Integration with Other Skills
 
 - **Git Skill** (`/git`): For branch creation, commit conventions
-- **Frontend Design** (`/frontend-design`): For UI patterns and component scaffolding
-- **Backend Dev** (`/backend-dev`): For API layered architecture patterns
+- **Frontend Designer Agent** (`frontend-designer`): For UI patterns and component scaffolding
+- **Backend Architect Agent** (`backend-architect`): For API layered architecture patterns
 - **Todo** (`/todo`): For creating GitHub issues if new issues are discovered
 
 ## Best Practices

@@ -128,4 +128,27 @@ def update(self, entity_id: int, dto: UpdateDTO) -> Entity:
         raise EntitySaveError(f"Failed: {e}") from e
 ```
 
-**See:** [app/services/recipe_service.py](../../backend/app/services/recipe_service.py) for complete reference implementation.
+## Modular Service Packages (Large Services)
+
+Large services are split into Core + Mixins composed in `__init__.py`:
+
+```python
+# services/meal/__init__.py
+from .core import MealServiceCore
+from .side_recipes import SideRecipeMixin
+from .query import QueryMixin
+
+class MealService(SideRecipeMixin, QueryMixin, MealServiceCore):
+    """Composed service with all meal functionality."""
+    pass
+```
+
+**Current modular packages:**
+- `services/meal/` — MealServiceCore + SideRecipeMixin + QueryMixin
+- `services/planner/` — PlannerServiceCore + EntryManagementMixin + StatusManagementMixin + BatchOperationsMixin
+- `services/shopping/` — ShoppingServiceCore + SyncMixin + ItemManagementMixin + AggregationMixin
+- `services/data_management/` — backup.py, export_ops.py, import_ops.py, restore.py
+
+**Simple services remain as flat files:** `recipe_service.py`, `ingredient_service.py`, `feedback_service.py`, `recipe_group_service.py`, `unit_conversion_service.py`, `usage_service.py`, `user_service.py`
+
+**See:** [app/services/recipe_service.py](../../backend/app/services/recipe_service.py) for flat service reference, and [app/services/meal/](../../backend/app/services/meal/) for modular package reference.

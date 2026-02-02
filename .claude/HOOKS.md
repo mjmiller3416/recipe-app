@@ -73,6 +73,7 @@ Located in `.claude/context/`:
 - `design-tokens.md` - Design system tokens and CSS variables
 - `shadcn-patterns.md` - shadcn/ui component usage patterns
 - `component-patterns.md` - React component patterns
+- `component-inventory.md` - Available shadcn/ui and custom project components
 - `form-patterns.md` - Form handling patterns
 - `layout-patterns.md` - Layout component patterns
 - `accessibility.md` - Accessibility guidelines
@@ -235,5 +236,5 @@ mv .claude/hooks/context-router.sh.disabled .claude/hooks/context-router.sh
 ## Additional Resources
 
 - Main documentation: [.claude/CLAUDE.md](.claude/CLAUDE.md)
-- Hook configuration: [.claude/claude.json](.claude/claude.json)
+- Hook configuration: [.claude/settings.json](.claude/settings.json)
 - Context modules: [.claude/context/](.claude/context/)

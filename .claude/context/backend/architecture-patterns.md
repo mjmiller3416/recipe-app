@@ -49,9 +49,14 @@ Similar patterns exist for:
 
 2. Should this be in THIS service or another?
    - Recipe-specific logic → `recipe_service.py`
-   - Meal-specific logic → `meal_service.py`
-   - Planner-specific logic → `planner_service.py`
+   - Meal-specific logic → `services/meal/` (modular package with mixins)
+   - Planner-specific logic → `services/planner/` (modular package with mixins)
+   - Shopping-specific logic → `services/shopping/` (modular package with mixins)
+   - Data management logic → `services/data_management/` (backup, export, import, restore)
    - Cross-domain logic → Create in appropriate service, call from others
+
+   **Note**: Large services use a modular package pattern (Core + Mixins composed in `__init__.py`).
+   Simple services remain as flat files (e.g., `recipe_service.py`, `ingredient_service.py`).
 
 3. Does this need a repository method?
    - **YES if** touching database directly

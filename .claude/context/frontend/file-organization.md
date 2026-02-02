@@ -14,9 +14,12 @@
 | Form components | `src/components/forms/` | Custom form inputs (QuantityInput, etc.) |
 | Layout components | `src/components/layout/` | Sidebar, nav, page header, mobile nav |
 | Auth components | `src/components/auth/` | Sign-in, sign-up, user menu |
-| Hooks | `src/hooks/` | Custom React hooks |
+| Hooks | `src/hooks/` | Custom React hooks (organized by domain) |
 | API hooks | `src/hooks/api/` | React Query hooks for all API calls |
-| Types | `src/types/` | TypeScript type definitions |
+| Form hooks | `src/hooks/forms/` | Form-specific hooks (filters, autocomplete, feedback) |
+| Persistence hooks | `src/hooks/persistence/` | localStorage hooks (settings, chat history, recent recipes) |
+| UI hooks | `src/hooks/ui/` | UI behavior hooks (drag-and-drop, unsaved changes) |
+| Types | `src/types/` | TypeScript types (domain-split modules) |
 | Utilities | `src/lib/` | Helper functions, constants |
 | API client | `src/lib/api.ts` | Typed API methods |
 | Design tokens | `src/app/globals.css` | Tailwind CSS variables |
@@ -56,11 +59,18 @@ src/components/common/
 
 **Hooks:**
 - camelCase with "use" prefix: `useRecipes.ts`, `useSettings.ts`
-- API hooks in `hooks/api/`: `useRecipes.ts`, `usePlanner.ts`
+- Organized by domain subdirectory:
+  - `hooks/api/` — React Query hooks: `useRecipes.ts`, `usePlanner.ts`, `useShopping.ts`
+  - `hooks/forms/` — Form hooks: `useRecipeFilters.ts`, `useFeedbackForm.ts`
+  - `hooks/persistence/` — Storage hooks: `useSettings.ts`, `useChatHistory.ts`, `useRecentRecipes.ts`
+  - `hooks/ui/` — UI hooks: `useSortableDnd.ts`, `useUnsavedChanges.ts`
+- Each subdirectory has an `index.ts` barrel export
 
 **Types:**
 - PascalCase: `RecipeCardData`, `MealSelection`
 - Suffix with type: `RecipeFormData`, `RecipeCardProps`
+- Domain-split modules: `recipe.ts`, `meal.ts`, `planner.ts`, `shopping.ts`, `ai.ts`, `common.ts`
+- Import from specific module: `import type { RecipeCardDTO } from "@/types/recipe"`
 
 **Files:**
 - Component file matches component name: `RecipeCard.tsx` exports `RecipeCard`
@@ -90,6 +100,8 @@ src/components/common/
 | Loading states | Any component with React Query |
 | Page structure | `app/recipes/page.tsx` |
 | API hook | `hooks/api/useRecipes.ts` |
+| Persistence hook | `hooks/persistence/useSettings.ts` |
+| UI hook | `hooks/ui/useSortableDnd.ts` |
 | Custom form input | `components/forms/QuantityInput.tsx` |
 | Empty state | `components/common/EmptyState.tsx` |
 

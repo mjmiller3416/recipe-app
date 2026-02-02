@@ -112,14 +112,19 @@ Models (app/models/)    # SQLAlchemy ORM
 - **DTOs** (`app/dtos/`): Pydantic models for request/response validation
 - **AI Module** (`app/ai/`): Separate directory with configs, DTOs, and services for all AI features
 - **Database** (`app/database/`): Connection setup and Alembic migrations
+- **Services** use two patterns: flat files for simple services, modular packages (Core + Mixins) for complex ones (`meal/`, `planner/`, `shopping/`, `data_management/`)
 
 ### Frontend Structure
 
 - `app/` - Next.js App Router (dashboard, recipes, meal-planner, shopping-list, settings, auth)
 - `components/` - UI components organized by domain (ui/, auth/, common/, forms/, layout/, meal-genie/, recipe/, settings/)
-- `hooks/api/` - React Query hooks for all API calls
+- `hooks/` - Custom React hooks organized by domain:
+  - `hooks/api/` - React Query hooks for all API calls
+  - `hooks/forms/` - Form-specific hooks (filters, autocomplete, feedback)
+  - `hooks/persistence/` - localStorage hooks (settings, chat history, recent recipes)
+  - `hooks/ui/` - UI behavior hooks (drag-and-drop, unsaved changes)
 - `lib/` - API client, utilities, constants, providers
-- `types/` - TypeScript type definitions
+- `types/` - TypeScript types (domain-split: recipe.ts, meal.ts, planner.ts, shopping.ts, ai.ts, common.ts)
 - `proxy.ts` - Clerk auth middleware
 
 ### Key Patterns
@@ -137,7 +142,7 @@ import { recipeApi, plannerApi, shoppingApi, mealGenieApi, ... } from "@/lib/api
 **State Management**:
 - Server state: React Query (hooks in `hooks/api/`)
 - Local state: React useState
-- Persisted state: Custom hooks with localStorage (`useSettings`, `useChatHistory`, `useRecentRecipes`)
+- Persisted state: Custom hooks with localStorage (in `hooks/persistence/`: `useSettings`, `useChatHistory`, `useRecentRecipes`)
 
 **Form Components**: Use shadcn/ui components with the design system tokens. Never hardcode colors.
 
