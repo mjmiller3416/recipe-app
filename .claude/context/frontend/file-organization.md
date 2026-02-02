@@ -21,7 +21,7 @@
 | UI hooks | `src/hooks/ui/` | UI behavior hooks (drag-and-drop, unsaved changes) |
 | Types | `src/types/` | TypeScript types (domain-split modules) |
 | Utilities | `src/lib/` | Helper functions, constants |
-| API client | `src/lib/api.ts` | Typed API methods |
+| API client | `src/lib/api/` | Domain-split API modules (barrel re-export via index.ts) |
 | Design tokens | `src/app/globals.css` | Tailwind CSS variables |
 
 ## Where to Create Components

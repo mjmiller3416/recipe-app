@@ -39,9 +39,10 @@ You are a specialized search agent for the Recipe App codebase.
 **Types**: src/types/ (domain-split modules)
 - recipe.ts, meal.ts, planner.ts, shopping.ts, ai.ts, common.ts
 
-**API Client**: src/lib/api.ts
-- Typed API methods (recipeApi, plannerApi, shoppingApi, mealGenieApi, etc.)
-- Imports types from @/types/ domain modules
+**API Client**: src/lib/api/ (domain-split modules with barrel index)
+- client.ts — fetchApi, ApiError, buildQueryString, API_BASE
+- Domain modules: recipe.ts, planner.ts, shopping.ts, ai.ts, ingredients.ts, upload.ts, dashboard.ts, data-management.ts, feedback.ts, units.ts, settings.ts, recipe-groups.ts
+- index.ts — barrel re-exports (imports use `@/lib/api` unchanged)
 
 ### Backend (FastAPI + SQLAlchemy)
 
