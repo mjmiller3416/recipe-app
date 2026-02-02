@@ -12,7 +12,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useSettings } from "@/hooks/useSettings";
+import { useSettings } from "@/hooks/persistence/useSettings";
 import { useGenerateImage, useGenerateBanner } from "@/hooks/api/useAI";
 
 type ImageState = "empty" | "uploading" | "uploaded" | "generating" | "generated" | "error";

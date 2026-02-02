@@ -26,7 +26,7 @@ import { RecipeInfoCard } from "./RecipeInfoCard";
 import { IngredientsCard } from "./IngredientsCard";
 import { DirectionsNotesCard } from "./DirectionsNotesCard";
 import { ImageUploadCard } from "./ImageUploadCard";
-import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { useUnsavedChanges } from "@/hooks/ui/useUnsavedChanges";
 
 // ============================================================================
 // TYPES

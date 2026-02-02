@@ -42,7 +42,7 @@ import { MealPreviewDialog } from "./MealPreviewDialog";
 import { SavedMealsDialog } from "./SavedMealsDialog";
 import { AlertTriangle, ChefHat, ArrowUpDown, Bookmark } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useUnsavedChanges, setNavigationBypass } from "@/hooks/useUnsavedChanges";
+import { useUnsavedChanges, setNavigationBypass } from "@/hooks/ui/useUnsavedChanges";
 
 // ============================================================================
 // MEAL PLANNER PAGE COMPONENT

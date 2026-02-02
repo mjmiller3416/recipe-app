@@ -3,7 +3,7 @@
 import { useCallback, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { hasAnyUnsavedChanges, setNavigationBypass } from "@/hooks/useUnsavedChanges";
+import { hasAnyUnsavedChanges, setNavigationBypass } from "@/hooks/ui/useUnsavedChanges";
 import {
   AlertDialog,
   AlertDialogAction,

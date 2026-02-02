@@ -26,7 +26,7 @@ import { ChangelogDialog } from "@/components/common/ChangelogDialog";
 import { CHANGELOG_TOTAL_ITEMS } from "@/data/changelog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { appConfig } from "@/lib/config";
-import { useSettings } from "@/hooks/useSettings";
+import { useSettings } from "@/hooks/persistence/useSettings";
 import { useShoppingList, useRefreshShoppingList } from "@/hooks/api";
 
 const navigation = [

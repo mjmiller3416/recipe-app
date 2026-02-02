@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useUnitConversionRules } from "@/hooks/useUnitConversionRules";
+import { useUnitConversionRules } from "@/hooks/persistence/useUnitConversionRules";
 import { useUnits } from "@/hooks/api";
 import { SectionHeader } from "../SectionHeader";
 

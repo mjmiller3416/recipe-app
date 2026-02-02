@@ -18,7 +18,7 @@ import {
   QUICK_FILTERS,
   type QuickFilter,
 } from "@/lib/constants";
-import { useSettings } from "@/hooks/useSettings";
+import { useSettings } from "@/hooks/persistence/useSettings";
 import type { RecipeCardData } from "@/types/recipe";
 import { RecipeSortControls, type SortOption, type SortDirection, type ActiveFilter } from "./browser/RecipeSortControls";
 import { RecipeGrid } from "./browser/RecipeGrid";

@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/select";
 import { INGREDIENT_CATEGORIES } from "@/lib/constants";
 import { IngredientSourceSidebar } from "./IngredientSourceSidebar";
-import { useSettings } from "@/hooks/useSettings";
+import { useSettings } from "@/hooks/persistence/useSettings";
 
 /**
  * StatCard - Individual stat card for the summary section

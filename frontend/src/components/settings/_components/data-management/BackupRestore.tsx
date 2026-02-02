@@ -26,7 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { dataManagementApi } from "@/lib/api";
-import { useSettings } from "@/hooks/useSettings";
+import { useSettings } from "@/hooks/persistence/useSettings";
 import type { RestorePreview, RestoreResult } from "@/types/common";
 
 export function BackupRestore() {

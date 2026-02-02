@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "../SectionHeader";
-import { DEFAULT_SETTINGS } from "@/hooks/useSettings";
+import { DEFAULT_SETTINGS } from "@/hooks/persistence/useSettings";
 
 const PLACEHOLDER_TOKEN = "{recipe_name}";
 

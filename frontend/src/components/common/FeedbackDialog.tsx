@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useFeedbackForm } from "@/hooks/useFeedbackForm";
+import { useFeedbackForm } from "@/hooks/forms/useFeedbackForm";
 
 interface FeedbackDialogProps {
   open: boolean;
