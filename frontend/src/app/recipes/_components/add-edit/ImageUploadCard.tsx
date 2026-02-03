@@ -12,8 +12,11 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { useSettings } from "@/hooks/persistence/useSettings";
 import { useGenerateImage, useGenerateBanner } from "@/hooks/api/useAI";
+import type { ImageGenerationType } from "@/types/ai";
 
 type ImageState = "empty" | "uploading" | "uploaded" | "generating" | "generated" | "error";
 
@@ -28,21 +31,27 @@ interface ImageUploadCardProps {
     referenceDataUrl: string,
     bannerBase64?: string
   ) => void;
+  /** Handler when user accepts a banner-only generated image */
+  onBannerOnlyAccept?: (bannerBase64: string) => void;
   /** Recipe name used for generating the image prompt */
   recipeName: string;
   /** Whether the current image was AI-generated */
   isAiGenerated?: boolean;
   /** Handler to update the AI-generated flag */
   onAiGeneratedChange?: (isAiGenerated: boolean) => void;
+  /** Whether in edit mode (enables selective generation UI) */
+  isEditMode?: boolean;
 }
 
 export function ImageUploadCard({
   imagePreview,
   onImageUpload,
   onGeneratedImageAccept,
+  onBannerOnlyAccept,
   recipeName,
   isAiGenerated = false,
   onAiGeneratedChange,
+  isEditMode = false,
 }: ImageUploadCardProps) {
   const { settings } = useSettings();
   const generateImageMutation = useGenerateImage();
@@ -65,6 +74,20 @@ export function ImageUploadCard({
   } | null>(null);
   const [progress, setProgress] = useState(0);
 
+  // Selective generation checkboxes (edit mode only)
+  const [generateReference, setGenerateReference] = useState(true);
+  const [generateBanner, setGenerateBanner] = useState(true);
+
+  // Derive image type from checkbox state
+  const getImageType = (): ImageGenerationType => {
+    if (generateReference && generateBanner) return "both";
+    if (generateReference) return "reference";
+    return "banner";
+  };
+
+  const isGenerating = imageState === "generating";
+  const noneSelected = isEditMode && !generateReference && !generateBanner;
+
   // Update state when imagePreview changes externally
   useEffect(() => {
     if (imagePreview && imageState === "empty") {
@@ -81,21 +104,20 @@ export function ImageUploadCard({
       return;
     }
 
-    // Target: 0-50% for reference, 50-100% for banner
-    // Duration: ~15 seconds per step
-    const startProgress = generationStep === "reference" ? 0 : 50;
-    const targetProgress = generationStep === "reference" ? 50 : 100;
-    const duration = 15000; // 15 seconds
-    const intervalMs = 100; // Update every 100ms
+    const imageType = isEditMode ? getImageType() : "both";
+    const isSingleStep = imageType !== "both";
+
+    const startProgress = isSingleStep ? 0 : (generationStep === "reference" ? 0 : 50);
+    const targetProgress = isSingleStep ? 100 : (generationStep === "reference" ? 50 : 100);
+    const duration = 15000;
+    const intervalMs = 100;
     const increment = ((targetProgress - startProgress) / duration) * intervalMs;
 
-    // Set starting point immediately
     setProgress(startProgress);
 
     const interval = setInterval(() => {
       setProgress((prev) => {
         const next = prev + increment;
-        // Stop slightly before target to leave room for completion snap
         if (next >= targetProgress - 2) {
           return targetProgress - 2;
         }
@@ -104,7 +126,7 @@ export function ImageUploadCard({
     }, intervalMs);
 
     return () => clearInterval(interval);
-  }, [generationStep]);
+  }, [generationStep, generateReference, generateBanner, isEditMode]);
 
   const handleGenerate = async () => {
     if (!recipeName.trim()) {
@@ -113,40 +135,79 @@ export function ImageUploadCard({
       return;
     }
 
+    const imageType = isEditMode ? getImageType() : "both";
+
     setImageState("generating");
-    setGenerationStep("reference");
     setGeneratingError(null);
     setPendingGeneratedImage(null);
 
     try {
-      // Step 1: Generate reference image using authenticated hook
-      const refResult = await generateImageMutation.mutateAsync({
-        recipeName,
-        customPrompt: settings.aiFeatures.imageGenerationPrompt,
-      });
+      if (imageType === "both") {
+        // BOTH: Generate reference, then banner from reference
+        setGenerationStep("reference");
+        const refResult = await generateImageMutation.mutateAsync({
+          recipeName,
+          customPrompt: settings.aiFeatures.imageGenerationPrompt,
+          imageType: "reference",
+        });
 
-      if (!refResult.success || !refResult.reference_image_data) {
-        throw new Error(refResult.error || "Failed to generate reference image");
+        if (!refResult.success || !refResult.reference_image_data) {
+          throw new Error(refResult.error || "Failed to generate reference image");
+        }
+
+        setProgress(50);
+        setGenerationStep("banner");
+        const bannerResult = await generateBannerMutation.mutateAsync({
+          recipeName,
+          referenceImageData: refResult.reference_image_data,
+        });
+
+        setProgress(100);
+        const dataUrl = `data:image/png;base64,${refResult.reference_image_data}`;
+        onGeneratedImageAccept(
+          refResult.reference_image_data,
+          dataUrl,
+          bannerResult.success ? bannerResult.banner_image_data : undefined
+        );
+        onAiGeneratedChange?.(true);
+        setImageState("generated");
+
+      } else if (imageType === "reference") {
+        // REFERENCE ONLY: Single call
+        setGenerationStep("reference");
+        const refResult = await generateImageMutation.mutateAsync({
+          recipeName,
+          customPrompt: settings.aiFeatures.imageGenerationPrompt,
+          imageType: "reference",
+        });
+
+        if (!refResult.success || !refResult.reference_image_data) {
+          throw new Error(refResult.error || "Failed to generate reference image");
+        }
+
+        setProgress(100);
+        const dataUrl = `data:image/png;base64,${refResult.reference_image_data}`;
+        onGeneratedImageAccept(refResult.reference_image_data, dataUrl);
+        onAiGeneratedChange?.(true);
+        setImageState("generated");
+
+      } else {
+        // BANNER ONLY: Single call
+        setGenerationStep("banner");
+        const bannerResult = await generateImageMutation.mutateAsync({
+          recipeName,
+          imageType: "banner",
+        });
+
+        if (!bannerResult.success || !bannerResult.banner_image_data) {
+          throw new Error(bannerResult.error || "Failed to generate banner image");
+        }
+
+        setProgress(100);
+        onBannerOnlyAccept?.(bannerResult.banner_image_data);
+        onAiGeneratedChange?.(true);
+        setImageState("generated");
       }
-
-      // Step 2: Generate banner image from reference using authenticated hook
-      setProgress(50); // Snap to 50% when reference completes
-      setGenerationStep("banner");
-      const bannerResult = await generateBannerMutation.mutateAsync({
-        recipeName,
-        referenceImageData: refResult.reference_image_data,
-      });
-
-      // Complete - display both images
-      setProgress(100); // Snap to 100% when complete
-      const dataUrl = `data:image/png;base64,${refResult.reference_image_data}`;
-      onGeneratedImageAccept(
-        refResult.reference_image_data,
-        dataUrl,
-        bannerResult.success ? bannerResult.banner_image_data : undefined
-      );
-      onAiGeneratedChange?.(true);
-      setImageState("generated");
     } catch (error) {
       setGeneratingError(
         error instanceof Error ? error.message : "Image generation failed"
@@ -227,12 +288,16 @@ export function ImageUploadCard({
                 <Sparkles className="h-12 w-12 text-primary animate-pulse" />
               </div>
               <p className="text-sm font-medium text-primary">
-                {generationStep === "reference"
+                {isEditMode && getImageType() === "reference"
+                  ? "Generating reference image..."
+                  : isEditMode && getImageType() === "banner"
+                  ? "Generating banner image..."
+                  : generationStep === "reference"
                   ? "Generating reference image (1 of 2)..."
                   : "Generating banner image (2 of 2)..."}
               </p>
               {/* Progress Bar */}
-              <div className="w-full max-w-[200px] mt-4">
+              <div className="w-full max-w-48 mt-4">
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full bg-primary rounded-full transition-all duration-200 ease-out"
@@ -289,6 +354,42 @@ export function ImageUploadCard({
             )}
         </div>
 
+        {/* Image Type Selector - Edit Mode Only */}
+        {isEditMode && (
+          <div className="flex items-center gap-4 mb-3">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="generate-reference"
+                size="sm"
+                checked={generateReference}
+                disabled={isGenerating}
+                onCheckedChange={(checked) => setGenerateReference(!!checked)}
+              />
+              <Label
+                htmlFor="generate-reference"
+                className="text-sm text-muted-foreground cursor-pointer"
+              >
+                Recipe image
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="generate-banner"
+                size="sm"
+                checked={generateBanner}
+                disabled={isGenerating}
+                onCheckedChange={(checked) => setGenerateBanner(!!checked)}
+              />
+              <Label
+                htmlFor="generate-banner"
+                className="text-sm text-muted-foreground cursor-pointer"
+              >
+                Banner image
+              </Label>
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="space-y-2">
           {/* Empty State Buttons */}
@@ -307,6 +408,7 @@ export function ImageUploadCard({
                 type="button"
                 className="flex-1 gap-2"
                 onClick={handleGenerate}
+                disabled={noneSelected}
               >
                 <Sparkles className="h-4 w-4" />
                 Generate
@@ -355,6 +457,7 @@ export function ImageUploadCard({
                   variant="outline"
                   size="icon"
                   onClick={handleGenerate}
+                  disabled={noneSelected}
                   aria-label="Generate a new image"
                 >
                   <RefreshCw className="h-4 w-4" />
@@ -389,6 +492,7 @@ export function ImageUploadCard({
                 type="button"
                 className="flex-1 gap-2"
                 onClick={handleGenerate}
+                disabled={noneSelected}
               >
                 <Sparkles className="h-4 w-4" />
                 Regenerate

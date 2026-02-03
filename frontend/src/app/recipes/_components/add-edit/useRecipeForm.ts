@@ -98,6 +98,7 @@ export interface RecipeFormState {
     referenceDataUrl: string,
     bannerBase64?: string
   ) => void;
+  handleBannerOnlyAccept: (bannerBase64: string) => void;
 
   // Form submission
   handleSubmit: () => Promise<void>;
@@ -446,6 +447,17 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
     [markDirty]
   );
 
+  // Banner-only accept handler (updates banner without touching reference image)
+  const handleBannerOnlyAccept = useCallback(
+    (bannerBase64: string) => {
+      markDirty();
+      setBannerImageData(bannerBase64);
+      const bannerFile = base64ToFile(bannerBase64, `recipe-ai-banner.png`);
+      setBannerImageFile(bannerFile);
+    },
+    [markDirty]
+  );
+
   // Validate entire form and return normalized values
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -734,6 +746,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
     // Image handlers
     handleImageUpload,
     handleGeneratedImageAccept,
+    handleBannerOnlyAccept,
 
     // Form submission
     handleSubmit,

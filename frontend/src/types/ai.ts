@@ -4,8 +4,11 @@
 // Image Generation Types
 // ============================================================================
 
+export type ImageGenerationType = "both" | "reference" | "banner";
+
 export interface ImageGenerationRequestDTO {
   recipe_name: string;
+  image_type?: ImageGenerationType;
 }
 
 export interface ImageGenerationResponseDTO {

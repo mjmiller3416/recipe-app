@@ -1,5 +1,6 @@
 import type {
   ImageGenerationResponseDTO,
+  ImageGenerationType,
   BannerGenerationResponseDTO,
   CookingTipResponseDTO,
   MealGenieMessage,
@@ -21,7 +22,8 @@ export const imageGenerationApi = {
   generate: (
     recipeName: string,
     customPrompt?: string,
-    token?: string | null
+    token?: string | null,
+    imageType?: ImageGenerationType
   ): Promise<ImageGenerationResponseDTO> =>
     fetchApi<ImageGenerationResponseDTO>(
       "/api/ai/image-generation",
@@ -30,6 +32,7 @@ export const imageGenerationApi = {
         body: JSON.stringify({
           recipe_name: recipeName,
           ...(customPrompt && { custom_prompt: customPrompt }),
+          ...(imageType && { image_type: imageType }),
         }),
       },
       token

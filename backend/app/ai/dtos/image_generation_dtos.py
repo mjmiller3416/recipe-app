@@ -1,7 +1,7 @@
 """DTOs for AI image generation."""
 
 from pydantic import BaseModel
-from typing import Optional
+from typing import Literal, Optional
 
 
 class ImageGenerationRequestDTO(BaseModel):
@@ -9,6 +9,7 @@ class ImageGenerationRequestDTO(BaseModel):
 
     recipe_name: str
     custom_prompt: Optional[str] = None  # Custom prompt template (must include {recipe_name})
+    image_type: Literal["both", "reference", "banner"] = "both"
 
 
 class ImageGenerationResponseDTO(BaseModel):

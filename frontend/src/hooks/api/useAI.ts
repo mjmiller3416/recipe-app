@@ -10,6 +10,7 @@ import {
 } from "@/lib/api";
 import { aiQueryKeys } from "./queryKeys";
 import type {
+  ImageGenerationType,
   MealSuggestionsRequestDTO,
   MealGenieMessage,
 } from "@/types/ai";
@@ -66,12 +67,14 @@ export function useGenerateImage() {
     mutationFn: async ({
       recipeName,
       customPrompt,
+      imageType,
     }: {
       recipeName: string;
       customPrompt?: string;
+      imageType?: ImageGenerationType;
     }) => {
       const token = await getToken();
-      return imageGenerationApi.generate(recipeName, customPrompt, token);
+      return imageGenerationApi.generate(recipeName, customPrompt, token, imageType);
     },
   });
 }

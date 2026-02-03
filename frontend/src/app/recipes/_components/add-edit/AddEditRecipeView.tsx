@@ -221,14 +221,16 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
           {/* Image Upload - Bottom on mobile, right sidebar on desktop */}
           {/* Image Upload - Bottom on mobile, right sidebar on desktop */}
           <div className="md:w-80 md:flex-shrink-0 md:self-stretch">
-            <div className="md:sticky md:top-[113px] z-10 transform-gpu">
+            <div className="md:sticky md:top-28 z-10 transform-gpu">
               <ImageUploadCard
                 imagePreview={form.imagePreview}
                 onImageUpload={form.handleImageUpload}
                 onGeneratedImageAccept={form.handleGeneratedImageAccept}
+                onBannerOnlyAccept={form.handleBannerOnlyAccept}
                 recipeName={form.recipeName}
                 isAiGenerated={form.isAiGenerated}
                 onAiGeneratedChange={form.setIsAiGenerated}
+                isEditMode={isEditMode}
               />
             </div>
           </div>

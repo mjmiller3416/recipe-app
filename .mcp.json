@@ -8,16 +8,6 @@
       "command": "cmd",
       "args": ["/c", "npx", "-y", "next-devtools-mcp@latest"]
     },
-    "cloudinary-asset-mgmt": {
-      "type": "stdio",
-      "command": "cmd",
-      "args": ["/c", "npx", "-y", "--package", "@cloudinary/asset-management", "--", "mcp", "start"],
-      "env": {
-        "CLOUDINARY_CLOUD_NAME": "dfbeydsmt",
-        "CLOUDINARY_API_KEY": "898326138311578",
-        "CLOUDINARY_API_SECRET": "y2JlvJ7UsRlTA71cRZzPQsI8VDU"
-      }
-    },
     "claude-code-docs": {
       "type": "http",
       "url": "https://code.claude.com/docs/mcp"
