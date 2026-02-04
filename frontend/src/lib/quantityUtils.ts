@@ -66,30 +66,20 @@ export function parseQuantity(input: string): number | null {
 }
 
 /**
- * Formats a duration in minutes to a human-readable string.
+ * Formats minutes into a compact time string for cards, badges, and inline displays.
  *
- * @param minutes - The duration in minutes
- * @returns A formatted string (e.g., "30 min", "1h 30m", "2h")
+ * @param minutes - Duration in minutes (nullable)
+ * @param fallback - String to return when minutes is null/undefined (default: em dash)
+ * @returns Formatted string like "30m", "1h 30m", "2h", or the fallback
  */
-export function formatDuration(minutes: number | null | undefined): string {
-  if (minutes === null || minutes === undefined || isNaN(minutes) || minutes < 0) {
-    return "0 min";
-  }
-
-  if (minutes === 0) {
-    return "0 min";
-  }
-
+export function formatTime(
+  minutes: number | null | undefined,
+  fallback: string = "\u2014"
+): string {
+  if (minutes == null || isNaN(minutes) || minutes <= 0) return fallback;
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-
-  if (hours === 0) {
-    return `${mins} min`;
-  }
-
-  if (mins === 0) {
-    return `${hours}h`;
-  }
-
+  if (hours === 0) return `${mins}m`;
+  if (mins === 0) return `${hours}h`;
   return `${hours}h ${mins}m`;
 }

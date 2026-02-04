@@ -1,7 +1,8 @@
 "use client";
 
 import { Info, Clock, Users, CheckCircle, Calendar, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { formatTime } from "@/lib/quantityUtils";
+import { cn, formatRelativeTime } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 
 // ============================================================================
@@ -21,63 +22,6 @@ interface RecipeStatsProps {
   dateAdded: string | null;
   /** Optional className for custom styling */
   className?: string;
-}
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-/**
- * Formats minutes into a human-readable time string.
- * Examples: 90 -> "1h 30m", 45 -> "45m", 120 -> "2h"
- */
-function formatCookTime(minutes: number): string {
-  if (minutes < 60) {
-    return `${minutes}m`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  if (mins === 0) {
-    return `${hours}h`;
-  }
-  return `${hours}h ${mins}m`;
-}
-
-/**
- * Formats an ISO datetime string into a relative time string.
- * Examples: "2 days ago", "3 weeks ago", "1 month ago"
- */
-function formatRelativeTime(isoDate: string): string {
-  const date = new Date(isoDate);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  // Handle edge cases (future dates or same day)
-  if (diffDays < 0) {
-    return "Today";
-  }
-  if (diffDays === 0) {
-    return "Today";
-  }
-  if (diffDays === 1) {
-    return "Yesterday";
-  }
-  if (diffDays < 7) {
-    return `${diffDays} days ago`;
-  }
-  if (diffDays < 14) {
-    return "1 week ago";
-  }
-  if (diffDays < 30) {
-    const weeks = Math.floor(diffDays / 7);
-    return `${weeks} weeks ago`;
-  }
-  if (diffDays < 60) {
-    return "1 month ago";
-  }
-  const months = Math.floor(diffDays / 30);
-  return `${months} months ago`;
 }
 
 // ============================================================================
@@ -154,7 +98,7 @@ export function RecipeStats({
         {cookTime !== null && (
           <StatRow
             label="Cook time"
-            value={formatCookTime(cookTime)}
+            value={formatTime(cookTime)}
             icon={<Clock className="w-3.5 h-3.5" />}
           />
         )}

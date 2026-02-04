@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRecipeCards } from "@/hooks/api";
 import { RecipeBannerImage } from "@/components/recipe/RecipeBannerImage";
+import { formatTime } from "@/lib/quantityUtils";
 import type { RecipeCardDTO } from "@/types/recipe";
 
 // Animation variants
@@ -116,15 +117,6 @@ export function RecipeRouletteWidget() {
     if (currentRecipe) {
       router.push(`/recipes/${currentRecipe.id}`);
     }
-  };
-
-  // Format time display
-  const formatTime = (minutes: number | null): string => {
-    if (!minutes) return "N/A";
-    if (minutes < 60) return `${minutes}m`;
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   };
 
   return (
@@ -236,7 +228,7 @@ export function RecipeRouletteWidget() {
               <div className="h-3 w-px bg-border" />
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                <span>{formatTime(currentRecipe.total_time)}</span>
+                <span>{formatTime(currentRecipe.total_time, "N/A")}</span>
               </div>
             </motion.div>
 

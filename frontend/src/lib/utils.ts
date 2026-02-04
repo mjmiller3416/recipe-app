@@ -89,3 +89,46 @@ export function base64ToFile(
   const blob = new Blob([byteArray], { type: mimeType });
   return new File([blob], filename, { type: mimeType });
 }
+
+/**
+ * Extracts a human-readable message from an unknown error.
+ * Use in catch blocks where the error type is not guaranteed.
+ */
+export function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
+/**
+ * Triggers a browser download of a Blob as a file.
+ * Creates and clicks a temporary anchor element, then cleans up.
+ */
+export function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Formats an ISO datetime string into a human-readable relative time.
+ */
+export function formatRelativeTime(isoDate: string): string {
+  const date = new Date(isoDate);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return "Today";
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 14) return "1 week ago";
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  if (diffDays < 60) return "1 month ago";
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+  return `${Math.floor(diffDays / 365)} year${diffDays >= 730 ? "s" : ""} ago`;
+}

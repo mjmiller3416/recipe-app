@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RecipeBannerImage } from "@/components/recipe/RecipeBannerImage";
 import { ShoppingCart, Users, Clock, Bookmark, GripVertical } from "lucide-react";
+import { formatTime } from "@/lib/quantityUtils";
 import { ShoppingMode } from "@/types/shopping";
 
 // ============================================================================
@@ -37,15 +38,6 @@ interface MealGridCardProps {
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
-
-function formatTime(minutes: number): string {
-  if (minutes < 60) {
-    return `${minutes}m`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-}
 
 /** Get tooltip text explaining the current shopping mode */
 function getShoppingModeTooltip(mode: ShoppingMode): string {

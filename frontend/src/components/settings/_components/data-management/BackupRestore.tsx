@@ -26,6 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { dataManagementApi } from "@/lib/api";
+import { getErrorMessage, downloadBlob } from "@/lib/utils";
 import { useSettings } from "@/hooks/persistence/useSettings";
 import type { RestorePreview, RestoreResult } from "@/types/common";
 
@@ -62,18 +63,11 @@ export function BackupRestore() {
       const blob = new Blob([JSON.stringify(backup, null, 2)], {
         type: "application/json",
       });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `meal-genie-backup-${new Date().toISOString().split("T")[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `meal-genie-backup-${new Date().toISOString().split("T")[0]}.json`);
 
       toast.success("Full backup created successfully");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to create backup");
+      toast.error(getErrorMessage(error, "Failed to create backup"));
     } finally {
       setIsCreatingBackup(false);
     }
@@ -105,7 +99,7 @@ export function BackupRestore() {
       setRestorePreview(preview);
       setShowRestorePreviewDialog(true);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Invalid backup file");
+      toast.error(getErrorMessage(error, "Invalid backup file"));
     } finally {
       setIsPreviewingRestore(false);
     }
@@ -134,7 +128,7 @@ export function BackupRestore() {
         toast.warning("Restore completed with some errors");
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to restore backup");
+      toast.error(getErrorMessage(error, "Failed to restore backup"));
     } finally {
       setIsRestoring(false);
     }

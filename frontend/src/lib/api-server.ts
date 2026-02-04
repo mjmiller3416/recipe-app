@@ -6,24 +6,10 @@
  */
 
 import { auth } from "@clerk/nextjs/server";
+import { ApiError } from "@/lib/api/client";
 
 // API base URL from environment variable or default to localhost
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://192.168.1.213:8000";
-
-/**
- * Custom error class for API errors with status code and details
- */
-export class ApiError extends Error {
-  status: number;
-  details?: Record<string, unknown>;
-
-  constructor(message: string, status: number, details?: Record<string, unknown>) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-    this.details = details;
-  }
-}
 
 /**
  * Server-side authenticated fetch function for server components.

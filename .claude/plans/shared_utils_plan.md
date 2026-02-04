@@ -1,18 +1,14 @@
-# Plan: Extract Shared Frontend Utilities
+# Parallel Execution Plan: Extract Shared Frontend Utilities
 
 **Branch:** `refactor/extract-shared-utilities`
-**Scope:** 8 extractions across ~22 files, 5 new files
-**Deferred:** #2 useAuth() boilerplate (minimal per-hook savings, warrants its own PR)
 
 ---
 
-## Phase 1: Standalone Utility Functions
+## Round 1 — All Independent (Run in Parallel)
 
-### 1A. `formatTime()` — add to `lib/quantityUtils.ts`, update 7 files
+### Task 1: `formatTime()` → `quantityUtils.ts`
 
-**Problem:** 9 independent time-formatting implementations across recipe cards, meal planner, dashboard, and recipe detail pages.
-
-**New function in `frontend/src/lib/quantityUtils.ts`:**
+Add to `frontend/src/lib/quantityUtils.ts`:
 
 ```ts
 /**
@@ -35,7 +31,7 @@ export function formatTime(
 }
 ```
 
-**Remove inline implementations and import `formatTime` from `@/lib/quantityUtils`:**
+Remove inline implementations and import `formatTime` from `@/lib/quantityUtils`:
 
 | File | Lines to Remove | Notes |
 |------|----------------|-------|
@@ -46,9 +42,7 @@ export function formatTime(
 | `app/meal-planner/_components/meal-display/RecipeStats.tsx` | 34-44 (`formatCookTime`) | Rename calls from `formatCookTime(x)` to `formatTime(x)` |
 | `app/meal-planner/_components/meal-display/SelectedMealCard.tsx` | 43-50 (top-level fn) | Direct replacement |
 
-**Update `app/recipes/[id]/_components/recipe-utils.ts`:**
-
-The recipe detail page uses `"45 min"` long format (not `"45m"`). Replace local `formatTime` with a wrapper that preserves the long format via `formatDuration`:
+Update `app/recipes/[id]/_components/recipe-utils.ts` — the recipe detail page uses `"45 min"` long format (not `"45m"`). Replace local `formatTime` with a wrapper that preserves the long format via `formatDuration`:
 
 ```ts
 import { formatDuration } from "@/lib/quantityUtils";
@@ -61,9 +55,7 @@ This keeps `RecipeHeaderCard.tsx` and `RecipePrintLayout.tsx` working with no im
 
 ---
 
-### 1B. `ApiError` class — dedupe 3 identical definitions
-
-**Problem:** Byte-identical `ApiError` class in `lib/api/client.ts`, `lib/api-client.ts`, and `lib/api-server.ts`.
+### Task 2: `ApiError` Dedupe
 
 **Keep** canonical definition in `lib/api/client.ts` (lines 5-15).
 
@@ -79,11 +71,9 @@ This keeps `RecipeHeaderCard.tsx` and `RecipePrintLayout.tsx` working with no im
 
 ---
 
-### 1C. `getErrorMessage()` — add to `lib/utils.ts`, update 6 files
+### Task 3: Utility Functions → `lib/utils.ts` (Combined)
 
-**Problem:** 11 occurrences of `error instanceof Error ? error.message : "fallback"` across 6 files.
-
-**New function in `frontend/src/lib/utils.ts`:**
+Add three functions to `frontend/src/lib/utils.ts`:
 
 ```ts
 /**
@@ -93,28 +83,7 @@ This keeps `RecipeHeaderCard.tsx` and `RecipePrintLayout.tsx` working with no im
 export function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
-```
 
-**Replace all 11 occurrences:**
-
-| File | Occurrences | Fallback Messages |
-|------|------------|-------------------|
-| `components/settings/_components/data-management/BackupRestore.tsx` | 3 | "Failed to create backup", "Invalid backup file", "Failed to restore backup" |
-| `components/settings/_components/data-management/ExportImport.tsx` | 4 | "Failed to preview import", "Failed to execute import", "Failed to export recipes", "Failed to download template" |
-| `components/settings/_components/data-management/DeleteData.tsx` | 1 | "Failed to delete data" |
-| `app/meal-planner/_components/meal-display/SelectedMealCard.tsx` | 1 | "Failed to load meal" (in JSX, not toast) |
-| `app/recipes/_components/add-edit/ImageUploadCard.tsx` | 1 | "Image generation failed" |
-| `app/shopping-list/_components/ShoppingListView.tsx` | 1 | "Failed to load shopping list" |
-
----
-
-### 1D. `downloadBlob()` — add to `lib/utils.ts`, update 2 files
-
-**Problem:** 3 identical 8-line blob download sequences.
-
-**New function in `frontend/src/lib/utils.ts`:**
-
-```ts
 /**
  * Triggers a browser download of a Blob as a file.
  * Creates and clicks a temporary anchor element, then cleans up.
@@ -129,25 +98,7 @@ export function downloadBlob(blob: Blob, filename: string): void {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
-```
 
-**Replace in:**
-
-| File | Location | Filename Pattern |
-|------|----------|-----------------|
-| `components/settings/_components/data-management/BackupRestore.tsx` | `handleCreateBackup` (lines 65-72) | `` `meal-genie-backup-${date}.json` `` |
-| `components/settings/_components/data-management/ExportImport.tsx` | `handleExport` (lines 240-247) | `` `recipes_export_${date}.xlsx` `` |
-| `components/settings/_components/data-management/ExportImport.tsx` | `handleDownloadTemplate` (lines 267-274) | `"recipe_import_template.xlsx"` |
-
----
-
-### 1E. `formatRelativeTime()` — add to `lib/utils.ts`, update 2 files
-
-**Problem:** 2 near-identical implementations (SavedMealCard handles years, RecipeStats doesn't).
-
-**New function in `frontend/src/lib/utils.ts`** (based on SavedMealCard version, the more complete one):
-
-```ts
 /**
  * Formats an ISO datetime string into a human-readable relative time.
  */
@@ -169,20 +120,35 @@ export function formatRelativeTime(isoDate: string): string {
 }
 ```
 
-**Remove inline implementations:**
+**Replace `getErrorMessage` pattern** (11 occurrences):
+
+| File | Occurrences | Fallback Messages |
+|------|------------|-------------------|
+| `components/settings/_components/data-management/BackupRestore.tsx` | 3 | "Failed to create backup", "Invalid backup file", "Failed to restore backup" |
+| `components/settings/_components/data-management/ExportImport.tsx` | 4 | "Failed to preview import", "Failed to execute import", "Failed to export recipes", "Failed to download template" |
+| `components/settings/_components/data-management/DeleteData.tsx` | 1 | "Failed to delete data" |
+| `app/meal-planner/_components/meal-display/SelectedMealCard.tsx` | 1 | "Failed to load meal" (in JSX, not toast) |
+| `app/recipes/_components/add-edit/ImageUploadCard.tsx` | 1 | "Image generation failed" |
+| `app/shopping-list/_components/ShoppingListView.tsx` | 1 | "Failed to load shopping list" |
+
+**Replace `downloadBlob` sequences** (3 occurrences):
+
+| File | Location | Filename Pattern |
+|------|----------|-----------------|
+| `components/settings/_components/data-management/BackupRestore.tsx` | `handleCreateBackup` (lines 65-72) | `` `meal-genie-backup-${date}.json` `` |
+| `components/settings/_components/data-management/ExportImport.tsx` | `handleExport` (lines 240-247) | `` `recipes_export_${date}.xlsx` `` |
+| `components/settings/_components/data-management/ExportImport.tsx` | `handleDownloadTemplate` (lines 267-274) | `"recipe_import_template.xlsx"` |
+
+**Remove `formatRelativeTime` implementations:**
 
 | File | Lines to Remove |
 |------|----------------|
 | `app/meal-planner/_components/SavedMealCard.tsx` | 18-33 |
-| `app/meal-planner/_components/meal-display/RecipeStats.tsx` | 50-81 (gains year handling) |
+| `app/meal-planner/_components/meal-display/RecipeStats.tsx` | 50-81 |
 
 ---
 
-## Phase 2: Hook Extractions
-
-### 2A. `useLocalStorageState<T>()` — new file, refactor 2 hooks
-
-**Problem:** `useChatHistory` and `useRecentRecipes` share ~50 lines of identical localStorage + event sync infrastructure.
+### Task 4: `useLocalStorageState<T>()` Hook
 
 **New file: `frontend/src/hooks/persistence/useLocalStorageState.ts`**
 
@@ -203,17 +169,18 @@ interface UseLocalStorageStateOptions<T> {
  * and same-window synchronization via CustomEvent + StorageEvent.
  *
  * @param key - localStorage key
- * @param eventName - CustomEvent name for same-window sync
- * @param initialValue - Default value before first load
+ * @param initialValue - Default value when nothing is stored
  * @param options - Optional configuration
- * @returns [state, setState, isLoaded]
+ * @returns [state, setState, isLoaded] tuple
  */
 export function useLocalStorageState<T>(
   key: string,
-  eventName: string,
   initialValue: T,
-  options?: UseLocalStorageStateOptions<T>
-): [T, (updater: T | ((prev: T) => T)) => void, boolean] {
+  options: UseLocalStorageStateOptions<T> = {}
+): [T, (value: T | ((prev: T) => T)) => void, boolean] {
+  const { maxItems, deserialize } = options;
+  const eventName = `localStorage:${key}`;
+
   const [state, setStateInternal] = useState<T>(initialValue);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -223,62 +190,57 @@ export function useLocalStorageState<T>(
       const stored = localStorage.getItem(key);
       if (stored) {
         const parsed = JSON.parse(stored);
-        const value = options?.deserialize ? options.deserialize(parsed) : parsed;
-        setStateInternal(
-          options?.maxItems && Array.isArray(value)
-            ? (value.slice(-options.maxItems) as T)
-            : value
-        );
+        const value = deserialize ? deserialize(parsed) : parsed;
+        setStateInternal(value);
       }
     } catch (err) {
       console.error(`[useLocalStorageState] Failed to load ${key}:`, err);
     }
     setIsLoaded(true);
-  }, [key]);
+  }, [key, deserialize]);
 
-  // Listen for same-window CustomEvent + cross-tab StorageEvent
+  // Listen for changes from other tabs (StorageEvent) and same window (CustomEvent)
   useEffect(() => {
-    const handleCustom = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      if (detail !== undefined) setStateInternal(detail);
-    };
-
     const handleStorage = (e: StorageEvent) => {
-      if (e.key !== key || !e.newValue) return;
-      try {
-        const parsed = JSON.parse(e.newValue);
-        const value = options?.deserialize ? options.deserialize(parsed) : parsed;
-        setStateInternal(value);
-      } catch (err) {
-        console.error(`[useLocalStorageState] Failed to sync ${key}:`, err);
+      if (e.key === key && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          const value = deserialize ? deserialize(parsed) : parsed;
+          setStateInternal(value);
+        } catch (err) {
+          console.error(`[useLocalStorageState] Failed to parse ${key}:`, err);
+        }
       }
     };
 
-    window.addEventListener(eventName, handleCustom);
-    window.addEventListener("storage", handleStorage);
-    return () => {
-      window.removeEventListener(eventName, handleCustom);
-      window.removeEventListener("storage", handleStorage);
+    const handleCustom = (e: Event) => {
+      const customEvent = e as CustomEvent<T>;
+      setStateInternal(customEvent.detail);
     };
-  }, [key, eventName]);
 
-  // Setter that persists to localStorage and dispatches sync events
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener(eventName, handleCustom);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(eventName, handleCustom);
+    };
+  }, [key, eventName, deserialize]);
+
   const setState = useCallback(
-    (updater: T | ((prev: T) => T)) => {
+    (value: T | ((prev: T) => T)) => {
       setStateInternal((prev) => {
-        const next = typeof updater === "function" ? (updater as (prev: T) => T)(prev) : updater;
+        const next = typeof value === "function" ? (value as (prev: T) => T)(prev) : value;
+        const toStore = maxItems && Array.isArray(next) ? next.slice(-maxItems) : next;
         try {
-          localStorage.setItem(key, JSON.stringify(next));
-          queueMicrotask(() => {
-            window.dispatchEvent(new CustomEvent(eventName, { detail: next }));
-          });
+          localStorage.setItem(key, JSON.stringify(toStore));
+          window.dispatchEvent(new CustomEvent(eventName, { detail: toStore }));
         } catch (err) {
           console.error(`[useLocalStorageState] Failed to save ${key}:`, err);
         }
-        return next;
+        return toStore as T;
       });
     },
-    [key, eventName]
+    [key, eventName, maxItems]
   );
 
   return [state, setState, isLoaded];
@@ -297,9 +259,7 @@ export function useLocalStorageState<T>(
 
 ---
 
-### 2B. `useChatScroll()` — new hook for MealGenie
-
-**Problem:** Both MealGenie chat components independently implement auto-scroll + fade indicator logic (~20 lines each).
+### Task 5: `useChatScroll()` Hook
 
 **New file: `frontend/src/hooks/ui/useChatScroll.ts`**
 
@@ -347,11 +307,104 @@ export function useChatScroll(deps: unknown[]) {
 
 ---
 
-## Phase 3: Component Extractions
+### Task 6: `<InlineGroupCreator>` Component
 
-### 3A. `<ChatMessageList>` + shared constants — new MealGenie components
+**New file: `frontend/src/components/common/InlineGroupCreator.tsx`**
 
-**Problem:** ~150 shared lines between MealGenieAssistant.tsx and MealGenieChatContent.tsx (message rendering, loading indicator, empty state, suggestion buttons).
+```tsx
+"use client";
+
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { FolderOpen, Check, X, Loader2 } from "lucide-react";
+
+interface InlineGroupCreatorProps {
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+  isPending?: boolean;
+  disabled?: boolean;
+  placeholder?: string;
+  size?: "sm" | "default";
+  maxLength?: number;
+}
+
+export function InlineGroupCreator({
+  value,
+  onChange,
+  onSubmit,
+  onCancel,
+  isPending = false,
+  disabled = false,
+  placeholder = "New group name",
+  size = "default",
+  maxLength = 50,
+}: InlineGroupCreatorProps) {
+  const iconSize = size === "sm" ? "h-4 w-4" : "h-5 w-5";
+  const buttonSize = size === "sm" ? "h-8 w-8" : "h-9 w-9";
+  const inputHeight = size === "sm" ? "h-8" : "h-9";
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && value.trim() && !disabled && !isPending) {
+      e.preventDefault();
+      onSubmit();
+    } else if (e.key === "Escape") {
+      onCancel();
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-card border border-border">
+      <FolderOpen className={`${iconSize} text-muted-foreground shrink-0`} />
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        disabled={disabled || isPending}
+        autoFocus
+        className={`${inputHeight} flex-1`}
+      />
+      <Button
+        size="icon"
+        variant="ghost"
+        className={buttonSize}
+        onClick={onSubmit}
+        disabled={!value.trim() || disabled || isPending}
+      >
+        {isPending ? (
+          <Loader2 className={`${iconSize} animate-spin`} />
+        ) : (
+          <Check className={iconSize} />
+        )}
+      </Button>
+      <Button
+        size="icon"
+        variant="ghost"
+        className={buttonSize}
+        onClick={onCancel}
+        disabled={isPending}
+      >
+        <X className={iconSize} />
+      </Button>
+    </div>
+  );
+}
+```
+
+**Update ManageGroupsDialog.tsx:** Replace lines 188-229 with `<InlineGroupCreator ... size="default" />`. Remove `handleKeyDown`.
+
+**Update RecipePreferencesSection.tsx:** Replace lines 327-368 with `<InlineGroupCreator ... size="sm" />`. Remove `handleGroupKeyDown`.
+
+---
+
+## Round 2 — Has Prerequisites
+
+### Task 7: `<ChatMessageList>` + Constants
+
+> **Requires:** Task 5 (`useChatScroll`) completed
 
 **New file: `frontend/src/components/meal-genie/constants.ts`**
 
@@ -367,14 +420,14 @@ export const CHAT_SUGGESTIONS = [
 
 **New file: `frontend/src/components/meal-genie/ChatMessageList.tsx`**
 
-Renders:
-- Scroll container with top/bottom fade overlays
-- Message bubbles with role-based styling (user right-aligned, assistant left-aligned)
-- ReactMarkdown for assistant messages
-- Loading indicator (Sparkles animation + "Thinking...")
-- Optional `afterLoadingSlot` for extra content (e.g., "View Recipe Draft" button)
+```tsx
+"use client";
 
-```ts
+import ReactMarkdown from "react-markdown";
+import { Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { MealGenieMessage } from "@/types/meal-genie";
+
 interface ChatMessageListProps {
   messages: MealGenieMessage[];
   isPending: boolean;
@@ -384,6 +437,82 @@ interface ChatMessageListProps {
   showBottomFade: boolean;
   afterLoadingSlot?: React.ReactNode;
 }
+
+export function ChatMessageList({
+  messages,
+  isPending,
+  scrollContainerRef,
+  messagesEndRef,
+  showTopFade,
+  showBottomFade,
+  afterLoadingSlot,
+}: ChatMessageListProps) {
+  return (
+    <div className="relative flex-1 min-h-0">
+      {/* Top fade */}
+      <div
+        className={cn(
+          "absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none transition-opacity",
+          showTopFade ? "opacity-100" : "opacity-0"
+        )}
+      />
+
+      {/* Scroll container */}
+      <div
+        ref={scrollContainerRef}
+        className="h-full overflow-y-auto px-4 py-2 space-y-3"
+      >
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className={cn(
+              "flex",
+              message.role === "user" ? "justify-end" : "justify-start"
+            )}
+          >
+            <div
+              className={cn(
+                "max-w-[85%] rounded-2xl px-4 py-2",
+                message.role === "user"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted"
+              )}
+            >
+              {message.role === "assistant" ? (
+                <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
+                  {message.content}
+                </ReactMarkdown>
+              ) : (
+                <p className="text-sm">{message.content}</p>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {isPending && (
+          <div className="flex justify-start">
+            <div className="bg-muted rounded-2xl px-4 py-2 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 animate-pulse text-primary" />
+              <span className="text-sm text-muted-foreground">Thinking...</span>
+            </div>
+          </div>
+        )}
+
+        {afterLoadingSlot}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Bottom fade */}
+      <div
+        className={cn(
+          "absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-background to-transparent z-10 pointer-events-none transition-opacity",
+          showBottomFade ? "opacity-100" : "opacity-0"
+        )}
+      />
+    </div>
+  );
+}
 ```
 
 **Update MealGenieAssistant.tsx:** Replace scroll logic with `useChatScroll`, message rendering with `<ChatMessageList>`, local SUGGESTIONS with import from constants. (~80 lines removed)
@@ -392,43 +521,9 @@ interface ChatMessageListProps {
 
 ---
 
-### 3B. `<InlineGroupCreator>` — new shared form component
+### Task 8: Barrel Export Updates
 
-**Problem:** ManageGroupsDialog and RecipePreferencesSection have near-identical inline group creation UI (~50 shared lines each).
-
-**New file: `frontend/src/components/common/InlineGroupCreator.tsx`**
-
-```ts
-interface InlineGroupCreatorProps {
-  value: string;
-  onChange: (value: string) => void;
-  onSubmit: () => void;
-  onCancel: () => void;
-  isPending?: boolean;
-  disabled?: boolean;
-  placeholder?: string;
-  size?: "sm" | "default";    // sm = h-8 w-8, default = h-9 w-9
-  maxLength?: number;
-}
-```
-
-Renders:
-```
-<div "flex items-center gap-2 px-3 py-2 rounded-md bg-card border border-border">
-  <FolderOpen icon />
-  <Input with autoFocus, Enter-to-submit, Escape-to-cancel />
-  <Button size="icon"> Check or Loader2 </Button>
-  <Button size="icon"> X </Button>
-</div>
-```
-
-**Update ManageGroupsDialog.tsx:** Replace lines 188-229 with `<InlineGroupCreator ... size="default" />`. Remove `handleKeyDown`.
-
-**Update RecipePreferencesSection.tsx:** Replace lines 327-368 with `<InlineGroupCreator ... size="sm" />`. Remove `handleGroupKeyDown`.
-
----
-
-## Phase 4: Barrel Export Updates
+> **Requires:** Tasks 1, 3, and 5 completed
 
 | File | New Exports |
 |------|-------------|
@@ -440,7 +535,7 @@ No changes needed to `hooks/persistence/index.ts` — public API of refactored h
 
 ---
 
-## Verification
+## Verification (Run After All Tasks Complete)
 
 1. **TypeScript:** `npx tsc` from `frontend/` — catch import/type errors
 2. **Lint:** `npm run lint` from `frontend/` — catch unused imports/variables
@@ -461,19 +556,14 @@ No changes needed to `hooks/persistence/index.ts` — public API of refactored h
 
 ## Summary
 
-| # | Extraction | Impact | New Files | Files Modified |
-|---|-----------|--------|-----------|----------------|
-| 1A | `formatTime()` | HIGH | 0 | 8 |
-| 1B | `ApiError` dedupe | HIGH | 0 | 2 |
-| 1C | `getErrorMessage()` | MEDIUM | 0 | 7 (incl. utils.ts) |
-| 1D | `downloadBlob()` | MEDIUM | 0 | 3 (incl. utils.ts) |
-| 1E | `formatRelativeTime()` | MEDIUM | 0 | 3 (incl. utils.ts) |
-| 2A | `useLocalStorageState` | MEDIUM | 1 | 2 |
-| 2B | `useChatScroll` | MEDIUM | 1 | 3 (incl. index) |
-| 3A | `ChatMessageList` | HIGH | 2 | 2 |
-| 3B | `InlineGroupCreator` | MEDIUM | 1 | 2 |
+| Round | Task | Description | New Files | Files Modified |
+|-------|------|-------------|-----------|----------------|
+| 1 | 1 | `formatTime()` | 0 | 8 |
+| 1 | 2 | `ApiError` dedupe | 0 | 2 |
+| 1 | 3 | `getErrorMessage`, `downloadBlob`, `formatRelativeTime` | 0 | 9 |
+| 1 | 4 | `useLocalStorageState` | 1 | 2 |
+| 1 | 5 | `useChatScroll` | 1 | 1 |
+| 1 | 6 | `InlineGroupCreator` | 1 | 2 |
+| 2 | 7 | `ChatMessageList` + constants | 2 | 2 |
+| 2 | 8 | Barrel exports | 0 | 3 |
 | **Total** | | | **5 new** | **~22 modified** |
-
-### Deferred
-
-**useAuth() + getToken() boilerplate** (#2 from original proposal): Every hook's `queryFn` is unique in API call, arguments, and return type. A minimal `useGetToken()` wrapper saves only 1 line per hook. A meaningful `useAuthenticatedQuery`/`useAuthenticatedMutation` abstraction changes every hook's API shape and warrants its own focused PR.

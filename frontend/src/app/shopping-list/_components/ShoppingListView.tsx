@@ -39,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { INGREDIENT_CATEGORIES } from "@/lib/constants";
+import { getErrorMessage } from "@/lib/utils";
 import { IngredientSourceSidebar } from "./IngredientSourceSidebar";
 import { useSettings } from "@/hooks/persistence/useSettings";
 
@@ -503,7 +504,7 @@ export function ShoppingListView() {
             Something went wrong
           </h3>
           <p className="max-w-sm mb-4 text-sm text-muted-foreground">
-            {error instanceof Error ? error.message : "Failed to load shopping list"}
+            {getErrorMessage(error, "Failed to load shopping list")}
           </p>
           <Button onClick={() => refetch()}>Try Again</Button>
         </div>

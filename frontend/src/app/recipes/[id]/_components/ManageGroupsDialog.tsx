@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FolderOpen, Plus, Check, X, Loader2 } from "lucide-react";
+import { FolderOpen, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -11,10 +11,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { InlineGroupCreator } from "@/components/common/InlineGroupCreator";
 import {
   useRecipeGroups,
   useRecipeGroupsForRecipe,
@@ -112,20 +112,11 @@ export function ManageGroupsDialog({
     );
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleCreateGroup();
-    } else if (e.key === "Escape") {
-      setIsCreating(false);
-      setNewGroupName("");
-    }
-  };
-
   const isLoading = isLoadingGroups || isLoadingRecipeGroups;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FolderOpen className="size-5 text-primary" strokeWidth={1.5} />
@@ -186,47 +177,16 @@ export function ManageGroupsDialog({
 
               {/* Create New Group */}
               {isCreating ? (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-card border border-border">
-                  <FolderOpen className="size-4 text-muted-foreground shrink-0" strokeWidth={1.5} />
-                  <Input
-                    value={newGroupName}
-                    onChange={(e) => setNewGroupName(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="h-9 flex-1"
-                    placeholder="Enter group name"
-                    autoFocus
-                    maxLength={255}
-                  />
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-9 w-9"
-                      onClick={handleCreateGroup}
-                      disabled={createMutation.isPending || !newGroupName.trim()}
-                      aria-label="Create group"
-                    >
-                      {createMutation.isPending ? (
-                        <Loader2 className="size-4 animate-spin" strokeWidth={1.5} />
-                      ) : (
-                        <Check className="size-4" strokeWidth={1.5} />
-                      )}
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-9 w-9"
-                      onClick={() => {
-                        setIsCreating(false);
-                        setNewGroupName("");
-                      }}
-                      disabled={createMutation.isPending}
-                      aria-label="Cancel"
-                    >
-                      <X className="size-4" strokeWidth={1.5} />
-                    </Button>
-                  </div>
-                </div>
+                <InlineGroupCreator
+                  value={newGroupName}
+                  onChange={setNewGroupName}
+                  onSubmit={handleCreateGroup}
+                  onCancel={() => {
+                    setIsCreating(false);
+                    setNewGroupName("");
+                  }}
+                  isPending={createMutation.isPending}
+                />
               ) : (
                 <Button
                   variant="outline"

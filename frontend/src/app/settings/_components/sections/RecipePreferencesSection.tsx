@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { QUICK_FILTERS, DEFAULT_QUICK_FILTER_IDS } from "@/lib/constants";
 import { SectionHeader } from "../SectionHeader";
+import { InlineGroupCreator } from "@/components/common/InlineGroupCreator";
 import {
   useRecipeGroups,
   useCreateRecipeGroup,
@@ -216,15 +217,6 @@ export function RecipePreferencesSection({
     });
   };
 
-  const handleGroupKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleAddGroup();
-    } else if (e.key === "Escape") {
-      setIsAdding(false);
-      setNewGroupName("");
-    }
-  };
-
   return (
     <Card>
       <CardContent className="pt-6">
@@ -325,47 +317,17 @@ export function RecipePreferencesSection({
                   <div className="space-y-1">
                     {/* Add new group input */}
                     {isAdding && (
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-card border border-border">
-                        <FolderOpen className="size-4 text-muted-foreground shrink-0" strokeWidth={1.5} />
-                        <Input
-                          value={newGroupName}
-                          onChange={(e) => setNewGroupName(e.target.value)}
-                          onKeyDown={handleGroupKeyDown}
-                          className="h-8 flex-1"
-                          placeholder="Enter group name"
-                          autoFocus
-                          maxLength={255}
-                        />
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            onClick={handleAddGroup}
-                            disabled={createMutation.isPending || !newGroupName.trim()}
-                            aria-label="Create group"
-                          >
-                            {createMutation.isPending ? (
-                              <Loader2 className="size-4 animate-spin" strokeWidth={1.5} />
-                            ) : (
-                              <Check className="size-4" strokeWidth={1.5} />
-                            )}
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            onClick={() => {
-                              setIsAdding(false);
-                              setNewGroupName("");
-                            }}
-                            disabled={createMutation.isPending}
-                            aria-label="Cancel"
-                          >
-                            <X className="size-4" strokeWidth={1.5} />
-                          </Button>
-                        </div>
-                      </div>
+                      <InlineGroupCreator
+                        value={newGroupName}
+                        onChange={setNewGroupName}
+                        onSubmit={handleAddGroup}
+                        onCancel={() => {
+                          setIsAdding(false);
+                          setNewGroupName("");
+                        }}
+                        isPending={createMutation.isPending}
+                        size="sm"
+                      />
                     )}
 
                     {/* Existing groups */}

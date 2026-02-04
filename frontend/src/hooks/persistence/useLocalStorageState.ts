@@ -1,0 +1,96 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+
+interface UseLocalStorageStateOptions<T> {
+  /** Maximum number of items to keep (for array values) */
+  maxItems?: number;
+  /** Custom deserializer — transform raw parsed JSON into the desired shape */
+  deserialize?: (raw: unknown) => T;
+}
+
+/**
+ * Generic hook for state persisted to localStorage with cross-tab
+ * and same-window synchronization via CustomEvent + StorageEvent.
+ *
+ * @param key - localStorage key
+ * @param initialValue - Default value when nothing is stored
+ * @param options - Optional configuration
+ * @returns [state, setState, isLoaded] tuple
+ */
+export function useLocalStorageState<T>(
+  key: string,
+  initialValue: T,
+  options: UseLocalStorageStateOptions<T> = {}
+): [T, (value: T | ((prev: T) => T)) => void, boolean] {
+  const { maxItems, deserialize } = options;
+  const eventName = `localStorage:${key}`;
+
+  const [state, setStateInternal] = useState<T>(initialValue);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const value = deserialize ? deserialize(parsed) : parsed;
+        setStateInternal(value);
+      }
+    } catch (err) {
+      console.error(`[useLocalStorageState] Failed to load ${key}:`, err);
+    }
+    setIsLoaded(true);
+  }, [key, deserialize]);
+
+  // Listen for changes from other tabs (StorageEvent) and same window (CustomEvent)
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === key && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          const value = deserialize ? deserialize(parsed) : parsed;
+          setStateInternal(value);
+        } catch (err) {
+          console.error(`[useLocalStorageState] Failed to parse ${key}:`, err);
+        }
+      }
+    };
+
+    const handleCustom = (e: Event) => {
+      const customEvent = e as CustomEvent<T>;
+      setStateInternal(customEvent.detail);
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener(eventName, handleCustom);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(eventName, handleCustom);
+    };
+  }, [key, eventName, deserialize]);
+
+  const setState = useCallback(
+    (value: T | ((prev: T) => T)) => {
+      setStateInternal((prev) => {
+        const next = typeof value === "function" ? (value as (prev: T) => T)(prev) : value;
+        const toStore = maxItems && Array.isArray(next) ? next.slice(-maxItems) : next;
+        try {
+          localStorage.setItem(key, JSON.stringify(toStore));
+          // Defer event dispatch to avoid "setState during render" errors
+          // when multiple components use this hook simultaneously
+          queueMicrotask(() => {
+            window.dispatchEvent(new CustomEvent(eventName, { detail: toStore }));
+          });
+        } catch (err) {
+          console.error(`[useLocalStorageState] Failed to save ${key}:`, err);
+        }
+        return toStore as T;
+      });
+    },
+    [key, eventName, maxItems]
+  );
+
+  return [state, setState, isLoaded];
+}

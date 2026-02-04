@@ -1,51 +1,21 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
-import { Sparkles, Send, ChefHat, Lightbulb, Calendar } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Sparkles, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import ReactMarkdown from "react-markdown";
 import { useChatHistory } from "@/hooks/persistence";
 import { useMealGenieAsk } from "@/hooks/api/useAI";
+import { useChatScroll } from "@/hooks/ui";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-
-const SUGGESTIONS = [
-  { icon: ChefHat, text: "What can I make with chicken?", color: "text-primary" },
-  { icon: Lightbulb, text: "Quick weeknight dinner ideas", color: "text-secondary" },
-  { icon: Calendar, text: "Help me plan meals for the week", color: "text-success" },
-];
+import { ChatMessageList } from "./ChatMessageList";
 
 export function AskMealGenieWidget() {
   const [input, setInput] = useState("");
   const { messages, addMessage, clearHistory } = useChatHistory();
   const askMutation = useMealGenieAsk();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [showTopFade, setShowTopFade] = useState(false);
-  const [showBottomFade, setShowBottomFade] = useState(false);
-
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, askMutation.isPending]);
-
-  // Track scroll position for fade indicators
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      setShowTopFade(scrollTop > 8);
-      setShowBottomFade(scrollTop + clientHeight < scrollHeight - 8);
-    };
-
-    handleScroll();
-    container.addEventListener("scroll", handleScroll);
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [messages]);
+  const { messagesEndRef, scrollContainerRef, showTopFade, showBottomFade } = useChatScroll(messages.length, askMutation.isPending);
 
   const handleSubmit = useCallback(async (messageText?: string) => {
     const textToSend = messageText || input.trim();
@@ -122,114 +92,16 @@ export function AskMealGenieWidget() {
         </div>
 
         {/* Messages / Empty State Area */}
-        <div className="relative flex-1 min-h-0">
-          {/* Scroll fade indicators */}
-          <div 
-            className={cn(
-              "absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-elevated to-transparent pointer-events-none z-10 transition-opacity duration-200",
-              showTopFade ? "opacity-100" : "opacity-0"
-            )}
-          />
-          <div 
-            className={cn(
-              "absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-elevated to-transparent pointer-events-none z-10 transition-opacity duration-200",
-              showBottomFade ? "opacity-100" : "opacity-0"
-            )}
-          />
-
-          <div ref={scrollContainerRef} className="h-full overflow-y-auto">
-            {hasMessages ? (
-              <div className="px-4 py-3 space-y-3">
-                <AnimatePresence initial={false}>
-                  {messages.map((message, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      className={cn(
-                        "flex",
-                        message.role === "user" ? "justify-end" : "justify-start"
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          "max-w-[85%] px-3.5 py-2.5 text-sm leading-relaxed",
-                          message.role === "user"
-                            ? "bg-primary text-primary-foreground rounded-2xl rounded-br-sm"
-                            : "bg-gradient-to-br from-muted to-muted/80 border border-border/30 text-foreground rounded-2xl rounded-bl-sm"
-                        )}
-                      >
-                        {message.role === "assistant" ? (
-                          <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none [&>p]:m-0">
-                            {message.content}
-                          </ReactMarkdown>
-                        ) : (
-                          message.content
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-
-                {/* Loading indicator */}
-                <AnimatePresence>
-                  {askMutation.isPending && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.2 }}
-                      className="flex justify-start"
-                    >
-                      <div className="bg-gradient-to-br from-muted to-muted/80 border border-border/30 rounded-2xl rounded-bl-sm px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-                          <span className="text-xs text-muted-foreground">Thinking...</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                <div ref={messagesEndRef} />
-              </div>
-            ) : (
-              /* Empty State with Suggestions */
-              <div className="h-full flex flex-col items-center justify-center px-4 py-6">
-                <div className="p-3 rounded-full bg-primary-surface mb-4">
-                  <Sparkles className="h-7 w-7 text-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">Ask me anything about cooking!</p>
-                <div className="space-y-2 w-full max-w-xs">
-                  {SUGGESTIONS.map((suggestion, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1, duration: 0.2 }}
-                    >
-                      <Button
-                        variant="outline"
-                        onClick={() => handleSubmit(suggestion.text)}
-                        disabled={askMutation.isPending}
-                        className="w-full h-auto p-3 justify-start text-left group"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 rounded-lg bg-muted/50 group-hover:bg-muted transition-colors">
-                            <suggestion.icon className={cn("h-4 w-4", suggestion.color)} />
-                          </div>
-                          <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-                            {suggestion.text}
-                          </span>
-                        </div>
-                      </Button>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <ChatMessageList
+          messages={messages}
+          isPending={askMutation.isPending}
+          scrollContainerRef={scrollContainerRef}
+          messagesEndRef={messagesEndRef}
+          showTopFade={showTopFade}
+          showBottomFade={showBottomFade}
+          onSuggestionClick={handleSubmit}
+          isSuggestionDisabled={askMutation.isPending}
+        />
 
         {/* Input Area */}
         <div className="mt-auto p-3 border-t border-border/50 bg-card/30">

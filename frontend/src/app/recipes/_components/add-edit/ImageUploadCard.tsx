@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { getErrorMessage } from "@/lib/utils";
 import { useSettings } from "@/hooks/persistence/useSettings";
 import { useGenerateImage, useGenerateBanner } from "@/hooks/api/useAI";
 import type { ImageGenerationType } from "@/types/ai";
@@ -209,9 +210,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
         setImageState("generated");
       }
     } catch (error) {
-      setGeneratingError(
-        error instanceof Error ? error.message : "Image generation failed"
-      );
+      setGeneratingError(getErrorMessage(error, "Image generation failed"));
       setImageState("error");
     } finally {
       setGenerationStep("idle");

@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { dataManagementApi, recipeApi } from "@/lib/api";
+import { getErrorMessage, downloadBlob } from "@/lib/utils";
 import type {
   ImportPreviewDTO,
   ImportResultDTO,
@@ -157,9 +158,7 @@ export function ExportImport() {
 
       setShowPreviewDialog(true);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to preview import"
-      );
+      toast.error(getErrorMessage(error, "Failed to preview import"));
     } finally {
       setIsPreviewLoading(false);
     }
@@ -191,9 +190,7 @@ export function ExportImport() {
         toast.warning("Import completed with some errors");
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to execute import"
-      );
+      toast.error(getErrorMessage(error, "Failed to execute import"));
     } finally {
       setIsImporting(false);
     }
@@ -237,20 +234,11 @@ export function ExportImport() {
         recipe_category: selectedCategory || null,
       }, token);
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `recipes_export_${new Date().toISOString().split("T")[0]}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `recipes_export_${new Date().toISOString().split("T")[0]}.xlsx`);
 
       toast.success("Recipes exported successfully");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to export recipes"
-      );
+      toast.error(getErrorMessage(error, "Failed to export recipes"));
     } finally {
       setIsExporting(false);
     }
@@ -264,20 +252,11 @@ export function ExportImport() {
       const token = await getToken();
       const blob = await dataManagementApi.downloadTemplate(token);
 
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "recipe_import_template.xlsx";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, "recipe_import_template.xlsx");
 
       toast.success("Template downloaded");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to download template"
-      );
+      toast.error(getErrorMessage(error, "Failed to download template"));
     } finally {
       setIsDownloadingTemplate(false);
     }

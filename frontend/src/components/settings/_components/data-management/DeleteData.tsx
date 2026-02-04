@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { dataManagementApi } from "@/lib/api";
+import { getErrorMessage } from "@/lib/utils";
 
 export function DeleteData() {
   const { getToken } = useAuth();
@@ -35,9 +36,7 @@ export function DeleteData() {
         setShowDeleteConfirmDialog(false);
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete data"
-      );
+      toast.error(getErrorMessage(error, "Failed to delete data"));
     } finally {
       setIsDeleting(false);
     }

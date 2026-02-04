@@ -2,16 +2,15 @@ import { INGREDIENT_CATEGORY_ORDER } from "@/lib/constants";
 import type { RecipeResponseDTO } from "@/types/recipe";
 
 /**
- * Formats minutes into a human-readable time string.
- * @example formatTime(90) // "1h 30m"
- * @example formatTime(45) // "45 min"
+ * Verbose time format for recipe detail and print pages (e.g., "45 min", "1h 30m").
  */
 export function formatTime(minutes: number | null): string {
-  if (!minutes) return "—";
-  if (minutes < 60) return `${minutes} min`;
+  if (!minutes) return "\u2014";
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  if (hours === 0) return `${mins} min`;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h ${mins}m`;
 }
 
 /**

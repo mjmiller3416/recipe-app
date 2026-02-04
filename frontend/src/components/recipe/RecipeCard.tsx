@@ -6,6 +6,7 @@ import { Clock, Users, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { formatTime } from "@/lib/quantityUtils";
 import type { RecipeCardData } from "@/types/recipe";
 import { getRecipeCardUrl } from "@/lib/imageUtils";
 import { FavoriteButton } from "../common/FavoriteButton";
@@ -69,16 +70,6 @@ export function RecipeCard({
     }
   };
 
-  // Format total time
-  const formatTime = (minutes: number): string => {
-    if (minutes < 60) {
-      return `${minutes}m`;
-    }
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-  };
-
   // Render different sizes
   if (size === "small") {
     return <RecipeCardSmall
@@ -86,7 +77,6 @@ export function RecipeCard({
       onClick={handleClick}
       onFavoriteClick={handleFavoriteClick}
       onKeyDown={handleKeyDown}
-      formatTime={formatTime}
       className={className}
       showCategory={showCategory}
       showFavorite={showFavorite}
@@ -99,7 +89,6 @@ export function RecipeCard({
       onClick={handleClick}
       onFavoriteClick={handleFavoriteClick}
       onKeyDown={handleKeyDown}
-      formatTime={formatTime}
       className={className}
       showCategory={showCategory}
       showFavorite={showFavorite}
@@ -113,7 +102,6 @@ export function RecipeCard({
     onClick={handleClick}
     onFavoriteClick={handleFavoriteClick}
     onKeyDown={handleKeyDown}
-    formatTime={formatTime}
     className={className}
     showCategory={showCategory}
     showFavorite={showFavorite}
@@ -131,7 +119,6 @@ interface CardVariantProps {
   onClick: () => void;
   onFavoriteClick: (e: React.MouseEvent) => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
-  formatTime: (minutes: number) => string;
   className?: string;
   showCategory: boolean;
   showFavorite: boolean;
@@ -145,7 +132,6 @@ function RecipeCardSmall({
   onClick,
   onFavoriteClick,
   onKeyDown,
-  formatTime,
   className,
   showFavorite,
 }: CardVariantProps) {
@@ -217,7 +203,6 @@ function RecipeCardMedium({
   onClick,
   onFavoriteClick,
   onKeyDown,
-  formatTime,
   className,
   showCategory,
   isSelected = false,
@@ -325,12 +310,11 @@ function RecipeCardMedium({
 // LARGE CARD - Traditional Recipe Card with Ingredients
 // ============================================================================
 
-function RecipeCardLarge({ 
-  recipe, 
-  onClick, 
+function RecipeCardLarge({
+  recipe,
+  onClick,
   onFavoriteClick,
   onKeyDown,
-  formatTime,
   className,
   showCategory,
   maxIngredientsDisplay = 8,
