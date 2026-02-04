@@ -5,7 +5,6 @@ import { Scale, Plus, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
@@ -25,7 +24,6 @@ import {
 } from "@/components/ui/select";
 import { useUnitConversionRules } from "@/hooks/persistence/useUnitConversionRules";
 import { useUnits } from "@/hooks/api";
-import { SectionHeader } from "../SectionHeader";
 
 export function UnitConversionsSection() {
   const { rules, isLoading, createRule, deleteRule } = useUnitConversionRules();
@@ -79,17 +77,14 @@ export function UnitConversionsSection() {
     parseFloat(factor) > 0;
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <SectionHeader
-          icon={Scale}
-          title="Shopping List"
-          description="Configure unit conversions for shopping list aggregation"
-          accentColor="primary"
-        />
+    <div className="space-y-3">
+      <Label className="flex items-center gap-2">
+        <Scale className="h-3.5 w-3.5 text-muted-foreground" />
+        Unit Conversions
+      </Label>
 
-        <div className="space-y-6">
-          {/* Explanation */}
+      <div className="space-y-6">
+        {/* Explanation */}
           <div className="bg-elevated rounded-xl p-4 border border-border">
             <p className="text-sm text-muted-foreground">
               Unit conversion rules let you display shopping list quantities in
@@ -262,7 +257,6 @@ export function UnitConversionsSection() {
             )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 }

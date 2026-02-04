@@ -114,14 +114,13 @@ export function ShoppingListSection({
                 Choose when checked items are removed from your shopping list
               </p>
             </div>
+            <Separator />
+
+            {/* Unit Conversions */}
+            <UnitConversionsSection />
           </div>
         </CardContent>
       </Card>
-
-      <Separator />
-
-      {/* Unit Conversions - kept as a sub-section */}
-      <UnitConversionsSection />
     </div>
   );
 }
