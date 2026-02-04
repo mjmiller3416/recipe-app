@@ -92,14 +92,26 @@ Located in `.claude/context/`:
 
 ## How Marker Files Work
 
-The system uses marker files to track which context has been loaded in the current session. This prevents redundant loading and improves performance.
+The system uses marker files to optimize context loading performance. Marker files control **only the core (static) context** — file-path-dependent conditional context loads on every edit.
+
+### What loads once vs. every edit
+
+| Loaded Once (marker-gated) | Loaded Every Edit (file-dependent) |
+|---|---|
+| frontend-core.md | accessibility.md |
+| design-tokens.md | form-patterns.md (for *Form.tsx, forms/*.tsx) |
+| component-inventory.md | layout-patterns.md (for page.tsx, layout.tsx) |
+| backend-core.md | component-patterns.md (for .tsx) |
+| architecture.md | shadcn-patterns.md (for .tsx) |
+| architecture-patterns.md | exceptions.md |
+| | models.md, dtos.md, services.md, etc. (by path) |
 
 ### Marker File Locations
 
 - **Windows**: `%TEMP%\claude-*-context-{session_id}`
 - **macOS/Linux**: `$TMPDIR/claude-*-context-{session_id}` or `/tmp/claude-*-context-{session_id}`
 
-Context is loaded **once per session** and persists until the session ends or is compacted.
+Core context is loaded **once per session** and persists until the session ends or is compacted. Conditional context loads on **every edit** based on the file being modified.
 
 ## Troubleshooting
 

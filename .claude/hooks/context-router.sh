@@ -47,27 +47,29 @@ CONTEXT=""
 
 # Helper function to load frontend context modules
 load_frontend_context() {
-    if [ -f "$FRONTEND_MARKER" ]; then
-        return 0
+    # ========================================
+    # CORE CONTEXT: Load once per session (static, file-independent)
+    # ========================================
+    if [ ! -f "$FRONTEND_MARKER" ]; then
+        touch "$FRONTEND_MARKER" 2>/dev/null || true
+
+        CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/frontend-core.md")
+        CONTEXT+=$'\n\n'
+        CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/design-tokens.md")
+        CONTEXT+=$'\n\n'
+        CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/component-inventory.md")
+        CONTEXT+=$'\n\n'
     fi
-    touch "$FRONTEND_MARKER" 2>/dev/null || true
 
     # ========================================
-    # ALWAYS LOAD (core context for ALL frontend files)
-    # ========================================
-    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/frontend-core.md")
-    CONTEXT+=$'\n\n'
-    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/design-tokens.md")
-    CONTEXT+=$'\n\n'
-    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/accessibility.md")
-    CONTEXT+=$'\n\n'
-    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/component-inventory.md")
-    CONTEXT+=$'\n\n'
-
-    # ========================================
-    # CONDITIONALLY LOAD based on file path
+    # CONDITIONAL CONTEXT: Load on EVERY edit based on file path
     # (Order matters: most specific patterns FIRST)
     # ========================================
+
+    # Accessibility is always relevant for frontend files
+    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/accessibility.md")
+    CONTEXT+=$'\n\n'
+
     case "$FILE_PATH" in
         # Forms: Check BEFORE generic .tsx
         *Form.tsx|*forms/*.tsx|*/add/page.tsx|*/edit/*/page.tsx)
@@ -105,27 +107,28 @@ load_frontend_context() {
 }
 
 load_backend_context() {
-    if [ -f "$BACKEND_MARKER" ]; then
-        return 0
+    # ========================================
+    # CORE CONTEXT: Load once per session (static, file-independent)
+    # ========================================
+    if [ ! -f "$BACKEND_MARKER" ]; then
+        touch "$BACKEND_MARKER" 2>/dev/null || true
+
+        CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/backend-core.md")
+        CONTEXT+=$'\n\n'
+        CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/architecture.md")
+        CONTEXT+=$'\n\n'
+        CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/architecture-patterns.md")
+        CONTEXT+=$'\n\n'
     fi
-    touch "$BACKEND_MARKER" 2>/dev/null || true
 
     # ========================================
-    # ALWAYS LOAD (core + cross-cutting concerns)
+    # CONDITIONAL CONTEXT: Load on EVERY edit based on file path
     # ========================================
-    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/backend-core.md")
-    CONTEXT+=$'\n\n'
-    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/architecture.md")
-    CONTEXT+=$'\n\n'
+
+    # Exceptions context is always relevant for backend files
     CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/exceptions.md")
     CONTEXT+=$'\n\n'
-    CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/architecture-patterns.md")
-    CONTEXT+=$'\n\n'
 
-    # ========================================
-    # CONDITIONALLY LOAD based on file path
-    # Load related modules (files have dependencies)
-    # ========================================
     case "$FILE_PATH" in
         */models/*.py)
             CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/models.md")
