@@ -18,7 +18,7 @@ import {
 import { restrictToParentElement } from "@dnd-kit/modifiers";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { MealGridCard, MealGridItem } from "./MealGridCard";
 
 // ============================================================================
@@ -46,15 +46,31 @@ interface AddMealCardProps {
 
 function AddMealCard({ onClick }: AddMealCardProps) {
   return (
-    <Button
-      variant="dashed"
+    <Card
       onClick={onClick}
+      tabIndex={0}
+      role="button"
       aria-label="Add a new meal"
-      className="h-full flex-col gap-2"
+      className={cn(
+        "cursor-pointer overflow-hidden relative",
+        "pb-0 pt-0 gap-0",
+        "border-dashed border-primary/40 bg-primary/5",
+        "hover:border-primary hover:bg-primary/10 transition-all duration-150",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      )}
     >
-      <Plus className="size-6" strokeWidth={1.5} />
-      <span>Add Meal</span>
-    </Button>
+      {/* Invisible spacer matching MealGridCard proportions */}
+      <div className="aspect-[16/9]" aria-hidden="true" />
+      <div className="p-3" aria-hidden="true">
+        <p className="text-sm mb-1 invisible">&nbsp;</p>
+        <p className="text-xs invisible">&nbsp;</p>
+      </div>
+      {/* Centered content */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+        <Plus className="size-8 text-muted-foreground" strokeWidth={1.5} />
+        <span className="text-sm font-semibold text-muted-foreground">Add Meal</span>
+      </div>
+    </Card>
   );
 }
 
