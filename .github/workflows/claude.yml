@@ -36,15 +36,33 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          # This is an optional setting that allows Claude to read CI results on PRs
+          # Branch from staging instead of main (default branch)
+          base_branch: staging
+
+          # Branch naming: uses GitHub labels (feature, fix, chore) as prefix
+          # Requires issues to have a matching label, otherwise falls back to "claude/"
+          branch_prefix: ""
+          branch_name_template: "{{label}}/issue-{{entityNumber}}-{{timestamp}}"
+
           additional_permissions: |
             actions: read
 
-          # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
-          # prompt: 'Update the pull request description to include a summary of changes.'
+          # Git workflow conventions for commits and PRs
+          prompt: |
+            Follow these git conventions strictly:
 
-          # Optional: Add claude_args to customize behavior and configuration
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
-          # claude_args: '--allowed-tools Bash(gh pr:*)'
+            Commit messages: Use conventional commits format
+              <type>: <description>
+            Types: feat, fix, chore, refactor, docs, test, style, perf
+            - Lowercase type, lowercase description, no period at end
+            - Imperative mood ("add" not "added")
+            - Under 72 characters
+
+            PR titles: Derive from branch name or summarize commits
+            PR body: Include Summary, Changes, and Test Plan sections
+
+            Always end commits with:
+            Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+
+            Target all PRs to the staging branch, never to main directly.
 
