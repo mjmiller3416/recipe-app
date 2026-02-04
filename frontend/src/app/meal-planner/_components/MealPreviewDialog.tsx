@@ -7,8 +7,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { MealPreviewPanel } from "./MealPreviewPanel";
 import type { RecipeCardData } from "@/types/recipe";
 
@@ -86,6 +84,7 @@ export function MealPreviewDialog({
             onSelectMain={onSelectMain}
             onRemoveMain={onRemoveMain}
             onRemoveSide={onRemoveSide}
+            onAddSides={onAddSides}
             onAddToQueue={onConfirm}
             isSubmitting={isSubmitting}
             showHeader={false}
@@ -93,18 +92,6 @@ export function MealPreviewDialog({
             submittingText={isEditMode ? "Saving..." : "Adding..."}
           />
         </div>
-
-        {/* Add Sides Button - shown when main is selected and fewer than 3 sides */}
-        {mainDish && sides.length < 3 && (
-          <Button
-            variant="outline"
-            onClick={onAddSides}
-            className="w-full mt-2 gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Side Dishes ({sides.length}/3)
-          </Button>
-        )}
       </DialogContent>
     </Dialog>
   );

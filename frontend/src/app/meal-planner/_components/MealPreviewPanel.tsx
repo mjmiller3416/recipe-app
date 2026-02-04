@@ -35,6 +35,9 @@ export interface MealPreviewPanelProps {
   /** Called when a side dish remove button is clicked */
   onRemoveSide?: (recipeId: number) => void;
 
+  /** Called when the "Add Side Dishes" button is clicked */
+  onAddSides?: () => void;
+
   /** Called when the "Add to Meal Queue" button is clicked */
   onAddToQueue?: () => void;
 
@@ -76,6 +79,7 @@ export function MealPreviewPanel({
   onSelectMain,
   onRemoveMain,
   onRemoveSide,
+  onAddSides,
   onAddToQueue,
   isSubmitting = false,
   showHeader = true,
@@ -227,8 +231,19 @@ export function MealPreviewPanel({
         </div>
       </div>
 
-      {/* Action Button */}
-      <div className="mt-auto pt-4">
+      {/* Action Buttons */}
+      <div className="mt-auto pt-4 space-y-2">
+        {onAddSides && mainDish && sides.length < 3 && (
+          <Button
+            variant="outline"
+            onClick={onAddSides}
+            className="w-full gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Side Dishes ({sides.length}/3)
+          </Button>
+        )}
+
         <Button
           variant="default"
           size="lg"
