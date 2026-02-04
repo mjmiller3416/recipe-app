@@ -79,7 +79,7 @@ export function MealPreviewDialog({
         </DialogHeader>
 
         {/* Meal Preview Panel */}
-        <div className="mt-2">
+        <div className="mt-2 min-w-0">
           <MealPreviewPanel
             mainDish={mainDish}
             sides={sides}
