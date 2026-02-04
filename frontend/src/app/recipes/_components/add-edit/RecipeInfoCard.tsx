@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Info, Clock, Users, Tag, ChefHat, Leaf } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -36,7 +37,7 @@ interface RecipeInfoCardProps {
   autoFocusName?: boolean;
 }
 
-export function RecipeInfoCard({
+export const RecipeInfoCard = memo(function RecipeInfoCard({
   recipeName,
   setRecipeName,
   totalTime,
@@ -201,4 +202,4 @@ export function RecipeInfoCard({
       </CardContent>
     </Card>
   );
-}
+});

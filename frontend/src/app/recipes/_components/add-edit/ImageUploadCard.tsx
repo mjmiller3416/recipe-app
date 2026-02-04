@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { memo, useState, useEffect } from "react";
 import {
   Upload,
   ImageIcon,
@@ -43,7 +43,7 @@ interface ImageUploadCardProps {
   isEditMode?: boolean;
 }
 
-export function ImageUploadCard({
+export const ImageUploadCard = memo(function ImageUploadCard({
   imagePreview,
   onImageUpload,
   onGeneratedImageAccept,
@@ -519,4 +519,4 @@ export function ImageUploadCard({
       </CardContent>
     </Card>
   );
-}
+});

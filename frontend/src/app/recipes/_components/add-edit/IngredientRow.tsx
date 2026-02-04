@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { GripVertical, X } from "lucide-react";
 import { QuantityInput } from "@/components/forms/QuantityInput";
 import {
@@ -58,7 +59,7 @@ const findCategoryValue = (categoryFromDb: string): string => {
   return categoryFromDb;
 };
 
-export function IngredientRow({
+export const IngredientRow = memo(function IngredientRow({
   ingredient,
   availableIngredients = [],
   onUpdate,
@@ -253,4 +254,4 @@ export function IngredientRow({
       </div>
     </div>
   );
-}
+});

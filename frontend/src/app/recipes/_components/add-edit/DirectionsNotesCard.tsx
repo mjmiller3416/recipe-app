@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { ListOrdered, FileText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +16,7 @@ interface DirectionsNotesCardProps {
   getError: (field: string) => string | undefined;
 }
 
-export function DirectionsNotesCard({
+export const DirectionsNotesCard = memo(function DirectionsNotesCard({
   directions,
   setDirections,
   notes,
@@ -78,4 +79,4 @@ export function DirectionsNotesCard({
       </CardContent>
     </Card>
   );
-}
+});

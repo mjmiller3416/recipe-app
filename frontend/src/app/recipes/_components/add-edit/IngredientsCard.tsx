@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { memo, useRef, useEffect } from "react";
 import { Plus, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ interface IngredientsCardProps {
   getError: (field: string) => string | undefined;
 }
 
-export function IngredientsCard({
+export const IngredientsCard = memo(function IngredientsCard({
   ingredients,
   availableIngredients = [],
   onUpdate,
@@ -139,4 +139,4 @@ export function IngredientsCard({
       </CardContent>
     </Card>
   );
-}
+});

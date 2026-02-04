@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useId, useCallback } from "react";
+import { useState, useEffect, useId, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
@@ -141,6 +141,10 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
 
   // Dirty tracking for unsaved changes
   const [isDirty, setIsDirty] = useState(false);
+  const isDirtyRef = useRef(false);
+  isDirtyRef.current = isDirty;
+  const isInitializedRef = useRef(mode === 'create');
+  isInitializedRef.current = isInitialized;
 
   // Recipe basic info state
   const [recipeName, setRecipeNameState] = useState("");
@@ -188,12 +192,13 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   // Helper to mark form as dirty (only after initialization)
+  // Uses refs to avoid including isDirty/isInitialized in deps, keeping all downstream callbacks stable
   const markDirty = useCallback(() => {
-    if (isInitialized && !isDirty) {
+    if (isInitializedRef.current && !isDirtyRef.current) {
       setIsDirty(true);
       onDirtyChange?.(true);
     }
-  }, [isInitialized, isDirty, onDirtyChange]);
+  }, [onDirtyChange]);
 
   // Wrapped setters that track dirty state
   const setRecipeName = useCallback((value: string) => {
@@ -700,9 +705,15 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
     }
   };
 
-  // Helper to check if a field has an error
-  const hasError = (field: string) => hasAttemptedSubmit && !!errors[field];
-  const getError = (field: string) => (hasAttemptedSubmit ? errors[field] : undefined);
+  // Helper to check if a field has an error (memoized for stable references)
+  const hasError = useCallback(
+    (field: string) => hasAttemptedSubmit && !!errors[field],
+    [hasAttemptedSubmit, errors]
+  );
+  const getError = useCallback(
+    (field: string) => (hasAttemptedSubmit ? errors[field] : undefined),
+    [hasAttemptedSubmit, errors]
+  );
 
   return {
     // Mode info
