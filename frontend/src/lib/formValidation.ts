@@ -462,3 +462,76 @@ export function collectErrors<T>(
 
   return { valid, errors };
 }
+
+// ============================================================================
+// Unit Categorization (Matches backend app/utils/unit_conversion.py)
+// ============================================================================
+
+/** Mass units that require a quantity value */
+export const MASS_UNITS = new Set(["oz", "lbs"]);
+
+/** Volume units that require a quantity value */
+export const VOLUME_UNITS = new Set(["tsp", "tbs", "cup"]);
+
+/** Count units where quantity is optional */
+export const COUNT_UNITS = new Set([
+  "", "stick", "bag", "box", "can", "jar", "package",
+  "piece", "slice", "whole", "pinch", "dash", "to-taste"
+]);
+
+/**
+ * Check if a unit requires a quantity value.
+ * Mass and volume units always require quantity.
+ * Count units (and unknown units) do not require quantity.
+ */
+export function unitRequiresQuantity(unit: string | null | undefined): boolean {
+  const normalized = (unit ?? "").trim().toLowerCase();
+  return MASS_UNITS.has(normalized) || VOLUME_UNITS.has(normalized);
+}
+
+/**
+ * Field-level errors for an ingredient row.
+ */
+export interface IngredientFieldErrors {
+  name?: string;
+  quantity?: string;
+}
+
+/**
+ * Validates an ingredient row with unit-aware quantity validation.
+ * - Name is always required (1-255 chars)
+ * - Quantity is required only for mass/volume units
+ * - Quantity must be >= 0 when provided
+ */
+export function validateIngredientRow(
+  name: string | null | undefined,
+  quantity: number | null | undefined,
+  unit: string | null | undefined
+): { isValid: boolean; errors: IngredientFieldErrors } {
+  const errors: IngredientFieldErrors = {};
+
+  // Validate name (required, 1-255 chars)
+  const trimmedName = (name ?? "").trim();
+  if (trimmedName.length === 0) {
+    errors.name = "Ingredient name is required";
+  } else if (trimmedName.length > 255) {
+    errors.name = "Name must be at most 255 characters";
+  }
+
+  // Validate quantity based on unit type
+  if (unitRequiresQuantity(unit)) {
+    if (quantity === null || quantity === undefined) {
+      errors.quantity = "Quantity required for this unit";
+    } else if (quantity < 0) {
+      errors.quantity = "Quantity must be at least 0";
+    }
+  } else if (quantity !== null && quantity !== undefined && quantity < 0) {
+    // For count units, quantity is optional but must be >= 0 if provided
+    errors.quantity = "Quantity must be at least 0";
+  }
+
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors,
+  };
+}

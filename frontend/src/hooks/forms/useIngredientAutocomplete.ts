@@ -170,12 +170,18 @@ export function useIngredientAutocomplete({
           break;
 
         case "Tab":
-          setOpen(false);
-          // Auto-select single match when tabbing away
-          if (items.length === 1 && items[0].type === "ingredient" && items[0].data) {
-            onValueChange(items[0].data.name);
-            onIngredientSelect(items[0].data);
+          // Select highlighted item if menu is open with valid items
+          if (items.length > 0 && highlightedIndex >= 0 && highlightedIndex < items.length) {
+            const item = items[highlightedIndex];
+            if (item.type === "ingredient" && item.data) {
+              onValueChange(item.data.name);
+              onIngredientSelect(item.data);
+            } else if (item.type === "create" && item.name && onNewIngredient) {
+              onNewIngredient(item.name);
+            }
           }
+          setOpen(false);
+          // Don't prevent default - allow natural tab navigation
           break;
       }
     },

@@ -288,12 +288,12 @@ export const ImageUploadCard = memo(function ImageUploadCard({
               </div>
               <p className="text-sm font-medium text-primary">
                 {isEditMode && getImageType() === "reference"
-                  ? "Generating reference image..."
+                  ? "Generating recipe image..."
                   : isEditMode && getImageType() === "banner"
                   ? "Generating banner image..."
                   : generationStep === "reference"
-                  ? "Generating reference image (1 of 2)..."
-                  : "Generating banner image (2 of 2)..."}
+                  ? "Generating recipe image..."
+                  : "Generating banner image..."}
               </p>
               {/* Progress Bar */}
               <div className="w-full max-w-48 mt-4">

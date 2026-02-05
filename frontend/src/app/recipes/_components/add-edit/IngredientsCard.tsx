@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useRef, useEffect } from "react";
+import { memo, useEffect, useRef } from "react";
 import { Plus, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ interface IngredientsCardProps {
   onAdd: () => void;
   onReorder: (activeId: string, overId: string) => void;
   getError: (field: string) => string | undefined;
+  getIngredientError?: (ingredientId: string, field: 'name' | 'quantity') => string | undefined;
 }
 
 export const IngredientsCard = memo(function IngredientsCard({
@@ -35,9 +36,9 @@ export const IngredientsCard = memo(function IngredientsCard({
   onAdd,
   onReorder,
   getError,
+  getIngredientError,
 }: IngredientsCardProps) {
-  // Track if the add was triggered via keyboard (spacebar)
-  const addedViaKeyboardRef = useRef(false);
+  // Track previous ingredients length to detect new additions
   const prevIngredientsLengthRef = useRef(ingredients.length);
 
   // Drag and drop setup
@@ -50,12 +51,9 @@ export const IngredientsCard = memo(function IngredientsCard({
     }
   };
 
-  // Focus the qty input of the new ingredient row when added via keyboard
+  // Focus the qty input of the new ingredient row when any new ingredient is added
   useEffect(() => {
-    if (
-      ingredients.length > prevIngredientsLengthRef.current &&
-      addedViaKeyboardRef.current
-    ) {
+    if (ingredients.length > prevIngredientsLengthRef.current) {
       // Small delay to ensure the new row is rendered
       setTimeout(() => {
         const qtyInputs = document.querySelectorAll<HTMLInputElement>(
@@ -64,17 +62,9 @@ export const IngredientsCard = memo(function IngredientsCard({
         const lastInput = qtyInputs[qtyInputs.length - 1];
         lastInput?.focus();
       }, 0);
-      addedViaKeyboardRef.current = false;
     }
     prevIngredientsLengthRef.current = ingredients.length;
   }, [ingredients.length]);
-
-  // Detect Enter key press on the Add button
-  const handleAddKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      addedViaKeyboardRef.current = true;
-    }
-  };
 
   return (
     <Card data-field="ingredients">
@@ -118,6 +108,7 @@ export const IngredientsCard = memo(function IngredientsCard({
                   availableIngredients={availableIngredients}
                   onUpdate={onUpdate}
                   onDelete={onDelete}
+                  getIngredientError={getIngredientError}
                 />
               ))}
             </div>
@@ -130,7 +121,6 @@ export const IngredientsCard = memo(function IngredientsCard({
           variant="secondary"
           size="sm"
           onClick={onAdd}
-          onKeyDown={handleAddKeyDown}
           className="w-full gap-2"
         >
           <Plus className="h-4 w-4" />

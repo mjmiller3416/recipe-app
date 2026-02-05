@@ -16,6 +16,8 @@ import type { Ingredient as AutocompleteIngredient } from "./IngredientAutocompl
 import {
   validateString,
   validateInteger,
+  validateIngredientRow,
+  type IngredientFieldErrors,
 } from "@/lib/formValidation";
 import { v4 as uuidv4 } from 'uuid';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -108,6 +110,7 @@ export interface RecipeFormState {
   errors: Record<string, string>;
   hasError: (field: string) => boolean;
   getError: (field: string) => string | undefined;
+  getIngredientError: (ingredientId: string, field: 'name' | 'quantity') => string | undefined;
   hasAttemptedSubmit: boolean;
 
   // Dirty tracking (for edit mode)
@@ -188,6 +191,9 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
 
   // Form validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [ingredientFieldErrors, setIngredientFieldErrors] = useState<
+    Record<string, IngredientFieldErrors>
+  >({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
@@ -520,9 +526,23 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
       newErrors.ingredients = "At least one ingredient is required";
     }
 
-    // TODO: Re-enable ingredient field validation (name length, quantity bounds)
-    // Disabled for now - validation was too strict during recipe entry
-    // See frontend/TODO.md for details
+    // Validate each ingredient's fields (name length, unit-aware quantity validation)
+    const newIngredientFieldErrors: Record<string, IngredientFieldErrors> = {};
+    ingredients.forEach((ing) => {
+      // Skip completely empty rows (no name, no quantity, no unit)
+      if (!ing.name.trim() && ing.quantity === null && !ing.unit) {
+        return;
+      }
+      const result = validateIngredientRow(ing.name, ing.quantity, ing.unit);
+      if (!result.isValid) {
+        newIngredientFieldErrors[ing.id] = result.errors;
+      }
+    });
+    setIngredientFieldErrors(newIngredientFieldErrors);
+
+    if (Object.keys(newIngredientFieldErrors).length > 0) {
+      newErrors.ingredientFields = "Some ingredients have errors";
+    }
 
     // Directions (required)
     const directionsResult = validateString(directions, {
@@ -715,6 +735,15 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
     [hasAttemptedSubmit, errors]
   );
 
+  // Helper to get ingredient field-specific errors
+  const getIngredientError = useCallback(
+    (ingredientId: string, field: 'name' | 'quantity') => {
+      if (!hasAttemptedSubmit) return undefined;
+      return ingredientFieldErrors[ingredientId]?.[field];
+    },
+    [hasAttemptedSubmit, ingredientFieldErrors]
+  );
+
   return {
     // Mode info
     mode,
@@ -767,6 +796,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
     errors,
     hasError,
     getError,
+    getIngredientError,
     hasAttemptedSubmit,
 
     // Dirty tracking

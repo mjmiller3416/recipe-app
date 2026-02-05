@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import { GripVertical, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { QuantityInput } from "@/components/forms/QuantityInput";
 import {
   Select,
@@ -33,6 +34,7 @@ interface IngredientRowProps {
   onUpdate: (id: string, field: keyof Ingredient, value: string | number | null) => void;
   onDelete: (id: string) => void;
   showLabels?: boolean;
+  getIngredientError?: (ingredientId: string, field: 'name' | 'quantity') => string | undefined;
 }
 
 // Helper to find matching category value from INGREDIENT_CATEGORIES
@@ -64,9 +66,14 @@ export const IngredientRow = memo(function IngredientRow({
   availableIngredients = [],
   onUpdate,
   onDelete,
-  showLabels = false,
+  // showLabels is available but not currently used
+  getIngredientError,
 }: IngredientRowProps) {
   const { data: units = [] } = useUnits();
+
+  // Get field errors
+  const quantityError = getIngredientError?.(ingredient.id, 'quantity');
+  const nameError = getIngredientError?.(ingredient.id, 'name');
   const {
     attributes,
     listeners,
@@ -113,6 +120,7 @@ export const IngredientRow = memo(function IngredientRow({
             aria-label="Drag to reorder"
             {...attributes}
             {...listeners}
+            tabIndex={-1}
           >
             <GripVertical className="h-5 w-5" />
           </button>
@@ -121,16 +129,23 @@ export const IngredientRow = memo(function IngredientRow({
             onClick={() => onDelete(ingredient.id)}
             className="p-1 text-muted-foreground hover:text-destructive transition-colors"
             aria-label="Delete ingredient"
+            tabIndex={-1}
           >
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="grid grid-cols-2 gap-2 mb-2">
-          <QuantityInput
-            value={ingredient.quantity}
-            onChange={(value) => onUpdate(ingredient.id, "quantity", value)}
-            placeholder="Qty"
-          />
+          <div>
+            <QuantityInput
+              value={ingredient.quantity}
+              onChange={(value) => onUpdate(ingredient.id, "quantity", value)}
+              placeholder="Qty"
+              className={cn(quantityError && "border-destructive")}
+            />
+            {quantityError && (
+              <p className="text-xs text-destructive mt-1">{quantityError}</p>
+            )}
+          </div>
           <Select
             value={ingredient.unit}
             onValueChange={(value) => onUpdate(ingredient.id, "unit", value)}
@@ -147,15 +162,20 @@ export const IngredientRow = memo(function IngredientRow({
             </SelectContent>
           </Select>
         </div>
-        <IngredientAutocomplete
-          ingredients={availableIngredients}
-          value={ingredient.name}
-          onValueChange={(value) => onUpdate(ingredient.id, "name", value)}
-          onIngredientSelect={handleIngredientSelect}
-          onNewIngredient={handleNewIngredient}
-          placeholder="Ingredient name"
-          className="h-9 mb-2"
-        />
+        <div className="mb-2">
+          <IngredientAutocomplete
+            ingredients={availableIngredients}
+            value={ingredient.name}
+            onValueChange={(value) => onUpdate(ingredient.id, "name", value)}
+            onIngredientSelect={handleIngredientSelect}
+            onNewIngredient={handleNewIngredient}
+            placeholder="Ingredient name"
+            className={cn("h-9", nameError && "border-destructive")}
+          />
+          {nameError && (
+            <p className="text-xs text-destructive mt-1">{nameError}</p>
+          )}
+        </div>
         <Select
           value={ingredient.category}
           onValueChange={(value) => onUpdate(ingredient.id, "category", value)}
@@ -181,17 +201,22 @@ export const IngredientRow = memo(function IngredientRow({
           aria-label="Drag to reorder"
           {...attributes}
           {...listeners}
+          tabIndex={-1}
         >
           <GripVertical className="h-5 w-5" />
         </button>
 
-        <div className="flex-1 flex items-center gap-2">
+        <div className="flex-1 flex items-start gap-2">
           <div className="flex-shrink-0 w-24">
             <QuantityInput
               value={ingredient.quantity}
               onChange={(value) => onUpdate(ingredient.id, "quantity", value)}
               placeholder="Qty"
+              className={cn(quantityError && "border-destructive")}
             />
+            {quantityError && (
+              <p className="text-xs text-destructive mt-1">{quantityError}</p>
+            )}
           </div>
 
           <div className="flex-shrink-0 w-28">
@@ -220,8 +245,11 @@ export const IngredientRow = memo(function IngredientRow({
               onIngredientSelect={handleIngredientSelect}
               onNewIngredient={handleNewIngredient}
               placeholder="Ingredient name"
-              className="h-9"
+              className={cn("h-9", nameError && "border-destructive")}
             />
+            {nameError && (
+              <p className="text-xs text-destructive mt-1">{nameError}</p>
+            )}
           </div>
 
           <div className="flex-shrink-0 w-32">
@@ -248,6 +276,7 @@ export const IngredientRow = memo(function IngredientRow({
           onClick={() => onDelete(ingredient.id)}
           className="p-1 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
           aria-label="Delete ingredient"
+          tabIndex={-1}
         >
           <X className="h-5 w-5" />
         </button>

@@ -205,6 +205,7 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
               onAdd={form.addIngredient}
               onReorder={form.reorderIngredients}
               getError={form.getError}
+              getIngredientError={form.getIngredientError}
             />
 
             {/* Directions & Notes Section */}
