@@ -11,7 +11,7 @@ Show current git status and suggest the next action.
    git fetch origin
    git status
    git branch --show-current
-   git log origin/staging..HEAD --oneline 2>/dev/null
+   git log origin/staging..HEAD --oneline 
    ```
 
 2. **Display status**

@@ -14,7 +14,7 @@ if [ "$SOURCE" = "compact" ]; then
     echo ""
 
     # Get git branch (if in a git repo)
-    BRANCH=$(git branch --show-current 2>/dev/null || echo "N/A")
+    BRANCH=$(git branch --show-current  || echo "N/A")
     echo "📋 Active branch: $BRANCH"
     echo "📂 Project: Recipe App (Next.js 16 + FastAPI)"
     echo ""

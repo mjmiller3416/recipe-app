@@ -51,7 +51,7 @@ load_frontend_context() {
     # CORE CONTEXT: Load once per session (static, file-independent)
     # ========================================
     if [ ! -f "$FRONTEND_MARKER" ]; then
-        touch "$FRONTEND_MARKER" 2>/dev/null || true
+        touch "$FRONTEND_MARKER"  || true
 
         CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/frontend-core.md")
         CONTEXT+=$'\n\n'
@@ -111,7 +111,7 @@ load_backend_context() {
     # CORE CONTEXT: Load once per session (static, file-independent)
     # ========================================
     if [ ! -f "$BACKEND_MARKER" ]; then
-        touch "$BACKEND_MARKER" 2>/dev/null || true
+        touch "$BACKEND_MARKER"  || true
 
         CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/backend-core.md")
         CONTEXT+=$'\n\n'

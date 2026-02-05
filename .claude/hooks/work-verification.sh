@@ -25,8 +25,8 @@ ISSUES=0
 
 # Check for uncommitted changes
 cd "$PROJECT_ROOT"
-if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
-    UNCOMMITTED=$(git status --short 2>/dev/null | wc -l)
+if ! git diff --quiet  || ! git diff --cached --quiet ; then
+    UNCOMMITTED=$(git status --short  | wc -l)
     if [ "$UNCOMMITTED" -gt 0 ]; then
         echo "⚠️  Found $UNCOMMITTED uncommitted change(s)"
         echo ""
@@ -38,7 +38,7 @@ if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; th
 fi
 
 # Check for untracked files that might be important
-UNTRACKED=$(git ls-files --others --exclude-standard 2>/dev/null | grep -v "node_modules\|venv\|__pycache__\|\.pyc$\|\.log$" | wc -l)
+UNTRACKED=$(git ls-files --others --exclude-standard  | grep -v "node_modules\|venv\|__pycache__\|\.pyc$\|\.log$" | wc -l)
 if [ "$UNTRACKED" -gt 0 ]; then
     echo "⚠️  Found $UNTRACKED untracked file(s) (excluding common ignores)"
     ISSUES=$((ISSUES + 1))
