@@ -1,31 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import {
-  CalendarDays,
-  ChefHat,
-  ShoppingCart,
-  Save,
-  RotateCcw,
-  AlertTriangle,
-} from "lucide-react";
+import { CalendarDays, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { DataManagementSection } from "@/components/settings/DataManagementSection";
 import { useSettings, DEFAULT_SETTINGS } from "@/hooks/persistence/useSettings";
-import { useUnsavedChanges } from "@/hooks/ui/useUnsavedChanges";
 
 import { CategoryNav, CATEGORIES, type SettingsCategory } from "./CategoryNav";
 import { PlaceholderSection } from "./PlaceholderSection";
@@ -39,38 +21,7 @@ import { ShoppingListSection } from "./sections/ShoppingListSection";
 export function SettingsView() {
   const [activeCategory, setActiveCategory] =
     useState<SettingsCategory>("profile");
-  const [isSaving, setIsSaving] = useState(false);
-  const {
-    settings,
-    isLoaded,
-    updateSettings,
-    saveSettings,
-    hasUnsavedChanges,
-    discardChanges,
-  } = useSettings();
-
-  const {
-    showLeaveDialog,
-    setShowLeaveDialog,
-    confirmLeave,
-    cancelLeave,
-  } = useUnsavedChanges({
-    isDirty: hasUnsavedChanges,
-    onConfirmLeave: discardChanges,
-  });
-
-  // Handle save
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await saveSettings();
-      toast.success("Settings saved successfully");
-    } catch {
-      toast.error("Failed to save settings");
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const { settings, isLoaded, updateSettings, resetSection } = useSettings();
 
   // Handle reset current section
   const handleResetSection = () => {
@@ -79,7 +30,8 @@ export function SettingsView() {
       toast.info("Feedback form has no saved settings to reset");
       return;
     }
-    updateSettings(activeCategory, DEFAULT_SETTINGS[activeCategory]);
+    // Reset the section - this auto-saves immediately
+    resetSection(activeCategory);
     toast.info(
       `${CATEGORIES.find((c) => c.id === activeCategory)?.label} reset to defaults`
     );
@@ -179,40 +131,18 @@ export function SettingsView() {
   }
 
   return (
-    <>
-      <PageLayout
+    <PageLayout
         title="Settings"
-        description="Manage your preferences and account settings"
+        description="Manage your preferences and account settings. Changes are saved automatically."
         actions={
-          <>
-            {hasUnsavedChanges && (
-              <div className="flex items-center gap-2 mr-2 text-sm">
-                <div className="h-2 w-2 rounded-full bg-secondary animate-pulse" />
-                <span className="text-muted-foreground">Unsaved changes</span>
-              </div>
-            )}
-            <Button
-              variant="ghost"
-              onClick={handleResetSection}
-              className="gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <RotateCcw className="h-4 w-4" />
-              Reset Section
-            </Button>
-            <Button
-              variant="default"
-              onClick={handleSave}
-              disabled={!hasUnsavedChanges || isSaving}
-              className="gap-2"
-            >
-              {isSaving ? (
-                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              {isSaving ? "Saving..." : "Save Changes"}
-            </Button>
-          </>
+          <Button
+            variant="ghost"
+            onClick={handleResetSection}
+            className="gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <RotateCcw className="h-4 w-4" strokeWidth={1.5} />
+            Reset Section
+          </Button>
         }
       >
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -240,34 +170,6 @@ export function SettingsView() {
           {/* Right Content - Settings Form */}
           <div className="lg:col-span-3 space-y-6">{renderCategoryContent()}</div>
         </div>
-      </PageLayout>
-
-      {/* Unsaved Changes Confirmation Dialog */}
-      <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-secondary" />
-              Unsaved Changes
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              You have unsaved changes to your settings. Are you sure you want
-              to leave? Your changes will be lost.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={cancelLeave}>
-              Keep Editing
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmLeave}
-              className="bg-destructive text-white hover:bg-destructive/90"
-            >
-              Discard Changes
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    </PageLayout>
   );
 }

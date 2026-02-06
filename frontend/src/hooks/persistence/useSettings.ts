@@ -2,7 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { useDebouncedCallback } from "use-debounce";
 import { settingsApi } from "@/lib/api";
+
+// Auto-save debounce delay (ms)
+const AUTO_SAVE_DELAY = 500;
 
 // ============================================================================
 // TYPES
@@ -149,42 +153,31 @@ interface UseSettingsReturn {
    */
   isSyncing: boolean;
   /**
-   * Update a specific section of settings
+   * Update a specific section of settings (auto-saves after debounce)
    */
   updateSettings: <K extends keyof AppSettings>(
     section: K,
     values: Partial<AppSettings[K]>
   ) => void;
   /**
-   * Update multiple sections at once
+   * Update multiple sections at once (auto-saves after debounce)
    */
   updateMultipleSections: (updates: Partial<AppSettings>) => void;
   /**
-   * Save current settings to storage
-   */
-  saveSettings: () => Promise<void>;
-  /**
-   * Reset settings to defaults
+   * Reset settings to defaults (auto-saves immediately)
    */
   resetSettings: () => void;
   /**
-   * Reset a specific section to defaults
+   * Reset a specific section to defaults (auto-saves immediately)
    */
   resetSection: <K extends keyof AppSettings>(section: K) => void;
-  /**
-   * Check if current settings differ from saved settings
-   */
-  hasUnsavedChanges: boolean;
-  /**
-   * Discard unsaved changes and reload from storage
-   */
-  discardChanges: () => void;
 }
 
 /**
- * Hook for managing application settings with API sync and localStorage fallback.
+ * Hook for managing application settings with auto-save, API sync, and localStorage fallback.
  *
  * Behavior:
+ * - **Auto-save**: Changes are automatically persisted after a 500ms debounce
  * - Theme is ALWAYS stored in localStorage for instant load (prevents flash)
  * - When signed in: fetches settings from API, syncs changes to API
  * - When signed out: falls back to localStorage
@@ -192,13 +185,13 @@ interface UseSettingsReturn {
  *
  * @example
  * ```tsx
- * const { settings, updateSettings, saveSettings, hasUnsavedChanges, isLoading } = useSettings();
+ * const { settings, updateSettings, isLoading, isSyncing } = useSettings();
  *
- * // Update profile
+ * // Update profile - automatically saves after debounce
  * updateSettings('profile', { userName: 'John' });
  *
- * // Save to storage/API
- * await saveSettings();
+ * // Reset a section - saves immediately
+ * resetSection('appearance');
  * ```
  */
 export function useSettings(): UseSettingsReturn {
@@ -222,13 +215,16 @@ export function useSettings(): UseSettingsReturn {
     }
     return DEFAULT_SETTINGS;
   });
-  const [savedSettings, setSavedSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
   // Track if we've already loaded settings this session
   const hasLoadedRef = useRef(false);
+
+  // Ref to hold current settings for the debounced save (avoids stale closure)
+  const settingsRef = useRef<AppSettings>(settings);
+  settingsRef.current = settings;
 
   // Load settings on mount - from API if signed in, otherwise localStorage
   useEffect(() => {
@@ -251,7 +247,6 @@ export function useSettings(): UseSettingsReturn {
             // API returned settings - merge with defaults
             const merged = deepMergeSettings(DEFAULT_SETTINGS, apiSettings as Partial<AppSettings>);
             setSettings(merged);
-            setSavedSettings(merged);
 
             // Also save theme to localStorage for instant load on refresh
             localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(merged.appearance.theme));
@@ -261,7 +256,6 @@ export function useSettings(): UseSettingsReturn {
             // API returned empty - load from localStorage and sync to API
             const localSettings = loadFromLocalStorage();
             setSettings(localSettings);
-            setSavedSettings(localSettings);
 
             // Sync localStorage settings to API for first-time users
             try {
@@ -274,14 +268,12 @@ export function useSettings(): UseSettingsReturn {
           // Not signed in - use localStorage
           const localSettings = loadFromLocalStorage();
           setSettings(localSettings);
-          setSavedSettings(localSettings);
         }
       } catch (error) {
         console.error("[useSettings] Failed to load settings from API:", error);
         // Fallback to localStorage
         const localSettings = loadFromLocalStorage();
         setSettings(localSettings);
-        setSavedSettings(localSettings);
       } finally {
         setIsLoading(false);
         setIsLoaded(true);
@@ -291,7 +283,40 @@ export function useSettings(): UseSettingsReturn {
     loadSettings();
   }, [isAuthLoaded, isSignedIn, getToken]);
 
-  // Update a specific section
+  // Persist settings to localStorage and API
+  const persistSettings = useCallback(
+    async (settingsToSave: AppSettings) => {
+      // Always save theme to localStorage for instant load
+      localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(settingsToSave.appearance.theme));
+      // Always save full settings to localStorage as fallback
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settingsToSave));
+
+      // Dispatch event for other components to react
+      window.dispatchEvent(new CustomEvent("settings-updated", { detail: settingsToSave }));
+
+      // If signed in, sync to API
+      if (isSignedIn) {
+        setIsSyncing(true);
+        try {
+          const token = await getToken();
+          await settingsApi.replace(settingsToSave as unknown as Record<string, unknown>, token);
+        } catch (error) {
+          console.error("[useSettings] Failed to sync settings to API:", error);
+          // Settings are already saved locally, so this is a silent failure
+        } finally {
+          setIsSyncing(false);
+        }
+      }
+    },
+    [isSignedIn, getToken]
+  );
+
+  // Debounced auto-save (triggers after user stops making changes)
+  const debouncedPersist = useDebouncedCallback(() => {
+    persistSettings(settingsRef.current);
+  }, AUTO_SAVE_DELAY);
+
+  // Update a specific section (auto-saves after debounce)
   const updateSettings = useCallback(
     <K extends keyof AppSettings>(section: K, values: Partial<AppSettings[K]>) => {
       setSettings((prev) => ({
@@ -301,90 +326,68 @@ export function useSettings(): UseSettingsReturn {
           ...values,
         },
       }));
+      debouncedPersist();
     },
-    []
+    [debouncedPersist]
   );
 
-  // Update multiple sections at once
-  const updateMultipleSections = useCallback((updates: Partial<AppSettings>) => {
-    setSettings((prev) => {
-      const newSettings = { ...prev };
+  // Update multiple sections at once (auto-saves after debounce)
+  const updateMultipleSections = useCallback(
+    (updates: Partial<AppSettings>) => {
+      setSettings((prev) => {
+        const newSettings = { ...prev };
 
-      if (updates.profile) {
-        newSettings.profile = { ...prev.profile, ...updates.profile };
-      }
-      if (updates.appearance) {
-        newSettings.appearance = { ...prev.appearance, ...updates.appearance };
-      }
-      if (updates.mealPlanning) {
-        newSettings.mealPlanning = { ...prev.mealPlanning, ...updates.mealPlanning };
-      }
-      if (updates.recipePreferences) {
-        newSettings.recipePreferences = { ...prev.recipePreferences, ...updates.recipePreferences };
-      }
-      if (updates.shoppingList) {
-        newSettings.shoppingList = { ...prev.shoppingList, ...updates.shoppingList };
-      }
-      if (updates.dataManagement) {
-        newSettings.dataManagement = { ...prev.dataManagement, ...updates.dataManagement };
-      }
-      if (updates.aiFeatures) {
-        newSettings.aiFeatures = { ...prev.aiFeatures, ...updates.aiFeatures };
-      }
+        if (updates.profile) {
+          newSettings.profile = { ...prev.profile, ...updates.profile };
+        }
+        if (updates.appearance) {
+          newSettings.appearance = { ...prev.appearance, ...updates.appearance };
+        }
+        if (updates.mealPlanning) {
+          newSettings.mealPlanning = { ...prev.mealPlanning, ...updates.mealPlanning };
+        }
+        if (updates.recipePreferences) {
+          newSettings.recipePreferences = { ...prev.recipePreferences, ...updates.recipePreferences };
+        }
+        if (updates.shoppingList) {
+          newSettings.shoppingList = { ...prev.shoppingList, ...updates.shoppingList };
+        }
+        if (updates.dataManagement) {
+          newSettings.dataManagement = { ...prev.dataManagement, ...updates.dataManagement };
+        }
+        if (updates.aiFeatures) {
+          newSettings.aiFeatures = { ...prev.aiFeatures, ...updates.aiFeatures };
+        }
 
-      return newSettings;
-    });
-  }, []);
+        return newSettings;
+      });
+      debouncedPersist();
+    },
+    [debouncedPersist]
+  );
 
-  // Save to storage/API
-  const saveSettings = useCallback(async () => {
-    // Always save theme to localStorage for instant load
-    localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(settings.appearance.theme));
-    // Always save full settings to localStorage as fallback
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-
-    // Optimistically update saved state
-    setSavedSettings(settings);
-
-    // Dispatch event for other components to react
-    window.dispatchEvent(new CustomEvent("settings-updated", { detail: settings }));
-
-    // If signed in, sync to API
-    if (isSignedIn) {
-      setIsSyncing(true);
-      try {
-        const token = await getToken();
-        await settingsApi.replace(settings as unknown as Record<string, unknown>, token);
-      } catch (error) {
-        console.error("[useSettings] Failed to sync settings to API:", error);
-        // Settings are already saved locally, so this is a silent failure
-        // User can continue working - settings will sync next time
-      } finally {
-        setIsSyncing(false);
-      }
-    }
-  }, [settings, isSignedIn, getToken]);
-
-  // Reset all settings to defaults
+  // Reset all settings to defaults (saves immediately)
   const resetSettings = useCallback(() => {
     setSettings(DEFAULT_SETTINGS);
-  }, []);
+    // Save immediately (no debounce for reset)
+    persistSettings(DEFAULT_SETTINGS);
+  }, [persistSettings]);
 
-  // Reset a specific section to defaults
-  const resetSection = useCallback(<K extends keyof AppSettings>(section: K) => {
-    setSettings((prev) => ({
-      ...prev,
-      [section]: DEFAULT_SETTINGS[section],
-    }));
-  }, []);
-
-  // Check if there are unsaved changes
-  const hasUnsavedChanges = JSON.stringify(settings) !== JSON.stringify(savedSettings);
-
-  // Discard changes and reload from saved
-  const discardChanges = useCallback(() => {
-    setSettings(savedSettings);
-  }, [savedSettings]);
+  // Reset a specific section to defaults (saves immediately)
+  const resetSection = useCallback(
+    <K extends keyof AppSettings>(section: K) => {
+      setSettings((prev) => {
+        const newSettings = {
+          ...prev,
+          [section]: DEFAULT_SETTINGS[section],
+        };
+        // Save immediately (no debounce for reset)
+        persistSettings(newSettings);
+        return newSettings;
+      });
+    },
+    [persistSettings]
+  );
 
   return {
     settings,
@@ -393,11 +396,8 @@ export function useSettings(): UseSettingsReturn {
     isSyncing,
     updateSettings,
     updateMultipleSections,
-    saveSettings,
     resetSettings,
     resetSection,
-    hasUnsavedChanges,
-    discardChanges,
   };
 }
 
