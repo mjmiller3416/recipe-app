@@ -65,6 +65,7 @@ export interface RecipeResponseDTO extends RecipeBaseDTO {
   is_favorite: boolean;
   created_at: string | null;
   ingredients: RecipeIngredientResponseDTO[];
+  group_ids: number[]; // IDs of recipe groups this recipe belongs to
 }
 
 export interface RecipeCardDTO {

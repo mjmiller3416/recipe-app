@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Search, X, Loader2 } from "lucide-react";
@@ -18,7 +18,7 @@ import {
   QUICK_FILTERS,
   type QuickFilter,
 } from "@/lib/constants";
-import { useSettings } from "@/hooks/persistence/useSettings";
+import { useSettings, useRecipeFilterPersistence } from "@/hooks/persistence";
 import type { RecipeCardData } from "@/types/recipe";
 import { RecipeSortControls, type SortOption, type SortDirection, type ActiveFilter } from "./browser/RecipeSortControls";
 import { RecipeGrid } from "./browser/RecipeGrid";
@@ -153,6 +153,16 @@ export function RecipeBrowserView({
   const searchParams = useSearchParams();
   const { settings } = useSettings();
   const toggleFavoriteMutation = useToggleFavorite();
+  const { saveFilterState, loadFilterState, clearFilterState } = useRecipeFilterPersistence();
+  const restoredRef = useRef(false);
+
+  // Load saved filter state (for back navigation restoration)
+  const savedState = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    if (mode === "select") return null;
+    return loadFilterState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only check on mount
 
   const visibleQuickFilters = useMemo(() => {
     const selectedIds = settings.recipePreferences.quickFilters;
@@ -177,15 +187,26 @@ export function RecipeBrowserView({
     return recipeGroups.map((g) => ({ value: String(g.id), label: g.name }));
   }, [recipeGroups]);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState<FilterState>({
-    categories: [],
-    mealTypes: filterMealType === "side" ? ["side"] : [],
-    dietaryPreferences: [],
-    groupIds: [],
-    favoritesOnly: initialFavoritesOnly,
-    maxCookTime: null,
-    newDays: null,
+  const [searchTerm, setSearchTerm] = useState(() => savedState?.searchTerm ?? "");
+  const [filters, setFilters] = useState<FilterState>(() => {
+    if (savedState?.filters) {
+      return {
+        ...savedState.filters,
+        // URL param takes precedence
+        favoritesOnly: initialFavoritesOnly || savedState.filters.favoritesOnly,
+        // Prop-enforced mealType takes precedence
+        mealTypes: filterMealType === "side" ? ["side"] : savedState.filters.mealTypes,
+      };
+    }
+    return {
+      categories: [],
+      mealTypes: filterMealType === "side" ? ["side"] : [],
+      dietaryPreferences: [],
+      groupIds: [],
+      favoritesOnly: initialFavoritesOnly,
+      maxCookTime: null,
+      newDays: null,
+    };
   });
 
   const getInitialSortOption = (): SortOption => {
@@ -194,8 +215,12 @@ export function RecipeBrowserView({
     return settingValue;
   };
 
-  const [sortBy, setSortBy] = useState<SortOption>(getInitialSortOption);
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [sortBy, setSortBy] = useState<SortOption>(
+    () => savedState?.sortBy ?? getInitialSortOption()
+  );
+  const [sortDirection, setSortDirection] = useState<SortDirection>(
+    () => savedState?.sortDirection ?? "asc"
+  );
   const [showFilters, setShowFilters] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = sessionStorage.getItem(FILTER_VISIBILITY_KEY);
@@ -203,9 +228,15 @@ export function RecipeBrowserView({
     }
     return true;
   });
-  const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(
-    () => initialFavoritesOnly ? new Set(["favorites"]) : new Set()
-  );
+  const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(() => {
+    if (savedState?.activeQuickFilters) {
+      const set = new Set(savedState.activeQuickFilters);
+      // Ensure consistency with URL param
+      if (initialFavoritesOnly) set.add("favorites");
+      return set;
+    }
+    return initialFavoritesOnly ? new Set(["favorites"]) : new Set();
+  });
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
@@ -225,6 +256,15 @@ export function RecipeBrowserView({
       });
     }
   }, [mode, searchParams, filters.favoritesOnly]);
+
+  // Clear saved filter state after restoration to prevent stale data on refresh
+  useEffect(() => {
+    if (mode === "select") return;
+    if (savedState && !restoredRef.current) {
+      restoredRef.current = true;
+      clearFilterState();
+    }
+  }, [savedState, clearFilterState, mode]);
 
   useEffect(() => {
     sessionStorage.setItem(FILTER_VISIBILITY_KEY, String(showFilters));
@@ -392,7 +432,16 @@ export function RecipeBrowserView({
     if (mode === "select") {
       onSelect?.(recipe);
     } else {
+      // Save scroll position
       sessionStorage.setItem(SCROLL_POSITION_KEY, String(window.scrollY));
+      // Save filter state for back navigation restoration
+      saveFilterState({
+        filters,
+        searchTerm,
+        activeQuickFilters: Array.from(activeQuickFilters),
+        sortBy,
+        sortDirection,
+      });
       router.push(`/recipes/${recipe.id}`);
     }
   };
@@ -539,6 +588,8 @@ export function RecipeBrowserView({
     });
     setSearchTerm("");
     setActiveQuickFilters(new Set());
+    // Clear saved filter state so cleared state persists on back navigation
+    clearFilterState();
     if (mode === "browse" && searchParams.get("favoritesOnly")) {
       router.replace("/recipes", { scroll: false });
     }
