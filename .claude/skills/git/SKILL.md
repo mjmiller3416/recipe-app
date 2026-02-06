@@ -189,7 +189,7 @@ Derive from branch name or summarize commits:
 2. Make minimal fix and commit: `/git commit`
 3. Create PR to main (bypasses staging)
 4. Merge PR (triggers auto-deploy)
-5. **Critical:** Backport fix to staging to keep branches in sync
+5. **Critical:** Backport fix to staging: `/git backport`
 
 ## Related Workflows
 
@@ -199,5 +199,6 @@ Derive from branch name or summarize commits:
 - [workflows/sync.md](workflows/sync.md) - Rebase on latest staging
 - [workflows/merge.md](workflows/merge.md) - Squash merge to staging
 - [workflows/deploy.md](workflows/deploy.md) - PR from staging to main
+- [workflows/backport.md](workflows/backport.md) - Sync hotfixes from main to staging
 - [workflows/pr.md](workflows/pr.md) - Push and create PR
 - [workflows/status.md](workflows/status.md) - Show status and suggest action

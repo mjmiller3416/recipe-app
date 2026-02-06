@@ -126,40 +126,17 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 
 After the hotfix is merged to main, **you must backport it to staging** to keep branches in sync:
 
-1. **Check if backport needed**
-   ```bash
-   git fetch origin
-   git log origin/staging..origin/main --oneline
-   ```
+```bash
+/git backport
+```
 
-   If the hotfix commit appears, it needs backporting.
+This will:
+1. Check if staging is behind main
+2. Show commits to backport
+3. Merge main into staging
+4. Push to origin
 
-2. **Merge main into staging**
-   ```bash
-   git checkout staging
-   git pull origin staging
-   git merge origin/main
-   git push origin staging
-   ```
-
-   Or use cherry-pick if staging has diverged:
-   ```bash
-   git checkout staging
-   git pull origin staging
-   git cherry-pick <hotfix-commit-sha>
-   git push origin staging
-   ```
-
-3. **Confirm sync**
-   ```
-   Hotfix backported to staging!
-
-   Branch sync status:
-   - main: abc1234 (hotfix deployed)
-   - staging: abc1234 (hotfix backported)
-
-   Branches are in sync. Normal workflow can resume.
-   ```
+See [workflows/backport.md](backport.md) for full details.
 
 ## Error Handling
 
@@ -200,5 +177,5 @@ Hotfix Flow:
   3. /git commit                     # Commit the fix
   4. Create PR to main               # Deploy to prod
   5. Merge PR                        # Auto-deploy
-  6. Backport to staging             # Keep in sync
+  6. /git backport                   # Sync to staging
 ```
