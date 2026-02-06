@@ -44,6 +44,7 @@ export function mapRecipeForCard(dto: RecipeResponseDTO): RecipeCardData {
     isFavorite: dto.is_favorite ?? false,
     ingredients: dto.ingredients?.map(mapIngredientForCard) ?? [],
     createdAt: dto.created_at ?? undefined,
+    groupIds: dto.group_ids ?? [],
   };
 }
 
