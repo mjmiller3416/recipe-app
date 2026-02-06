@@ -155,6 +155,7 @@ class RecipeResponseDTO(RecipeBaseDTO):
     is_favorite: bool = False
     created_at: Optional[str] = None  # ISO format datetime string
     ingredients: List["RecipeIngredientResponseDTO"] = []
+    group_ids: List[int] = []  # IDs of recipe groups this recipe belongs to
 
 # ── Filter DTO ──────────────────────────────────────────────────────────────────────────────────────────────
 class RecipeFilterDTO(BaseModel):

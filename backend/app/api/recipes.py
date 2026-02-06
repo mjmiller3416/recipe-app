@@ -41,6 +41,9 @@ def _recipe_to_response_dto(recipe) -> RecipeResponseDTO:
             unit=ri.unit,
         ))
 
+    # Extract group IDs from the recipe's groups relationship
+    group_ids = [group.id for group in recipe.groups] if recipe.groups else []
+
     return RecipeResponseDTO(
         id=recipe.id,
         recipe_name=recipe.recipe_name,
@@ -56,6 +59,7 @@ def _recipe_to_response_dto(recipe) -> RecipeResponseDTO:
         is_favorite=recipe.is_favorite,
         created_at=recipe.created_at.isoformat() if recipe.created_at else None,
         ingredients=ingredients,
+        group_ids=group_ids,
     )
 
 
