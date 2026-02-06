@@ -14,9 +14,9 @@ import {
 } from "@/components/ui/select";
 import {
   MEAL_TYPE_OPTIONS,
-  RECIPE_CATEGORY_OPTIONS,
   DIETARY_PREFERENCES,
 } from "@/lib/constants";
+import { useCategoryOptions } from "@/hooks/api";
 import { cn } from "@/lib/utils";
 
 interface RecipeInfoCardProps {
@@ -54,6 +54,8 @@ export const RecipeInfoCard = memo(function RecipeInfoCard({
   getError,
   autoFocusName = false,
 }: RecipeInfoCardProps) {
+  const { formOptions: categoryOptions } = useCategoryOptions();
+
   return (
     <Card>
       <CardContent className="pt-6">
@@ -165,7 +167,7 @@ export const RecipeInfoCard = memo(function RecipeInfoCard({
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent side="bottom">
-                  {RECIPE_CATEGORY_OPTIONS.map((cat) => (
+                  {categoryOptions.map((cat) => (
                     <SelectItem key={cat.value} value={cat.value}>
                       {cat.label}
                     </SelectItem>

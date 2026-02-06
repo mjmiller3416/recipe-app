@@ -2,17 +2,17 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { Search, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { FilterBar } from "@/components/common/FilterBar";
-import { useRecipes, useToggleFavorite } from "@/hooks/api";
+import { useRecipes, useToggleFavorite, useCategoryOptions } from "@/hooks/api";
 import { useRecipeGroups } from "@/hooks/api/useRecipeGroups";
 import { applyFilters } from "@/lib/filterUtils";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
 import {
-  RECIPE_CATEGORY_OPTIONS,
   MEAL_TYPE_OPTIONS,
   DIETARY_PREFERENCES,
   QUICK_FILTERS,
@@ -69,10 +69,12 @@ function HeroSection({
   return (
     <div className="relative w-full overflow-hidden">
       <div className="absolute inset-0">
-        <img
+        <Image
           src="/images/rb_hero_image.png"
           alt=""
-          className="w-full min-h-full object-cover"
+          fill
+          className="object-cover"
+          priority
         />
         <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/70 to-background" />
         <div className="absolute inset-0 backdrop-blur-sm" />
@@ -161,6 +163,7 @@ export function RecipeBrowserView({
 
   const { data: recipesData, isLoading, error: queryError } = useRecipes();
   const { data: recipeGroups = [] } = useRecipeGroups();
+  const { filterOptions: categoryOptions } = useCategoryOptions();
 
   const recipes = useMemo(() => {
     return recipesData ? mapRecipesForCards(recipesData) : [];
@@ -168,9 +171,8 @@ export function RecipeBrowserView({
 
   const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to load recipes") : null;
 
-  const categoryOptions = RECIPE_CATEGORY_OPTIONS;
   const mealTypeOptions = MEAL_TYPE_OPTIONS;
-  const dietaryOptions = [...DIETARY_PREFERENCES];
+  const dietaryOptions = useMemo(() => [...DIETARY_PREFERENCES], []);
   const groupOptions: FilterOption[] = useMemo(() => {
     return recipeGroups.map((g) => ({ value: String(g.id), label: g.name }));
   }, [recipeGroups]);
@@ -370,7 +372,7 @@ export function RecipeBrowserView({
     });
 
     return result;
-  }, [recipes, searchTerm, filters, sortBy, sortDirection, filterMealType]);
+  }, [recipes, searchTerm, filters, sortBy, sortDirection]);
 
   useEffect(() => {
     if (mode === "select") return;

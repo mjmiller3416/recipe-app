@@ -14,18 +14,31 @@ export const MEAL_TYPES = [
   { value: "other", label: "Other" },
 ] as const;
 
+/**
+ * @deprecated Use `useCategoryOptions()` hook from `@/hooks/api` instead.
+ * Categories are now user-customizable and stored in the database.
+ * This constant is kept for backwards compatibility only.
+ */
 export const RECIPE_CATEGORIES = [
   { value: "all", label: "All" },
-  { value: "beef", label: "Beef" },
-  { value: "chicken", label: "Chicken" },
-  { value: "pork", label: "Pork" },
-  { value: "seafood", label: "Seafood" },
-  { value: "vegetarian", label: "Vegetarian" },
-  { value: "other", label: "Other" },
+  { value: "american", label: "American" },
+  { value: "chinese", label: "Chinese" },
+  { value: "french", label: "French" },
+  { value: "indian", label: "Indian" },
+  { value: "italian", label: "Italian" },
+  { value: "japanese", label: "Japanese" },
+  { value: "mediterranean", label: "Mediterranean" },
+  { value: "mexican", label: "Mexican" },
+  { value: "thai", label: "Thai" }
 ] as const;
 
 // Form options excluding "All" - use for Add/Edit Recipe forms
 export const MEAL_TYPE_OPTIONS = MEAL_TYPES.filter(t => t.value !== "all");
+
+/**
+ * @deprecated Use `useCategoryOptions().formOptions` from `@/hooks/api` instead.
+ * Categories are now user-customizable and stored in the database.
+ */
 export const RECIPE_CATEGORY_OPTIONS = RECIPE_CATEGORIES.filter(c => c.value !== "all");
 
 export const DIETARY_PREFERENCES = [

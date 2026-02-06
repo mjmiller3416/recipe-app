@@ -17,3 +17,4 @@ export { feedbackApi } from "./feedback";
 export { unitConversionApi } from "./units";
 export { settingsApi } from "./settings";
 export { recipeGroupApi } from "./recipe-groups";
+export { categoryApi } from "./categories";

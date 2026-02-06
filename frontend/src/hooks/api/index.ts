@@ -108,5 +108,22 @@ export {
   useRemoveRecipeFromGroup,
 } from "./useRecipeGroups";
 
+// Category Hooks
+export {
+  // Query Keys
+  categoryQueryKeys,
+  // Queries
+  useCategories,
+  useCategoryOptions,
+  useCategory,
+  // Mutations
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+  useReorderCategories,
+  useBulkUpdateCategories,
+  useResetCategories,
+} from "./useCategories";
+
 // Unit Conversion Hooks
 export { useUnits } from "./useUnits";

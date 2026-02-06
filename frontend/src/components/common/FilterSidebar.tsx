@@ -25,11 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { FilterBar } from "./FilterBar";
-import {
-  RECIPE_CATEGORY_OPTIONS,
-  MEAL_TYPE_OPTIONS,
-  DIETARY_PREFERENCES,
-} from "@/lib/constants";
+import { MEAL_TYPE_OPTIONS, DIETARY_PREFERENCES } from "@/lib/constants";
 
 // ============================================================================
 // Types
@@ -67,8 +63,8 @@ export interface FilterSidebarProps {
   showDietary?: boolean;
   showGroups?: boolean;
 
-  /** Custom options (defaults to constants) */
-  categoryOptions?: readonly FilterOption[] | FilterOption[];
+  /** Custom options */
+  categoryOptions: readonly FilterOption[] | FilterOption[];
   mealTypeOptions?: readonly FilterOption[] | FilterOption[];
   dietaryOptions?: readonly FilterOption[] | FilterOption[];
   groupOptions?: FilterOption[];
@@ -158,7 +154,7 @@ export function FilterSidebar({
   showMealTypes = true,
   showDietary = true,
   showGroups = false,
-  categoryOptions = RECIPE_CATEGORY_OPTIONS,
+  categoryOptions,
   mealTypeOptions = MEAL_TYPE_OPTIONS,
   dietaryOptions = DIETARY_PREFERENCES.filter((d) => d.value !== "none"),
   groupOptions = [],

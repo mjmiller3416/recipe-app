@@ -27,6 +27,7 @@ import {
   useUpdateRecipeGroup,
   useDeleteRecipeGroup,
 } from "@/hooks/api/useRecipeGroups";
+import { RecipeCategoriesSection } from "./RecipeCategoriesSection";
 
 const MAX_FILTERS = 5;
 
@@ -36,7 +37,6 @@ interface RecipePreferencesSectionProps {
 }
 
 interface RecipeGroupItemProps {
-  id: number;
   name: string;
   recipeCount: number;
   isEditing: boolean;
@@ -47,7 +47,6 @@ interface RecipeGroupItemProps {
 }
 
 function RecipeGroupItem({
-  id,
   name,
   recipeCount,
   isEditing,
@@ -345,7 +344,6 @@ export function RecipePreferencesSection({
                       groups.map((group) => (
                         <RecipeGroupItem
                           key={group.id}
-                          id={group.id}
                           name={group.name}
                           recipeCount={group.recipe_count}
                           isEditing={editingId === group.id}
@@ -361,6 +359,12 @@ export function RecipePreferencesSection({
               </CardContent>
             </Card>
           </div>
+
+          {/* Divider */}
+          <div className="border-t border-border" />
+
+          {/* Recipe Categories Section */}
+          <RecipeCategoriesSection />
         </div>
       </CardContent>
 

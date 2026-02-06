@@ -11,6 +11,7 @@ from .shopping_item import ShoppingItem
 from .shopping_item_contribution import ShoppingItemContribution
 from .unit_conversion_rule import UnitConversionRule
 from .user import User
+from .user_category import UserCategory
 from .user_settings import UserSettings
 from .user_usage import UserUsage
 
@@ -26,6 +27,7 @@ __all__ = [
     "ShoppingItemContribution",
     "UnitConversionRule",
     "User",
+    "UserCategory",
     "UserSettings",
     "UserUsage",
 ]
