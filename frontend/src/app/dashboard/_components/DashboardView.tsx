@@ -8,7 +8,7 @@ import { ShoppingListWidget } from "./ShoppingListWidget";
 import { ChefTipWidget } from "./ChefTipWidget";
 import { CookingStreakWidget } from "./CookingStreakWidget";
 import { RecipeRouletteWidget } from "./RecipeRouletteWidget";
-import { QuickAddWidget } from "./QuickAddWidget";
+import { QuickAddForm } from "@/components/forms/QuickAddForm";
 import { useDashboardStats, usePlannerEntries, useShoppingList } from "@/hooks/api";
 
 export function DashboardView() {
@@ -84,7 +84,7 @@ export function DashboardView() {
           <div className="flex-1 min-h-0">
             <RecipeRouletteWidget />
           </div>
-          <QuickAddWidget />
+          <QuickAddForm variant="compact" />
         </div>
         {/* Chef's Tip - spans columns 2-3 on xl */}
         <div className="xl:col-span-2">
