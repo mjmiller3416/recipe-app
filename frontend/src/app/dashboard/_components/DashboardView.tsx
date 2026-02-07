@@ -2,7 +2,7 @@
 
 import { BookOpen, Heart, UtensilsCrossed, ShoppingCart } from "lucide-react";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { DashboardStatCard } from "./DashboardStatCard";
+import { StatCard } from "@/components/common/StatCard";
 import { MealQueueWidget } from "./MealQueueWidget";
 import { ShoppingListWidget } from "./ShoppingListWidget";
 import { ChefTipWidget } from "./ChefTipWidget";
@@ -34,28 +34,28 @@ export function DashboardView() {
     >
       {/* Stat Cards - fixed height */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
-        <DashboardStatCard
+        <StatCard
           icon={BookOpen}
           value={stats.totalRecipes}
           label="Total Recipes"
           colorClass="purple"
           isLoading={isLoading}
         />
-        <DashboardStatCard
+        <StatCard
           icon={Heart}
           value={stats.favorites}
           label="Favorites"
           colorClass="pink"
           isLoading={isLoading}
         />
-        <DashboardStatCard
+        <StatCard
           icon={UtensilsCrossed}
           value={stats.mealsPlanned}
           label="Meals Planned"
           colorClass="teal"
           isLoading={isLoading}
         />
-        <DashboardStatCard
+        <StatCard
           icon={ShoppingCart}
           value={stats.shoppingItems}
           label="Shopping Items"

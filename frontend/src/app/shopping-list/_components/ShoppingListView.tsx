@@ -17,7 +17,8 @@ import {
   useUnits,
 } from "@/hooks/api";
 import type { ShoppingItemResponseDTO } from "@/types/shopping";
-import { ShoppingCart, Eye, EyeOff, Filter, X, Plus, Trash2 } from "lucide-react";
+import { ShoppingCart, Eye, EyeOff, Filter, X, Plus, Trash2, Clock, CheckCircle, Package } from "lucide-react";
+import { StatCard } from "@/components/common/StatCard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,26 +42,6 @@ import { INGREDIENT_CATEGORIES } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/utils";
 import { IngredientSourceSidebar } from "./IngredientSourceSidebar";
 import { useSettings } from "@/hooks/persistence/useSettings";
-
-/**
- * StatCard - Individual stat card for the summary section
- */
-function StatCard({
-  value,
-  label,
-  colorClass,
-}: {
-  value: number;
-  label: string;
-  colorClass: string;
-}) {
-  return (
-    <Card className="flex flex-col items-center justify-center flex-1 gap-1 p-4">
-      <span className={`text-3xl font-bold ${colorClass}`}>{value}</span>
-      <span className="text-sm text-muted-foreground">{label}</span>
-    </Card>
-  );
-}
 
 /**
  * AddManualItemForm - Inline form for adding manual items to the shopping list
@@ -567,21 +548,24 @@ export function ShoppingListView() {
       actions={headerActions}
     >
       {/* Summary stats */}
-      <div className="flex gap-3 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
         <StatCard
+          icon={Clock}
           value={remainingItems}
           label="Remaining"
-          colorClass="text-success"
+          colorClass="green"
         />
         <StatCard
+          icon={CheckCircle}
           value={shoppingData.checked_items}
           label="Collected"
-          colorClass="text-warning"
+          colorClass="amber"
         />
         <StatCard
+          icon={Package}
           value={shoppingData.total_items}
           label="Total Items"
-          colorClass="text-primary"
+          colorClass="purple"
         />
       </div>
 
