@@ -56,10 +56,13 @@ frontend/public/ui_examples/shopping_list/progress_tracking.png
 frontend/public/ui_examples/shopping_list/recipe_filter.png
 backend/app/scripts/copy_prod_to_local.py
 
+# Local task files
+tasks/
+.github/
+
 # Generated outputs
 codebase-map.html
 5242880
 .claude/hooks/hooks.log
 .claude/hooks/hooks.log
 frontend/lint-report.md
-tasks/lint-report.md
