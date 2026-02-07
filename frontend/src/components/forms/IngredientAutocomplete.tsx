@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Check, Plus } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,29 +10,29 @@ import {
   PopoverContent,
   PopoverAnchor,
 } from "@/components/ui/popover";
+import { ingredientApi } from "@/lib/api";
 import {
   useIngredientAutocomplete,
   type AutocompleteIngredient,
 } from "@/hooks/forms/useIngredientAutocomplete";
 
-// ============================================================================
-// Types
-// ============================================================================
-
-// Re-export the type for backwards compatibility
-export type { AutocompleteIngredient as Ingredient } from "@/hooks/forms/useIngredientAutocomplete";
+export type { AutocompleteIngredient } from "@/hooks/forms/useIngredientAutocomplete";
 
 export interface IngredientAutocompleteProps {
-  /** Available ingredients to search/filter */
-  ingredients: AutocompleteIngredient[];
+  /** Available ingredients to search/filter. When omitted, fetches automatically. */
+  ingredients?: AutocompleteIngredient[];
   /** Current input value (controlled) */
   value: string;
   /** Called when input value changes */
   onValueChange: (value: string) => void;
-  /** Called when an existing ingredient is selected */
-  onIngredientSelect: (ingredient: AutocompleteIngredient) => void;
+  /** Called when an existing ingredient is selected (recipe form use case) */
+  onIngredientSelect?: (ingredient: AutocompleteIngredient) => void;
   /** Called when user submits a new ingredient name (not in list) */
   onNewIngredient?: (name: string) => void;
+  /** Called when a category is determined from selection (shopping use case) */
+  onCategoryChange?: (category: string) => void;
+  /** Called when user presses Enter with valid input and dropdown is closed */
+  onSubmit?: () => void;
   /** Placeholder text */
   placeholder?: string;
   /** Additional class names */
@@ -42,16 +43,14 @@ export interface IngredientAutocompleteProps {
   autoFocus?: boolean;
 }
 
-// ============================================================================
-// Component
-// ============================================================================
-
 export function IngredientAutocomplete({
-  ingredients,
+  ingredients: ingredientsProp,
   value,
   onValueChange,
   onIngredientSelect,
   onNewIngredient,
+  onCategoryChange,
+  onSubmit,
   placeholder = "Type ingredient name...",
   className,
   disabled = false,
@@ -59,6 +58,49 @@ export function IngredientAutocomplete({
 }: IngredientAutocompleteProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const listRef = React.useRef<HTMLDivElement>(null);
+
+  // Self-fetch ingredients when none are provided via props
+  const { getToken, isLoaded, isSignedIn } = useAuth();
+  const [fetchedIngredients, setFetchedIngredients] = React.useState<AutocompleteIngredient[]>([]);
+  const shouldFetch = ingredientsProp === undefined;
+
+  React.useEffect(() => {
+    if (!shouldFetch || !isLoaded || !isSignedIn) return;
+
+    const fetchIngredients = async () => {
+      try {
+        const token = await getToken();
+        const ingredients = await ingredientApi.list(undefined, token);
+        const transformed: AutocompleteIngredient[] = ingredients.map((ing) => ({
+          id: ing.id,
+          name: ing.ingredient_name,
+          category: ing.ingredient_category,
+        }));
+        setFetchedIngredients(transformed);
+      } catch (error) {
+        console.error("Failed to fetch ingredients:", error);
+      }
+    };
+    fetchIngredients();
+  }, [shouldFetch, isLoaded, isSignedIn, getToken]);
+
+  const ingredients = ingredientsProp ?? fetchedIngredients;
+
+  // Internal selection handler that delegates to the appropriate callback
+  const handleIngredientSelectInternal = React.useCallback(
+    (ingredient: AutocompleteIngredient) => {
+      if (onIngredientSelect) {
+        onIngredientSelect(ingredient);
+      } else {
+        // Shopping use case: update name and category directly
+        onValueChange(ingredient.name);
+      }
+      if (ingredient.category && onCategoryChange) {
+        onCategoryChange(ingredient.category);
+      }
+    },
+    [onIngredientSelect, onValueChange, onCategoryChange]
+  );
 
   const {
     open,
@@ -69,16 +111,33 @@ export function IngredientAutocomplete({
     items,
     handleSelect,
     handleInputChange,
-    handleKeyDown,
+    handleKeyDown: hookKeyDown,
     handleFocus,
     handleBlur,
   } = useIngredientAutocomplete({
     ingredients,
     value,
     onValueChange,
-    onIngredientSelect,
+    onIngredientSelect: handleIngredientSelectInternal,
     onNewIngredient,
   });
+
+  // Wrap keydown to support onSubmit when dropdown is closed
+  const handleKeyDown = React.useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (open && items.length > 0) {
+        hookKeyDown(e);
+        return;
+      }
+      if (e.key === "Enter" && value.trim() && onSubmit) {
+        e.preventDefault();
+        onSubmit();
+        return;
+      }
+      hookKeyDown(e);
+    },
+    [open, items.length, hookKeyDown, value, onSubmit]
+  );
 
   // Scroll highlighted item into view
   React.useEffect(() => {
@@ -89,6 +148,7 @@ export function IngredientAutocomplete({
   }, [highlightedIndex, open]);
 
   return (
+    <div className="relative flex-1 min-w-0">
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverAnchor asChild>
         <Input
@@ -121,7 +181,7 @@ export function IngredientAutocomplete({
       >
         <div
           ref={listRef}
-          className="max-h-[200px] overflow-y-auto p-1"
+          className="max-h-52 overflow-y-auto p-1"
           role="listbox"
         >
           {items.length === 0 && (
@@ -169,5 +229,6 @@ export function IngredientAutocomplete({
         </div>
       </PopoverContent>
     </Popover>
+    </div>
   );
 }

@@ -12,7 +12,7 @@ import type { RecipeCreateDTO, RecipeUpdateDTO, RecipeIngredientDTO, RecipeRespo
 // Session storage key for AI-generated recipe (must match MealGenieChatContent)
 const AI_RECIPE_STORAGE_KEY = "meal-genie-generated-recipe";
 import type { Ingredient } from "./IngredientRow";
-import type { Ingredient as AutocompleteIngredient } from "./IngredientAutocomplete";
+import type { AutocompleteIngredient } from "@/components/forms/IngredientAutocomplete";
 import {
   validateString,
   validateInteger,
@@ -180,7 +180,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
 
   // Banner image state (21:9 ultrawide)
   const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
-  const [bannerImageData, setBannerImageData] = useState<string | null>(null);
+  const [, setBannerImageData] = useState<string | null>(null);
 
   // AI Image generation state
   const [isAiGenerated, setIsAiGenerated] = useState(false);
@@ -370,7 +370,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
       }
     };
     fetchIngredients();
-  }, []);
+  }, [getToken]);
 
   // Ingredient handlers
   const addIngredient = useCallback(() => {

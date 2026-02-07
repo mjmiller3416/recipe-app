@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { QuantityInput } from "@/components/forms/QuantityInput";
-import { SmartIngredientInput } from "@/components/forms/SmartIngredientInput";
+import { IngredientAutocomplete } from "@/components/forms/IngredientAutocomplete";
 import { INGREDIENT_CATEGORIES } from "@/lib/constants";
 import { useAddManualItem, useUnits } from "@/hooks/api";
 
@@ -77,9 +77,9 @@ export function QuickAddWidget() {
               ))}
             </SelectContent>
           </Select>
-          <SmartIngredientInput
+          <IngredientAutocomplete
             value={itemName}
-            onChange={setItemName}
+            onValueChange={setItemName}
             onCategoryChange={setCategory}
             onSubmit={() => itemName.trim() && handleAdd()}
             placeholder="Add item..."

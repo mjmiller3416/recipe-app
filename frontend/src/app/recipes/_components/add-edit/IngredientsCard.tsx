@@ -5,7 +5,7 @@ import { Plus, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { IngredientRow, Ingredient } from "./IngredientRow";
-import { Ingredient as AutocompleteIngredient } from "./IngredientAutocomplete";
+import type { AutocompleteIngredient } from "@/components/forms/IngredientAutocomplete";
 import {
   DndContext,
   closestCenter,

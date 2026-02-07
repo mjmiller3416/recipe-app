@@ -14,7 +14,6 @@ import {
   useToggleFlagged,
   useAddManualItem,
   useClearManualItems,
-  useRefreshShoppingList,
   useUnits,
 } from "@/hooks/api";
 import type { ShoppingItemResponseDTO } from "@/types/shopping";
@@ -30,7 +29,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { QuantityInput } from "@/components/forms/QuantityInput";
-import { SmartIngredientInput } from "@/components/forms/SmartIngredientInput";
+import { IngredientAutocomplete } from "@/components/forms/IngredientAutocomplete";
 import {
   Select,
   SelectContent,
@@ -112,9 +111,9 @@ function AddManualItemForm({
           ))}
         </SelectContent>
       </Select>
-      <SmartIngredientInput
+      <IngredientAutocomplete
         value={itemName}
-        onChange={setItemName}
+        onValueChange={setItemName}
         onCategoryChange={setCategory}
         onSubmit={() => itemName.trim() && onAdd()}
         placeholder="Add item..."
@@ -167,8 +166,6 @@ export function ShoppingListView() {
   const toggleFlagged = useToggleFlagged();
   const addManualItem = useAddManualItem();
   const clearManualItems = useClearManualItems();
-  const refreshList = useRefreshShoppingList();
-
   // Fetch planner entries and meals for recipe ordering (using authenticated hooks)
   const { data: plannerEntries } = usePlannerEntries();
   const { data: allMeals } = useMeals();
@@ -653,7 +650,7 @@ export function ShoppingListView() {
 
         {/* Recipe filter sidebar (desktop only) - sticky below header */}
         <div className="hidden lg:block">
-          <div className="sticky top-[113px] transform-gpu">
+          <div className="sticky top-28 transform-gpu">
             <IngredientSourceSidebar
               recipes={recipes}
               manualItemCount={manualItemCount}

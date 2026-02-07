@@ -30,7 +30,7 @@ fi
 
 # Get ALL changed frontend files (modified, staged, untracked - everything except deleted)
 # Using git status --porcelain which shows all file states, then strip the status prefix
-CHANGED_FILES=$(cd "$PROJECT_ROOT" && git status --porcelain 2>/dev/null | grep -v "^D" | sed 's/^...//' | grep "^frontend/.*\.\(ts\|tsx\|js\|jsx\)$")
+CHANGED_FILES=$(cd "$PROJECT_ROOT" && git status --porcelain 2>/dev/null | grep -v "^D" | grep -v "^ D" | sed 's/^...//' | grep "^frontend/.*\.\(ts\|tsx\|js\|jsx\)$")
 
 # Skip if no frontend JS/TS files were changed
 if [ -z "$CHANGED_FILES" ]; then

@@ -14,5 +14,3 @@ export { ImageUploadCard } from "./ImageUploadCard";
 // Ingredient components
 export { IngredientRow } from "./IngredientRow";
 export type { Ingredient } from "./IngredientRow";
-export { IngredientAutocomplete } from "./IngredientAutocomplete";
-export type { Ingredient as AutocompleteIngredient } from "./IngredientAutocomplete";

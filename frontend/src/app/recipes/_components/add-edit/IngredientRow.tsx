@@ -14,8 +14,8 @@ import {
 import { INGREDIENT_CATEGORIES } from "@/lib/constants";
 import {
   IngredientAutocomplete,
-  Ingredient as AutocompleteIngredient,
-} from "./IngredientAutocomplete";
+  type AutocompleteIngredient,
+} from "@/components/forms/IngredientAutocomplete";
 import { useUnits } from "@/hooks/api";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
