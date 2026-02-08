@@ -1,7 +1,7 @@
-"""Build user context data for Meal Genie prompts.
+"""Build user context data for AI assistant prompts.
 
 This module aggregates user data (recipes, meal plan, shopping list) into
-structured data that can be used with the config's build_user_context_prompt().
+structured data that can be used with the assistant's build_user_context_prompt().
 """
 
 from typing import Dict, List, Optional
@@ -16,7 +16,7 @@ from app.dtos.recipe_dtos import RecipeFilterDTO
 class UserContextBuilder:
     """Builds structured user context data for AI prompts."""
 
-    def __init__(self, session: Session, user_id: int):
+    def __init__(self, session: Session, user_id: int) -> None:
         """Initialize with database session and user ID."""
         self.session = session
         self.user_id = user_id
@@ -29,11 +29,10 @@ class UserContextBuilder:
         include_ingredients: bool = False,
         include_shopping_list: bool = False,
     ) -> dict:
-        """
-        Build structured context data dict.
+        """Build structured context data dict.
 
         This returns a dict that can be passed to build_user_context_prompt()
-        in meal_genie/context.py.
+        in assistant/context.py.
 
         Args:
             include_ingredients: Whether to include recipe ingredients.
@@ -57,8 +56,7 @@ class UserContextBuilder:
         return data
 
     def build_context(self, include_shopping_list: bool = False) -> str:
-        """
-        Build complete user context string (legacy method for backwards compat).
+        """Build complete user context string (legacy method for backwards compat).
 
         Args:
             include_shopping_list: Whether to include shopping list in context.

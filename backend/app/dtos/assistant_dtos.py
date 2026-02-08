@@ -1,25 +1,25 @@
-"""DTOs for Meal Genie conversational AI."""
+"""DTOs for the AI assistant (conversational chat + recipe generation)."""
 
 from pydantic import BaseModel
 from typing import Optional, List, Literal
 
 
-class MealGenieMessageDTO(BaseModel):
+class AssistantMessageDTO(BaseModel):
     """A single message in the conversation."""
 
     role: Literal["user", "assistant"]
     content: str
 
 
-class MealGenieRequestDTO(BaseModel):
-    """Request DTO for Meal Genie chat."""
+class AssistantRequestDTO(BaseModel):
+    """Request DTO for assistant chat."""
 
     message: str
-    conversation_history: Optional[List[MealGenieMessageDTO]] = None
+    conversation_history: Optional[List[AssistantMessageDTO]] = None
 
 
-class MealGenieResponseDTO(BaseModel):
-    """Response DTO for Meal Genie chat.
+class AssistantResponseDTO(BaseModel):
+    """Response DTO for assistant chat.
 
     Can include recipe data if the AI decides to generate a recipe.
     """
@@ -60,10 +60,10 @@ class GeneratedRecipeDTO(BaseModel):
 
 
 class RecipeGenerationRequestDTO(BaseModel):
-    """Request DTO for generating a recipe via Meal Genie."""
+    """Request DTO for generating a recipe via the assistant."""
 
     message: str
-    conversation_history: Optional[List[MealGenieMessageDTO]] = None
+    conversation_history: Optional[List[AssistantMessageDTO]] = None
     generate_image: bool = True
 
 
@@ -80,4 +80,4 @@ class RecipeGenerationResponseDTO(BaseModel):
 
 
 # Rebuild models to resolve forward references
-MealGenieResponseDTO.model_rebuild()
+AssistantResponseDTO.model_rebuild()

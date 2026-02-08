@@ -1,16 +1,18 @@
 """Service for generating cooking tips using Gemini."""
 
 import logging
-import os
-import random
 import re
+import random
 import threading
 from collections import deque
 from typing import Optional
-from dotenv import load_dotenv
 
-from app.ai.dtos.cooking_tip_dtos import CookingTipResponseDTO
-from app.ai.config.cooking_tips_config import (
+from app.dtos.cooking_tip_dtos import CookingTipResponseDTO
+from app.services.ai.gemini_client import get_gemini_client
+from app.services.ai.response_utils import extract_text_from_response
+from app.services.ai.text_utils import clean_tip
+
+from .config import (
     TIP_CATEGORIES,
     TIP_PROMPT_TEMPLATE,
     MODEL_NAME,
@@ -22,35 +24,14 @@ from app.ai.config.cooking_tips_config import (
 
 logger = logging.getLogger(__name__)
 
-# Load environment variables
-load_dotenv()
-
-# Lazy import to avoid issues if package not installed
-_genai_client = None
-
-
-def _get_genai_client():
-    """Lazy initialization of Gemini client for cooking tips."""
-    global _genai_client
-    if _genai_client is None:
-        from google import genai
-
-        # Use dedicated key if set, otherwise fall back to shared key
-        api_key = os.getenv(API_KEY_ENV_VAR_ALT) or os.getenv(API_KEY_ENV_VAR)
-        _genai_client = genai.Client(api_key=api_key)
-    return _genai_client
-
 
 class CookingTipService:
     """Service for generating cooking tips using Gemini AI."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the cooking tip service."""
-        # Validate that at least one API key is set (matches _get_genai_client logic)
-        if not os.getenv(API_KEY_ENV_VAR_ALT) and not os.getenv(API_KEY_ENV_VAR):
-            raise ValueError(
-                f"Either {API_KEY_ENV_VAR_ALT} or {API_KEY_ENV_VAR} must be set"
-            )
+        # Validate eagerly so we fail fast if misconfigured
+        get_gemini_client(API_KEY_ENV_VAR, API_KEY_ENV_VAR_ALT)
 
         # Instance state for thread-safe category rotation and tip deduplication
         self._shuffled_categories: list[str] = []
@@ -90,25 +71,16 @@ class CookingTipService:
                 return True
         return False
 
-    def _clean_tip(self, tip: str) -> str:
-        """Remove common prefixes and clean up formatting."""
-        # Remove common prefixes
-        tip = re.sub(r'^(Tip:|Chef\'s Tip:|Pro Tip:|\*|\-|•)\s*', '', tip, flags=re.IGNORECASE)
-        # Remove quotes if wrapped
-        tip = tip.strip('"\'')
-        return tip.strip()
-
     def generate_tip(self) -> CookingTipResponseDTO:
-        """
-        Generate a random cooking tip with deduplication.
+        """Generate a random cooking tip with deduplication.
 
         Returns:
-            CookingTipResponseDTO with success status, tip text, and optional error
+            CookingTipResponseDTO with success status, tip text, and optional error.
         """
         try:
             from google.genai import types
 
-            client = _get_genai_client()
+            client = get_gemini_client(API_KEY_ENV_VAR, API_KEY_ENV_VAR_ALT)
             max_retries = 3
 
             for attempt in range(max_retries):
@@ -127,28 +99,25 @@ class CookingTipService:
                 )
 
                 # Extract the text from the response
-                if response and response.candidates:
-                    for candidate in response.candidates:
-                        if candidate.content and candidate.content.parts:
-                            for part in candidate.content.parts:
-                                if hasattr(part, "text") and part.text:
-                                    tip_text = self._clean_tip(part.text.strip())
+                tip_text = extract_text_from_response(response)
+                if tip_text:
+                    tip_text = clean_tip(tip_text)
 
-                                    # Check for duplicate tips
-                                    if self._is_duplicate(tip_text):
-                                        logger.info(f"[ChefTip] Duplicate detected, retrying ({attempt + 1}/{max_retries})")
-                                        continue
+                    # Check for duplicate tips
+                    if self._is_duplicate(tip_text):
+                        logger.info(f"[ChefTip] Duplicate detected, retrying ({attempt + 1}/{max_retries})")
+                        continue
 
-                                    # Track this tip to prevent future duplicates
-                                    normalized = self._normalize_tip(tip_text)
-                                    self._recent_tips.append(normalized)
+                    # Track this tip to prevent future duplicates
+                    normalized = self._normalize_tip(tip_text)
+                    self._recent_tips.append(normalized)
 
-                                    logger.info(f"[ChefTip] Category: {category} | Generated: {tip_text[:60]}...")
-                                    return CookingTipResponseDTO(
-                                        success=True,
-                                        tip=tip_text,
-                                        error=None,
-                                    )
+                    logger.info(f"[ChefTip] Category: {category} | Generated: {tip_text[:60]}...")
+                    return CookingTipResponseDTO(
+                        success=True,
+                        tip=tip_text,
+                        error=None,
+                    )
 
             # All retries exhausted (rare edge case)
             return CookingTipResponseDTO(

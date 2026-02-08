@@ -1,20 +1,21 @@
-"""app/ai/services/meal_genie/generators.py
+"""app/services/ai/assistant/generators.py
 
-AI content generation methods for Meal Genie.
+AI content generation methods for the assistant.
 Handles recipe suggestions, full recipe generation, and cooking question answers.
 """
 
-# ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
 import json
 from typing import Optional
 
-from app.ai.config.meal_genie import MODEL_NAME
-from app.ai.dtos.meal_genie_dtos import GeneratedRecipeDTO, GeneratedIngredientDTO
+from app.dtos.assistant_dtos import GeneratedRecipeDTO, GeneratedIngredientDTO
+from app.services.ai.gemini_client import get_gemini_client
+from app.services.ai.response_utils import extract_text_from_response
+
+from .prompts import MODEL_NAME, API_KEY_ENV_VAR
 
 
-# ── Generators Mixin ────────────────────────────────────────────────────────────────────────────────────────
 class GeneratorsMixin:
-    """Mixin providing AI generation methods for Meal Genie."""
+    """Mixin providing AI generation methods for the assistant."""
 
     def _handle_function_call(
         self,
@@ -51,7 +52,7 @@ class GeneratorsMixin:
         self, args: dict, context_data: Optional[dict], contents: list
     ) -> dict:
         """Generate recipe suggestions text based on tool arguments."""
-        client = self._get_client()
+        client = get_gemini_client(API_KEY_ENV_VAR)
 
         # Build a prompt that includes context about what the user wants
         context_parts = []
@@ -92,14 +93,7 @@ Be warm, enthusiastic, and use 2-4 emojis naturally placed."""
         )
 
         # Extract the text
-        final_text = "Here are some ideas! 🍳"  # Fallback
-        if gen_response and gen_response.candidates:
-            for candidate in gen_response.candidates:
-                if candidate.content and candidate.content.parts:
-                    for part in candidate.content.parts:
-                        if hasattr(part, "text") and part.text:
-                            final_text = part.text.strip()
-                            break
+        final_text = extract_text_from_response(gen_response) or "Here are some ideas! 🍳"
 
         return {
             "type": "suggestions",
@@ -109,7 +103,7 @@ Be warm, enthusiastic, and use 2-4 emojis naturally placed."""
 
     def _generate_cooking_answer(self, args: dict, contents: list) -> dict:
         """Generate a cooking question answer."""
-        client = self._get_client()
+        client = get_gemini_client(API_KEY_ENV_VAR)
 
         question_type = args.get("question_type", "general")
         context = args.get("context", "")
@@ -126,14 +120,7 @@ Use your friendly Meal Genie personality."""
             config={"temperature": 0.8},
         )
 
-        final_text = "Let me help with that!"
-        if gen_response and gen_response.candidates:
-            for candidate in gen_response.candidates:
-                if candidate.content and candidate.content.parts:
-                    for part in candidate.content.parts:
-                        if hasattr(part, "text") and part.text:
-                            final_text = part.text.strip()
-                            break
+        final_text = extract_text_from_response(gen_response) or "Let me help with that!"
 
         return {
             "type": "chat",
@@ -143,7 +130,7 @@ Use your friendly Meal Genie personality."""
 
     def _generate_recipe_from_args(self, args: dict) -> Optional[GeneratedRecipeDTO]:
         """Generate a structured recipe from tool arguments."""
-        client = self._get_client()
+        client = get_gemini_client(API_KEY_ENV_VAR)
 
         recipe_name = args.get("recipe_name", "Untitled Recipe")
         style_notes = args.get("style_notes", "")
@@ -188,30 +175,27 @@ Rules:
         )
 
         # Parse JSON from response
-        if response and response.candidates:
-            for candidate in response.candidates:
-                if candidate.content and candidate.content.parts:
-                    for part in candidate.content.parts:
-                        if hasattr(part, "text") and part.text:
-                            try:
-                                data = json.loads(part.text)
-                                ingredients = [
-                                    GeneratedIngredientDTO(**ing)
-                                    for ing in data.get("ingredients", [])
-                                ]
-                                return GeneratedRecipeDTO(
-                                    recipe_name=data.get("recipe_name", recipe_name),
-                                    recipe_category=data.get("recipe_category", "other"),
-                                    meal_type=data.get("meal_type", "dinner"),
-                                    diet_pref=data.get("diet_pref", "none"),
-                                    total_time=data.get("total_time"),
-                                    servings=data.get("servings", servings),
-                                    directions=data.get("directions"),
-                                    notes=data.get("notes"),
-                                    ingredients=ingredients,
-                                )
-                            except json.JSONDecodeError:
-                                pass
+        raw_text = extract_text_from_response(response)
+        if raw_text:
+            try:
+                data = json.loads(raw_text)
+                ingredients = [
+                    GeneratedIngredientDTO(**ing)
+                    for ing in data.get("ingredients", [])
+                ]
+                return GeneratedRecipeDTO(
+                    recipe_name=data.get("recipe_name", recipe_name),
+                    recipe_category=data.get("recipe_category", "other"),
+                    meal_type=data.get("meal_type", "dinner"),
+                    diet_pref=data.get("diet_pref", "none"),
+                    total_time=data.get("total_time"),
+                    servings=data.get("servings", servings),
+                    directions=data.get("directions"),
+                    notes=data.get("notes"),
+                    ingredients=ingredients,
+                )
+            except json.JSONDecodeError:
+                pass
 
         # Fallback: return empty recipe with just the name
         return GeneratedRecipeDTO(recipe_name=recipe_name, ingredients=[])

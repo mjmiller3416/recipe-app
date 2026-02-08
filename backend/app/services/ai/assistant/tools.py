@@ -1,4 +1,4 @@
-"""Gemini function calling tool definitions for Meal Genie.
+"""Gemini function calling tool definitions for the AI assistant.
 
 Defines the tools/functions available to the AI for structured interactions.
 """

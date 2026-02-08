@@ -16,9 +16,9 @@ Goal: Suggest a small enhancement that makes the dish taste better, feel more sp
 This is NOT a basic cooking lesson.
 
 RULES:
-- Give ONE upgrade idea (1–2 sentences).
-- It must be specific to THIS dish (not generic advice like "season well" or "don’t overcook").
-- Prefer upgrades like: sauce ideas, toppings, mix-ins, seasoning twists, texture boosts, better assembly, a side pairing, or a “make it restaurant-y” finishing touch.
+- Give ONE upgrade idea (1-2 sentences).
+- It must be specific to THIS dish (not generic advice like "season well" or "don't overcook").
+- Prefer upgrades like: sauce ideas, toppings, mix-ins, seasoning twists, texture boosts, better assembly, a side pairing, or a "make it restaurant-y" finishing touch.
 - Include at least one concrete detail (ingredient, amount, timing, or method).
 - Assume a normal home kitchen; no specialty equipment required.
 - Avoid food-safety reminders and vague technique tips unless absolutely necessary for the dish.
@@ -28,4 +28,3 @@ QUALITY CHECK (do silently):
 If your suggestion could apply to 10+ unrelated dishes, rewrite it to be more dish-specific.
 
 Return ONLY the suggestion text."""
-

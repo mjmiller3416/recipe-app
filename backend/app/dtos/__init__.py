@@ -1,5 +1,25 @@
-# app/core/dtos/__init__.py
+# app/dtos/__init__.py
 
+from .assistant_dtos import (
+    AssistantMessageDTO,
+    AssistantRequestDTO,
+    AssistantResponseDTO,
+    GeneratedIngredientDTO,
+    GeneratedRecipeDTO,
+    RecipeGenerationRequestDTO,
+    RecipeGenerationResponseDTO,
+)
+from .cooking_tip_dtos import CookingTipResponseDTO
+from .image_generation_dtos import (
+    BannerGenerationRequestDTO,
+    BannerGenerationResponseDTO,
+    ImageGenerationRequestDTO,
+    ImageGenerationResponseDTO,
+)
+from .meal_suggestions_dtos import (
+    MealSuggestionsRequestDTO,
+    MealSuggestionsResponseDTO,
+)
 from .ingredient_dtos import (
     IngredientBaseDTO,
     IngredientCreateDTO,
@@ -56,6 +76,28 @@ from .shopping_dtos import (
 )
 
 __all__ = [
+    # Assistant (AI Chat) DTOs
+    "AssistantMessageDTO",
+    "AssistantRequestDTO",
+    "AssistantResponseDTO",
+    "GeneratedIngredientDTO",
+    "GeneratedRecipeDTO",
+    "RecipeGenerationRequestDTO",
+    "RecipeGenerationResponseDTO",
+
+    # Cooking Tip DTOs
+    "CookingTipResponseDTO",
+
+    # Image Generation DTOs
+    "ImageGenerationRequestDTO",
+    "ImageGenerationResponseDTO",
+    "BannerGenerationRequestDTO",
+    "BannerGenerationResponseDTO",
+
+    # Meal Suggestions DTOs
+    "MealSuggestionsRequestDTO",
+    "MealSuggestionsResponseDTO",
+
     # Recipe DTOs
     "RecipeIngredientDTO",
     "RecipeBaseDTO",

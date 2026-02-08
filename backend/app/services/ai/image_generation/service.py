@@ -1,11 +1,12 @@
 """Service for generating AI images using Gemini."""
 
-import os
 import base64
 from typing import Optional
-from dotenv import load_dotenv
 
-from app.ai.config.image_generation_config import (
+from app.services.ai.gemini_client import get_gemini_client
+from app.services.ai.response_utils import extract_image_data
+
+from .config import (
     PROMPT_TEMPLATE,
     BANNER_PROMPT_TEMPLATE,
     BANNER_FROM_REFERENCE_PROMPT,
@@ -15,46 +16,27 @@ from app.ai.config.image_generation_config import (
     API_KEY_ENV_VAR,
 )
 
-# Load environment variables
-load_dotenv()
-
-# Lazy import to avoid issues if package not installed
-_genai_client = None
-
-
-def _get_genai_client():
-    """Lazy initialization of Gemini client."""
-    global _genai_client
-    if _genai_client is None:
-        from google import genai
-
-        api_key = os.getenv(API_KEY_ENV_VAR)
-        _genai_client = genai.Client(api_key=api_key)
-    return _genai_client
-
 
 class ImageGenerationService:
     """Service for generating recipe images using Gemini AI."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the image generation service."""
-        self.api_key = os.getenv(API_KEY_ENV_VAR)
-        if not self.api_key:
-            raise ValueError(f"{API_KEY_ENV_VAR} environment variable is not set")
+        # Validate eagerly so we fail fast if misconfigured
+        get_gemini_client(API_KEY_ENV_VAR)
 
     def generate_recipe_image(
         self, recipe_name: str, custom_prompt: str = None, aspect_ratio: str = "1:1"
     ) -> dict:
-        """
-        Generate an AI image for a recipe.
+        """Generate an AI image for a recipe.
 
         Args:
             recipe_name: The name of the recipe to generate an image for.
             custom_prompt: Optional custom prompt template (must include {recipe_name}).
-            aspect_ratio: Image aspect ratio (default "1:1"). Supported: "1:1", "21:9", etc.
+            aspect_ratio: Image aspect ratio (default "1:1").
 
         Returns:
-            dict with 'success', 'image_data' (base64), and optional 'error'
+            dict with 'success', 'image_data' (base64), and optional 'error'.
         """
         if not recipe_name or not recipe_name.strip():
             return {
@@ -66,7 +48,7 @@ class ImageGenerationService:
         try:
             from google.genai import types
 
-            client = _get_genai_client()
+            client = get_gemini_client(API_KEY_ENV_VAR)
 
             # Build the prompt - use custom_prompt if provided and valid, else use default
             template = (
@@ -89,23 +71,13 @@ class ImageGenerationService:
             )
 
             # Extract the image data from the response
-            if response and response.candidates:
-                for candidate in response.candidates:
-                    if candidate.content and candidate.content.parts:
-                        for part in candidate.content.parts:
-                            # Check for inline_data (image)
-                            if hasattr(part, "inline_data") and part.inline_data:
-                                image_data = part.inline_data.data
-                                # The data might already be base64 string or bytes
-                                if isinstance(image_data, bytes):
-                                    image_data = base64.b64encode(image_data).decode(
-                                        "utf-8"
-                                    )
-                                return {
-                                    "success": True,
-                                    "image_data": image_data,
-                                    "error": None,
-                                }
+            image_data = extract_image_data(response)
+            if image_data:
+                return {
+                    "success": True,
+                    "image_data": image_data,
+                    "error": None,
+                }
 
             return {
                 "success": False,
@@ -129,20 +101,19 @@ class ImageGenerationService:
     def generate_banner_from_reference(
         self, recipe_name: str, reference_image_bytes: bytes
     ) -> dict:
-        """
-        Generate a banner image using the reference image as visual input.
+        """Generate a banner image using the reference image as visual input.
 
         Args:
             recipe_name: The name of the recipe.
             reference_image_bytes: The reference image as bytes.
 
         Returns:
-            dict with 'success', 'image_data' (base64), and optional 'error'
+            dict with 'success', 'image_data' (base64), and optional 'error'.
         """
         try:
             from google.genai import types
 
-            client = _get_genai_client()
+            client = get_gemini_client(API_KEY_ENV_VAR)
 
             # Build prompt with recipe name
             prompt = BANNER_FROM_REFERENCE_PROMPT.format(recipe_name=recipe_name.strip())
@@ -163,21 +134,13 @@ class ImageGenerationService:
             )
 
             # Extract the image data from the response
-            if response and response.candidates:
-                for candidate in response.candidates:
-                    if candidate.content and candidate.content.parts:
-                        for part in candidate.content.parts:
-                            if hasattr(part, "inline_data") and part.inline_data:
-                                image_data = part.inline_data.data
-                                if isinstance(image_data, bytes):
-                                    image_data = base64.b64encode(image_data).decode(
-                                        "utf-8"
-                                    )
-                                return {
-                                    "success": True,
-                                    "image_data": image_data,
-                                    "error": None,
-                                }
+            image_data = extract_image_data(response)
+            if image_data:
+                return {
+                    "success": True,
+                    "image_data": image_data,
+                    "error": None,
+                }
 
             return {
                 "success": False,
@@ -199,14 +162,13 @@ class ImageGenerationService:
             }
 
     def generate_dual_recipe_images(self, recipe_name: str) -> dict:
-        """
-        Generate both reference (1:1) and banner (21:9) images for a recipe.
+        """Generate both reference (1:1) and banner (21:9) images for a recipe.
 
         Args:
             recipe_name: The name of the recipe to generate images for.
 
         Returns:
-            dict with 'success', 'reference_image_data', 'banner_image_data', and 'errors'
+            dict with 'success', 'reference_image_data', 'banner_image_data', and 'errors'.
         """
         result = {
             "success": False,

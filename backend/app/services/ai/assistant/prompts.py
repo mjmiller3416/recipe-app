@@ -1,4 +1,4 @@
-"""System prompts and personality configuration for Meal Genie.
+"""System prompts and personality configuration for the AI assistant.
 
 Defines the AI assistant's voice, response philosophy, and formatting guidelines.
 """

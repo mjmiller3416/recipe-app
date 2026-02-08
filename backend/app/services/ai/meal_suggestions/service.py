@@ -1,16 +1,17 @@
 """Service for generating meal-specific cooking tips using Gemini."""
 
 import logging
-import os
-import re
 from typing import Optional
-from dotenv import load_dotenv
 
-from app.ai.dtos.meal_suggestions_dtos import (
+from app.dtos.meal_suggestions_dtos import (
     MealSuggestionsRequestDTO,
     MealSuggestionsResponseDTO,
 )
-from app.ai.config.meal_suggestions_config import (
+from app.services.ai.gemini_client import get_gemini_client
+from app.services.ai.response_utils import extract_text_from_response
+from app.services.ai.text_utils import clean_tip
+
+from .config import (
     MEAL_TIP_PROMPT,
     MODEL_NAME,
     TEMPERATURE,
@@ -21,61 +22,30 @@ from app.ai.config.meal_suggestions_config import (
 
 logger = logging.getLogger(__name__)
 
-# Load environment variables
-load_dotenv()
-
-# Lazy import to avoid issues if package not installed
-_genai_client = None
-
-
-def _get_genai_client():
-    """Lazy initialization of Gemini client for meal suggestions."""
-    global _genai_client
-    if _genai_client is None:
-        from google import genai
-
-        # Use dedicated key if set, otherwise fall back to shared key
-        api_key = os.getenv(API_KEY_ENV_VAR_ALT) or os.getenv(API_KEY_ENV_VAR)
-        _genai_client = genai.Client(api_key=api_key)
-    return _genai_client
-
-
-def _clean_tip(tip: str) -> str:
-    """Remove common prefixes and clean up formatting."""
-    # Remove common prefixes
-    tip = re.sub(r"^(Tip:|Chef's Tip:|Pro Tip:|Cooking Tip:|\*|\-|•)\s*", "", tip, flags=re.IGNORECASE)
-    # Remove quotes if wrapped
-    tip = tip.strip('"\'')
-    return tip.strip()
-
 
 class MealSuggestionsService:
     """Service for generating meal-specific cooking tips."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the meal suggestions service."""
-        # Validate that at least one API key is set
-        if not os.getenv(API_KEY_ENV_VAR_ALT) and not os.getenv(API_KEY_ENV_VAR):
-            raise ValueError(
-                f"Either {API_KEY_ENV_VAR_ALT} or {API_KEY_ENV_VAR} must be set"
-            )
+        # Validate eagerly so we fail fast if misconfigured
+        get_gemini_client(API_KEY_ENV_VAR, API_KEY_ENV_VAR_ALT)
 
     def generate_suggestions(
         self, request: MealSuggestionsRequestDTO
     ) -> MealSuggestionsResponseDTO:
-        """
-        Generate a cooking tip for a meal.
+        """Generate a cooking tip for a meal.
 
         Args:
-            request: The meal details to generate a tip for
+            request: The meal details to generate a tip for.
 
         Returns:
-            MealSuggestionsResponseDTO with tip or error
+            MealSuggestionsResponseDTO with tip or error.
         """
         try:
             from google.genai import types
 
-            client = _get_genai_client()
+            client = get_gemini_client(API_KEY_ENV_VAR, API_KEY_ENV_VAR_ALT)
 
             # Build context for the dish
             category_text = f" ({request.main_recipe_category})" if request.main_recipe_category else ""
@@ -98,22 +68,19 @@ class MealSuggestionsService:
             )
 
             # Extract text from response
-            if response and response.candidates:
-                for candidate in response.candidates:
-                    if candidate.content and candidate.content.parts:
-                        for part in candidate.content.parts:
-                            if hasattr(part, "text") and part.text:
-                                tip_text = _clean_tip(part.text.strip())
+            tip_text = extract_text_from_response(response)
+            if tip_text:
+                tip_text = clean_tip(tip_text)
 
-                                logger.info(
-                                    f"[MealSuggestions] Generated tip for: {request.main_recipe_name}"
-                                )
+                logger.info(
+                    f"[MealSuggestions] Generated tip for: {request.main_recipe_name}"
+                )
 
-                                return MealSuggestionsResponseDTO(
-                                    success=True,
-                                    cooking_tip=tip_text,
-                                    error=None,
-                                )
+                return MealSuggestionsResponseDTO(
+                    success=True,
+                    cooking_tip=tip_text,
+                    error=None,
+                )
 
             return MealSuggestionsResponseDTO(
                 success=False,

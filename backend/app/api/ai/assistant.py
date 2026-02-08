@@ -1,39 +1,36 @@
-"""API router for Meal Genie conversational AI."""
-
-from typing import List, Optional
+"""API router for AI assistant (conversational chat + recipe generation)."""
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.auth import require_pro
 from app.database.db import get_session
-from app.ai.dtos import (
-    MealGenieRequestDTO,
-    MealGenieResponseDTO,
+from app.dtos.assistant_dtos import (
+    AssistantRequestDTO,
+    AssistantResponseDTO,
     RecipeGenerationRequestDTO,
     RecipeGenerationResponseDTO,
 )
-from app.ai.services import get_meal_genie_service
-from app.ai.services.image_generation_service import get_image_generation_service
-from app.ai.services.user_context_builder import UserContextBuilder
-from app.ai.config.meal_genie import (
+from app.services.ai.assistant import get_assistant_service
+from app.services.ai.assistant.context import (
     should_include_ingredients,
     should_include_shopping_list,
 )
+from app.services.ai.image_generation import get_image_generation_service
+from app.services.ai.user_context_builder import UserContextBuilder
 from app.models.user import User
 from app.services.usage_service import UsageService
 
 router = APIRouter()
 
 
-@router.post("/chat", response_model=MealGenieResponseDTO)
-async def chat_with_meal_genie(
-    request: MealGenieRequestDTO,
+@router.post("/chat", response_model=AssistantResponseDTO)
+async def chat_with_assistant(
+    request: AssistantRequestDTO,
     session: Session = Depends(get_session),
     current_user: User = Depends(require_pro),
-) -> MealGenieResponseDTO:
-    """
-    Unified chat endpoint for Meal Genie.
+) -> AssistantResponseDTO:
+    """Unified chat endpoint for the AI assistant.
 
     The AI decides what action to take:
     - Suggest recipes
@@ -63,7 +60,7 @@ async def chat_with_meal_genie(
         )
 
         # Call the service
-        service = get_meal_genie_service()
+        service = get_assistant_service()
         result = service.chat(
             message=request.message,
             conversation_history=request.conversation_history,
@@ -104,7 +101,7 @@ async def chat_with_meal_genie(
         except Exception:
             pass
 
-        return MealGenieResponseDTO(
+        return AssistantResponseDTO(
             success=True,
             response=result.get("response"),
             recipe=recipe,
@@ -115,23 +112,22 @@ async def chat_with_meal_genie(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Meal Genie error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Assistant error: {str(e)}")
 
 
 # Keep /ask as backwards-compatible alias that routes to /chat
-@router.post("/ask", response_model=MealGenieResponseDTO)
-async def ask_meal_genie(
-    request: MealGenieRequestDTO,
+@router.post("/ask", response_model=AssistantResponseDTO)
+async def ask_assistant(
+    request: AssistantRequestDTO,
     session: Session = Depends(get_session),
     current_user: User = Depends(require_pro),
-) -> MealGenieResponseDTO:
-    """
-    Send a message to Meal Genie and get a response.
+) -> AssistantResponseDTO:
+    """Send a message to the AI assistant and get a response.
 
     This endpoint is an alias for /chat for backwards compatibility.
     The AI may decide to generate a recipe if the user asks for one.
     """
-    return await chat_with_meal_genie(request, session, current_user)
+    return await chat_with_assistant(request, session, current_user)
 
 
 @router.post("/generate-recipe", response_model=RecipeGenerationResponseDTO)
@@ -140,8 +136,7 @@ async def generate_recipe(
     session: Session = Depends(get_session),
     current_user: User = Depends(require_pro),
 ) -> RecipeGenerationResponseDTO:
-    """
-    Generate a complete recipe with optional AI image.
+    """Generate a complete recipe with optional AI image.
 
     This endpoint is kept for backwards compatibility.
     Consider using /chat instead, which handles recipe generation automatically.
@@ -167,7 +162,7 @@ async def generate_recipe(
         )
 
         # Call service
-        service = get_meal_genie_service()
+        service = get_assistant_service()
         result = service.chat(
             message=request.message,
             conversation_history=request.conversation_history,

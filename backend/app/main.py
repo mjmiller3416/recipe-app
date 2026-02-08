@@ -6,11 +6,8 @@ Main FastAPI application for Meal Genie.
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from pathlib import Path
 
-from app.api import categories, dashboard, data_management, feedback, meals, planner, recipe_groups, recipes, settings, shopping, ingredients, upload, conversion_rules
-from app.api.ai import cooking_tips_router, meal_genie_router, image_generation_router, meal_suggestions_router
+from app.router import api_router
 
 # Create FastAPI app
 app = FastAPI(
@@ -31,26 +28,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API routers
-app.include_router(recipes.router, prefix="/api/recipes", tags=["recipes"])
-app.include_router(recipe_groups.router, prefix="/api/recipe-groups", tags=["recipe-groups"])
-app.include_router(categories.router, prefix="/api/categories", tags=["categories"])
-app.include_router(meals.router, prefix="/api/meals", tags=["meals"])
-app.include_router(planner.router, prefix="/api/planner", tags=["planner"])
-app.include_router(shopping.router, prefix="/api/shopping", tags=["shopping"])
-app.include_router(ingredients.router, prefix="/api/ingredients", tags=["ingredients"])
-app.include_router(data_management.router, prefix="/api/data-management", tags=["data-management"])
-app.include_router(upload.router, prefix="/api/upload", tags=["upload"])
-app.include_router(feedback.router, prefix="/api/feedback", tags=["feedback"])
-app.include_router(conversion_rules.router, prefix="/api/unit-conversions", tags=["unit-conversions"])
-app.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
-app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
-
-# AI-powered services (consolidated under /api/ai/)
-app.include_router(cooking_tips_router, prefix="/api/ai/cooking-tip", tags=["ai", "cooking-tips"])
-app.include_router(meal_genie_router, prefix="/api/ai/meal-genie", tags=["ai", "meal-genie"])
-app.include_router(image_generation_router, prefix="/api/ai/image-generation", tags=["ai", "image-generation"])
-app.include_router(meal_suggestions_router, prefix="/api/ai/meal-suggestions", tags=["ai", "meal-suggestions"])
+# Register all routes
+app.include_router(api_router)
 
 
 @app.get("/")

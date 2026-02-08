@@ -1,4 +1,4 @@
-"""User context building and conditional context loading for Meal Genie.
+"""User context building and conditional context loading for the AI assistant.
 
 Provides keyword detection for smart context loading and functions to build
 formatted user context sections for the AI prompt.

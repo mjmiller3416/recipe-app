@@ -1,0 +1,54 @@
+"""app/router.py
+
+Centralised route registration for the Meal Genie API.
+"""
+
+from fastapi import APIRouter
+
+from app.api import (
+    categories,
+    conversion_rules,
+    dashboard,
+    data_management,
+    feedback,
+    ingredients,
+    meals,
+    planner,
+    recipe_groups,
+    recipes,
+    settings,
+    shopping,
+    upload,
+)
+from app.api.ai import (
+    assistant_router,
+    cooking_tips_router,
+    image_generation_router,
+    meal_suggestions_router,
+)
+
+api_router = APIRouter()
+
+# ── Core domain routes ───────────────────────────────────────────────────
+api_router.include_router(recipes.router, prefix="/api/recipes", tags=["recipes"])
+api_router.include_router(recipe_groups.router, prefix="/api/recipe-groups", tags=["recipe-groups"])
+api_router.include_router(categories.router, prefix="/api/categories", tags=["categories"])
+api_router.include_router(meals.router, prefix="/api/meals", tags=["meals"])
+api_router.include_router(planner.router, prefix="/api/planner", tags=["planner"])
+api_router.include_router(shopping.router, prefix="/api/shopping", tags=["shopping"])
+api_router.include_router(ingredients.router, prefix="/api/ingredients", tags=["ingredients"])
+
+# ── Supporting routes ────────────────────────────────────────────────────
+api_router.include_router(data_management.router, prefix="/api/data-management", tags=["data-management"])
+api_router.include_router(upload.router, prefix="/api/upload", tags=["upload"])
+api_router.include_router(feedback.router, prefix="/api/feedback", tags=["feedback"])
+api_router.include_router(conversion_rules.router, prefix="/api/unit-conversions", tags=["unit-conversions"])
+api_router.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
+api_router.include_router(settings.router, prefix="/api/settings", tags=["settings"])
+
+# ── AI-powered routes ────────────────────────────────────────────────────
+api_router.include_router(cooking_tips_router, prefix="/api/ai/cooking-tip", tags=["ai", "cooking-tips"])
+# TODO: rename URL prefix to /api/ai/assistant (requires frontend changes)
+api_router.include_router(assistant_router, prefix="/api/ai/meal-genie", tags=["ai", "meal-genie"])
+api_router.include_router(image_generation_router, prefix="/api/ai/image-generation", tags=["ai", "image-generation"])
+api_router.include_router(meal_suggestions_router, prefix="/api/ai/meal-suggestions", tags=["ai", "meal-suggestions"])

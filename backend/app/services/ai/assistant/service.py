@@ -1,55 +1,38 @@
-"""app/ai/services/meal_genie/service.py
+"""app/services/ai/assistant/service.py
 
-Core Meal Genie service logic.
+Core AI assistant service logic.
 Handles chat interface, context building, and response processing.
 """
 
-# ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
-import os
 from typing import Optional, List
-from dotenv import load_dotenv
 
-from app.ai.config.meal_genie import (
-    MODEL_NAME,
-    API_KEY_ENV_VAR,
-    TOOL_DEFINITIONS,
-    get_full_system_prompt,
+from app.dtos.assistant_dtos import AssistantMessageDTO
+from app.services.ai.gemini_client import get_gemini_client
+
+from .prompts import MODEL_NAME, API_KEY_ENV_VAR, get_full_system_prompt
+from .tools import TOOL_DEFINITIONS
+from .context import (
     build_user_context_prompt,
     should_include_ingredients,
     should_include_shopping_list,
 )
-from app.ai.dtos.meal_genie_dtos import MealGenieMessageDTO
-
-load_dotenv()
 
 
-# ── Core Service ────────────────────────────────────────────────────────────────────────────────────────────
-class MealGenieServiceCore:
-    """Core Meal Genie service with chat interface and response processing."""
+class AssistantServiceCore:
+    """Core AI assistant service with chat interface and response processing."""
 
-    def __init__(self):
-        """Initialize the Meal Genie service."""
-        self.api_key = os.getenv(API_KEY_ENV_VAR)
-        if not self.api_key:
-            raise ValueError(f"{API_KEY_ENV_VAR} environment variable is not set")
-        self._client = None
-
-    def _get_client(self):
-        """Lazy initialization of Gemini client."""
-        if self._client is None:
-            from google import genai
-
-            self._client = genai.Client(api_key=self.api_key)
-        return self._client
+    def __init__(self) -> None:
+        """Initialize the AI assistant service."""
+        # Validate eagerly so we fail fast if misconfigured
+        get_gemini_client(API_KEY_ENV_VAR)
 
     def chat(
         self,
         message: str,
-        conversation_history: Optional[List[MealGenieMessageDTO]] = None,
+        conversation_history: Optional[List[AssistantMessageDTO]] = None,
         user_context_data: Optional[dict] = None,
     ) -> dict:
-        """
-        Main entry point for all Meal Genie interactions.
+        """Main entry point for all assistant interactions.
 
         The AI decides what action to take based on the message:
         - Suggest recipes
@@ -57,16 +40,16 @@ class MealGenieServiceCore:
         - Answer a cooking question
 
         Args:
-            message: The user's message
-            conversation_history: Optional list of previous messages
+            message: The user's message.
+            conversation_history: Optional list of previous messages.
             user_context_data: Dict with saved_recipes, meal_plan, etc.
 
         Returns:
             dict with 'type' (chat|suggestions|recipe|error), 'response', and
-            optionally 'recipe' or 'tool_args'
+            optionally 'recipe' or 'tool_args'.
         """
         try:
-            client = self._get_client()
+            client = get_gemini_client(API_KEY_ENV_VAR)
 
             # Build context based on message content
             user_context = self._build_context(
@@ -101,7 +84,7 @@ class MealGenieServiceCore:
     def _build_context(
         self,
         message: str,
-        history: Optional[List[MealGenieMessageDTO]],
+        history: Optional[List[AssistantMessageDTO]],
         context_data: Optional[dict],
     ) -> str:
         """Build user context string based on message needs."""
@@ -136,7 +119,7 @@ class MealGenieServiceCore:
     def _build_contents(
         self,
         system_prompt: str,
-        history: Optional[List[MealGenieMessageDTO]],
+        history: Optional[List[AssistantMessageDTO]],
         message: str,
     ) -> list:
         """Build the conversation contents for Gemini."""

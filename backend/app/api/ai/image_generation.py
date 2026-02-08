@@ -5,13 +5,13 @@ import base64
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.ai.dtos import (
+from app.dtos.image_generation_dtos import (
     ImageGenerationRequestDTO,
     ImageGenerationResponseDTO,
     BannerGenerationRequestDTO,
     BannerGenerationResponseDTO,
 )
-from app.ai.services import get_image_generation_service
+from app.services.ai.image_generation import get_image_generation_service
 from app.api.auth import require_pro
 from app.database.db import get_session
 from app.models.user import User
@@ -55,7 +55,7 @@ async def generate_recipe_image(
             banner_data = result.get("banner_image_data")
 
         elif request.image_type == "reference":
-            from app.ai.config.image_generation_config import PROMPT_TEMPLATE, ASPECT_RATIO
+            from app.services.ai.image_generation.config import PROMPT_TEMPLATE, ASPECT_RATIO
 
             ref_result = service.generate_recipe_image(
                 request.recipe_name,
@@ -71,7 +71,7 @@ async def generate_recipe_image(
             banner_data = None
 
         else:  # banner
-            from app.ai.config.image_generation_config import (
+            from app.services.ai.image_generation.config import (
                 BANNER_PROMPT_TEMPLATE,
                 BANNER_ASPECT_RATIO,
             )
