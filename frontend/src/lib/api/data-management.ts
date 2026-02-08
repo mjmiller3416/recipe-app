@@ -7,7 +7,7 @@ import type {
   RestorePreview,
   RestoreResult,
 } from "@/types/common";
-import { API_BASE, ApiError, buildQueryString } from "./client";
+import { API_BASE, ApiError, buildQueryString } from "./base";
 
 export const dataManagementApi = {
   /**

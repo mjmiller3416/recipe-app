@@ -1,5 +1,5 @@
 import type { FeedbackSubmitDTO, FeedbackResponseDTO } from "@/types/common";
-import { fetchApi } from "./client";
+import { fetchApi } from "./base";
 
 export const feedbackApi = {
   /**

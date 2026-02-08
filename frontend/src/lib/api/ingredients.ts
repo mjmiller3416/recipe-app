@@ -3,7 +3,7 @@ import type {
   IngredientCreateDTO,
   IngredientSearchDTO,
 } from "@/types/recipe";
-import { fetchApi, buildQueryString } from "./client";
+import { fetchApi, buildQueryString } from "./base";
 
 export const ingredientApi = {
   /**

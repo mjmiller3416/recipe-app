@@ -1,4 +1,4 @@
-import { fetchApi } from "./client";
+import { fetchApi } from "./base";
 
 export const settingsApi = {
   /**

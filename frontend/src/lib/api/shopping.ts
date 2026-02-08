@@ -9,7 +9,7 @@ import type {
 } from "@/types/shopping";
 import type { IngredientBreakdownDTO } from "@/types/recipe";
 import type { BulkOperationResultDTO } from "@/types/common";
-import { fetchApi, buildQueryString } from "./client";
+import { fetchApi, buildQueryString } from "./base";
 
 export const shoppingApi = {
   /**

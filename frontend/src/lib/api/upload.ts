@@ -1,4 +1,4 @@
-import { API_BASE, ApiError } from "./client";
+import { API_BASE, ApiError } from "./base";
 
 export const uploadApi = {
   /**

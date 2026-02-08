@@ -134,7 +134,7 @@ Models (app/models/)    # SQLAlchemy ORM
 // All imports go through the barrel index — same import path as before
 import { recipeApi, plannerApi, shoppingApi, mealGenieApi, ... } from "@/lib/api";
 
-// Modules: client.ts, recipe.ts, planner.ts, shopping.ts, ai.ts,
+// Modules: base.ts, recipe.ts, planner.ts, shopping.ts, ai.ts,
 // ingredients.ts, upload.ts, dashboard.ts, data-management.ts,
 // feedback.ts, units.ts, settings.ts, recipe-groups.ts
 ```

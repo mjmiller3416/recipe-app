@@ -1,5 +1,5 @@
 import type { DashboardStatsDTO } from "@/types/common";
-import { fetchApi } from "./client";
+import { fetchApi } from "./base";
 
 export const dashboardApi = {
   /**

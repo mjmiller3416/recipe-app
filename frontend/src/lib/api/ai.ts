@@ -9,7 +9,7 @@ import type {
   MealSuggestionsRequestDTO,
   MealSuggestionsResponseDTO,
 } from "@/types/ai";
-import { fetchApi } from "./client";
+import { fetchApi } from "./base";
 
 export const imageGenerationApi = {
   /**

@@ -4,7 +4,7 @@ import type {
   RecipeGroupUpdateDTO,
   RecipeGroupAssignmentDTO,
 } from "@/types/recipe";
-import { fetchApi } from "./client";
+import { fetchApi } from "./base";
 
 export const recipeGroupApi = {
   /**

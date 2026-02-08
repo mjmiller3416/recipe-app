@@ -9,7 +9,7 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { useCallback, useMemo } from "react";
-import { ApiError } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/base";
 
 // API base URL from environment variable or default to localhost
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://192.168.1.213:8000";

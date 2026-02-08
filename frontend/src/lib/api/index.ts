@@ -2,7 +2,7 @@
 // All existing imports like `import { recipeApi } from "@/lib/api"` continue to work.
 
 // Core infrastructure
-export { ApiError, fetchApi, buildQueryString, API_BASE } from "./client";
+export { ApiError, fetchApi, buildQueryString, API_BASE } from "./base";
 
 // Domain API modules
 export { recipeApi } from "./recipe";

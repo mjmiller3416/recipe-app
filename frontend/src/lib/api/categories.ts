@@ -5,7 +5,7 @@ import type {
   UserCategoryReorderDTO,
   UserCategoryBulkUpdateDTO,
 } from "@/types/category";
-import { fetchApi } from "./client";
+import { fetchApi } from "./base";
 
 export const categoryApi = {
   /**

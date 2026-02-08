@@ -57,16 +57,16 @@ This keeps `RecipeHeaderCard.tsx` and `RecipePrintLayout.tsx` working with no im
 
 ### Task 2: `ApiError` Dedupe
 
-**Keep** canonical definition in `lib/api/client.ts` (lines 5-15).
+**Keep** canonical definition in `lib/api/base.ts` (lines 5-15).
 
 **Update `lib/api-client.ts`:**
 - Remove class definition (lines 19-29)
-- Add: `import { ApiError } from "@/lib/api/client";`
+- Add: `import { ApiError } from "@/lib/api/base";`
 - Add: `export { ApiError };`
 
 **Update `lib/api-server.ts`:**
 - Remove class definition (lines 16-26)
-- Add: `import { ApiError } from "@/lib/api/client";`
+- Add: `import { ApiError } from "@/lib/api/base";`
 - Add: `export { ApiError };`
 
 ---
