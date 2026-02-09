@@ -49,8 +49,8 @@ These exist in `frontend/src/components/` - **reuse before creating new:**
 - `RecipeBadge` - Category/meal-type badge
 - `RecipeBannerImage` - Full-width banner image
 
-### Meal Genie Domain (`components/meal-genie/`)
-- `MealGenieAssistant` - AI chat assistant wrapper
+### Assistant Domain (`components/assistant/`)
+- `Assistant` - AI chat assistant wrapper
 - `AssistantChatContent` - Chat message display
 - `AssistantPopup` - Floating chat popup
 

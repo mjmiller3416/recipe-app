@@ -13,16 +13,15 @@ export function PageHeader({ children, className }: PageHeaderProps) {
     <>
       {/* Fixed header - positioned relative to viewport, respects sidebar on desktop */}
       <div className={cn(
-        "fixed top-0 left-0 md:left-72 right-0 z-20 border-b border-border bg-background/95 backdrop-blur-sm",
+        "fixed top-0 md:top-16 left-0 right-0 z-20 border-b border-border bg-background/95 backdrop-blur-sm",
         className
       )}>
-        {/* pl-16 on mobile creates space for the hamburger menu button */}
-        <div className="py-4 pl-16 pr-4 mx-auto max-w-7xl md:px-6">
+        <div className="py-4 px-4 mx-auto max-w-7xl md:px-6">
           {children}
         </div>
       </div>
       {/* Spacer to push content below fixed header */}
-      <div className="h-[89px]" aria-hidden="true" />
+      <div className="h-24" aria-hidden="true" />
     </>
   );
 }

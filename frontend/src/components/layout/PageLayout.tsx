@@ -18,8 +18,6 @@ interface PageLayoutProps {
   actions?: React.ReactNode;
   /** Optional custom header content that replaces the default title/actions layout */
   headerContent?: React.ReactNode;
-  /** Optional back button href - when provided, shows a back arrow before the title */
-  backHref?: string;
   /** Optional callback when back button is clicked (for custom navigation with unsaved changes) */
   onBackClick?: () => void;
   /** Page content */
@@ -75,7 +73,6 @@ export function PageLayout({
   description,
   actions,
   headerContent,
-  backHref,
   onBackClick,
   children,
   className,
@@ -84,30 +81,18 @@ export function PageLayout({
   stickyHeader,
   fillViewport = false,
 }: PageLayoutProps) {
-  // Determine if we should show a back button
-  const showBackButton = backHref || onBackClick;
-
-  // Handle back button click
-  const handleBackClick = () => {
-    if (onBackClick) {
-      onBackClick();
-    } else if (backHref) {
-      window.location.href = backHref;
-    }
-  };
-
   // Build the header content (shared across modes)
   const headerElement = (
     <PageHeader>
       {headerContent ?? (
         <PageHeaderContent>
-          {showBackButton ? (
+          {onBackClick ? (
             <div className="flex items-center flex-1 gap-4">
               <Button
                 variant="ghost"
                 size="icon"
                 aria-label="Go back"
-                onClick={handleBackClick}
+                onClick={onBackClick}
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
@@ -136,7 +121,7 @@ export function PageLayout({
         {stickyHeader && (
           <div
             data-sticky-header
-            className="sticky top-0 z-40 border-b bg-background border-border"
+            className="sticky top-0 md:top-16 z-40 border-b bg-background border-border"
           >
             {stickyHeader}
           </div>

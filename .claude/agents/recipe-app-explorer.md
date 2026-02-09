@@ -22,7 +22,7 @@ You are a specialized search agent for the Recipe App codebase.
 **Components**: src/components/
 - components/ui/ - shadcn/ui base components
 - components/recipe/ - Recipe-specific (RecipeCard, RecipeImage, RecipeBadge)
-- components/meal-genie/ - AI chat interface (Assistant, AssistantChatContent)
+- components/assistant/ - AI chat interface (Assistant, AssistantChatContent)
 - components/layout/ - Sidebar, nav, page header, mobile nav
 - components/common/ - Shared components (FilterBar, StatsCard, FeedbackDialog)
 - components/forms/ - Form inputs (QuantityInput, SmartIngredientInput)
