@@ -31,7 +31,6 @@ import {
 } from "@/hooks/api";
 import { plannerApi } from "@/lib/api";
 import type { PlannerEntryResponseDTO } from "@/types/planner";
-import type { MealSelectionResponseDTO } from "@/types/meal";
 import type { RecipeCardData } from "@/types/recipe";
 import { MealGrid } from "./MealGrid";
 import { MealGridItem } from "./MealGridCard";
@@ -70,7 +69,7 @@ export function MealPlannerPage() {
 
   // Local UI state
   const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [mealRefreshKey, setMealRefreshKey] = useState(0);
 
   // Dialog orchestration state for meal creation/edit flow
@@ -99,6 +98,14 @@ export function MealPlannerPage() {
     setEditingMealName(null);
   }, []);
 
+  // Open the meal creation dialog (used by URL param handler and UI buttons)
+  const openMealCreation = useCallback(() => {
+    setPendingMain(null);
+    setPendingSides([]);
+    setPickerMode("main");
+    setShowMealPreview(true);
+  }, []);
+
   // Unsaved changes hook - handles browser nav and sidebar via SafeLink
   // Include showRecipePicker so protection is active during recipe selection
   const {
@@ -123,7 +130,7 @@ export function MealPlannerPage() {
     // Push a guard state when picker opens
     window.history.pushState({ pickerGuard: true }, "", window.location.href);
 
-    const handlePopState = (e: PopStateEvent) => {
+    const handlePopState = () => {
       if (showRecipePickerRef.current) {
         // Temporarily bypass the useUnsavedChanges handler
         setNavigationBypass(true);
@@ -141,12 +148,16 @@ export function MealPlannerPage() {
     return () => window.removeEventListener("popstate", handlePopState, true);
   }, [showRecipePicker]);
 
-  // Check for create=true URL parameter and redirect to create page
+  // Open meal creation dialog when navigated with ?action=create
+  const hasTriggeredCreateRef = useRef(false);
   useEffect(() => {
-    if (searchParams.get("create") === "true") {
-      router.replace("/meal-planner/create");
+    if (isLoading) return;
+    if (searchParams.get("action") === "create" && !hasTriggeredCreateRef.current) {
+      hasTriggeredCreateRef.current = true;
+      router.replace("/meal-planner", { scroll: false });
+      openMealCreation();
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, isLoading, openMealCreation]);
 
   // Auto-select first uncompleted entry when entries load
   const hasAutoSelected = useRef(false);
@@ -154,7 +165,7 @@ export function MealPlannerPage() {
     if (entries.length > 0 && selectedEntryId === null && !hasAutoSelected.current) {
       hasAutoSelected.current = true;
       const firstUncompleted = entries.find((e) => !e.is_completed);
-      setSelectedEntryId(firstUncompleted?.id ?? entries[0].id);
+      setSelectedEntryId(firstUncompleted?.id ?? null);
     }
   }, [entries, selectedEntryId]);
 
@@ -198,22 +209,10 @@ export function MealPlannerPage() {
   };
 
   // Handle Add Meal button click - opens the meal preview dialog first
-  const handleAddMealClick = () => {
-    // Reset state for new meal creation
-    setPendingMain(null);
-    setPendingSides([]);
-    setPickerMode("main");
-    setShowMealPreview(true);
-  };
+  const handleAddMealClick = openMealCreation;
 
   // Handle Create Meal button click - opens the meal preview dialog first
-  const handleCreateMealClick = () => {
-    // Reset state for new meal creation
-    setPendingMain(null);
-    setPendingSides([]);
-    setPickerMode("main");
-    setShowMealPreview(true);
-  };
+  const handleCreateMealClick = openMealCreation;
 
   // Handle selecting a main dish from the preview dialog
   const handleSelectMainFromPreview = () => {
@@ -388,7 +387,7 @@ export function MealPlannerPage() {
           if (remainingEntries.length > 0) {
             // Try to find the first uncompleted entry
             const firstUncompleted = remainingEntries.find((e) => !e.is_completed);
-            setSelectedEntryId(firstUncompleted?.id ?? remainingEntries[0].id);
+            setSelectedEntryId(firstUncompleted?.id ?? null);
           } else {
             // No entries remain - clear selection to show empty state
             setSelectedEntryId(null);
@@ -460,7 +459,7 @@ export function MealPlannerPage() {
   };
 
   // Handle meal updated - cache is automatically updated by mutation
-  const handleMealUpdated = (updatedMeal: MealSelectionResponseDTO) => {
+  const handleMealUpdated = () => {
     // Trigger SelectedMealCard to re-fetch by changing its key
     setMealRefreshKey((prev) => prev + 1);
   };
@@ -666,16 +665,18 @@ export function MealPlannerPage() {
     >
       {/* STACKED VERTICAL LAYOUT */}
       <div className="space-y-8 px-3">
-        {/* TOP: MEAL GRID */}
-        <MealGrid
-          items={gridItems}
-          selectedId={selectedEntryId}
-          onItemClick={handleGridItemClick}
-          onAddMealClick={handleAddMealClick}
-          onCycleShoppingMode={handleCycleShoppingMode}
-          onReorder={handleReorder}
-          isReorderMode={isReorderMode}
-        />
+        {/* TOP: MEAL GRID - hidden when empty state is shown */}
+        {(gridItems.length > 0 || selectedMealId !== null) && (
+          <MealGrid
+            items={gridItems}
+            selectedId={selectedEntryId}
+            onItemClick={handleGridItemClick}
+            onAddMealClick={handleAddMealClick}
+            onCycleShoppingMode={handleCycleShoppingMode}
+            onReorder={handleReorder}
+            isReorderMode={isReorderMode}
+          />
+        )}
 
         {/* BOTTOM: SELECTED MEAL CARD */}
         {selectedMealId !== null ? (
@@ -692,7 +693,7 @@ export function MealPlannerPage() {
           />
         ) : (
           /* Empty state when no meals in planner */
-          <div className="flex flex-col items-center justify-center text-center py-16 px-8">
+          <div className="flex flex-col items-center justify-center text-center min-h-[60vh] px-8">
             <div className="text-muted-foreground mb-6">
               <p className="text-lg font-medium mb-2">No meals planned yet</p>
               <p className="text-sm">

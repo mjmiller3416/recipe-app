@@ -11,6 +11,7 @@ import {
   Menu,
   Moon,
   Sun,
+  UtensilsCrossed,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +28,7 @@ import {
 import { Logo } from "@/components/layout/Logo";
 import { TopNavLink } from "@/components/layout/TopNavLink";
 import { TopNavUserMenu } from "@/components/layout/TopNavUserMenu";
+import { TopNavAddMenu } from "@/components/layout/TopNavAddMenu";
 import { NavButton } from "@/components/layout/NavButton";
 import { FeedbackDialog } from "@/components/common/FeedbackDialog";
 import { ChangelogDialog } from "@/components/common/ChangelogDialog";
@@ -179,6 +181,7 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
               badge={item.hasBadge ? shoppingListRemaining : undefined}
             />
           ))}
+          <TopNavAddMenu />
         </nav>
 
         {/* Spacer to push right section when nav is hidden */}
@@ -260,6 +263,23 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
                 onClick={handleSheetNavigate}
               />
             ))}
+
+            {/* Add actions */}
+            <div className="h-px bg-border my-2" />
+            <NavButton
+              icon={BookOpen}
+              label="Add Recipe"
+              href="/recipes/add"
+              isActive={pathname === "/recipes/add"}
+              onClick={handleSheetNavigate}
+            />
+            <NavButton
+              icon={UtensilsCrossed}
+              label="Add Meal"
+              href="/meal-planner?action=create"
+              isActive={false}
+              onClick={handleSheetNavigate}
+            />
           </nav>
         </SheetContent>
       </Sheet>
