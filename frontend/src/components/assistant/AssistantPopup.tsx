@@ -6,16 +6,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MealGenieChatContent } from "./MealGenieChatContent";
+import { AssistantChatContent } from "./AssistantChatContent";
 
 type DisplayMode = "minimized" | "normal" | "expanded";
 
-interface MealGeniePopupProps {
+interface AssistantPopupProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function MealGeniePopup({ open, onOpenChange }: MealGeniePopupProps) {
+export function AssistantPopup({ open, onOpenChange }: AssistantPopupProps) {
   const [isMobile, setIsMobile] = useState(false);
   const [displayMode, setDisplayMode] = useState<DisplayMode>("minimized");
 
@@ -74,7 +74,7 @@ export function MealGeniePopup({ open, onOpenChange }: MealGeniePopupProps) {
 
             {/* Content */}
             <div className="relative h-full">
-              <MealGenieChatContent 
+              <AssistantChatContent 
                 onClose={() => onOpenChange(false)} 
                 isMobile={true}
               />
@@ -232,7 +232,7 @@ export function MealGeniePopup({ open, onOpenChange }: MealGeniePopupProps) {
                       transition={{ duration: 0.15, delay: 0.1 }}
                       className="h-full"
                     >
-                      <MealGenieChatContent
+                      <AssistantChatContent
                         onClose={() => onOpenChange(false)}
                         isMinimized={isMinimized}
                         isExpanded={isExpanded}

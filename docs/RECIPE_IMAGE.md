@@ -85,8 +85,8 @@ All images are stored on **Cloudinary CDN** with automatic optimization.
 | Backend | `app/ai/config/image_generation_config.py` | Prompt templates & settings |
 | Backend | `app/api/ai/image_generation.py` | REST endpoint for generation |
 | Backend | `app/api/upload.py` | Cloudinary upload endpoints |
-| Backend | `app/api/ai/meal_genie.py` | Recipe generation endpoint with image integration |
-| Backend | `app/ai/services/meal_genie_service.py` | Orchestrates recipe + image generation |
+| Backend | `app/api/ai/assistant.py` | Recipe generation endpoint with image integration |
+| Backend | `app/ai/services/assistant_service.py` | Orchestrates recipe + image generation |
 | Backend | `app/services/recipe_service.py` | Database methods for updating image paths |
 | Backend | `app/services/data_management_service.py` | Cloudinary cleanup on recipe deletion |
 | Frontend | `ImageUploadCard.tsx` | UI for generation/upload |
@@ -217,7 +217,7 @@ Generates a complete recipe with optional AI images via the Meal Genie conversat
 
 #### Service Integration
 The endpoint orchestrates both recipe and image generation:
-1. `MealGenieService` generates the recipe JSON
+1. `AssistantService` generates the recipe JSON
 2. If `generate_image: true`, calls `ImageGenerationService.generate_dual_recipe_images()`
 3. Image generation failures are graceful—recipe still returns with logged warning
 
@@ -332,7 +332,7 @@ interface ImageGenerationResponseDTO {
 ```typescript
 interface RecipeGenerationRequestDTO {
   message: string;
-  conversation_history?: MealGenieMessage[];
+  conversation_history?: AssistantMessage[];
   generate_image?: boolean;
 }
 

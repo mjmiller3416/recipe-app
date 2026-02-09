@@ -51,8 +51,8 @@ These exist in `frontend/src/components/` - **reuse before creating new:**
 
 ### Meal Genie Domain (`components/meal-genie/`)
 - `MealGenieAssistant` - AI chat assistant wrapper
-- `MealGenieChatContent` - Chat message display
-- `MealGeniePopup` - Floating chat popup
+- `AssistantChatContent` - Chat message display
+- `AssistantPopup` - Floating chat popup
 
 ### Settings Domain (`components/settings/`)
 - `DataManagementSection` - Data import/export/backup settings

@@ -22,10 +22,10 @@ const navigation: NavItem[] = [
 ];
 
 interface MobileBottomNavProps {
-  onOpenMealGenie?: () => void;
+  onOpenAssistant?: () => void;
 }
 
-export function MobileBottomNav({ onOpenMealGenie }: MobileBottomNavProps) {
+export function MobileBottomNav({ onOpenAssistant }: MobileBottomNavProps) {
   const pathname = usePathname();
 
   // Use React Query hook with automatic token injection
@@ -122,7 +122,7 @@ export function MobileBottomNav({ onOpenMealGenie }: MobileBottomNavProps) {
 
         {/* Meal Genie Button */}
         <button
-          onClick={onOpenMealGenie}
+          onClick={onOpenAssistant}
           className={cn(
             // Layout
             "flex flex-col items-center justify-center",

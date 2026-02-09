@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.dtos.meal_suggestions_dtos import MealSuggestionsRequestDTO, MealSuggestionsResponseDTO
-from app.services.ai.meal_suggestions import get_meal_suggestions_service
+from app.services.ai.assistant_suggestions import get_meal_suggestions_service
 from app.api.auth import require_pro
 from app.database.db import get_session
 from app.models.user import User

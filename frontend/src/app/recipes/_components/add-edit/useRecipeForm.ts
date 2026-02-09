@@ -9,7 +9,7 @@ import { base64ToFile } from "@/lib/utils";
 import type { GeneratedRecipeDTO } from "@/types/ai";
 import type { RecipeCreateDTO, RecipeUpdateDTO, RecipeIngredientDTO, RecipeResponseDTO } from "@/types/recipe";
 
-// Session storage key for AI-generated recipe (must match MealGenieChatContent)
+// Session storage key for AI-generated recipe (must match AssistantChatContent)
 const AI_RECIPE_STORAGE_KEY = "meal-genie-generated-recipe";
 import type { Ingredient } from "./IngredientRow";
 import type { AutocompleteIngredient } from "@/components/forms/IngredientAutocomplete";

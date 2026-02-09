@@ -3,8 +3,8 @@ import type {
   ImageGenerationType,
   BannerGenerationResponseDTO,
   CookingTipResponseDTO,
-  MealGenieMessage,
-  MealGenieResponseDTO,
+  AssistantMessage,
+  AssistantResponseDTO,
   RecipeGenerationResponseDTO,
   MealSuggestionsRequestDTO,
   MealSuggestionsResponseDTO,
@@ -94,7 +94,7 @@ export const mealSuggestionsApi = {
     ),
 };
 
-export const mealGenieApi = {
+export const AssistantApi = {
   /**
    * Send a message to Meal Genie
    * AI decides whether to chat, suggest recipes, or generate a full recipe
@@ -105,10 +105,10 @@ export const mealGenieApi = {
    */
   chat: (
     message: string,
-    conversationHistory?: MealGenieMessage[],
+    conversationHistory?: AssistantMessage[],
     token?: string | null
-  ): Promise<MealGenieResponseDTO> =>
-    fetchApi<MealGenieResponseDTO>(
+  ): Promise<AssistantResponseDTO> =>
+    fetchApi<AssistantResponseDTO>(
       "/api/ai/meal-genie/chat",
       {
         method: "POST",
@@ -129,10 +129,10 @@ export const mealGenieApi = {
    */
   ask: (
     message: string,
-    conversationHistory?: MealGenieMessage[],
+    conversationHistory?: AssistantMessage[],
     token?: string | null
-  ): Promise<MealGenieResponseDTO> =>
-    fetchApi<MealGenieResponseDTO>(
+  ): Promise<AssistantResponseDTO> =>
+    fetchApi<AssistantResponseDTO>(
       "/api/ai/meal-genie/chat",
       {
         method: "POST",
@@ -155,7 +155,7 @@ export const mealGenieApi = {
    */
   generateRecipe: (
     message: string,
-    conversationHistory?: MealGenieMessage[],
+    conversationHistory?: AssistantMessage[],
     generateImage = true,
     token?: string | null
   ): Promise<RecipeGenerationResponseDTO> =>

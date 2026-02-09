@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Sparkles, Send, X, Minimize2, Maximize2, Minus, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChatHistory } from "@/hooks/persistence";
-import { useMealGenieChat } from "@/hooks/api/useAI";
+import { useAssistantChat } from "@/hooks/api/useAI";
 import { useChatScroll } from "@/hooks/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import type { GeneratedRecipeDTO } from "@/types/ai";
 // Session storage key for AI-generated recipe (must match useRecipeForm.ts)
 const AI_RECIPE_STORAGE_KEY = "meal-genie-generated-recipe";
 
-interface MealGenieChatContentProps {
+interface AssistantChatContentProps {
   onClose: () => void;
   isMinimized?: boolean;
   isExpanded?: boolean;
@@ -26,7 +26,7 @@ interface MealGenieChatContentProps {
   isMobile?: boolean;
 }
 
-export function MealGenieChatContent({
+export function AssistantChatContent({
   onClose,
   isMinimized = false,
   isExpanded = false,
@@ -34,11 +34,11 @@ export function MealGenieChatContent({
   onExpand,
   onCollapse,
   isMobile = false,
-}: MealGenieChatContentProps) {
+}: AssistantChatContentProps) {
   const router = useRouter();
   const [input, setInput] = useState("");
   const { messages, addMessage, clearHistory } = useChatHistory();
-  const chatMutation = useMealGenieChat();
+  const chatMutation = useAssistantChat();
   const { messagesEndRef, scrollContainerRef, showTopFade, showBottomFade } = useChatScroll(messages.length, chatMutation.isPending);
   const inputRef = useRef<HTMLInputElement>(null);
 

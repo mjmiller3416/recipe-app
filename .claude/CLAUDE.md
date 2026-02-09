@@ -132,7 +132,7 @@ Models (app/models/)    # SQLAlchemy ORM
 **API Client** (`lib/api/`): Domain-split API modules with barrel re-export:
 ```typescript
 // All imports go through the barrel index — same import path as before
-import { recipeApi, plannerApi, shoppingApi, mealGenieApi, ... } from "@/lib/api";
+import { recipeApi, plannerApi, shoppingApi, AssistantApi, ... } from "@/lib/api";
 
 // Modules: base.ts, recipe.ts, planner.ts, shopping.ts, ai.ts,
 // ingredients.ts, upload.ts, dashboard.ts, data-management.ts,

@@ -41,14 +41,14 @@ interface SidebarContentProps {
   /** Callback when a navigation action occurs (used by mobile to close sheet) */
   onNavigate?: () => void;
   /** Callback to open Meal Genie chat popup */
-  onOpenMealGenie?: () => void;
+  onOpenAssistant?: () => void;
 }
 
 /**
  * Shared sidebar content used by both desktop Sidebar and mobile MobileSidebar.
  * Contains navigation, recent recipes, user profile, and theme toggle.
  */
-export function SidebarContent({ onNavigate, onOpenMealGenie }: SidebarContentProps) {
+export function SidebarContent({ onNavigate, onOpenAssistant }: SidebarContentProps) {
   const pathname = usePathname();
   const { settings } = useSettings();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -147,10 +147,10 @@ export function SidebarContent({ onNavigate, onOpenMealGenie }: SidebarContentPr
       <div className="p-4 border-t border-border space-y-3">
         {/* Meal Genie, Feedback & Changelog */}
         <div className="flex items-center gap-2 pt-1">
-          {onOpenMealGenie && (
+          {onOpenAssistant && (
             <IconButton
               icon={Sparkles}
-              onClick={onOpenMealGenie}
+              onClick={onOpenAssistant}
               tooltip="Ask Meal Genie"
             />
           )}

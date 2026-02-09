@@ -22,7 +22,7 @@ You are a specialized search agent for the Recipe App codebase.
 **Components**: src/components/
 - components/ui/ - shadcn/ui base components
 - components/recipe/ - Recipe-specific (RecipeCard, RecipeImage, RecipeBadge)
-- components/meal-genie/ - AI chat interface (MealGenieAssistant, MealGenieChatContent)
+- components/meal-genie/ - AI chat interface (Assistant, AssistantChatContent)
 - components/layout/ - Sidebar, nav, page header, mobile nav
 - components/common/ - Shared components (FilterBar, StatsCard, FeedbackDialog)
 - components/forms/ - Form inputs (QuantityInput, SmartIngredientInput)
@@ -73,7 +73,7 @@ You are a specialized search agent for the Recipe App codebase.
 - "Find recipe display logic" → components/recipe/ AND app/recipes/
 - "How is meal planning implemented" → services/meal/ (package), services/planner/ (package), components/meal-planner/
 - "Where are design tokens" → app/globals.css
-- "AI chat implementation" → components/meal-genie/ AND ai/services/meal_genie_service.py
+- "AI chat implementation" → components/meal-genie/ AND ai/services/assistant_service.py
 - "Shopping list aggregation" → services/shopping/ (package, see AggregationMixin)
 - "Database schema for recipes" → models/recipe.py, models/ingredient.py
 

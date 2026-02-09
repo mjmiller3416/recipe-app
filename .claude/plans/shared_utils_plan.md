@@ -248,7 +248,7 @@ export function useLocalStorageState<T>(
 ```
 
 **Refactor `hooks/persistence/useChatHistory.ts`:**
-- Replace ~50 lines of manual localStorage/event code with `useLocalStorageState<MealGenieMessage[]>`
+- Replace ~50 lines of manual localStorage/event code with `useLocalStorageState<AssistantMessage[]>`
 - Keep public API unchanged: `{ messages, addMessage, clearHistory, isLoaded }`
 - `addMessage` becomes: `setState(prev => [...prev, message].slice(-MAX_MESSAGES))`
 
@@ -426,10 +426,10 @@ export const CHAT_SUGGESTIONS = [
 import ReactMarkdown from "react-markdown";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { MealGenieMessage } from "@/types/meal-genie";
+import type { AssistantMessage } from "@/types/meal-genie";
 
 interface ChatMessageListProps {
-  messages: MealGenieMessage[];
+  messages: AssistantMessage[];
   isPending: boolean;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
@@ -515,9 +515,9 @@ export function ChatMessageList({
 }
 ```
 
-**Update MealGenieAssistant.tsx:** Replace scroll logic with `useChatScroll`, message rendering with `<ChatMessageList>`, local SUGGESTIONS with import from constants. (~80 lines removed)
+**Update Assistant.tsx:** Replace scroll logic with `useChatScroll`, message rendering with `<ChatMessageList>`, local SUGGESTIONS with import from constants. (~80 lines removed)
 
-**Update MealGenieChatContent.tsx:** Same treatment, passing `afterLoadingSlot={pendingRecipeButton}`. (~80 lines removed)
+**Update AssistantChatContent.tsx:** Same treatment, passing `afterLoadingSlot={pendingRecipeButton}`. (~80 lines removed)
 
 ---
 
@@ -545,7 +545,7 @@ No changes needed to `hooks/persistence/index.ts` — public API of refactored h
    - Recipe detail page shows `"45 min"`, `"1h 30m"` long format
    - RecipeRoulette widget shows `"N/A"` for null times
    - Meal planner cards/dropdowns show correct short format
-   - MealGenie chat (dashboard widget + popup): messages render, auto-scroll works, fade indicators work
+   - Assistant chat (dashboard widget + popup): messages render, auto-scroll works, fade indicators work
    - Settings > Data Management: backup download, recipe export, template download all trigger file saves
    - Settings > Recipe Preferences: inline group creation works
    - Recipe detail > Manage Groups: inline group creation works

@@ -10,7 +10,7 @@ export { plannerApi } from "./planner";
 export { shoppingApi } from "./shopping";
 export { ingredientApi } from "./ingredients";
 export { uploadApi } from "./upload";
-export { imageGenerationApi, cookingTipApi, mealSuggestionsApi, mealGenieApi } from "./ai";
+export { imageGenerationApi, cookingTipApi, mealSuggestionsApi, AssistantApi } from "./ai";
 export { dashboardApi } from "./dashboard";
 export { dataManagementApi } from "./data-management";
 export { feedbackApi } from "./feedback";

@@ -67,7 +67,7 @@ export {
   useMealSuggestions,
   useGenerateImage,
   useGenerateBanner,
-  useMealGenieChat,
+  useAssistantChat,
   // Utilities
   useRefreshCookingTip,
 } from "./useAI";

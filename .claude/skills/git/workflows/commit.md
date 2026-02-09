@@ -31,7 +31,7 @@
    | `recipes/`, `useRecipe`, `RecipeCard` | `recipes` |
    | `dashboard/`, `Dashboard`, `Widget` | `dashboard` |
    | `settings/`, `useSettings` | `settings` |
-   | `meal-genie/`, `MealGenie`, `useChat` | `meal-genie` |
+   | `meal-genie/`, `Assistant`, `useChat` | `meal-genie` |
    | `components/ui/`, `lib/`, `hooks/api/` | (shared - no specific domain) |
 
    **Case A: Full mismatch (all changes belong elsewhere)**

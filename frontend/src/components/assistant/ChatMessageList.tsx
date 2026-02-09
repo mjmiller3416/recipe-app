@@ -6,10 +6,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CHAT_SUGGESTIONS } from "./constants";
-import type { MealGenieMessage } from "@/types/ai";
+import type { AssistantMessage } from "@/types/ai";
 
 interface ChatMessageListProps {
-  messages: MealGenieMessage[];
+  messages: AssistantMessage[];
   isPending: boolean;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;

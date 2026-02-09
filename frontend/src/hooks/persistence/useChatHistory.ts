@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import type { MealGenieMessage } from "@/types/ai";
+import type { AssistantMessage } from "@/types/ai";
 import { useLocalStorageState } from "./useLocalStorageState";
 
 // ============================================================================
@@ -19,7 +19,7 @@ interface UseChatHistoryReturn {
   /**
    * List of chat messages
    */
-  messages: MealGenieMessage[];
+  messages: AssistantMessage[];
   /**
    * Whether the hook has loaded from storage
    */
@@ -27,7 +27,7 @@ interface UseChatHistoryReturn {
   /**
    * Add a single message to the chat history
    */
-  addMessage: (message: MealGenieMessage) => void;
+  addMessage: (message: AssistantMessage) => void;
   /**
    * Clear all chat history
    */
@@ -49,14 +49,14 @@ interface UseChatHistoryReturn {
  * ```
  */
 export function useChatHistory(): UseChatHistoryReturn {
-  const [messages, setMessages, isLoaded] = useLocalStorageState<MealGenieMessage[]>(
+  const [messages, setMessages, isLoaded] = useLocalStorageState<AssistantMessage[]>(
     STORAGE_KEY,
     [],
     { maxItems: MAX_MESSAGES }
   );
 
   const addMessage = useCallback(
-    (message: MealGenieMessage) => {
+    (message: AssistantMessage) => {
       setMessages((prev) => [...prev, message]);
     },
     [setMessages]

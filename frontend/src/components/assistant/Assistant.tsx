@@ -4,17 +4,17 @@ import { useState, useCallback } from "react";
 import { Sparkles, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChatHistory } from "@/hooks/persistence";
-import { useMealGenieAsk } from "@/hooks/api/useAI";
+import { useAssistantAsk } from "@/hooks/api/useAI";
 import { useChatScroll } from "@/hooks/ui";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChatMessageList } from "./ChatMessageList";
 
-export function AskMealGenieWidget() {
+export function AskAssistantWidget() {
   const [input, setInput] = useState("");
   const { messages, addMessage, clearHistory } = useChatHistory();
-  const askMutation = useMealGenieAsk();
+  const askMutation = useAssistantAsk();
   const { messagesEndRef, scrollContainerRef, showTopFade, showBottomFade } = useChatScroll(messages.length, askMutation.isPending);
 
   const handleSubmit = useCallback(async (messageText?: string) => {

@@ -100,7 +100,7 @@ Planner entries have a `shopping_mode` enum:
 
 All AI features use Google Gemini. Configuration lives in `app/ai/config/`, services in `app/ai/services/`.
 
-**Meal Genie Assistant** (`meal_genie_service.py`):
+**Meal Genie Assistant** (`assistant_service.py`):
 - Conversational AI with function calling
 - Uses `user_context_builder.py` to inject user's recipes, meals, planner state
 - Personality tuned for encouraging, friendly tone
