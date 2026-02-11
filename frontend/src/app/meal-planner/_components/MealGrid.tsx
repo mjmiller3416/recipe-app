@@ -32,7 +32,6 @@ interface MealGridProps {
   onAddMealClick?: () => void;
   onCycleShoppingMode?: (item: MealGridItem) => void;
   onReorder?: (reorderedItems: MealGridItem[]) => void;
-  isReorderMode?: boolean;
   className?: string;
 }
 
@@ -89,11 +88,12 @@ export function MealGrid({
   onAddMealClick,
   onCycleShoppingMode,
   onReorder,
-  isReorderMode = false,
   className,
 }: MealGridProps) {
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: { delay: 250, tolerance: 5 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -113,10 +113,7 @@ export function MealGrid({
   };
 
   return (
-    <div className={cn("space-y-4", className)}>
-      {/* Section Header */}
-      <h2 className="text-lg font-semibold text-foreground">This Week&apos;s Menu</h2>
-
+    <div className={className}>
       {/* Grid */}
       <DndContext
         sensors={sensors}
@@ -136,7 +133,6 @@ export function MealGrid({
                 isSelected={selectedId === item.id}
                 onClick={() => onItemClick?.(item)}
                 onCycleShoppingMode={() => onCycleShoppingMode?.(item)}
-                isReorderMode={isReorderMode}
               />
             ))}
 

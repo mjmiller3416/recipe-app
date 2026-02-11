@@ -322,8 +322,7 @@ export function ShoppingListView() {
   if (isLoading) {
     return (
       <PageLayout
-        title="Shopping List"
-        description="Items from your meal plan"
+        title="Items from your meal plan"
       >
         <div className="space-y-6">
           {[1, 2, 3].map((i) => (
@@ -345,8 +344,7 @@ export function ShoppingListView() {
   if (error) {
     return (
       <PageLayout
-        title="Shopping List"
-        description="Items from your meal plan"
+        title="Items from your meal plan"
         actions={headerActions}
       >
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -369,8 +367,7 @@ export function ShoppingListView() {
   if (!hasItems) {
     return (
       <PageLayout
-        title="Shopping List"
-        description="Items from your meal plan"
+        title="Items from your meal plan"
         actions={headerActions}
       >
         {/* Add manual item form - also available when list is empty */}

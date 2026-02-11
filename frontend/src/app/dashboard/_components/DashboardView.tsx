@@ -27,8 +27,7 @@ export function DashboardView() {
 
   return (
     <PageLayout
-      title="Dashboard"
-      description="Overview of your meal planning activities"
+      title="Overview of your meal planning activities"
       fillViewport
       contentClassName="flex flex-col"
     >

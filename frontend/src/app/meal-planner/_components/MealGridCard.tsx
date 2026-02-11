@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RecipeBannerImage } from "@/components/recipe/RecipeBannerImage";
-import { ShoppingCart, Users, Clock, Bookmark, GripVertical } from "lucide-react";
+import { ShoppingCart, Users, Clock, Bookmark } from "lucide-react";
 import { formatTime } from "@/lib/quantityUtils";
 import { ShoppingMode } from "@/types/shopping";
 
@@ -31,7 +31,6 @@ interface MealGridCardProps {
   isSelected?: boolean;
   onClick?: () => void;
   onCycleShoppingMode?: () => void;
-  isReorderMode?: boolean;
   className?: string;
 }
 
@@ -76,7 +75,6 @@ export function MealGridCard({
   isSelected = false,
   onClick,
   onCycleShoppingMode,
-  isReorderMode = false,
   className,
 }: MealGridCardProps) {
   const {
@@ -100,12 +98,10 @@ export function MealGridCard({
       ref={setNodeRef}
       style={style}
       onClick={onClick}
-      tabIndex={0}
-      role="button"
-      aria-label={`${item.name} - click to view`}
+      aria-label={`${item.name} - click to view, hold to reorder`}
       className={cn(
         // Base styles
-        "group cursor-pointer overflow-hidden",
+        "group cursor-pointer overflow-hidden touch-none",
         "pb-0 pt-0 gap-0",
         // Liftable hover effect (disabled while dragging to prevent transform conflicts)
         !isDragging && "liftable hover:bg-hover",
@@ -117,6 +113,8 @@ export function MealGridCard({
         isDragging && "opacity-50 shadow-lg z-10 transition-none",
         className
       )}
+      {...attributes}
+      {...listeners}
     >
       {/* Image Section */}
       <div className="relative w-full overflow-hidden">
@@ -130,22 +128,6 @@ export function MealGridCard({
             !isDragging && "transition-transform duration-300 group-hover:scale-105"
           )}
         />
-
-        {/* Drag Handle - Top Left (only visible in reorder mode) */}
-        {isReorderMode && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            shape="pill"
-            className="absolute top-2 left-2 size-6 bg-overlay-strong cursor-grab active:cursor-grabbing touch-none"
-            aria-label="Drag to reorder"
-            onClick={(e) => e.stopPropagation()}
-            {...attributes}
-            {...listeners}
-          >
-            <GripVertical className="size-3.5 text-muted-foreground" strokeWidth={1.5} />
-          </Button>
-        )}
 
         {/* Status Icons - Top Right */}
         <div className="absolute top-2 right-2 flex gap-1">

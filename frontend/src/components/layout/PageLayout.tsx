@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import {
   PageHeader,
   PageHeaderContent,
-  PageHeaderTitle,
   PageHeaderActions,
 } from "./PageHeader";
 
@@ -68,44 +67,40 @@ interface PageLayoutProps {
  *   {content}
  * </PageLayout>
  */
-export function PageLayout({
-  title,
-  description,
-  actions,
-  headerContent,
-  onBackClick,
-  children,
-  className,
-  contentClassName,
-  hero,
-  stickyHeader,
-  fillViewport = false,
-}: PageLayoutProps) {
+export function PageLayout(props: PageLayoutProps) {
+  const {
+    actions,
+    headerContent,
+    onBackClick,
+    children,
+    className,
+    contentClassName,
+    hero,
+    stickyHeader,
+    fillViewport = false,
+  } = props;
   // Build the header content (shared across modes)
-  const headerElement = (
+  // Only render header when there are actions, custom content, or a back button
+  const hasHeader = !!(headerContent || actions || onBackClick);
+  const headerElement = hasHeader ? (
     <PageHeader>
       {headerContent ?? (
         <PageHeaderContent>
-          {onBackClick ? (
-            <div className="flex items-center flex-1 gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Go back"
-                onClick={onBackClick}
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <PageHeaderTitle title={title} description={description} />
-            </div>
-          ) : (
-            <PageHeaderTitle title={title} description={description} />
+          {onBackClick && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Go back"
+              onClick={onBackClick}
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
           )}
           {actions && <PageHeaderActions>{actions}</PageHeaderActions>}
         </PageHeaderContent>
       )}
     </PageHeader>
-  );
+  ) : null;
 
   // ============================================
   // HERO MODE: Hero section with sticky subheader

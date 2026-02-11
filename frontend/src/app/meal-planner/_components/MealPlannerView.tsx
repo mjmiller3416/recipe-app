@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { PageHeaderContent, PageHeaderTitle, PageHeaderActions } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -38,9 +39,7 @@ import { CompletedDropdown, CompletedMealItem } from "./CompletedDropdown";
 import { SelectedMealCard } from "./meal-display/SelectedMealCard";
 import { RecipePickerDialog } from "./RecipePickerDialog";
 import { MealPreviewDialog } from "./MealPreviewDialog";
-import { SavedMealsDialog } from "./SavedMealsDialog";
-import { AlertTriangle, ChefHat, ArrowUpDown, Bookmark } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { AlertTriangle } from "lucide-react";
 import { useUnsavedChanges, setNavigationBypass } from "@/hooks/ui/useUnsavedChanges";
 
 // ============================================================================
@@ -75,15 +74,18 @@ export function MealPlannerView() {
   // Dialog orchestration state for meal creation/edit flow
   const [showRecipePicker, setShowRecipePicker] = useState(false);
   const [showMealPreview, setShowMealPreview] = useState(false);
-  const [showSavedMealsDialog, setShowSavedMealsDialog] = useState(false);
   const [pickerMode, setPickerMode] = useState<"main" | "side">("main");
   const [pendingMain, setPendingMain] = useState<RecipeCardData | null>(null);
   const [pendingSides, setPendingSides] = useState<RecipeCardData[]>([]);
   const [isCreatingMeal, setIsCreatingMeal] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
-  const [isReorderMode, setIsReorderMode] = useState(false);
   const [editingMealId, setEditingMealId] = useState<number | null>(null);
   const [editingMealName, setEditingMealName] = useState<string | null>(null);
+
+  // NOTE: MealPreviewDialog and the discard AlertDialog are rendered in BOTH
+  // the recipe picker conditional return AND the main return. This is intentional —
+  // when showRecipePicker is true, the component returns early with a different
+  // layout, so the dialogs must be duplicated to remain accessible in both states.
 
   // Track if user has started meal creation (selected a main dish)
   const hasPendingMeal = !!pendingMain;
@@ -208,11 +210,17 @@ export function MealPlannerView() {
     setSelectedEntryId(item.id);
   };
 
+  // Handle a saved meal being added to planner from the Saved Meals tab
+  const handleSavedMealAdded = useCallback(
+    (entry: PlannerEntryResponseDTO) => {
+      setSelectedEntryId(entry.id);
+      resetMealCreation();
+    },
+    [resetMealCreation]
+  );
+
   // Handle Add Meal button click - opens the meal preview dialog first
   const handleAddMealClick = openMealCreation;
-
-  // Handle Create Meal button click - opens the meal preview dialog first
-  const handleCreateMealClick = openMealCreation;
 
   // Handle selecting a main dish from the preview dialog
   const handleSelectMainFromPreview = () => {
@@ -308,7 +316,7 @@ export function MealPlannerView() {
 
       if (editingMealId) {
         // Update existing meal using mutation
-        const updatedMeal = await updateMealMutation.mutateAsync({
+        await updateMealMutation.mutateAsync({
           mealId: editingMealId,
           data: {
             meal_name: editingMealName || pendingMain.name,
@@ -318,7 +326,7 @@ export function MealPlannerView() {
         });
 
         // Update local entries state
-        handleMealUpdated(updatedMeal);
+        handleMealUpdated();
 
         // Close dialogs and reset state
         resetMealCreation();
@@ -452,11 +460,6 @@ export function MealPlannerView() {
     await handleEditMeal();
   };
 
-  // Handle saved meal added to planner from SavedMealsDialog
-  const handleSavedMealAdded = (entry: PlannerEntryResponseDTO) => {
-    // Cache is automatically updated by the useAddToPlanner mutation in SavedMealsDialog
-    setSelectedEntryId(entry.id);
-  };
 
   // Handle meal updated - cache is automatically updated by mutation
   const handleMealUpdated = () => {
@@ -580,6 +583,7 @@ export function MealPlannerView() {
           onAddSides={handleAddSidesClick}
           onConfirm={handleConfirmMeal}
           isSubmitting={isCreatingMeal}
+          onSavedMealAdded={handleSavedMealAdded}
         />
 
         {/* Discard Confirmation Dialog */}
@@ -587,7 +591,7 @@ export function MealPlannerView() {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-warning" />
+                <AlertTriangle className="h-5 w-5 text-warning" strokeWidth={1.5} />
                 Discard Meal?
               </AlertDialogTitle>
               <AlertDialogDescription>
@@ -613,58 +617,22 @@ export function MealPlannerView() {
 
   return (
     <PageLayout
-      title="Meal Planner"
-      description="Plan your weekly meals"
-      actions={
-        <div className="flex items-center gap-2">
-          {/* Reorder Toggle Button */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={() => setIsReorderMode(!isReorderMode)}
-                variant={isReorderMode ? "default" : "outline"}
-                size="icon"
-                aria-label={isReorderMode ? "Done reordering" : "Reorder meals"}
-              >
-                <ArrowUpDown strokeWidth={1.5} className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {isReorderMode ? "Done reordering" : "Reorder meals"}
-            </TooltipContent>
-          </Tooltip>
-
-          {/* Saved Meals Button */}
-          <Button
-            onClick={() => setShowSavedMealsDialog(true)}
-            variant="outline"
-            className="gap-2"
-          >
-            <Bookmark strokeWidth={1.5} />
-            Saved Meals
-          </Button>
-
-          {/* Create Meal Button */}
-          <Button
-            onClick={handleCreateMealClick}
-            variant="outline"
-            className="gap-2"
-          >
-            <ChefHat strokeWidth={1.5} />
-            Create Meal
-          </Button>
-
-          {/* Completed Dropdown */}
-          <CompletedDropdown
-            items={completedItems}
-            onItemClick={handleCompletedItemClick}
-            onClearCompleted={handleClearCompleted}
-          />
-        </div>
+      title="Plan your weekly meals"
+      headerContent={
+        <PageHeaderContent className="w-full">
+          <PageHeaderTitle title="This Week's Menu" />
+          <PageHeaderActions>
+            <CompletedDropdown
+              items={completedItems}
+              onItemClick={handleCompletedItemClick}
+              onClearCompleted={handleClearCompleted}
+            />
+          </PageHeaderActions>
+        </PageHeaderContent>
       }
     >
       {/* STACKED VERTICAL LAYOUT */}
-      <div className="space-y-8 px-3">
+      <div className="space-y-8">
         {/* TOP: MEAL GRID - hidden when empty state is shown */}
         {(gridItems.length > 0 || selectedMealId !== null) && (
           <MealGrid
@@ -674,7 +642,6 @@ export function MealPlannerView() {
             onAddMealClick={handleAddMealClick}
             onCycleShoppingMode={handleCycleShoppingMode}
             onReorder={handleReorder}
-            isReorderMode={isReorderMode}
           />
         )}
 
@@ -720,13 +687,7 @@ export function MealPlannerView() {
         onAddSides={handleAddSidesClick}
         onConfirm={handleConfirmMeal}
         isSubmitting={isCreatingMeal}
-      />
-
-      {/* Saved Meals Dialog - for browsing and quick-adding saved meals */}
-      <SavedMealsDialog
-        open={showSavedMealsDialog}
-        onOpenChange={setShowSavedMealsDialog}
-        onEntryCreated={handleSavedMealAdded}
+        onSavedMealAdded={handleSavedMealAdded}
       />
 
       {/* Discard Confirmation Dialog - for dialog close attempts */}
@@ -734,7 +695,7 @@ export function MealPlannerView() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-warning" />
+              <AlertTriangle className="h-5 w-5 text-warning" strokeWidth={1.5} />
               Discard Meal?
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -760,7 +721,7 @@ export function MealPlannerView() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-warning" />
+              <AlertTriangle className="h-5 w-5 text-warning" strokeWidth={1.5} />
               Discard Meal?
             </AlertDialogTitle>
             <AlertDialogDescription>

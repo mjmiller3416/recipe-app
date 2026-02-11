@@ -145,8 +145,7 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
   }
 
   // Page metadata
-  const pageTitle = isEditMode ? "Edit Recipe" : "Add New Recipe";
-  const pageDescription = isEditMode
+  const pageTitle = isEditMode
     ? `Editing "${initialData?.recipe_name}"`
     : "Create a new recipe for your collection";
   const saveButtonText = isEditMode ? "Save Changes" : "Save Recipe";
@@ -155,7 +154,6 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
     <>
       <PageLayout
         title={pageTitle}
-        description={pageDescription}
         onBackClick={isEditMode ? () => handleNavigation(`/recipes/${recipeId}`) : undefined}
         contentClassName="max-md:pb-40"
         actions={

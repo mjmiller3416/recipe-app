@@ -53,7 +53,7 @@ function EmptyNoMeals() {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       <div className="p-4 rounded-full bg-muted">
-        <Bookmark className="h-12 w-12 text-muted-foreground" />
+        <Bookmark className="h-12 w-12 text-muted-foreground" strokeWidth={1.5} />
       </div>
       <h3 className="mt-4 text-lg font-semibold text-foreground">
         No Saved Meals
@@ -120,7 +120,7 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
 
   return (
     <ScrollableCardList
-      className="min-h-[40vh] max-h-[40vh]"
+      className="h-full"
       innerClassName="grid grid-cols-1 gap-3"
     >
       {meals.map((meal) => (
