@@ -14,21 +14,45 @@ This is the most common decision you'll make. One rule:
 | **Form inputs** | `components/forms/` |
 | **Layout/nav/shell** | `components/layout/` |
 | **shadcn/ui primitives** | `components/ui/` — never modify these |
+| **Static content/data** | `data/` — changelog, defaults, static copy |
 
 **When a page component starts being used on a second page**, move it from `_components/` to `components/{domain}/`. Don't pre-emptively put things in `components/` "just in case."
+
+### `components/common/` entry criteria
+
+A component belongs in `common/` only if it's used by **2+ unrelated domains** (e.g., dashboard and shopping-list both use `StatCard`). If it's recipe-specific, it goes in `components/recipe/` even if multiple recipe-related pages use it. Audit `common/` when it exceeds ~18 files — something domain-specific probably snuck in.
 
 ## The `_components` Convention
 
 - **Inside `app/`** — always use `_components/`. The underscore prevents Next.js from treating it as a route segment.
 - **Inside `components/`** — never use `_components/`. The underscore has no meaning there. Use plain folder names.
 
+### What belongs in `_components/`
+
+`_components/` holds everything a page owns privately — not just `.tsx` components:
+
+| File type | Example | Belongs? |
+|-----------|---------|----------|
+| **Components** (`.tsx`) | `MealGrid.tsx` | Yes |
+| **Page-specific hooks** (`.ts`) | `useRecipeForm.ts` | Yes — if only used by this page's tree |
+| **Page-specific utilities** (`.ts`) | `recipe-utils.ts` | Yes — if only consumed within this page |
+| **Page-specific styles** (`.css`) | `print-styles.css` | Yes — if scoped to this page's components |
+
+The organizing principle is **page ownership**, not file type. When any of these files are needed by a second page, promote them to their shared home (`hooks/`, `lib/`, `components/`, or `globals.css`).
+
+### Cross-page imports
+
+**Never import from another page's `_components/`.** If `meal-planner/_components/` needs something from `recipes/_components/`, that file must be promoted to a shared location (`components/{domain}/`). Cross-page `_components/` imports create hidden coupling between pages.
+
 ## Sub-folders Within `_components`
 
 | Condition | Structure |
 |-----------|-----------|
-| **< 10 files** | Flat — no sub-folders needed |
-| **10-15 files** with a clear sub-feature | One sub-folder for the feature (e.g. `print/`, `meal-display/`) |
-| **15+ files** | Likely a sign the page is doing too much — consider splitting the route |
+| **< 10 top-level entries** | Flat — no sub-folders needed |
+| **10-15 top-level entries** with a clear sub-feature | One sub-folder for the feature (e.g. `print/`, `meal-display/`) |
+| **15+ top-level entries** | Likely a sign the page is doing too much — consider splitting the route |
+
+**Counting method:** Count files and directories at the top level of `_components/`, not recursive totals. A sub-folder counts as 1 entry. A well-organized directory with 6 files and 3 sub-folders has 9 entries — the sub-folders are doing their job.
 
 **When creating a sub-folder, the contents must be a cohesive feature**, not a code-type grouping. Good: `print/` (has its own hook, styles, and components). Bad: `dialogs/` (arbitrary grouping by component type).
 
@@ -78,6 +102,24 @@ If `common.ts` exceeds ~100 lines, audit it — something domain-specific probab
 ### Page-specific hooks
 
 Hooks used by only one page live in that page's `_components/` folder (e.g. `useRecipeForm.ts`, `useRecipeView.ts`). Only move to `hooks/` when a second page needs it.
+
+### Non-hook support files
+
+`hooks/api/` may contain non-hook support files that are exclusively consumed by the API hooks in that directory — query key factories (`queryKeys.ts`), event dispatchers (`events.ts`), etc. These are React Query infrastructure, not HTTP client code, so they belong with the hooks rather than in `lib/api/`.
+
+## Barrel Exports (`index.ts`)
+
+| Directory | Barrel export? |
+|-----------|---------------|
+| `app/{page}/_components/` | **Yes** — always |
+| Sub-folders within `_components/` | **Yes** — if the sub-folder has 3+ files |
+| `hooks/` and `hooks/{category}/` | **Yes** — always |
+| `lib/api/` | **Yes** — single barrel re-export |
+| `components/{domain}/` | **No** — import directly by filename |
+| `components/ui/` | **No** — shadcn default, don't modify |
+| `types/` | **No** — import directly by filename |
+
+Barrel exports earn their keep at module boundaries (`_components/`, `hooks/`, `lib/api/`) where they define a public API. In `components/`, direct filename imports are clearer and more grep-friendly.
 
 ## API Client Layer (`lib/api/`)
 
@@ -185,3 +227,6 @@ Route segments (`[id]`, `edit`) don't count toward organizational depth — they
 - [ ] Is a page-scoped component now used on a second page? → Move to `components/{domain}/`
 - [ ] Did I name something `helpers.ts` or `utils2.ts`? → Rename to what it does
 - [ ] Is `lib/` over 15 files? → Consider domain grouping
+- [ ] Did I import from another page's `_components/`? → Promote the file to `components/{domain}/`
+- [ ] Does a new `_components/` sub-folder have a barrel export? → Add `index.ts` if 3+ files
+- [ ] Did I add a component to `common/`? → Verify it's used by 2+ unrelated domains
