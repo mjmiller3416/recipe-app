@@ -9,7 +9,7 @@ interface PageHeaderProps {
 export function PageHeader({ children, className }: PageHeaderProps) {
   return (
     <div className={cn("bg-background", className)}>
-      <div className="py-4 px-4 mx-auto max-w-7xl md:px-6">
+      <div className="pt-6 px-4 mx-auto max-w-7xl md:px-6">
         {children}
       </div>
     </div>

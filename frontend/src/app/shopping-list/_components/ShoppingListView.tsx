@@ -165,6 +165,9 @@ export function ShoppingListView() {
       const meal = allMeals.find((m) => m.id === entry.meal_id);
       if (!meal) continue;
 
+      // Use planner entry ID for uniqueness (same meal can appear in multiple entries)
+      const entryId = entry.id;
+
       // Add main recipe first (mark as first in meal)
       if (meal.main_recipe?.recipe_name) {
         const name = meal.main_recipe.recipe_name;
@@ -172,20 +175,21 @@ export function ShoppingListView() {
           recipeName: name,
           mealId: meal.id,
           isFirstInMeal: true,
-          instanceKey: `meal-${meal.id}-${name}`,
+          instanceKey: `entry-${entryId}-main-${name}`,
         });
         recipeNameCounts.set(name, (recipeNameCounts.get(name) ?? 0) + 1);
       }
 
       // Add sides in order (always — no dedup guard)
-      for (const side of meal.side_recipes || []) {
+      for (let i = 0; i < (meal.side_recipes || []).length; i++) {
+        const side = meal.side_recipes![i];
         if (side.recipe_name) {
           const name = side.recipe_name;
           entries.push({
             recipeName: name,
             mealId: meal.id,
             isFirstInMeal: false,
-            instanceKey: `meal-${meal.id}-${name}`,
+            instanceKey: `entry-${entryId}-side-${i}-${name}`,
           });
           recipeNameCounts.set(name, (recipeNameCounts.get(name) ?? 0) + 1);
         }
