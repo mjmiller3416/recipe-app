@@ -48,17 +48,15 @@ These exist in `frontend/src/components/` - **reuse before creating new:**
 - `RecipeImage` - Recipe image with fallback
 - `RecipeBadge` - Category/meal-type badge
 - `RecipeBannerImage` - Full-width banner image
+- `RecipeBrowserView` - Recipe browse/search view (used by recipes page and meal planner)
+  - `browser/RecipeFilters` - Filter sidebar for recipe browsing
+  - `browser/RecipeGrid` - Recipe card grid display
+  - `browser/RecipeSortControls` - Sort and filter controls bar
 
 ### Assistant Domain (`components/assistant/`)
 - `Assistant` - AI chat assistant wrapper
 - `AssistantChatContent` - Chat message display
 - `AssistantPopup` - Floating chat popup
-
-### Settings Domain (`components/settings/`)
-- `DataManagementSection` - Data import/export/backup settings
-  - `_components/data-management/BackupRestore` - Backup & restore UI
-  - `_components/data-management/DeleteData` - Data deletion UI
-  - `_components/data-management/ExportImport` - CSV export/import UI
 
 ### Common Components (`components/common/`)
 - `FilterBar` - Reusable filter bar

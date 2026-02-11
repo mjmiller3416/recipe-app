@@ -1,10 +1,10 @@
 import { Database } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { SectionHeader } from "@/app/settings/_components/SectionHeader";
-import { BackupRestore } from "./_components/data-management/BackupRestore";
-import { ExportImport } from "./_components/data-management/ExportImport";
-import { DeleteData } from "./_components/data-management/DeleteData";
+import { SectionHeader } from "../SectionHeader";
+import { BackupRestore } from "../data-management/BackupRestore";
+import { ExportImport } from "../data-management/ExportImport";
+import { DeleteData } from "../data-management/DeleteData";
 
 export function DataManagementSection() {
   return (

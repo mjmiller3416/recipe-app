@@ -1,7 +1,7 @@
 // Meal Planner Components
 // Re-export all components for clean imports
 
-export { MealPlannerPage } from "./MealPlannerView";
+export { MealPlannerView } from "./MealPlannerView";
 export { RecipePickerDialog } from "./RecipePickerDialog";
 export { MealPreviewDialog } from "./MealPreviewDialog";
 export { MealGrid } from "./MealGrid";

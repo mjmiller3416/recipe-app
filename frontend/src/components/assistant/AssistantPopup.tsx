@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AssistantChatContent } from "./AssistantChatContent";
@@ -27,12 +27,16 @@ export function AssistantPopup({ open, onOpenChange }: AssistantPopupProps) {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Reset display mode when popup is closed
-  useEffect(() => {
-    if (!open) {
-      setDisplayMode("minimized");
-    }
-  }, [open]);
+  // Wrap onOpenChange to reset display mode when closing
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      if (!newOpen) {
+        setDisplayMode("minimized");
+      }
+      onOpenChange(newOpen);
+    },
+    [onOpenChange]
+  );
 
   // Handle escape key for desktop: expanded → normal → minimized → close
   useEffect(() => {
@@ -45,24 +49,25 @@ export function AssistantPopup({ open, onOpenChange }: AssistantPopupProps) {
         } else if (displayMode === "normal") {
           setDisplayMode("minimized");
         } else {
-          onOpenChange(false);
+          handleOpenChange(false);
         }
       }
     };
 
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [open, isMobile, displayMode, onOpenChange]);
+  }, [open, isMobile, displayMode, handleOpenChange]);
 
   // Mobile: Use Sheet component
   if (isMobile) {
     return (
       <div className="print:hidden">
-        <Sheet open={open} onOpenChange={onOpenChange}>
+        <Sheet open={open} onOpenChange={handleOpenChange}>
           <SheetContent
             side="bottom"
             className="h-[calc(100dvh-env(safe-area-inset-top,0px)-2rem)] p-0 rounded-t-2xl"
           >
+            <SheetTitle className="sr-only">AI Assistant</SheetTitle>
             {/* Noise texture background */}
             <div
               className="absolute inset-0 bg-elevated rounded-t-2xl opacity-60"
@@ -74,8 +79,8 @@ export function AssistantPopup({ open, onOpenChange }: AssistantPopupProps) {
 
             {/* Content */}
             <div className="relative h-full">
-              <AssistantChatContent 
-                onClose={() => onOpenChange(false)} 
+              <AssistantChatContent
+                onClose={() => handleOpenChange(false)}
                 isMobile={true}
               />
             </div>
@@ -233,7 +238,7 @@ export function AssistantPopup({ open, onOpenChange }: AssistantPopupProps) {
                       className="h-full"
                     >
                       <AssistantChatContent
-                        onClose={() => onOpenChange(false)}
+                        onClose={() => handleOpenChange(false)}
                         isMinimized={isMinimized}
                         isExpanded={isExpanded}
                         onMinimize={() => setDisplayMode("minimized")}

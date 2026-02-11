@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { DataManagementSection } from "@/components/settings/DataManagementSection";
+import { DataManagementSection } from "./sections/DataManagementSection";
 import { useSettings, DEFAULT_SETTINGS } from "@/hooks/persistence/useSettings";
 
 import { CategoryNav, CATEGORIES, type SettingsCategory } from "./CategoryNav";

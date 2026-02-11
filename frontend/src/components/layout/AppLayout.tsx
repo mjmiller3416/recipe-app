@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { TopNav } from "@/components/layout/TopNav";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
-import { AssistantPopup } from "@/components/assistant";
+import { AssistantPopup } from "@/components/assistant/AssistantPopup";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [isAssistantOpen, setIsAssistantOpen] = useState(true);

@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback } from "react";
-import type { FilterState } from "@/app/recipes/_components/browser/RecipeFilters";
+import type { FilterState } from "@/components/recipe/browser/RecipeFilters";
 import type {
   SortOption,
   SortDirection,
-} from "@/app/recipes/_components/browser/RecipeSortControls";
+} from "@/components/recipe/browser/RecipeSortControls";
 
 // ============================================================================
 // Types

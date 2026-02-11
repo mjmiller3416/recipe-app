@@ -45,10 +45,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useUnsavedChanges, setNavigationBypass } from "@/hooks/ui/useUnsavedChanges";
 
 // ============================================================================
-// MEAL PLANNER PAGE COMPONENT
+// MEAL PLANNER VIEW COMPONENT
 // ============================================================================
 
-export function MealPlannerPage() {
+export function MealPlannerView() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getToken } = useAuth();

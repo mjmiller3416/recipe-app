@@ -26,7 +26,6 @@ You are a specialized search agent for the Recipe App codebase.
 - components/layout/ - Sidebar, nav, page header, mobile nav
 - components/common/ - Shared components (FilterBar, StatsCard, FeedbackDialog)
 - components/forms/ - Form inputs (QuantityInput, SmartIngredientInput)
-- components/settings/ - Settings UI with `_components/data-management/` sub-components
 - components/auth/ - Authentication (SignInForm, SignUpForm, UserMenu)
 
 **Hooks**: src/hooks/ (organized by domain)
