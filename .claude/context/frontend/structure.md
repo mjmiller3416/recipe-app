@@ -75,7 +75,7 @@ A sub-folder should have **3+ files** to justify its existence. Two files don't 
 
 | Type | Location |
 |------|----------|
-| **Domain types** (recipe, meal, planner, etc.) | `types/{domain}.ts` |
+| **Domain types** (recipe, meal, planner, category, etc.) | `types/{domain}.ts` |
 | **Generic utility types** (shared across domains) | `types/common.ts` |
 | **Component props** | Inline in the component file |
 | **Hook return types / internal interfaces** | Inline in the hook file, unless 5+ interfaces |
@@ -230,3 +230,43 @@ Route segments (`[id]`, `edit`) don't count toward organizational depth — they
 - [ ] Did I import from another page's `_components/`? → Promote the file to `components/{domain}/`
 - [ ] Does a new `_components/` sub-folder have a barrel export? → Add `index.ts` if 3+ files
 - [ ] Did I add a component to `common/`? → Verify it's used by 2+ unrelated domains
+
+## Import Organization
+
+**Standard import order:**
+1. React and Next.js
+2. External libraries
+3. UI components (shadcn/ui)
+4. Icons (lucide-react)
+5. Internal components
+6. Hooks
+7. Utilities and types
+
+## Reference File Patterns
+
+**For patterns, look at existing implementations:**
+
+| Pattern | Reference File |
+|---------|---------------|
+| Recipe card | `components/recipe/RecipeCard.tsx` |
+| Form layout | `app/recipes/_components/add-edit/AddEditRecipeView.tsx` |
+| Dialog usage | `app/meal-planner/_components/MealPreviewDialog.tsx` |
+| Filter UI | `components/common/FilterBar.tsx` |
+| Loading states | Any component with React Query |
+| Page structure | `app/recipes/page.tsx` |
+| API hook | `hooks/api/useRecipes.ts` |
+| Persistence hook | `hooks/persistence/useSettings.ts` |
+| UI hook | `hooks/ui/useSortableDnd.ts` |
+| Custom form input | `components/forms/QuantityInput.tsx` |
+
+## When to Create New Files
+
+**Create a new component when:**
+- Logic is reused in 2+ places
+- Component exceeds ~100 lines
+- Component has distinct responsibility
+
+**Don't create a new component when:**
+- Used only once in parent and < 100 lines
+- Extraction doesn't improve clarity
+- Over-abstracting simple JSX

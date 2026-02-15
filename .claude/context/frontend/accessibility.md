@@ -2,15 +2,15 @@
 
 **ARIA labels, keyboard navigation, and screen reader support.**
 
-## ARIA Labels Required on Icon Buttons (CRITICAL)
+## ARIA Labels on Icon Buttons (CRITICAL)
 
-**Icon-only buttons MUST have aria-label with descriptive context:**
+**Every icon-only button MUST have aria-label with specific, descriptive context:**
 
 ```tsx
 import { X, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// ✅ Correct - descriptive aria-label
+// CORRECT - descriptive aria-label
 <Button size="icon" variant="ghost" aria-label="Close dialog">
   <X className="size-4" strokeWidth={1.5} />
 </Button>
@@ -19,66 +19,25 @@ import { Button } from "@/components/ui/button";
   <Trash2 className="size-4" strokeWidth={1.5} />
 </Button>
 
-// ❌ Wrong - missing aria-label
+// WRONG - missing aria-label
 <Button size="icon">
   <X className="size-4" strokeWidth={1.5} />
 </Button>
 ```
 
-Use specific labels like "Delete recipe" (not just "Delete"), "Close dialog" (not just "Close").
+Use specific labels: "Delete recipe" not "Delete", "Close dialog" not "Close".
 
-## Form Labeling (htmlFor Attributes)
+## Form Labeling
 
-**All form inputs MUST have associated labels:**
+All form inputs MUST have `<Label htmlFor>`. See form-patterns.md for standard field patterns.
+
+For helper text, use `aria-describedby` linking to the helper element's `id`.
+
+## Keyboard Navigation for Custom Interactive Elements
+
+**When using a div as an interactive element (instead of `<button>` or `<a>`):**
 
 ```tsx
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-
-// ✅ Correct - Label with htmlFor
-<div className="space-y-2">
-  <Label htmlFor="recipe-name">Recipe Name</Label>
-  <Input
-    id="recipe-name"
-    placeholder="Enter recipe name"
-  />
-</div>
-
-// ❌ Wrong - no htmlFor or id
-<div className="space-y-2">
-  <Label>Recipe Name</Label>
-  <Input placeholder="Enter recipe name" />
-</div>
-```
-
-**Required field indicators:**
-```tsx
-<Label htmlFor="name">
-  Recipe Name <span className="text-destructive">*</span>
-</Label>
-```
-
-**Helper text with aria-describedby:**
-```tsx
-<div className="space-y-2">
-  <Label htmlFor="servings">Servings</Label>
-  <Input
-    id="servings"
-    aria-describedby="servings-help"
-  />
-  <p id="servings-help" className="text-sm text-muted-foreground">
-    Number of people this recipe serves
-  </p>
-</div>
-```
-
-## Keyboard Navigation
-
-**Interactive elements must be keyboard accessible:**
-
-**Custom interactive elements:**
-```tsx
-// Make divs keyboard accessible
 <div
   role="button"
   tabIndex={0}
@@ -95,58 +54,40 @@ import { Input } from "@/components/ui/input";
 </div>
 ```
 
+Prefer `<Button>` over this pattern whenever possible.
+
 ## Focus Management
 
-**Dialog focus management:**
-```tsx
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+shadcn Dialog/Sheet/Popover handle focus trapping automatically. Do not add custom focus management for these.
 
-// shadcn Dialog handles focus automatically
-<Dialog open={open} onOpenChange={setOpen}>
-  <DialogContent>
-    {/* Focus is trapped inside dialog */}
-  </DialogContent>
-</Dialog>
-```
-
-**Focus visible styles:**
-```tsx
-// Ensure focus is visible (shadcn components have this built-in)
-<Button className="focus-visible:ring-2 focus-visible:ring-primary">
-  Button
-</Button>
-```
+shadcn components include `focus-visible` ring styles. Do not override them.
 
 ## Screen Reader Considerations
 
-**Visually hidden text (sr-only) or aria-label:**
+**Visually hidden text:**
 ```tsx
-<button aria-label="Close dialog">
-  <X className="size-4" />
-</button>
+<span className="sr-only">Loading recipes...</span>
 ```
 
-**Live regions for announcements:**
+**Live regions for dynamic announcements:**
 ```tsx
-// Announce form errors
 <div role="alert" aria-live="assertive">
   {error && <p className="text-destructive">{error}</p>}
 </div>
 ```
 
-**Use descriptive link text** ("View Chocolate Cake recipe" not "Click here")
+**Descriptive link text:** Use "View Chocolate Cake recipe" not "Click here".
 
 ## Semantic HTML
 
-**Use semantic elements** (`<nav>`, `<main>`, `<article>`, `<section>`, `<h1>`-`<h6>`) instead of generic `<div>` elements. Screen readers rely on proper document structure.
+Use semantic elements (`<nav>`, `<main>`, `<article>`, `<section>`, `<h1>`-`<h6>`) instead of generic `<div>`. Screen readers rely on proper document structure.
 
 ## Alt Text for Images
 
-**Meaningful alt text:**
 ```tsx
 import Image from "next/image";
 
-// ✅ Descriptive alt text
+// Meaningful alt text
 <Image
   src={recipe.imageUrl}
   alt={`${recipe.name} - ${recipe.category} recipe`}
@@ -154,7 +95,7 @@ import Image from "next/image";
   height={300}
 />
 
-// For decorative images
+// Decorative images
 <Image
   src="/decorative-pattern.png"
   alt=""
@@ -166,75 +107,22 @@ import Image from "next/image";
 
 ## Loading States
 
-**Accessible loading indicators:**
-```tsx
-import { Loader2 } from "lucide-react";
-
-// Screen reader announcement
-<div className="flex items-center gap-2">
-  <Loader2 className="size-4 animate-spin" />
-  <span className="sr-only">Loading recipes...</span>
-  <span aria-hidden="true" className="text-sm text-muted-foreground">
-    Loading...
-  </span>
-</div>
-
-// Button loading state
-<Button disabled={isLoading}>
-  {isLoading && (
-    <>
-      <Loader2 className="size-4 mr-2 animate-spin" />
-      <span className="sr-only">Saving recipe...</span>
-    </>
-  )}
-  {isLoading ? "Saving..." : "Save Recipe"}
-</Button>
-```
+Loading states must be accessible. See component-patterns.md for spinner patterns.
+Add `<span className="sr-only">` for screen reader announcements alongside visual spinners.
 
 ## Disabled States
 
-**Communicate disabled state:**
-```tsx
-// Disabled button (automatically has aria-disabled)
-<Button disabled>Cannot Submit</Button>
+Use `disabled` prop on `<Button>` (automatically sets `aria-disabled`).
+For custom elements, add `aria-disabled="true"` and `opacity-50 cursor-not-allowed`.
 
-// Custom disabled element
-<div
-  role="button"
-  aria-disabled="true"
-  className="opacity-50 cursor-not-allowed"
->
-  Disabled action
-</div>
-```
+## Checklist
 
-## Common Accessibility Violations
+Before completing UI work, verify:
 
-❌ **Don't:**
-- Icon buttons without aria-label
-- Form inputs without labels
-- Clickable divs without role/keyboard handling
-- Missing alt text on images
-- Low contrast text
-- Focus states removed
-
-✅ **Do:**
-- Add aria-label to icon buttons
-- Use Label with htmlFor for all inputs
-- Use semantic HTML (button, nav, main, etc.)
-- Provide descriptive alt text
-- Use semantic tokens (contrast guaranteed)
-- Keep focus visible styles
-
-## Testing Checklist
-
-Before completing UI work:
-
-- [ ] All icon buttons have aria-label
+- [ ] All icon buttons have descriptive aria-label
 - [ ] All form inputs have Label with htmlFor
-- [ ] Interactive elements are keyboard accessible (Tab, Enter, Space)
-- [ ] Focus is visible on all interactive elements
-- [ ] Screen reader can understand the page structure
-- [ ] Images have descriptive alt text
-- [ ] Loading states are announced to screen readers
+- [ ] Custom interactive elements have role, tabIndex, and keyboard handlers
+- [ ] Images have descriptive alt text (or `alt=""` + `aria-hidden` if decorative)
+- [ ] Loading/error states announced to screen readers (sr-only or aria-live)
+- [ ] Semantic HTML used for document structure
 - [ ] Color is not the only way to convey information

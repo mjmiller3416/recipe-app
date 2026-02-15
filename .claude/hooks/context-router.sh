@@ -98,7 +98,7 @@ load_frontend_context() {
     # NEW FILE creation (file doesn't exist yet)
     # ========================================
     if [ ! -f "$PROJECT_ROOT/$FILE_PATH" ]; then
-        CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/file-organization.md")
+        CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/structure.md")
         CONTEXT+=$'\n\n'
     fi
 
@@ -116,8 +116,6 @@ load_backend_context() {
         CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/backend-core.md")
         CONTEXT+=$'\n\n'
         CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/architecture.md")
-        CONTEXT+=$'\n\n'
-        CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/architecture-patterns.md")
         CONTEXT+=$'\n\n'
     fi
 

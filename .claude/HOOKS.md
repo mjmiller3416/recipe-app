@@ -77,7 +77,7 @@ Located in `.claude/context/`:
 - `form-patterns.md` - Form handling patterns
 - `layout-patterns.md` - Layout component patterns
 - `accessibility.md` - Accessibility guidelines
-- `file-organization.md` - Frontend file organization
+- `structure.md` - Frontend organization rules (also loaded for new files)
 
 ### Backend Modules
 - `backend-core.md` - Core backend patterns
@@ -103,7 +103,7 @@ The system uses marker files to optimize context loading performance. Marker fil
 | component-inventory.md | layout-patterns.md (for page.tsx, layout.tsx) |
 | backend-core.md | component-patterns.md (for .tsx) |
 | architecture.md | shadcn-patterns.md (for .tsx) |
-| architecture-patterns.md | exceptions.md |
+| | exceptions.md |
 | | models.md, dtos.md, services.md, etc. (by path) |
 
 ### Marker File Locations

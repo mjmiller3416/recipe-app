@@ -27,48 +27,55 @@ Routes → Services → Repositories → Models
 
 ## User Isolation (EVERY Model)
 
-```python
-# REQUIRED on all domain models
-user_id: Mapped[int] = mapped_column(
-    ForeignKey("users.id", ondelete="CASCADE"),
-    index=True  # REQUIRED for performance
-)
+All domain models require `user_id` with `index=True`. All repositories filter by `user_id` in every query.
 
-# REQUIRED in all repositories
-def __init__(self, session: Session, user_id: int):
-    self.user_id = user_id
+See models.md for model definition. See repositories.md for query filtering.
 
-# REQUIRED in all queries
-.where(Entity.user_id == self.user_id)
-```
+## Transaction Management
 
-## Transaction Management (Services Only)
-
-```python
-# ✅ Service commits
-try:
-    entity = self.repo.create(dto)
-    self.session.commit()
-    return entity
-except SQLAlchemyError as e:
-    self.session.rollback()
-    raise SaveError(f"Failed: {e}") from e
-
-# ✅ Repository flushes
-def create(self, dto):
-    entity = Entity(**dto.model_dump())
-    self.session.add(entity)
-    self.session.flush()  # NOT commit()
-    return entity
-```
+Services commit and rollback. Repositories only flush. See services.md for the standard transaction pattern.
 
 ## Error Handling
 
-| Layer | Exception Type |
-|-------|---------------|
-| Services | Domain exceptions (RecipeNotFoundError, DuplicateMealError) |
-| Routes | HTTPException only (404, 409, 500) |
-| Repositories | None (return None or []) |
+See exceptions.md for the complete exception hierarchy and HTTP status mapping.
+
+## Existing Endpoints (Extend, Don't Duplicate)
+
+| Domain | Base Route |
+|--------|-----------|
+| Recipes | `/api/recipes` |
+| Meals | `/api/meals` |
+| Planner | `/api/planner` |
+| Shopping | `/api/shopping` |
+| AI | `/api/meal-genie` |
+
+- ❌ Don't create `/api/recipes/search` when `/api/recipes?search=...` works
+- ❌ Don't create `/api/favorites` when `/api/recipes?favorite=true` works
+- ✅ Extend existing endpoints with query params
+
+## Service Ownership
+
+| Logic Type | Service |
+|-----------|---------|
+| Recipe-specific | `recipe_service.py` (flat) |
+| Meal-specific | `services/meal/` (modular) |
+| Planner-specific | `services/planner/` (modular) |
+| Shopping-specific | `services/shopping/` (modular) |
+| Data management | `services/data_management/` |
+| Cross-domain | Create in owning service, call from others |
+
+## Decision Tree: Where Does This Code Go?
+
+| Question | YES → |
+|----------|-------|
+| HTTP-specific (status codes, headers)? | Route |
+| Business rules or orchestration? | Service |
+| Database CRUD? | Repository |
+| Data transformation/validation? | DTO or Utility |
+
+## Anti-Duplication Rule
+
+Before creating new endpoints, services, repositories, or DTOs, search for existing ones. Extend with parameters instead of duplicating.
 
 ## New Feature Workflow
 

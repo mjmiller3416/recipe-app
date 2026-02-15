@@ -43,8 +43,6 @@ if [ "$SOURCE" = "compact" ]; then
     BACKEND_CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/architecture.md")
     BACKEND_CONTEXT+=$'\n\n'
     BACKEND_CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/exceptions.md")
-    BACKEND_CONTEXT+=$'\n\n'
-    BACKEND_CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/backend/architecture-patterns.md")
 
     COMBINED_CONTEXT="$FRONTEND_CONTEXT"$'\n\n'"$BACKEND_CONTEXT"
 

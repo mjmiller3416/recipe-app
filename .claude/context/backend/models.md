@@ -30,11 +30,6 @@ user_id: Mapped[int] = mapped_column(
 user: Mapped["User"] = relationship("User", back_populates="entities")
 ```
 
-**Why:**
-- Ensures data scoped to user
-- `ondelete="CASCADE"` auto-cleanup when user deleted
-- `index=True` optimizes WHERE user_id queries
-
 ## Common Patterns Quick Reference
 
 | Type | Pattern |

@@ -1,19 +1,15 @@
 # Component Patterns
 
-**Common React component patterns and templates.**
+## Icon Buttons
 
-## Icon Buttons (CRITICAL)
+Icon buttons MUST have `aria-label`. See accessibility.md for detailed patterns.
 
-**Icon buttons MUST have aria-label** - See [accessibility.md](.claude/context/frontend/accessibility.md) for detailed patterns.
-
-**Icon button sizes:**
-- `size="icon"` with `size-4` icon — Standard (40px)
-- `size="icon"` with `size-3` icon — Compact
-- `size="icon"` with `size-5` icon — Prominent
+- `size="icon"` + `size-4` icon — Standard (40px)
+- `size="icon"` + `size-3` icon — Compact
+- `size="icon"` + `size-5` icon — Prominent
 
 ## Icon + Text Layouts
 
-**Standard patterns:**
 ```tsx
 import { Clock, Plus } from "lucide-react";
 
@@ -32,25 +28,15 @@ import { Clock, Plus } from "lucide-react";
 
 ## Empty States
 
-**Standard empty state pattern:**
 ```tsx
-import { FileX, Package, Calendar } from "lucide-react";
-
 <div className="flex flex-col items-center justify-center py-12 text-center">
-  {/* Icon in circle background */}
   <div className="rounded-full bg-muted p-4 mb-4">
     <FileX className="size-8 text-muted-foreground" strokeWidth={1.5} />
   </div>
-
-  {/* Heading */}
   <h3 className="text-lg font-semibold">No recipes found</h3>
-
-  {/* Description */}
   <p className="text-sm text-muted-foreground mt-1 mb-4">
     Try adjusting your filters or search terms
   </p>
-
-  {/* Action button */}
   <Button>
     <Plus className="size-4 mr-2" strokeWidth={1.5} />
     Add Recipe
@@ -58,24 +44,12 @@ import { FileX, Package, Calendar } from "lucide-react";
 </div>
 ```
 
-**Variants:**
-```tsx
-// Empty list (no results)
-<FileX /> + "No recipes found"
-
-// Empty shopping list
-<Package /> + "Shopping list is empty"
-
-// Empty meal planner
-<Calendar /> + "No meals planned"
-```
+Contextual icons: FileX (no results), Package (empty list), Calendar (no plans).
 
 ## Loading States
 
-**Button loading state (REQUIRED for async actions):**
+**Button loading (REQUIRED for async actions):**
 ```tsx
-import { Loader2 } from "lucide-react";
-
 <Button disabled={isLoading}>
   {isLoading ? (
     <>
@@ -85,12 +59,6 @@ import { Loader2 } from "lucide-react";
   ) : (
     "Save Recipe"
   )}
-</Button>
-
-// Or with separate states
-<Button disabled={isLoading}>
-  {isLoading && <Loader2 className="size-4 mr-2 animate-spin" />}
-  {isLoading ? "Saving..." : "Save Recipe"}
 </Button>
 ```
 
@@ -109,9 +77,8 @@ import { Loader2 } from "lucide-react";
 </div>
 ```
 
-## Conditional Rendering with cn()
+## Conditional Classes with cn()
 
-**Conditional classes:**
 ```tsx
 import { cn } from "@/lib/utils";
 
@@ -122,30 +89,18 @@ import { cn } from "@/lib/utils";
 )}>
 ```
 
-**Conditional variants:**
-```tsx
-<Badge variant={isDietary ? "default" : "secondary"}>
-  {tag}
-</Badge>
+## Card with Header Actions
 
-<Button
-  variant={isDestructive ? "destructive" : "outline"}
-  size={isCompact ? "sm" : "default"}
->
-  {label}
-</Button>
-```
-
-## Common Composition Patterns
-
-**Card with header actions:**
+Use `CardAction` for header action buttons (not manual flex layout on CardHeader):
 ```tsx
 <Card>
-  <CardHeader className="flex flex-row items-center justify-between space-y-0">
+  <CardHeader>
     <CardTitle>Recipe Name</CardTitle>
-    <Button size="icon" variant="ghost" aria-label="Edit">
-      <Edit className="size-4" strokeWidth={1.5} />
-    </Button>
+    <CardAction>
+      <Button size="icon" variant="ghost" aria-label="Edit recipe">
+        <Edit className="size-4" strokeWidth={1.5} />
+      </Button>
+    </CardAction>
   </CardHeader>
   <CardContent>Content here</CardContent>
 </Card>
