@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { PageHeaderContent, PageHeaderTitle, PageHeaderActions } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -616,34 +615,32 @@ export function MealPlannerView() {
   }
 
   return (
-    <PageLayout
-      title="Plan your weekly meals"
-      headerContent={
-        <PageHeaderContent className="w-full">
-          <PageHeaderTitle title="This Week's Menu" />
-          <PageHeaderActions>
+    <PageLayout title="Plan your weekly meals">
+      {/* STACKED VERTICAL LAYOUT */}
+      <div className="space-y-8">
+        {/* TOP: MENU SECTION (heading + grid grouped with space-y-4, matching SelectedMealCard) */}
+        <div className="space-y-4">
+          <div className="flex items-end gap-4">
+            <h2 className="flex-1 text-lg font-semibold text-foreground">
+              This Week&apos;s Menu
+            </h2>
             <CompletedDropdown
               items={completedItems}
               onItemClick={handleCompletedItemClick}
               onClearCompleted={handleClearCompleted}
             />
-          </PageHeaderActions>
-        </PageHeaderContent>
-      }
-    >
-      {/* STACKED VERTICAL LAYOUT */}
-      <div className="space-y-8">
-        {/* TOP: MEAL GRID - hidden when empty state is shown */}
-        {(gridItems.length > 0 || selectedMealId !== null) && (
-          <MealGrid
-            items={gridItems}
-            selectedId={selectedEntryId}
-            onItemClick={handleGridItemClick}
-            onAddMealClick={handleAddMealClick}
-            onCycleShoppingMode={handleCycleShoppingMode}
-            onReorder={handleReorder}
-          />
-        )}
+          </div>
+          {(gridItems.length > 0 || selectedMealId !== null) && (
+            <MealGrid
+              items={gridItems}
+              selectedId={selectedEntryId}
+              onItemClick={handleGridItemClick}
+              onAddMealClick={handleAddMealClick}
+              onCycleShoppingMode={handleCycleShoppingMode}
+              onReorder={handleReorder}
+            />
+          )}
+        </div>
 
         {/* BOTTOM: SELECTED MEAL CARD */}
         {selectedMealId !== null ? (

@@ -151,7 +151,7 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
         )}
       >
         {/* Left section: Logo + App Name + Hamburger */}
-        <div className="flex items-center gap-3 mr-2">
+        <div className="flex items-center gap-3 mr-6">
           <Logo className="w-8 h-8 text-primary flex-shrink-0" />
           <span className="text-lg font-semibold text-foreground whitespace-nowrap">
             {appConfig.appName}
@@ -170,7 +170,7 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
         </div>
 
         {/* Center section: Inline nav links — hidden below lg */}
-        <nav className="hidden lg:flex items-center gap-1 flex-1" aria-label="Main navigation">
+        <nav className="hidden lg:flex items-center gap-1.5 flex-1" aria-label="Main navigation">
           {navigation.map((item) => (
             <TopNavLink
               key={item.href}
@@ -188,7 +188,7 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
         <div className="flex-1 lg:hidden" />
 
         {/* Right section: Theme toggle, Changelog, Avatar */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2.5 border-l border-border pl-3">
           {/* Theme toggle — single icon */}
           {mounted && (
             <Tooltip>
