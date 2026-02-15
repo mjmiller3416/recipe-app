@@ -1,5 +1,5 @@
 ---
-name: Git Workflow
+name: git
 description: Follow strict branch naming and commit message conventions for consistent version control
 ---
 

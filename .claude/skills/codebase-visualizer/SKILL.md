@@ -1,7 +1,6 @@
 ---
 name: codebase-visualizer
 description: Generate an interactive collapsible tree visualization of your codebase. Use when exploring a new repo, understanding project structure, or identifying large files.
-allowed-tools: Bash(python *)
 ---
 
 # Codebase Visualizer
