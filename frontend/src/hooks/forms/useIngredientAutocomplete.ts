@@ -65,13 +65,15 @@ export function useIngredientAutocomplete({
   const [open, setOpen] = React.useState(false);
   const [highlightedIndex, setHighlightedIndex] = React.useState(0);
 
-  // Filter ingredients based on input value (matches start of any word)
+  // Filter ingredients based on input value (each search word must match the start of at least one ingredient word)
   const filteredIngredients = React.useMemo(() => {
     if (!value.trim()) return [];
-    const searchTerm = value.toLowerCase().trim();
+    const searchWords = value.toLowerCase().trim().split(/\s+/);
     return ingredients.filter((ing) => {
-      const words = ing.name.toLowerCase().split(/\s+/);
-      return words.some((word) => word.startsWith(searchTerm));
+      const ingredientWords = ing.name.toLowerCase().split(/\s+/);
+      return searchWords.every((searchWord) =>
+        ingredientWords.some((ingredientWord) => ingredientWord.startsWith(searchWord))
+      );
     });
   }, [ingredients, value]);
 
