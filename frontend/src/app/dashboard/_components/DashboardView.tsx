@@ -1,7 +1,9 @@
 "use client";
 
 import { BookOpen, Heart, UtensilsCrossed, ShoppingCart } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { PageHeaderContent, PageHeaderTitle } from "@/components/layout/PageHeader";
 import { StatCard } from "@/components/common/StatCard";
 import { MealQueueWidget } from "./MealQueueWidget";
 import { ShoppingListWidget } from "./ShoppingListWidget";
@@ -11,7 +13,16 @@ import { RecipeRouletteWidget } from "./RecipeRouletteWidget";
 import { QuickAddForm } from "@/components/forms/QuickAddForm";
 import { useDashboardStats, usePlannerEntries, useShoppingList } from "@/hooks/api";
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
 export function DashboardView() {
+  const { user } = useUser();
+
   // Fetch all data via React Query hooks (parallel fetching)
   const { data: statsData, isLoading: statsLoading } = useDashboardStats();
   const { data: plannerEntries } = usePlannerEntries();
@@ -25,9 +36,22 @@ export function DashboardView() {
     shoppingItems: statsData?.shopping_items ?? 0,
   };
 
+  const firstName = user?.firstName || "there";
+
   return (
     <PageLayout
-      title="Overview of your meal planning activities"
+      headerContent={
+        <PageHeaderContent>
+          <div className="flex flex-1 flex-col gap-1.5">
+            <h2 className="text-2xl font-semibold text-foreground">
+              {`${getGreeting()}, ${firstName} 👋`}
+            </h2>
+            <p className="text-md text-muted-foreground">
+              Time to cook something amazing! You have <span className="font-semibold text-primary">{stats.mealsPlanned}</span> meals planned this week.
+            </p>
+          </div>
+        </PageHeaderContent>
+      }
       fillViewport
       contentClassName="flex flex-col"
     >

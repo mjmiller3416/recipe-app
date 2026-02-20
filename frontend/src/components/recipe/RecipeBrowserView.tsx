@@ -527,7 +527,6 @@ export function RecipeBrowserView({
   if (isLoading) {
     return (
       <PageLayout
-        title="Recipes"
         hero={<Skeleton className="h-48 w-full" shape="none" />}
       >
         <div className="mb-6"><Skeleton className="h-12 w-full" /></div>
@@ -558,7 +557,6 @@ export function RecipeBrowserView({
 
   return (
     <PageLayout
-      title="Recipes"
       hero={
         <HeroSection
           recipeCount={recipes.length}

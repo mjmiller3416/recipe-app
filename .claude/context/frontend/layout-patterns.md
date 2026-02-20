@@ -6,7 +6,7 @@
 
 Sub-components:
 - `PageHeader` — wrapper: `bg-background`, `max-w-7xl`, horizontal padding
-- `PageHeaderContent` — flex row: `flex items-center gap-4`
+- `PageHeaderContent` — flex row: `flex items-end gap-4`
 - `PageHeaderTitle` — accepts `title: string`, optional `description: string`
 - `PageHeaderActions` — right-aligned: `flex items-center gap-2`
 

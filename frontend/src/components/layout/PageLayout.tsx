@@ -8,20 +8,19 @@ import { Button } from "@/components/ui/button";
 import {
   PageHeader,
   PageHeaderContent,
+  PageHeaderTitle,
   PageHeaderActions,
 } from "./PageHeader";
 import { useNavActions } from "@/lib/providers/NavActionsProvider";
 
 interface PageLayoutProps {
-  // TODO: title and description are accepted but not yet rendered —
-  // will be used in a future header update.
-  /** Page title displayed in the header */
-  title: string;
+  /** Optional page title displayed in the header */
+  title?: string;
   /** Optional description displayed below the title */
   description?: string;
   /** Optional actions (buttons, etc.) displayed on the right side of the header */
   actions?: React.ReactNode;
-  /** Optional custom header content that replaces the default title/actions layout */
+  /** Optional custom header content that completely replaces the default title/actions layout */
   headerContent?: React.ReactNode;
   /** Optional callback when back button is clicked (for custom navigation with unsaved changes) */
   onBackClick?: () => void;
@@ -44,31 +43,38 @@ interface PageLayoutProps {
 /**
  * PageLayout - Standard page layout wrapper
  *
- * Supports two modes:
- * 1. Standard (default) - Page scrolls normally with sticky header
- * 2. Hero mode - Hero section at top, sticky subheader for filters/sort
+ * Supports three modes:
+ * 1. Standard with title (default) - Page scrolls normally with title/description header
+ * 2. Standard with custom header - Pass headerContent to override default header
+ * 3. Hero mode - Hero section at top, sticky subheader for filters/sort
  *
  * For sticky sidebars, use CSS `position: sticky` on child elements.
  *
  * @example
- * // Standard scrolling page
- * <PageLayout title="Settings">
+ * // Standard page with title, description, and actions
+ * <PageLayout
+ *   title="Shopping List"
+ *   description="Automatically generated from your meal plan."
+ *   actions={<Button>Clear All</Button>}
+ * >
  *   {content}
  * </PageLayout>
  *
  * @example
- * // Page with sticky sidebar (use sticky positioning on the sidebar element)
- * <PageLayout title="Add Recipe">
- *   <div className="flex gap-6">
- *     <main className="flex-1">{formContent}</main>
- *     <aside className="sticky self-start top-24">{sidebar}</aside>
- *   </div>
+ * // Page with custom header (overrides title/description)
+ * <PageLayout
+ *   headerContent={
+ *     <PageHeaderContent>
+ *       <CustomHeaderContent />
+ *     </PageHeaderContent>
+ *   }
+ * >
+ *   {content}
  * </PageLayout>
  *
  * @example
  * // Hero mode (RecipeBrowser)
  * <PageLayout
- *   title="Recipes"
  *   hero={<HeroSection />}
  *   stickyHeader={<SortAndFilters />}
  * >
@@ -77,6 +83,8 @@ interface PageLayoutProps {
  */
 export function PageLayout(props: PageLayoutProps) {
   const {
+    title,
+    description,
     actions,
     headerContent,
     onBackClick,
@@ -118,12 +126,14 @@ export function PageLayout(props: PageLayoutProps) {
   }, [pinActionsToNav, actions, setPinned]);
 
   // Build the header content (shared across modes)
-  // Only render header when there are actions, custom content, or a back button
-  const hasHeader = !!(headerContent || actions || onBackClick);
+  // Priority: headerContent > (title + actions) > actions only > back button only
+  const hasHeader = !!(headerContent || title || actions || onBackClick);
   const headerElement = hasHeader ? (
     <div ref={pinActionsToNav ? headerRef : undefined}>
       <PageHeader>
-        {headerContent ?? (
+        {headerContent ? (
+          headerContent
+        ) : (
           <PageHeaderContent>
             {onBackClick && (
               <Button
@@ -135,6 +145,7 @@ export function PageLayout(props: PageLayoutProps) {
                 <ArrowLeft className="size-4" strokeWidth={1.5} />
               </Button>
             )}
+            {title && <PageHeaderTitle title={title} description={description} />}
             {actions && <PageHeaderActions>{actions}</PageHeaderActions>}
           </PageHeaderContent>
         )}

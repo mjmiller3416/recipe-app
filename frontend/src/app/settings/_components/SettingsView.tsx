@@ -132,19 +132,19 @@ export function SettingsView() {
 
   return (
     <PageLayout
-        title="Settings"
-        description="Manage your preferences and account settings. Changes are saved automatically."
-        actions={
-          <Button
-            variant="ghost"
-            onClick={handleResetSection}
-            className="gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <RotateCcw className="h-4 w-4" strokeWidth={1.5} />
-            Reset Section
-          </Button>
-        }
-      >
+      title="Settings"
+      description="Manage your preferences and account settings. Changes are saved automatically."
+      actions={
+        <Button
+          variant="ghost"
+          onClick={handleResetSection}
+          className="gap-2 text-muted-foreground hover:text-foreground"
+        >
+          <RotateCcw className="h-4 w-4" strokeWidth={1.5} />
+          Reset Section
+        </Button>
+      }
+    >
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Left Sidebar - Category Navigation */}
           <div className="lg:col-span-1">

@@ -615,7 +615,10 @@ export function MealPlannerView() {
   }
 
   return (
-    <PageLayout title="Plan your weekly meals">
+    <PageLayout
+      title="Plan the Week"
+      description="Build your week in minutes. Balanced, realistic, repeatable."
+    >
       {/* STACKED VERTICAL LAYOUT */}
       <div className="space-y-8">
         {/* TOP: MENU SECTION (heading + grid grouped with space-y-4, matching SelectedMealCard) */}

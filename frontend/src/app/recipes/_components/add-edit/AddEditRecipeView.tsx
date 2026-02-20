@@ -147,32 +147,39 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
   // Page metadata
   const pageTitle = isEditMode
     ? `Editing "${initialData?.recipe_name}"`
-    : "Create a new recipe for your collection";
+    : "Create Recipe Card";
   const saveButtonText = isEditMode ? "Save Changes" : "Save Recipe";
+  
+  // Header Actions
+  const headerActions = (
+    <Button
+      variant="default"
+      className="hidden gap-2 md:flex"
+      onClick={form.handleSubmit}
+      disabled={form.isSubmitting}
+    >
+      {form.isSubmitting ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        <Save className="w-4 h-4" />
+      )}
+      {form.isSubmitting ? "Saving..." : saveButtonText}
+    </Button>
+  );
 
   return (
     <>
       <PageLayout
         title={pageTitle}
+        description="Ingredients, steps, notes—organized and easy to reuse."
         onBackClick={isEditMode ? () => handleNavigation(`/recipes/${recipeId}`) : undefined}
         contentClassName="max-md:pb-40"
         pinActionsToNav
-        actions={
-          <Button
-            variant="default"
-            className="hidden gap-2 md:flex"
-            onClick={form.handleSubmit}
-            disabled={form.isSubmitting}
-          >
-            {form.isSubmitting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            {form.isSubmitting ? "Saving..." : saveButtonText}
-          </Button>
-        }
+        actions={headerActions}
       >
+      
+
+
         <div className="flex flex-col gap-6 md:flex-row md:items-start">
           {/* Form Cards - Top on mobile, left column on desktop */}
           <div className="flex-1 min-w-0 space-y-6">

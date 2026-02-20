@@ -325,9 +325,7 @@ export function ShoppingListView() {
   // Loading skeleton
   if (isLoading) {
     return (
-      <PageLayout
-        title="Items from your meal plan"
-      >
+      <PageLayout>
         <div className="space-y-6">
           {[1, 2, 3].map((i) => (
             <div key={i} className="space-y-2">
@@ -348,7 +346,6 @@ export function ShoppingListView() {
   if (error) {
     return (
       <PageLayout
-        title="Items from your meal plan"
         actions={headerActions}
       >
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -371,7 +368,6 @@ export function ShoppingListView() {
   if (!hasItems) {
     return (
       <PageLayout
-        title="Items from your meal plan"
         actions={headerActions}
       >
         {/* Add manual item form - also available when list is empty */}
@@ -408,8 +404,8 @@ export function ShoppingListView() {
 
   return (
     <PageLayout
-      title="Shopping List"
-      description="Items from your meal plan"
+      title="Grab & Go List"
+      description="Everything you need, consolidated and ready for the store."
       actions={headerActions}
       pinActionsToNav
     >
