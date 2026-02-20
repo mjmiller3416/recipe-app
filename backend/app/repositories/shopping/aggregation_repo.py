@@ -42,6 +42,7 @@ class ContributionData:
     base_quantity: float
     dimension: str
     original_unit: str | None = None
+    category: str | None = None
 
 
 # ── Shopping Aggregation Repository ─────────────────────────────────────────────────────────────────────────
@@ -134,7 +135,8 @@ class ShoppingAggregationRepo:
                 planner_entry_id=planner_entry_id,
                 base_quantity=base_qty,
                 dimension=dimension,
-                original_unit=ri.unit
+                original_unit=ri.unit,
+                category=ingredient.ingredient_category,
             ))
 
         return contributions
