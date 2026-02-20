@@ -161,6 +161,40 @@ class RecipeResponseDTO(RecipeBaseDTO):
     ingredients: List["RecipeIngredientResponseDTO"] = []
     group_ids: List[int] = []  # IDs of recipe groups this recipe belongs to
 
+    @classmethod
+    def from_recipe(cls, recipe: "Recipe") -> "RecipeResponseDTO":
+        """Convert a Recipe model to RecipeResponseDTO."""
+        ingredients = [
+            RecipeIngredientResponseDTO(
+                id=ri.ingredient.id,
+                ingredient_name=ri.ingredient.ingredient_name,
+                ingredient_category=ri.ingredient.ingredient_category,
+                quantity=ri.quantity,
+                unit=ri.unit,
+            )
+            for ri in recipe.ingredients
+        ]
+        group_ids = [g.id for g in recipe.groups] if recipe.groups else []
+
+        return cls(
+            id=recipe.id,
+            recipe_name=recipe.recipe_name,
+            recipe_category=recipe.recipe_category,
+            meal_type=recipe.meal_type,
+            diet_pref=recipe.diet_pref,
+            total_time=recipe.total_time,
+            servings=recipe.servings,
+            directions=recipe.directions,
+            notes=recipe.notes,
+            reference_image_path=recipe.reference_image_path,
+            banner_image_path=recipe.banner_image_path,
+            is_favorite=recipe.is_favorite,
+            is_ai_generated=recipe.is_ai_generated,
+            created_at=recipe.created_at.isoformat() if recipe.created_at else None,
+            ingredients=ingredients,
+            group_ids=group_ids,
+        )
+
 # ── Filter DTO ──────────────────────────────────────────────────────────────────────────────────────────────
 class RecipeFilterDTO(BaseModel):
     """DTO for filtering recipe queries."""
