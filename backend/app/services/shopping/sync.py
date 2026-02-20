@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -79,6 +79,7 @@ class SyncMixin:
                                 "planner_entry_id": entry.id,
                                 "recipe_id": contrib.recipe_id,
                                 "original_unit": contrib.original_unit,
+                                "category": contrib.category,
                             }
                         desired_contributions[agg_key][key][
                             "base_quantity"
@@ -130,8 +131,8 @@ class SyncMixin:
                 parts = agg_key.split("::")
                 ingredient_name = parts[0] if parts else "Unknown"
 
-                # Look up category from first recipe ingredient
-                category = self._get_ingredient_category(ingredient_name)
+                # Read category from the contribution data (already fetched via FK join)
+                category = sample_contrib.get("category")
 
                 # Calculate display quantity (pass original_unit for unit preservation)
                 display_qty, display_unit = to_display_unit(
@@ -218,29 +219,6 @@ class SyncMixin:
                 base_quantity=data["base_quantity"],
                 dimension=data["dimension"],
             )
-
-    def _get_ingredient_category(self, ingredient_name: str) -> Optional[str]:
-        """
-        Look up the category for an ingredient by name.
-
-        Args:
-            ingredient_name: Name of the ingredient
-
-        Returns:
-            Category string or None
-        """
-        from sqlalchemy import select
-
-        from ...models.ingredient import Ingredient
-
-        stmt = (
-            select(Ingredient.ingredient_category)
-            .where(Ingredient.ingredient_name.ilike(ingredient_name))
-            .limit(1)
-        )
-        result = self.session.execute(stmt)
-        row = result.first()
-        return row[0] if row else None
 
     # -- Generate Methods (for API compatibility) ------------------------------------------------
     def generate_shopping_list(
