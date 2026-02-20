@@ -1,5 +1,6 @@
 "use client";
 
+import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -8,7 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { RecipeGroupResponseDTO } from "@/types/recipe";
 
-type BadgeType = "category" | "mealType" | "dietary" | "group";
+type BadgeType = "category" | "mealType" | "dietary" | "group" | "ai";
 type BadgeSize = "sm" | "md" | "lg";
 type BadgeVariant = "overlay" | "inline" | "outline";
 
@@ -49,6 +50,7 @@ export function RecipeBadge({
     mealType: "bg-[var(--secondary)]/90 text-[var(--secondary-foreground)]",
     dietary: "bg-[var(--accent)] text-[var(--accent-foreground)]",
     group: "bg-[var(--accent)] text-[var(--accent-foreground)]",
+    ai: "bg-[var(--chart-6)] text-[var(--chart-6-foreground,var(--primary-foreground))]",
   };
 
   // Outline variant uses border + text color instead of filled background
@@ -57,6 +59,7 @@ export function RecipeBadge({
     mealType: "bg-transparent border-2 border-[var(--secondary)] text-[var(--secondary)]",
     dietary: "bg-transparent border-2 border-[var(--accent)] text-[var(--accent-foreground)]",
     group: "bg-transparent border-2 border-[var(--accent)] text-[var(--accent)]",
+    ai: "bg-transparent border-2 border-[var(--chart-6)] text-[var(--chart-6)]",
   };
 
   // Size variants
@@ -143,7 +146,7 @@ export function RecipeBadge({
     <span
       className={cn(
         // Base styles
-        "rounded-full font-medium",
+        "rounded-full font-medium inline-flex items-center gap-1",
         "transition-colors duration-200",
 
         // Type colors (outline variant uses border instead of background)
@@ -159,6 +162,7 @@ export function RecipeBadge({
         className
       )}
     >
+      {type === "ai" && <Sparkles className="h-3 w-3" strokeWidth={1.5} />}
       {type === "group" ? label.toLowerCase() : label}
     </span>
   );

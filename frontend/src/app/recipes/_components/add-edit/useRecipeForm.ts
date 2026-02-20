@@ -564,6 +564,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
 
       if (mode === 'create') {
         // ===== CREATE MODE =====
+        const fromAi = searchParams.get('from') === 'ai';
         const payload: RecipeCreateDTO = {
           recipe_name: values.recipeName as string,
           recipe_category: values.category as string,
@@ -574,6 +575,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
           directions: values.directions as string,
           notes: values.notes,
           ingredients: apiIngredients,
+          is_ai_generated: fromAi,
         };
 
         const createdRecipe = await recipeApi.create(payload, token);
