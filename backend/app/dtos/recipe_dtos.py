@@ -67,6 +67,7 @@ class RecipeCardDTO(BaseModel):
     id: int
     recipe_name: str
     is_favorite: bool = False
+    is_ai_generated: bool = False
     reference_image_path: Optional[str] = None
     banner_image_path: Optional[str] = None
     servings: Optional[int] = None
@@ -94,6 +95,7 @@ class RecipeCardDTO(BaseModel):
             id=recipe.id,
             recipe_name=recipe.recipe_name,
             is_favorite=recipe.is_favorite,
+            is_ai_generated=recipe.is_ai_generated,
             reference_image_path=recipe.reference_image_path,
             banner_image_path=recipe.banner_image_path,
             servings=recipe.servings,
@@ -110,6 +112,7 @@ class RecipeCardDTO(BaseModel):
 class RecipeCreateDTO(RecipeBaseDTO):
     """DTO used to create a new recipe with ingredients."""
     ingredients: List[RecipeIngredientDTO] = []
+    is_ai_generated: bool = False
 
 # ── Update DTO ──────────────────────────────────────────────────────────────────────────────────────────────
 class RecipeUpdateDTO(BaseModel):
@@ -153,6 +156,7 @@ class RecipeResponseDTO(RecipeBaseDTO):
 
     id: int
     is_favorite: bool = False
+    is_ai_generated: bool = False
     created_at: Optional[str] = None  # ISO format datetime string
     ingredients: List["RecipeIngredientResponseDTO"] = []
     group_ids: List[int] = []  # IDs of recipe groups this recipe belongs to
