@@ -411,6 +411,7 @@ export function ShoppingListView() {
       title="Shopping List"
       description="Items from your meal plan"
       actions={headerActions}
+      pinActionsToNav
     >
       {/* Summary stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">

@@ -156,6 +156,7 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
         title={pageTitle}
         onBackClick={isEditMode ? () => handleNavigation(`/recipes/${recipeId}`) : undefined}
         contentClassName="max-md:pb-40"
+        pinActionsToNav
         actions={
           <Button
             variant="default"

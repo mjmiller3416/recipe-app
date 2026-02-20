@@ -1,5 +1,6 @@
 .claude/settings.local.json
 .claude/settings.json
+.claude/last-audit.json
 .vscode/settings.json
 
 # Windows reserved device names
@@ -61,6 +62,7 @@ tasks/
 .github/
 
 # Generated outputs
+audits/
 codebase-map.html
 5242880
 .claude/hooks/hooks.log

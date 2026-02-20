@@ -36,6 +36,7 @@ import { CHANGELOG_TOTAL_ITEMS } from "@/data/changelog";
 import { appConfig } from "@/lib/config";
 import { cn } from "@/lib/utils";
 import { useShoppingList, useRefreshShoppingList } from "@/hooks/api";
+import { useNavActions } from "@/lib/providers/NavActionsProvider";
 
 const navigation = [
   { name: "Home", href: "/dashboard", icon: LayoutDashboard },
@@ -50,6 +51,7 @@ interface TopNavProps {
 
 export function TopNav({ onOpenAssistant }: TopNavProps) {
   const pathname = usePathname();
+  const { actions: navActions, isPinned } = useNavActions();
 
   // Sheet state (hamburger menu for md-to-lg)
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -121,7 +123,11 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
     const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
     localStorage.setItem("theme", newTheme);
+    document.documentElement.classList.add("no-transition");
     document.documentElement.classList.toggle("light", newTheme === "light");
+    requestAnimationFrame(() => {
+      document.documentElement.classList.remove("no-transition");
+    });
   };
 
   const handleChangelogOpenChange = (open: boolean) => {
@@ -165,7 +171,7 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
             aria-label="Open navigation menu"
             onClick={() => setSheetOpen(true)}
           >
-            <Menu className="h-5 w-5" strokeWidth={1.5} />
+            <Menu className="size-5" strokeWidth={1.5} />
           </Button>
         </div>
 
@@ -187,6 +193,21 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
         {/* Spacer to push right section when nav is hidden */}
         <div className="flex-1 lg:hidden" />
 
+        {/* Pinned page actions — injected from PageLayout when header scrolls out */}
+        {navActions && (
+          <div
+            className={cn(
+              "flex items-center gap-2 border-l border-border pl-3",
+              "transition-all duration-200",
+              isPinned
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 -translate-y-2 pointer-events-none"
+            )}
+          >
+            {navActions}
+          </div>
+        )}
+
         {/* Right section: Theme toggle, Changelog, Avatar */}
         <div className="flex items-center gap-2.5 border-l border-border pl-3">
           {/* Theme toggle — single icon */}
@@ -200,9 +221,9 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
                   onClick={toggleTheme}
                 >
                   {theme === "dark" ? (
-                    <Sun className="h-5 w-5" strokeWidth={1.5} />
+                    <Sun className="size-5" strokeWidth={1.5} />
                   ) : (
-                    <Moon className="h-5 w-5" strokeWidth={1.5} />
+                    <Moon className="size-5" strokeWidth={1.5} />
                   )}
                 </Button>
               </TooltipTrigger>
@@ -222,7 +243,7 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
                 onClick={() => handleChangelogOpenChange(true)}
                 className="relative"
               >
-                <Newspaper className="h-5 w-5" strokeWidth={1.5} />
+                <Newspaper className="size-5" strokeWidth={1.5} />
                 {hasNewUpdates && (
                   <span className="absolute w-2 h-2 rounded-full top-1.5 right-1.5 bg-primary animate-pulse" />
                 )}

@@ -3,14 +3,28 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { Search, X, Loader2 } from "lucide-react";
+import {
+  Search,
+  X,
+  SlidersHorizontal,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { FilterBar } from "@/components/common/FilterBar";
 import { useRecipes, useToggleFavorite, useCategoryOptions } from "@/hooks/api";
 import { useRecipeGroups } from "@/hooks/api/useRecipeGroups";
-import { applyFilters } from "@/lib/filterUtils";
+import { useRecipeFilters } from "@/hooks/forms";
 import { mapRecipesForCards } from "@/lib/recipeCardMapper";
 import {
   MEAL_TYPE_OPTIONS,
@@ -20,16 +34,18 @@ import {
 } from "@/lib/constants";
 import { useSettings, useRecipeFilterPersistence } from "@/hooks/persistence";
 import type { RecipeCardData } from "@/types/recipe";
-import { RecipeSortControls, type SortOption, type SortDirection, type ActiveFilter } from "./browser/RecipeSortControls";
+import type { ActiveFilter, FilterOption } from "@/lib/filterUtils";
+import { RecipeSortControls, SORT_OPTIONS, type SortOption, type SortDirection } from "./browser/FilterSortControls";
+import { useNavActions } from "@/lib/providers/NavActionsProvider";
+import { cn } from "@/lib/utils";
 import { RecipeGrid } from "./browser/RecipeGrid";
-import { RecipeFilters, type FilterState, type FilterOption } from "./browser/RecipeFilters";
+import { RecipeFilterSidebar } from "./browser/RecipeFilterSidebar";
 
 // ============================================================================
 // Constants
 // ============================================================================
 
 const SCROLL_POSITION_KEY = "recipe-browser-scroll-position";
-const FILTER_VISIBILITY_KEY = "recipe-browser-show-filters";
 
 // ============================================================================
 // Hero Section Component
@@ -88,20 +104,37 @@ function HeroSection({
           {displayDescription}
         </p>
 
-        <div className="flex gap-3 max-w-2xl mx-auto mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder="Search saved recipes, ingredients, tags..."
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="pl-12 text-base bg-elevated/90 backdrop-blur-sm border-border/50 focus:border-primary"
-            />
-          </div>
-          <Button onClick={onSearch} size="lg">
-            Search
-          </Button>
+        <div className="relative max-w-2xl mx-auto mb-4">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            placeholder="Search saved recipes, ingredients, tags..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="pl-12 pr-20 text-base bg-elevated/90 backdrop-blur-sm shadow-sm border-border text-foreground/80 placeholder:text-muted-foreground focus:border-primary"
+          />
+          {searchTerm.length > 0 && (
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={() => onSearchChange("")}
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-primary"
+                onClick={onSearch}
+                aria-label="Search"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="max-w-2xl mx-auto">
@@ -187,27 +220,69 @@ export function RecipeBrowserView({
     return recipeGroups.map((g) => ({ value: String(g.id), label: g.name }));
   }, [recipeGroups]);
 
-  const [searchTerm, setSearchTerm] = useState(() => savedState?.searchTerm ?? "");
-  const [filters, setFilters] = useState<FilterState>(() => {
-    if (savedState?.filters) {
+  // --------------------------------------------------------------------------
+  // Recipe Filter Hook
+  // --------------------------------------------------------------------------
+
+  const {
+    filters,
+    activeQuickFilters,
+    hasActiveFilters: hookHasActiveFilters,
+    activeFiltersList,
+    setSearchTerm,
+    toggleCategory,
+    toggleMealType,
+    toggleDietary,
+    toggleGroup,
+    toggleQuickFilter,
+    removeActiveFilter,
+    clearAll,
+    setFilters,
+    setActiveQuickFilters,
+    applyTo,
+  } = useRecipeFilters({
+    initialFilters: (() => {
+      if (savedState?.filters) {
+        return {
+          ...savedState.filters,
+          searchTerm: savedState.searchTerm ?? "",
+          favoritesOnly: initialFavoritesOnly || savedState.filters.favoritesOnly,
+          mealTypes: filterMealType === "side" ? ["side"] : savedState.filters.mealTypes,
+        };
+      }
       return {
-        ...savedState.filters,
-        // URL param takes precedence
-        favoritesOnly: initialFavoritesOnly || savedState.filters.favoritesOnly,
-        // Prop-enforced mealType takes precedence
-        mealTypes: filterMealType === "side" ? ["side"] : savedState.filters.mealTypes,
+        searchTerm: "",
+        categories: [] as string[],
+        mealTypes: filterMealType === "side" ? ["side"] : ([] as string[]),
+        dietaryPreferences: [] as string[],
+        groupIds: [] as number[],
+        favoritesOnly: initialFavoritesOnly,
+        maxCookTime: null,
+        newDays: null,
       };
-    }
-    return {
-      categories: [],
-      mealTypes: filterMealType === "side" ? ["side"] : [],
-      dietaryPreferences: [],
-      groupIds: [],
-      favoritesOnly: initialFavoritesOnly,
-      maxCookTime: null,
-      newDays: null,
-    };
+    })(),
+    initialQuickFilters: (() => {
+      if (savedState?.activeQuickFilters) {
+        const result = [...savedState.activeQuickFilters];
+        if (initialFavoritesOnly && !result.includes("favorites")) {
+          result.push("favorites");
+        }
+        return result;
+      }
+      return initialFavoritesOnly ? ["favorites"] : [];
+    })(),
+    onClearAll: () => {
+      clearFilterState();
+      if (mode === "browse" && searchParams.get("favoritesOnly")) {
+        router.replace("/recipes", { scroll: false });
+      }
+    },
+    filterOptions: { categoryOptions, mealTypeOptions, dietaryOptions, groupOptions },
   });
+
+  // --------------------------------------------------------------------------
+  // Sort & UI State
+  // --------------------------------------------------------------------------
 
   const getInitialSortOption = (): SortOption => {
     const settingValue = settings.recipePreferences.defaultSortOrder;
@@ -221,27 +296,103 @@ export function RecipeBrowserView({
   const [sortDirection, setSortDirection] = useState<SortDirection>(
     () => savedState?.sortDirection ?? "asc"
   );
-  const [showFilters, setShowFilters] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = sessionStorage.getItem(FILTER_VISIBILITY_KEY);
-      return saved !== null ? saved === "true" : true;
-    }
-    return true;
-  });
-  const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(() => {
-    if (savedState?.activeQuickFilters) {
-      const set = new Set(savedState.activeQuickFilters);
-      // Ensure consistency with URL param
-      if (initialFavoritesOnly) set.add("favorites");
-      return set;
-    }
-    return initialFavoritesOnly ? new Set(["favorites"]) : new Set();
-  });
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
+  // --------------------------------------------------------------------------
+  // Nav-pinned sort controls (browse mode only)
+  // --------------------------------------------------------------------------
+
+  const sortControlsRef = useRef<HTMLDivElement>(null);
+  const { setNavActions, setPinned, clearNavActions } = useNavActions();
+
+  // Register compact filter + sort controls with the nav bar.
+  // Split into two effects: one updates content on state changes (no cleanup),
+  // the other clears nav actions only on unmount / mode change.
+  const filterCount = activeFiltersList.length;
+  useEffect(() => {
+    if (mode !== "browse") return;
+
+    setNavActions(
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setFiltersOpen((prev) => !prev)}
+          className={cn(
+            "gap-2",
+            filterCount > 0 && "border-primary/50 bg-primary/5"
+          )}
+        >
+          <SlidersHorizontal className="size-4" strokeWidth={1.5} />
+          Filters
+          {filterCount > 0 && (
+            <span className="min-w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-semibold inline-flex items-center justify-center px-1.5">
+              {filterCount}
+            </span>
+          )}
+        </Button>
+
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+          <SelectTrigger className="w-40 h-9">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SORT_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                <span className="flex items-center gap-2">
+                  <option.icon className="size-4" strokeWidth={1.5} />
+                  {option.label}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))}
+          className="h-9 w-9"
+          aria-label={`Sort ${sortDirection === "asc" ? "ascending" : "descending"}`}
+        >
+          {sortDirection === "asc" ? (
+            <ArrowUp className="size-4" strokeWidth={1.5} />
+          ) : (
+            <ArrowDown className="size-4" strokeWidth={1.5} />
+          )}
+        </Button>
+      </div>
+    );
+  }, [mode, sortBy, sortDirection, filterCount, setNavActions]);
+
+  // Clear nav actions on unmount or when leaving browse mode
+  useEffect(() => {
+    if (mode !== "browse") return;
+    return () => clearNavActions();
+  }, [mode, clearNavActions]);
+
+  // Observe when in-page sort controls scroll behind the nav bar
+  // isLoading is a dependency so the observer re-initialises once the
+  // sort controls div actually mounts (it doesn't exist during loading)
+  useEffect(() => {
+    if (mode !== "browse" || !sortControlsRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setPinned(!entry.isIntersecting),
+      { rootMargin: "-64px 0px 0px 0px", threshold: 0 }
+    );
+
+    observer.observe(sortControlsRef.current);
+    return () => observer.disconnect();
+  }, [mode, setPinned, isLoading]);
+
+  // --------------------------------------------------------------------------
+  // Effects
+  // --------------------------------------------------------------------------
+
+  // Sync favorites filter with URL param changes
   useEffect(() => {
     if (mode === "select") return;
-
     const urlFavoritesOnly = searchParams.get("favoritesOnly") === "true";
     if (urlFavoritesOnly !== filters.favoritesOnly) {
       setFilters((prev) => ({ ...prev, favoritesOnly: urlFavoritesOnly }));
@@ -255,9 +406,9 @@ export function RecipeBrowserView({
         return next;
       });
     }
-  }, [mode, searchParams, filters.favoritesOnly]);
+  }, [mode, searchParams, filters.favoritesOnly, setFilters, setActiveQuickFilters]);
 
-  // Clear saved filter state after restoration to prevent stale data on refresh
+  // Clear saved filter state after restoration
   useEffect(() => {
     if (mode === "select") return;
     if (savedState && !restoredRef.current) {
@@ -266,157 +417,9 @@ export function RecipeBrowserView({
     }
   }, [savedState, clearFilterState, mode]);
 
-  useEffect(() => {
-    sessionStorage.setItem(FILTER_VISIBILITY_KEY, String(showFilters));
-  }, [showFilters]);
-
-  const handleQuickFilterToggle = (filterId: string) => {
-    const filter = QUICK_FILTERS.find((f) => f.id === filterId);
-    if (!filter) return;
-
-    const isActive = activeQuickFilters.has(filterId);
-    const newQuickFilters = new Set(activeQuickFilters);
-
-    if (isActive) {
-      newQuickFilters.delete(filterId);
-    } else {
-      newQuickFilters.add(filterId);
-    }
-
-    setActiveQuickFilters(newQuickFilters);
-
-    if (filter.type === "mealType") {
-      setFilters((f) => ({
-        ...f,
-        mealTypes: isActive
-          ? f.mealTypes.filter((m) => m !== filter.value)
-          : [...f.mealTypes, filter.value as string],
-      }));
-    } else if (filter.type === "dietary") {
-      setFilters((f) => ({
-        ...f,
-        dietaryPreferences: isActive
-          ? f.dietaryPreferences.filter((d) => d !== filter.value)
-          : [...f.dietaryPreferences, filter.value as string],
-      }));
-    } else if (filter.type === "favorite") {
-      setFilters((f) => ({
-        ...f,
-        favoritesOnly: !isActive,
-      }));
-      if (mode === "browse") {
-        if (isActive) {
-          router.replace("/recipes", { scroll: false });
-        } else {
-          router.replace("/recipes?favoritesOnly=true", { scroll: false });
-        }
-      }
-    } else if (filter.type === "time") {
-      setFilters((f) => ({
-        ...f,
-        maxCookTime: isActive ? null : (filter.value as number),
-      }));
-    } else if (filter.type === "new") {
-      setFilters((f) => ({
-        ...f,
-        newDays: isActive ? null : (filter.value as number),
-      }));
-    }
-
-    const contentEl = document.querySelector("[data-page-content]");
-    const stickyHeader = document.querySelector("[data-sticky-header]");
-    if (contentEl) {
-      const contentTop = contentEl.getBoundingClientRect().top + window.scrollY;
-      const headerHeight = stickyHeader?.getBoundingClientRect().height ?? 0;
-      const targetScrollPosition = contentTop - headerHeight;
-
-      if (window.scrollY > targetScrollPosition) {
-        window.scrollTo({ top: targetScrollPosition, behavior: "smooth" });
-      }
-    }
-  };
-
-  const activeFilters: ActiveFilter[] = useMemo(() => {
-    const active: ActiveFilter[] = [];
-
-    const getCategoryLabel = (value: string) =>
-      categoryOptions.find((c) => c.value === value)?.label ?? value;
-    const getMealTypeLabel = (value: string) =>
-      mealTypeOptions.find((m) => m.value === value)?.label ?? value;
-    const getDietaryLabel = (value: string) =>
-      dietaryOptions.find((d) => d.value === value)?.label ?? value;
-    const getGroupLabel = (value: number) =>
-      groupOptions.find((g) => g.value === String(value))?.label ?? `Group ${value}`;
-
-    filters.categories.forEach((cat) => {
-      active.push({ type: "category", value: cat, label: getCategoryLabel(cat) });
-    });
-    filters.mealTypes.forEach((type) => {
-      active.push({ type: "mealType", value: type, label: getMealTypeLabel(type) });
-    });
-    filters.dietaryPreferences.forEach((pref) => {
-      active.push({ type: "dietary", value: pref, label: getDietaryLabel(pref) });
-    });
-    filters.groupIds.forEach((groupId) => {
-      active.push({ type: "group", value: String(groupId), label: getGroupLabel(groupId) });
-    });
-    if (filters.favoritesOnly) {
-      active.push({ type: "favorite", value: "favorites", label: "Favorites Only" });
-    }
-    if (filters.maxCookTime) {
-      active.push({
-        type: "time",
-        value: String(filters.maxCookTime),
-        label: `Under ${filters.maxCookTime}m`,
-      });
-    }
-    if (filters.newDays) {
-      active.push({
-        type: "new",
-        value: String(filters.newDays),
-        label: "New",
-      });
-    }
-
-    return active;
-  }, [filters, categoryOptions, mealTypeOptions, dietaryOptions, groupOptions]);
-
-  const filteredRecipes = useMemo(() => {
-    let result = applyFilters(recipes, {
-      searchTerm,
-      categories: filters.categories,
-      mealTypes: filters.mealTypes,
-      dietaryPreferences: filters.dietaryPreferences,
-      groups: filters.groupIds,
-      favoritesOnly: filters.favoritesOnly,
-      maxCookTime: filters.maxCookTime,
-      newDays: filters.newDays,
-    });
-
-    result = [...result].sort((a, b) => {
-      let comparison = 0;
-
-      switch (sortBy) {
-        case "alphabetical":
-          comparison = a.name.localeCompare(b.name);
-          break;
-        case "cookTime":
-          comparison = (a.totalTime || 0) - (b.totalTime || 0);
-          break;
-        case "createdAt":
-          comparison = Number(a.id) - Number(b.id);
-          break;
-      }
-
-      return sortDirection === "asc" ? comparison : -comparison;
-    });
-
-    return result;
-  }, [recipes, searchTerm, filters, sortBy, sortDirection]);
-
+  // Scroll position restore on back navigation
   useEffect(() => {
     if (mode === "select") return;
-
     if (!isLoading && recipes.length > 0) {
       const savedPosition = sessionStorage.getItem(SCROLL_POSITION_KEY);
       if (savedPosition) {
@@ -428,16 +431,54 @@ export function RecipeBrowserView({
     }
   }, [mode, isLoading, recipes.length]);
 
+  // --------------------------------------------------------------------------
+  // Handlers (thin wrappers for component-level concerns)
+  // --------------------------------------------------------------------------
+
+  // Quick filter toggle with URL sync for favorites
+  const handleQuickFilterToggle = (filterId: string) => {
+    const filter = QUICK_FILTERS.find((f) => f.id === filterId);
+    if (!filter) return;
+
+    const wasActive = activeQuickFilters.has(filterId);
+    toggleQuickFilter(filterId);
+
+    if (filter.type === "favorite" && mode === "browse") {
+      router.replace(
+        wasActive ? "/recipes" : "/recipes?favoritesOnly=true",
+        { scroll: false }
+      );
+    }
+  };
+
+  // Remove filter with URL sync for favorites
+  const handleRemoveFilter = (filter: ActiveFilter) => {
+    removeActiveFilter(filter);
+    if (filter.type === "favorite" && mode === "browse" && searchParams.get("favoritesOnly")) {
+      router.replace("/recipes", { scroll: false });
+    }
+  };
+
+  // Favorites sidebar toggle — browse mode uses URL, select mode sets directly
+  const handleFavoritesFilterChange = (checked: boolean) => {
+    if (mode === "browse") {
+      router.replace(
+        checked ? "/recipes?favoritesOnly=true" : "/recipes",
+        { scroll: false }
+      );
+    } else {
+      setFilters((prev) => ({ ...prev, favoritesOnly: checked }));
+    }
+  };
+
   const handleRecipeClick = (recipe: RecipeCardData) => {
     if (mode === "select") {
       onSelect?.(recipe);
     } else {
-      // Save scroll position
       sessionStorage.setItem(SCROLL_POSITION_KEY, String(window.scrollY));
-      // Save filter state for back navigation restoration
       saveFilterState({
         filters,
-        searchTerm,
+        searchTerm: filters.searchTerm,
         activeQuickFilters: Array.from(activeQuickFilters),
         sortBy,
         sortDirection,
@@ -450,177 +491,53 @@ export function RecipeBrowserView({
     toggleFavoriteMutation.mutate(Number(recipe.id));
   };
 
-  const scrollToResults = () => {
-    const contentEl = document.querySelector("[data-page-content]");
-    const stickyHeader = document.querySelector("[data-sticky-header]");
-
-    if (contentEl) {
-      const contentTop = contentEl.getBoundingClientRect().top + window.scrollY;
-      const headerHeight = stickyHeader?.getBoundingClientRect().height ?? 0;
-      const targetScrollPosition = contentTop - headerHeight;
-
-      if (window.scrollY > targetScrollPosition) {
-        window.scrollTo({ top: targetScrollPosition, behavior: "smooth" });
-      }
-    }
-  };
-
-  const handleCategoryChange = (value: string, checked: boolean) => {
-    setFilters((prev) => ({
-      ...prev,
-      categories: checked
-        ? [...prev.categories, value]
-        : prev.categories.filter((c) => c !== value),
-    }));
-    scrollToResults();
-  };
-
-  const handleMealTypeChange = (value: string, checked: boolean) => {
-    setFilters((prev) => ({
-      ...prev,
-      mealTypes: checked
-        ? [...prev.mealTypes, value]
-        : prev.mealTypes.filter((t) => t !== value),
-    }));
-    const quickFilter = QUICK_FILTERS.find((f) => f.type === "mealType" && f.value === value);
-    if (quickFilter) {
-      setActiveQuickFilters((prev) => {
-        const next = new Set(prev);
-        if (checked) {
-          next.add(quickFilter.id);
-        } else {
-          next.delete(quickFilter.id);
-        }
-        return next;
-      });
-    }
-    scrollToResults();
-  };
-
-  const handleDietaryChange = (value: string, checked: boolean) => {
-    setFilters((prev) => ({
-      ...prev,
-      dietaryPreferences: checked
-        ? [...prev.dietaryPreferences, value]
-        : prev.dietaryPreferences.filter((d) => d !== value),
-    }));
-    const quickFilter = QUICK_FILTERS.find((f) => f.type === "dietary" && f.value === value);
-    if (quickFilter) {
-      setActiveQuickFilters((prev) => {
-        const next = new Set(prev);
-        if (checked) {
-          next.add(quickFilter.id);
-        } else {
-          next.delete(quickFilter.id);
-        }
-        return next;
-      });
-    }
-    scrollToResults();
-  };
-
-  const handleGroupChange = (value: number, checked: boolean) => {
-    setFilters((prev) => ({
-      ...prev,
-      groupIds: checked
-        ? [...prev.groupIds, value]
-        : prev.groupIds.filter((g) => g !== value),
-    }));
-    scrollToResults();
-  };
-
-  const handleRemoveFilter = (filter: ActiveFilter) => {
-    switch (filter.type) {
-      case "category":
-        handleCategoryChange(filter.value, false);
-        break;
-      case "mealType":
-        handleMealTypeChange(filter.value, false);
-        break;
-      case "dietary":
-        handleDietaryChange(filter.value, false);
-        break;
-      case "group":
-        handleGroupChange(Number(filter.value), false);
-        break;
-      case "favorite":
-        setFilters((prev) => ({ ...prev, favoritesOnly: false }));
-        setActiveQuickFilters((prev) => {
-          const next = new Set(prev);
-          next.delete("favorites");
-          return next;
-        });
-        if (mode === "browse" && searchParams.get("favoritesOnly")) {
-          router.replace("/recipes", { scroll: false });
-        }
-        scrollToResults();
-        break;
-      case "time":
-        setFilters((prev) => ({ ...prev, maxCookTime: null }));
-        setActiveQuickFilters((prev) => {
-          const next = new Set(prev);
-          next.delete("under30");
-          return next;
-        });
-        scrollToResults();
-        break;
-      case "new":
-        setFilters((prev) => ({ ...prev, newDays: null }));
-        setActiveQuickFilters((prev) => {
-          const next = new Set(prev);
-          next.delete("new");
-          return next;
-        });
-        scrollToResults();
-        break;
-    }
-  };
-
-  const handleClearAllFilters = () => {
-    setFilters({
-      categories: [],
-      mealTypes: [],
-      dietaryPreferences: [],
-      groupIds: [],
-      favoritesOnly: false,
-      maxCookTime: null,
-      newDays: null,
-    });
-    setSearchTerm("");
-    setActiveQuickFilters(new Set());
-    // Clear saved filter state so cleared state persists on back navigation
-    clearFilterState();
-    if (mode === "browse" && searchParams.get("favoritesOnly")) {
-      router.replace("/recipes", { scroll: false });
-    }
-  };
-
-  const handleFavoritesFilterChange = (checked: boolean) => {
-    if (mode === "browse") {
-      if (checked) {
-        router.replace("/recipes?favoritesOnly=true", { scroll: false });
-      } else {
-        router.replace("/recipes", { scroll: false });
-      }
-    } else {
-      setFilters((prev) => ({ ...prev, favoritesOnly: checked }));
-    }
-  };
-
   const toggleSortDirection = () => {
     setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
   };
 
-  const hasActiveFilters = activeFilters.length > 0 || searchTerm.length > 0;
+  // --------------------------------------------------------------------------
+  // Derived State
+  // --------------------------------------------------------------------------
+
+  const filteredRecipes = useMemo(() => {
+    const result = applyTo(recipes);
+    return [...result].sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case "alphabetical":
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case "cookTime":
+          comparison = (a.totalTime || 0) - (b.totalTime || 0);
+          break;
+        case "createdAt":
+          comparison = Number(a.id) - Number(b.id);
+          break;
+      }
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+  }, [applyTo, recipes, sortBy, sortDirection]);
+
+  const hasActiveFilters = hookHasActiveFilters || filters.searchTerm.length > 0;
+
+  // --------------------------------------------------------------------------
+  // Render
+  // --------------------------------------------------------------------------
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16 bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading recipes...</p>
+      <PageLayout
+        title="Recipes"
+        hero={<Skeleton className="h-48 w-full" shape="none" />}
+      >
+        <div className="mb-6"><Skeleton className="h-12 w-full" /></div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} size="card" className="h-64" />
+          ))}
         </div>
-      </div>
+        <span className="sr-only">Loading recipes...</span>
+      </PageLayout>
     );
   }
 
@@ -639,48 +556,13 @@ export function RecipeBrowserView({
     );
   }
 
-  const mainContent = (
-    <>
-      <div className="flex gap-3 md:gap-6">
-        <RecipeFilters
-          filters={filters}
-          showFilters={showFilters}
-          mobileFiltersOpen={mobileFiltersOpen}
-          onMobileFiltersChange={setMobileFiltersOpen}
-          onCategoryChange={handleCategoryChange}
-          onMealTypeChange={handleMealTypeChange}
-          onDietaryChange={handleDietaryChange}
-          onGroupChange={handleGroupChange}
-          onFavoritesChange={handleFavoritesFilterChange}
-          onClearAll={handleClearAllFilters}
-          categoryOptions={categoryOptions}
-          mealTypeOptions={mealTypeOptions}
-          dietaryOptions={dietaryOptions}
-          groupOptions={groupOptions}
-        />
-
-        <div className="flex-1 min-w-0">
-          <RecipeGrid
-            recipes={filteredRecipes}
-            hasActiveFilters={hasActiveFilters}
-            onRecipeClick={handleRecipeClick}
-            onFavoriteToggle={handleFavoriteToggle}
-            onClearFilters={handleClearAllFilters}
-            selectionMode={mode === "select"}
-            selectedIds={selectedIds}
-          />
-        </div>
-      </div>
-    </>
-  );
-
   return (
     <PageLayout
       title="Recipes"
       hero={
         <HeroSection
           recipeCount={recipes.length}
-          searchTerm={searchTerm}
+          searchTerm={filters.searchTerm}
           onSearchChange={setSearchTerm}
           onSearch={() => {}}
           activeQuickFilters={activeQuickFilters}
@@ -690,26 +572,47 @@ export function RecipeBrowserView({
           description={heroDescription}
         />
       }
-      stickyHeader={
+    >
+      {/* Static filter/sort row (scrolls with page, observed for nav pinning) */}
+      <div ref={mode === "browse" ? sortControlsRef : undefined} className="mb-6">
         <RecipeSortControls
-          resultCount={filteredRecipes.length}
-          totalCount={recipes.length}
           sortBy={sortBy}
           sortDirection={sortDirection}
           onSortChange={setSortBy}
           onSortDirectionToggle={toggleSortDirection}
-          showFilters={showFilters}
-          onToggleFilters={() => setShowFilters(!showFilters)}
-          onOpenMobileFilters={() => setMobileFiltersOpen(true)}
-          activeFilters={activeFilters}
+          onOpenFilters={() => setFiltersOpen((prev) => !prev)}
+          activeFilters={activeFiltersList}
           onRemoveFilter={handleRemoveFilter}
-          onClearAllFilters={handleClearAllFilters}
+          onClearAllFilters={clearAll}
           onBack={onBack}
           actionButton={actionButton}
         />
-      }
-    >
-      {mainContent}
+      </div>
+
+      <RecipeFilterSidebar
+        filters={filters}
+        filtersOpen={filtersOpen}
+        onFiltersOpenChange={setFiltersOpen}
+        onCategoryChange={(value) => toggleCategory(value)}
+        onMealTypeChange={(value) => toggleMealType(value)}
+        onDietaryChange={(value) => toggleDietary(value)}
+        onGroupChange={(value) => toggleGroup(value)}
+        onFavoritesChange={handleFavoritesFilterChange}
+        onClearAll={clearAll}
+        categoryOptions={categoryOptions}
+        mealTypeOptions={mealTypeOptions}
+        dietaryOptions={dietaryOptions}
+        groupOptions={groupOptions}
+      />
+      <RecipeGrid
+        recipes={filteredRecipes}
+        hasActiveFilters={hasActiveFilters}
+        onRecipeClick={handleRecipeClick}
+        onFavoriteToggle={handleFavoriteToggle}
+        onClearFilters={clearAll}
+        selectionMode={mode === "select"}
+        selectedIds={selectedIds}
+      />
     </PageLayout>
   );
 }

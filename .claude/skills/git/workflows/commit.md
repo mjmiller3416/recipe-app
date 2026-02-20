@@ -223,7 +223,69 @@
    3. Only commit already-staged changes
    ```
 
-4. **Get or validate commit message**
+4. **Verify audit status**
+
+   After staging is finalized (all files that will be committed are staged), verify that auditable files have been audited.
+
+   **Step 4a: Check for manifest**
+
+   Read `.claude/last-audit.json`. If the file doesn't exist, treat all auditable files as unaudited.
+
+   **Step 4b: Classify staged files**
+
+   Using the same classification rules as the audit skill (Step 2 in `SKILL.md`), determine which staged files are **auditable** (`.tsx`, `.ts`, `.py` matching the routing table) vs **non-auditable** (CSS, JSON, config, markdown, migrations, `__init__.py`, etc.).
+
+   Only auditable files need to pass the gate. Non-auditable files are always allowed.
+
+   **Step 4c: Verify each auditable file**
+
+   For each auditable staged file, check three conditions:
+
+   1. **Present in manifest** — the file path exists in `files`
+   2. **Hash matches** — run `git ls-files -s -- <file>` and compare the current staged blob hash to `blobHash` in the manifest. A mismatch means the file was modified and re-staged after the audit.
+   3. **Verdict is not FAIL** — the verdict is `"PASS"` or `"PASS WITH WARNINGS"`
+
+   **Step 4d: Report results**
+
+   **If all auditable files pass:**
+   ```
+   ✓ Audit verified — all auditable files passed
+   ```
+   Proceed to step 5.
+
+   **If any files fail verification:**
+   ```
+   ✗ Audit verification failed
+
+   Unaudited files:
+     - frontend/src/components/recipe/RecipeBrowserView.tsx (not in manifest)
+     - frontend/src/components/layout/TopNav.tsx (modified since audit)
+
+   Failed audit:
+     - frontend/src/hooks/useFilters.ts (verdict: FAIL)
+
+   Non-auditable (OK):
+     - frontend/src/app/globals.css
+
+   Run `/audit staged` to audit these files, then retry `/git commit`.
+   ```
+   **Stop here.** Do not proceed to commit.
+
+   **If the user explicitly overrides:**
+
+   After showing the failure, offer an escape hatch:
+   ```
+   Options:
+   1. Run /audit staged now (Recommended)
+   2. Skip audit gate and commit anyway
+   ```
+
+   If the user chooses option 2, proceed but include a note in the commit output:
+   ```
+   ⚠ Committed without audit verification (user override)
+   ```
+
+5. **Get or validate commit message**
 
    **If message provided in arguments:**
    - Validate against Conventional Commits format
@@ -242,7 +304,7 @@
      Accept this message? (yes / edit / custom)
      ```
 
-5. **Validate commit message format**
+6. **Validate commit message format**
 
    **Strict validation rules:**
 
@@ -290,7 +352,7 @@
 
    If invalid, show the specific issue and ask for correction.
 
-6. **Create commit**
+7. **Create commit**
    ```bash
    git add <files>  # if staging was requested
    git commit -m "<validated-message>
@@ -298,7 +360,7 @@
    Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
    ```
 
-7. **Confirm success**
+8. **Confirm success**
    ```
    Committed: feat: add shopping list sync
 

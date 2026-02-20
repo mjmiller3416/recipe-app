@@ -77,11 +77,13 @@ load_frontend_context() {
             CONTEXT+=$'\n\n'
             ;;
 
-        # Pages/Layouts: Check BEFORE generic .tsx
-        *page.tsx|*layout.tsx)
+        # Pages/Layouts/Views: Check BEFORE generic .tsx
+        *page.tsx|*layout.tsx|*View.tsx|*View.ts)
             CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/layout-patterns.md")
             CONTEXT+=$'\n\n'
             CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/component-patterns.md")
+            CONTEXT+=$'\n\n'
+            CONTEXT+=$(cat "$PROJECT_ROOT/.claude/context/frontend/data-fetching.md")
             CONTEXT+=$'\n\n'
             ;;
 

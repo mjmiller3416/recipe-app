@@ -40,9 +40,9 @@ Parse $ARGUMENTS → resolve file list
         ↓
 Classify each file → audit type
         ↓
-Map audit type → criteria + context files
+Tier each file → full or lightweight audit
         ↓
-Read criteria, context, and report template files
+Load criteria and context per tier
         ↓
 Dispatch parallel Task subagents (1 per file)
         ↓
@@ -79,7 +79,7 @@ If the directory doesn't exist or contains no auditable files, stop and report t
 
 ### `structure`
 
-No file list needed. This dispatches a single subagent to examine overall project layout. Skip directly to Step 3 with audit type `structure`.
+No file list needed. This dispatches a single subagent to examine overall project layout. Skip directly to Step 4 with audit type `structure`.
 
 ### No Arguments
 
@@ -109,7 +109,28 @@ For `staged` and `directory` modes, classify each file using first-match routing
 
 ---
 
-## Step 3: Load Criteria and Resolve Context References
+## Step 3: Tier Each File
+
+Before loading context, assess the diff size for each file to determine audit depth. For non-staged modes where no diff exists, always use **full**.
+
+Count the changed lines for each file:
+
+```bash
+git diff --cached -- {file_path} | grep -c '^[+-]'
+```
+
+| Changed Lines | Tier | Reference Standards |
+|---|---|---|
+| < 20 | **Lightweight** | Omit — use criteria + `general.md` only |
+| ≥ 20 | **Full** | Inline all reference standards per criteria file |
+
+Include the tier assignment in each file's subagent prompt so the auditor understands the audit scope.
+
+> **Note**: For explicit modes (`component`, `page`, `service`, `directory`) where you have no diff context, always assign **full** tier regardless.
+
+---
+
+## Step 4: Load Criteria and Resolve Context References
 
 For the matched audit type, read these files:
 
@@ -117,22 +138,26 @@ For the matched audit type, read these files:
 2. **General criteria**: `.claude/skills/audit/criteria/general.md` (always included)
 3. **Report template**: `.claude/skills/audit/report-template.md` (always included)
 
-Then parse the criteria file's **Reference Standards** section for `@` references. Each `@`-prefixed path is project-root-relative.
+For **full tier** files only: parse the criteria file's **Reference Standards** section for `@` references. Each `@`-prefixed path is project-root-relative.
 
 **Resolution rule**: Extract all paths matching `` `@<path>` `` from the criteria file. Read each `<path>` relative to the project root. These become the subagent's reference context.
+
+For **lightweight tier** files: skip reference standard resolution entirely.
 
 If a referenced file doesn't exist, log a warning and continue — don't abort the audit.
 
 ---
 
-## Step 4: Dispatch Subagents
+## Step 5: Dispatch Subagents
 
-Dispatch **one Task subagent per file**, all in parallel (single message with multiple Task calls).
+Before dispatching, print: "Dispatching {n} subagents: [list filenames]" and confirm the count matches your auditable file list. If counts don't match, reconcile before proceeding.
+
+Dispatch **one Task subagent per file**, all in parallel (single message with multiple Task calls). Do not dispatch in batches.
 
 ### Task Parameters
 
 - **`subagent_type`**: `"auditor"`
-- **`description`**: `"Audit {filename}"`
+- **`description`**: `"Audit {filename} [{tier} audit]"`
 
 ### Subagent Prompt Template
 
@@ -143,6 +168,13 @@ Build each subagent's prompt by inlining all necessary content. The auditor agen
 
 - **File**: {file_path}
 - **Audit Type**: {component | page | service | structure}
+- **Audit Tier**: {Full | Lightweight}
+
+{IF lightweight tier:}
+> This is a lightweight audit (< 20 lines changed). Evaluate against
+> type-specific criteria and general criteria only. Reference standards
+> are omitted intentionally.
+{END IF}
 
 {IF staged mode:}
 ## Diff
@@ -167,6 +199,7 @@ Build each subagent's prompt by inlining all necessary content. The auditor agen
 
 ---
 
+{IF full tier:}
 ## Reference Standards
 
 {for each context file in the mapping:}
@@ -176,6 +209,8 @@ Build each subagent's prompt by inlining all necessary content. The auditor agen
 {full contents of the context file}
 
 {end for each}
+
+{END IF}
 
 ---
 
@@ -196,13 +231,26 @@ Include this in that file's subagent prompt under the Diff section.
 
 ### Structure Mode — Special Case
 
-For `structure` mode, dispatch a **single subagent**. The target is the project root, not a single file. Modify the prompt to instruct the subagent to use Glob and Bash (`ls`) to examine the directory layout holistically, rather than reading a single file.
+For `structure` mode, dispatch a **single subagent**. The target is the project root, not a single file. Modify the prompt to instruct the subagent to use Glob and Bash (`ls`) to examine the directory layout holistically, rather than reading a single file. Structure audits always use **full** tier.
 
 ---
 
-## Step 5: Compile Unified Report
+## Step 6: Compile Unified Report
 
-After all subagents return, compile their reports into a unified summary.
+After all subagents return, validate their output before compiling.
+
+### Handling Empty or Failed Returns
+
+If a subagent returns empty output or no report content:
+- Mark that file with verdict **AUDIT ERROR**
+- Include it in the Per-File Reports section with: "Subagent completed but returned no report. Re-run `/audit component {file_path}` to audit individually."
+- **Do not attempt to audit the file inline** — a silent fallback produces a report that looks valid but wasn't generated by the correct process
+- Count AUDIT ERROR files separately in the Overall Summary
+
+If **all** subagents return empty, stop and report:
+> All subagents returned empty output. Try auditing a single file with `/audit component {path}` to diagnose.
+
+Otherwise, compile all valid reports into a unified summary.
 
 ### Unified Report Format
 
@@ -210,7 +258,7 @@ After all subagents return, compile their reports into a unified summary.
 # Audit Report
 
 **Mode**: {staged | component | page | service | directory | structure}
-**Files Audited**: {count}
+**Files Audited**: {count} ({n} full, {n} lightweight)
 **Date**: {YYYY-MM-DD}
 
 ---
@@ -222,6 +270,7 @@ After all subagents return, compile their reports into a unified summary.
 | PASS | {n} |
 | PASS WITH WARNINGS | {n} |
 | FAIL | {n} |
+| AUDIT ERROR | {n} |
 
 | Severity | Total |
 |----------|-------|
@@ -268,6 +317,28 @@ After all subagents return, compile their reports into a unified summary.
 3. Review per-file suggestions
 ```
 
+### Save Report to File
+
+After displaying the unified report to the user, persist it to the `audits/` directory at the project root.
+
+**Filename format**: `audits/{mode}-{YYYY-MM-DD}-{HHmmss}.md`
+
+- `{mode}` — the audit mode (`staged`, `component`, `page`, `service`, `directory`, `structure`)
+- `{YYYY-MM-DD}-{HHmmss}` — timestamp at audit completion (e.g., `143022` for 2:30:22 PM)
+
+Examples:
+- `audits/staged-2026-02-18-143022.md`
+- `audits/component-2026-02-18-091503.md`
+- `audits/directory-2026-02-18-160045.md`
+
+Use the **Write** tool to create the file. The `audits/` directory is gitignored — reports are local-only reference artifacts.
+
+After writing, confirm to the user:
+
+```
+Report saved to audits/{filename}.
+```
+
 ### Cross-Cutting Detection
 
 Scan all returned reports for findings sharing the same **criteria ID** across 2+ files. Group these as cross-cutting concerns. Common examples:
@@ -275,6 +346,83 @@ Scan all returned reports for findings sharing the same **criteria ID** across 2
 - C.6 (missing `aria-label`) across icon buttons
 - S.4 (repo calling `commit()`) in multiple repositories
 - G.4 (`any` type usage) across files
+
+---
+
+## Step 7: Write Audit Manifest
+
+After displaying the unified report, write a machine-readable manifest so the `/git commit` workflow can verify that staged files were audited before committing.
+
+**Manifest path**: `.claude/last-audit.json` (project root, gitignored)
+
+### When to Write
+
+Write the manifest when **all** of these are true:
+- The audit mode is `staged` (other modes don't gate commits)
+- At least one file was audited (not all skipped)
+- The audit completed (even if some files FAIL)
+
+**Do NOT write a manifest** for `component`, `page`, `service`, `directory`, or `structure` modes — these are ad-hoc audits not tied to the commit flow.
+
+### Manifest Format
+
+```json
+{
+  "timestamp": "2026-02-18T14:30:00Z",
+  "files": {
+    "frontend/src/components/recipe/RecipeBrowserView.tsx": {
+      "blobHash": "<hash>",
+      "verdict": "PASS",
+      "tier": "full"
+    },
+    "frontend/src/components/layout/TopNav.tsx": {
+      "blobHash": "<hash>",
+      "verdict": "PASS WITH WARNINGS",
+      "tier": "lightweight"
+    }
+  },
+  "skipped": [
+    "frontend/src/app/globals.css"
+  ]
+}
+```
+
+### How to Compute Blob Hashes
+
+For each audited file, compute its blob hash from the **staged content** (not the working tree):
+
+```bash
+git ls-files -s -- <file_path>
+```
+
+This outputs the staged blob hash (column 2). Use that value — it fingerprints the exact content that was audited. If the file is edited after auditing, re-staging changes the hash and the commit workflow will detect the mismatch.
+
+### Fields
+
+| Field | Description |
+|-------|-------------|
+| `timestamp` | ISO 8601 timestamp of when the audit completed |
+| `files` | Map of audited file paths → `{ blobHash, verdict, tier }` |
+| `files[].blobHash` | Git blob hash of the staged content at audit time |
+| `files[].verdict` | `"PASS"`, `"PASS WITH WARNINGS"`, or `"FAIL"` |
+| `files[].tier` | `"full"` or `"lightweight"` — records which audit depth was applied |
+| `skipped` | Array of file paths skipped during classification |
+
+### Writing the Manifest
+
+Use the **Write** tool to write the JSON to `.claude/last-audit.json`. Overwrite any existing manifest — only the most recent audit matters.
+
+After writing, confirm to the user:
+
+```
+Audit manifest saved. Run `/git commit` when ready.
+```
+
+If any files have a `FAIL` verdict, also note:
+
+```
+⚠ {n} file(s) failed audit. `/git commit` will block until failures are resolved and re-audited.
+```
 
 ---
 
@@ -288,41 +436,25 @@ Scan all returned reports for findings sharing the same **criteria ID** across 2
 | Invalid file path(s) | Report invalid paths, audit remaining valid files |
 | Empty directory | Report "No auditable files in {path}" and stop |
 | Subagent returns error | Include error in that file's section, continue with others |
-| All subagents fail | Report errors, suggest checking file paths |
 
 ---
 
-## Examples
-
-### Staged Files
+## Example: Staged Audit
 
 ```bash
 /audit staged
 ```
 
-`git diff --cached --name-only` returns:
-- `frontend/src/components/recipe/RecipeCard.tsx` → **component** audit
-- `frontend/src/app/recipes/_components/RecipesView.tsx` → **page** audit
-- `backend/app/services/recipe/core.py` → **service** audit
+`git diff --cached --name-only` returns 4 files. After tiering:
 
-→ 3 subagents dispatched in parallel, each with appropriate criteria and context
+| File | Type | Changed Lines | Tier |
+|---|---|---|---|
+| `RecipeBrowserView.tsx` | page | 243 | Full |
+| `FilterSortControls.tsx` | component | 18 | Lightweight |
+| `RecipeCard.tsx` | component | 4 | Lightweight |
+| `backend/services/recipe/core.py` | service | 31 | Full |
+
+→ 2 full subagents receive all reference standards inlined  
+→ 2 lightweight subagents receive criteria + `general.md` only  
+→ All 4 dispatched in parallel  
 → Unified report with cross-cutting analysis
-
-### Specific Components
-
-```bash
-/audit component frontend/src/components/common/StatCard.tsx frontend/src/components/recipe/RecipeCard.tsx
-```
-
-→ 2 subagents, both with `component.md` + `general.md` criteria
-→ Compiled report highlights shared patterns between the two
-
-### Directory
-
-```bash
-/audit directory backend/app/services
-```
-
-→ Globs all `.py` files in services directory
-→ All classified as **service** audit type
-→ Cross-cutting analysis reveals systematic patterns (e.g., missing rollback across services)

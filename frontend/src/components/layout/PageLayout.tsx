@@ -1,4 +1,7 @@
+"use client";
+
 import * as React from "react";
+import { useRef, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -7,8 +10,11 @@ import {
   PageHeaderContent,
   PageHeaderActions,
 } from "./PageHeader";
+import { useNavActions } from "@/lib/providers/NavActionsProvider";
 
 interface PageLayoutProps {
+  // TODO: title and description are accepted but not yet rendered —
+  // will be used in a future header update.
   /** Page title displayed in the header */
   title: string;
   /** Optional description displayed below the title */
@@ -31,6 +37,8 @@ interface PageLayoutProps {
   stickyHeader?: React.ReactNode;
   /** When true, page fills viewport height exactly with no scrolling (content must manage its own overflow) */
   fillViewport?: boolean;
+  /** When true, action buttons pin into the TopNav bar when the header scrolls out of view (desktop only) */
+  pinActionsToNav?: boolean;
 }
 
 /**
@@ -78,28 +86,60 @@ export function PageLayout(props: PageLayoutProps) {
     hero,
     stickyHeader,
     fillViewport = false,
+    pinActionsToNav = false,
   } = props;
+
+  const headerRef = useRef<HTMLDivElement>(null);
+  const { setNavActions, setPinned, clearNavActions } = useNavActions();
+
+  // Register actions with nav context when pinActionsToNav is enabled
+  useEffect(() => {
+    if (!pinActionsToNav || !actions) return;
+    setNavActions(actions);
+    return () => clearNavActions();
+  }, [pinActionsToNav, actions, setNavActions, clearNavActions]);
+
+  // Observe header visibility to toggle pinned state
+  useEffect(() => {
+    if (!pinActionsToNav || !actions || !headerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setPinned(!entry.isIntersecting),
+      {
+        // Offset by TopNav height (h-16 = 64px) so pinning triggers
+        // when the header scrolls behind the fixed nav bar
+        rootMargin: "-64px 0px 0px 0px",
+        threshold: 0,
+      }
+    );
+
+    observer.observe(headerRef.current);
+    return () => observer.disconnect();
+  }, [pinActionsToNav, actions, setPinned]);
+
   // Build the header content (shared across modes)
   // Only render header when there are actions, custom content, or a back button
   const hasHeader = !!(headerContent || actions || onBackClick);
   const headerElement = hasHeader ? (
-    <PageHeader>
-      {headerContent ?? (
-        <PageHeaderContent>
-          {onBackClick && (
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Go back"
-              onClick={onBackClick}
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          )}
-          {actions && <PageHeaderActions>{actions}</PageHeaderActions>}
-        </PageHeaderContent>
-      )}
-    </PageHeader>
+    <div ref={pinActionsToNav ? headerRef : undefined}>
+      <PageHeader>
+        {headerContent ?? (
+          <PageHeaderContent>
+            {onBackClick && (
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Go back"
+                onClick={onBackClick}
+              >
+                <ArrowLeft className="size-4" strokeWidth={1.5} />
+              </Button>
+            )}
+            {actions && <PageHeaderActions>{actions}</PageHeaderActions>}
+          </PageHeaderContent>
+        )}
+      </PageHeader>
+    </div>
   ) : null;
 
   // ============================================

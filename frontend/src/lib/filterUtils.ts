@@ -3,7 +3,7 @@
  * Provides a single source of truth for filter application logic.
  */
 
-import { QUICK_FILTERS, type QuickFilter } from "./constants";
+import { QUICK_FILTERS } from "./constants";
 import type { RecipeCardData } from "@/types/recipe";
 
 // ============================================================================
@@ -20,7 +20,7 @@ export interface RecipeFilters {
   categories: string[];
   mealTypes: string[];
   dietaryPreferences: string[];
-  groups: number[];            // Recipe group IDs to filter by
+  groupIds: number[];          // Recipe group IDs to filter by
   favoritesOnly: boolean;
   maxCookTime: number | null;  // "Under 30m" filter uses this (value: 30)
   newDays: number | null;      // "New" filter uses this (value: 2 = last 2 days)
@@ -55,7 +55,7 @@ export const DEFAULT_FILTERS: RecipeFilters = {
   categories: [],
   mealTypes: [],
   dietaryPreferences: [],
-  groups: [],
+  groupIds: [],
   favoritesOnly: false,
   maxCookTime: null,
   newDays: null,
@@ -129,11 +129,11 @@ export function applyFilters(
   }
 
   // Group filter (OR logic within - recipe must be in at least one selected group)
-  if (filters.groups.length > 0) {
+  if (filters.groupIds.length > 0) {
     result = result.filter(
       (recipe) =>
         recipe.groupIds &&
-        recipe.groupIds.some((groupId) => filters.groups.includes(groupId))
+        recipe.groupIds.some((groupId) => filters.groupIds.includes(groupId))
     );
   }
 
@@ -261,7 +261,7 @@ export function hasActiveFilters(filters: RecipeFilters): boolean {
     filters.categories.length > 0 ||
     filters.mealTypes.length > 0 ||
     filters.dietaryPreferences.length > 0 ||
-    filters.groups.length > 0 ||
+    filters.groupIds.length > 0 ||
     filters.favoritesOnly ||
     filters.maxCookTime !== null ||
     filters.newDays !== null
@@ -311,7 +311,7 @@ export function getActiveFiltersList(
   }
 
   // Groups
-  for (const grp of filters.groups) {
+  for (const grp of filters.groupIds) {
     const label = options?.groupOptions?.find((o) => o.value === String(grp))?.label ?? `Group ${grp}`;
     active.push({ type: "group", value: String(grp), label });
   }
@@ -368,7 +368,7 @@ export function removeFilter(
     case "group":
       return {
         ...filters,
-        groups: filters.groups.filter((g) => g !== Number(filter.value)),
+        groupIds: filters.groupIds.filter((g) => g !== Number(filter.value)),
       };
     case "favorite":
       return { ...filters, favoritesOnly: false };
@@ -396,6 +396,6 @@ export function mergeFilters(
     categories: partial.categories ?? base.categories,
     mealTypes: partial.mealTypes ?? base.mealTypes,
     dietaryPreferences: partial.dietaryPreferences ?? base.dietaryPreferences,
-    groups: partial.groups ?? base.groups,
+    groupIds: partial.groupIds ?? base.groupIds,
   };
 }

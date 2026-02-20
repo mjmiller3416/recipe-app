@@ -4,11 +4,9 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Clock, Users, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/quantityUtils";
 import type { RecipeCardData } from "@/types/recipe";
-import { getRecipeCardUrl } from "@/lib/imageUtils";
 import { FavoriteButton } from "../common/FavoriteButton";
 import { RecipeBadge, RecipeBadgeGroup } from "./RecipeBadge";
 import { RecipeImage } from "./RecipeImage";
@@ -206,7 +204,6 @@ function RecipeCardMedium({
   className,
   showCategory,
   isSelected = false,
-  selectionType = "main",
 }: CardVariantProps) {
   return (
     <Card
@@ -245,7 +242,7 @@ function RecipeCardMedium({
         {/* Selection checkmark indicator - top left, overlays meal type badge when selected */}
         {isSelected && (
           <div className="absolute top-4 left-4 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg animate-scale-in z-20">
-            <Check className="w-5 h-5 text-primary-foreground" strokeWidth={2} />
+            <Check className="size-5 text-primary-foreground" strokeWidth={1.5} />
           </div>
         )}
 
@@ -478,7 +475,7 @@ interface RecipeCardGridProps {
 export function RecipeCardGrid({ children, className, size = "medium" }: RecipeCardGridProps) {
   const gridClasses = {
     small: "grid grid-cols-1 gap-3",
-    medium: "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-6",
+    medium: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6",
     large: "grid grid-cols-1 gap-3 md:gap-6",
   };
 

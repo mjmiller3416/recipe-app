@@ -104,7 +104,7 @@ export function FilterBar({
               // Inactive state: dark solid background with subtle border, muted text
               !active && variant !== "glass" && "bg-elevated border border-border-subtle text-muted-foreground hover:bg-hover hover:border-border hover:text-foreground",
               // Glass variant for overlays
-              variant === "glass" && !active && "bg-elevated/80 backdrop-blur-sm border border-border/50 text-muted-foreground hover:text-foreground"
+              variant === "glass" && !active && "bg-elevated/90 backdrop-blur-sm shadow-sm border border-border text-foreground/80 hover:text-foreground"
             )}
             size="sm"
           >

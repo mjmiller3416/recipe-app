@@ -1,6 +1,5 @@
 /**
- * Reusable filter sidebar component for recipe filtering.
- * Used in Recipe Browser and can be used in Meal Planner.
+ * Recipe filter content component with collapsible filter sections.
  *
  * Features:
  * - Collapsible filter sections (Category, Meal Type, Dietary)
@@ -11,7 +10,6 @@
 
 "use client";
 
-import { useState } from "react";
 import {
   SlidersHorizontal,
   ChefHat,
@@ -23,20 +21,21 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { FilterBar } from "./FilterBar";
+import { FilterBar } from "@/components/common/FilterBar";
 import { MEAL_TYPE_OPTIONS, DIETARY_PREFERENCES } from "@/lib/constants";
+import type { FilterOption } from "@/lib/filterUtils";
 
 // ============================================================================
 // Types
 // ============================================================================
 
-export interface FilterOption {
-  value: string;
-  label: string;
-}
-
-export interface FilterSidebarFilters {
+export interface RecipeFiltersState {
   categories: string[];
   mealTypes: string[];
   dietaryPreferences: string[];
@@ -44,9 +43,9 @@ export interface FilterSidebarFilters {
   favoritesOnly: boolean;
 }
 
-export interface FilterSidebarProps {
+export interface RecipeFiltersProps {
   /** Current filter state */
-  filters: FilterSidebarFilters;
+  filters: RecipeFiltersState;
 
   /** Change handlers */
   onCategoryChange: (value: string, checked: boolean) => void;
@@ -71,6 +70,9 @@ export interface FilterSidebarProps {
 
   /** Custom header title */
   headerTitle?: string;
+
+  /** Show the header with title and reset button (default true) */
+  showHeader?: boolean;
 
   /** Additional class name */
   className?: string;
@@ -97,32 +99,27 @@ function FilterSection({
   onChange,
   defaultOpen = true,
 }: FilterSectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
   return (
-    <div className="py-2">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full py-2 text-sm font-medium text-foreground hover:text-primary transition-colors pressable"
+    <Collapsible defaultOpen={defaultOpen} className="py-6">
+      <CollapsibleTrigger
+        className="flex items-center justify-between w-full h-auto p-0 text-sm font-medium text-foreground hover:text-primary hover:bg-transparent pressable"
       >
         <span className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-muted-foreground" />
+          <Icon className="size-4 text-muted-foreground" strokeWidth={1.5} />
           {title}
           {selected.length > 0 && (
-            <span className="ml-1 px-2 py-1 bg-primary/20 text-primary text-xs rounded-full">
+            <span className="ml-1 px-2 py-0.5 bg-primary/20 text-primary text-xs rounded-full">
               {selected.length}
             </span>
           )}
         </span>
         <ChevronDown
-          className={cn(
-            "h-4 w-4 text-muted-foreground transition-transform duration-200",
-            isOpen && "rotate-180"
-          )}
+          className="size-4 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180"
+          strokeWidth={1.5}
         />
-      </button>
-      {isOpen && (
-        <div className="pt-2 pb-4">
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="pt-3">
           <FilterBar
             options={options.map((o) => ({ id: o.value, label: o.label }))}
             activeIds={selected}
@@ -132,16 +129,16 @@ function FilterSection({
             }}
           />
         </div>
-      )}
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
 // ============================================================================
-// FilterSidebar Component
+// RecipeFilters Component
 // ============================================================================
 
-export function FilterSidebar({
+export function RecipeFilters({
   filters,
   onCategoryChange,
   onMealTypeChange,
@@ -149,6 +146,7 @@ export function FilterSidebar({
   onGroupChange,
   onFavoritesChange,
   onClearAll,
+  showHeader = true,
   showFavorites = true,
   showCategories = true,
   showMealTypes = true,
@@ -160,8 +158,7 @@ export function FilterSidebar({
   groupOptions = [],
   headerTitle = "Refine Results",
   className,
-}: FilterSidebarProps) {
-  // Check if any filters are active
+}: RecipeFiltersProps) {
   const hasActiveFilters =
     filters.categories.length > 0 ||
     filters.mealTypes.length > 0 ||
@@ -171,46 +168,53 @@ export function FilterSidebar({
 
   return (
     <div className={className}>
-      {/* Sidebar Header */}
-      <div className="flex items-center justify-between mb-4 pb-4 border-b border-border">
-        <div className="flex items-center gap-2">
-          <SlidersHorizontal className="h-4 w-4 text-primary" />
-          <span className="font-medium text-foreground">{headerTitle}</span>
-        </div>
-        {hasActiveFilters && (
-          <Button
-            variant="link"
-            size="sm"
-            onClick={onClearAll}
-            className="h-auto p-0 text-xs"
-          >
-            Reset
-          </Button>
-        )}
-      </div>
-
-      {/* Favorites Toggle */}
-      {showFavorites && (
-        <div className="flex items-center justify-between py-3 px-2 mb-2 rounded-md">
+      {/* Header */}
+      {showHeader && (
+        <div className="flex items-center justify-between pb-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <Heart
-              className={cn(
-                "h-4 w-4 transition-colors",
-                filters.favoritesOnly ? "text-destructive fill-current" : "text-muted-foreground"
-              )}
-            />
-            <span className="text-sm text-foreground">Favorites Only</span>
+            <SlidersHorizontal className="size-4 text-primary" strokeWidth={1.5} />
+            <span className="font-medium text-foreground">{headerTitle}</span>
           </div>
-          <Switch
-            checked={filters.favoritesOnly}
-            onCheckedChange={(checked) => onFavoritesChange(checked)}
-            size="sm"
-          />
+          {hasActiveFilters && (
+            <Button
+              variant="link"
+              size="sm"
+              onClick={onClearAll}
+              className="h-auto p-0 text-xs"
+            >
+              Reset
+            </Button>
+          )}
         </div>
       )}
 
-      {/* Filter Sections */}
-      <div className="space-y-2 divide-y divide-border">
+      {/* All filter sections in a single divide-y container */}
+      <div className="divide-y divide-border">
+        {/* Favorites Toggle */}
+        {showFavorites && (
+          <div className="flex items-center justify-between py-6">
+            <div className="flex items-center gap-2">
+              <Heart
+                className={cn(
+                  "size-4 transition-colors",
+                  filters.favoritesOnly
+                    ? "text-destructive fill-current"
+                    : "text-muted-foreground"
+                )}
+                strokeWidth={1.5}
+              />
+              <label htmlFor="favorites-only-switch" className="text-sm text-foreground">Favorites Only</label>
+            </div>
+            <Switch
+              id="favorites-only-switch"
+              checked={filters.favoritesOnly}
+              onCheckedChange={(checked) => onFavoritesChange(checked)}
+              size="sm"
+            />
+          </div>
+        )}
+
+        {/* Filter Sections */}
         {showCategories && (
           <FilterSection
             title="Category"
@@ -251,6 +255,3 @@ export function FilterSidebar({
     </div>
   );
 }
-
-// Re-export FilterSection for use cases that need it separately
-export { FilterSection };
