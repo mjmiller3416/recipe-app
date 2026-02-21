@@ -11,12 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { INGREDIENT_CATEGORIES } from "@/lib/constants";
 import {
   IngredientAutocomplete,
   type AutocompleteIngredient,
 } from "@/components/forms/IngredientAutocomplete";
 import { useUnits } from "@/hooks/api";
+import { useIngredientCategoryOptions } from "@/hooks/api/useIngredientCategories";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -37,27 +37,24 @@ interface IngredientRowProps {
   getIngredientError?: (ingredientId: string, field: 'name' | 'quantity') => string | undefined;
 }
 
-// Helper to find matching category value from INGREDIENT_CATEGORIES
-const findCategoryValue = (categoryFromDb: string): string => {
-  // Try exact match first
-  const exactMatch = INGREDIENT_CATEGORIES.find(
-    (cat) => cat.value === categoryFromDb
-  );
+// Helper to find matching category value from dynamic options
+const findCategoryValue = (
+  categoryFromDb: string,
+  categories: { value: string; label: string }[]
+): string => {
+  const exactMatch = categories.find((cat) => cat.value === categoryFromDb);
   if (exactMatch) return exactMatch.value;
 
-  // Try case-insensitive match on value
-  const caseInsensitiveValue = INGREDIENT_CATEGORIES.find(
+  const caseInsensitiveValue = categories.find(
     (cat) => cat.value.toLowerCase() === categoryFromDb.toLowerCase()
   );
   if (caseInsensitiveValue) return caseInsensitiveValue.value;
 
-  // Try case-insensitive match on label
-  const labelMatch = INGREDIENT_CATEGORIES.find(
+  const labelMatch = categories.find(
     (cat) => cat.label.toLowerCase() === categoryFromDb.toLowerCase()
   );
   if (labelMatch) return labelMatch.value;
 
-  // Return original if no match (Select will show placeholder)
   return categoryFromDb;
 };
 
@@ -70,6 +67,7 @@ export const IngredientRow = memo(function IngredientRow({
   getIngredientError,
 }: IngredientRowProps) {
   const { data: units = [] } = useUnits();
+  const { options: ingredientCategories } = useIngredientCategoryOptions();
 
   // Get field errors
   const quantityError = getIngredientError?.(ingredient.id, 'quantity');
@@ -93,7 +91,7 @@ export const IngredientRow = memo(function IngredientRow({
     onUpdate(ingredient.id, "name", selected.name);
     // Auto-fill category from the selected ingredient (normalized to match Select values)
     if (selected.category) {
-      const normalizedCategory = findCategoryValue(selected.category);
+      const normalizedCategory = findCategoryValue(selected.category, ingredientCategories);
       onUpdate(ingredient.id, "category", normalizedCategory);
     }
   };
@@ -184,7 +182,7 @@ export const IngredientRow = memo(function IngredientRow({
             <SelectValue placeholder="Category" />
           </SelectTrigger>
           <SelectContent>
-            {INGREDIENT_CATEGORIES.map((cat) => (
+            {ingredientCategories.map((cat) => (
               <SelectItem key={cat.value} value={cat.value}>
                 {cat.label}
               </SelectItem>
@@ -261,7 +259,7 @@ export const IngredientRow = memo(function IngredientRow({
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                {INGREDIENT_CATEGORIES.map((cat) => (
+                {ingredientCategories.map((cat) => (
                   <SelectItem key={cat.value} value={cat.value}>
                     {cat.label}
                   </SelectItem>

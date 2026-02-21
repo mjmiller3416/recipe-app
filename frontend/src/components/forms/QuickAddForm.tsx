@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/select";
 import { QuantityInput } from "@/components/forms/QuantityInput";
 import { IngredientAutocomplete } from "@/components/forms/IngredientAutocomplete";
-import { INGREDIENT_CATEGORIES } from "@/lib/constants";
 import { useAddManualItem, useUnits } from "@/hooks/api";
+import { useIngredientCategoryOptions } from "@/hooks/api/useIngredientCategories";
 
 interface QuickAddFormProps {
   variant: "compact" | "inline";
@@ -28,6 +28,7 @@ export function QuickAddForm({ variant }: QuickAddFormProps) {
 
   const addManualItem = useAddManualItem();
   const { data: units = [] } = useUnits();
+  const { options: ingredientCategories } = useIngredientCategoryOptions();
 
   const handleAdd = () => {
     const trimmedName = itemName.trim();
@@ -95,7 +96,7 @@ export function QuickAddForm({ variant }: QuickAddFormProps) {
         <SelectValue placeholder="Category" />
       </SelectTrigger>
       <SelectContent>
-        {INGREDIENT_CATEGORIES.map((cat) => (
+        {ingredientCategories.map((cat) => (
           <SelectItem key={cat.value} value={cat.value}>
             {cat.label}
           </SelectItem>

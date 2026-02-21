@@ -56,6 +56,11 @@ export const DIETARY_PREFERENCES = [
 // This eliminates the need to maintain duplicate unit lists and ensures the backend is the
 // single source of truth. See: frontend/src/hooks/api/useUnits.ts
 
+/**
+ * @deprecated Use `useIngredientCategoryOptions()` hook from `@/hooks/api/useIngredientCategories` instead.
+ * Ingredient categories are now user-customizable and stored in the database.
+ * This constant is kept for backwards compatibility only.
+ */
 export const INGREDIENT_CATEGORIES = [
 { value: "produce", label: "Produce" },
   { value: "dairy", label: "Dairy" },
@@ -73,8 +78,11 @@ export const INGREDIENT_CATEGORIES = [
   { value: "other", label: "Other" },
 ] as const;
 
-// Display order for ingredient categories on recipe detail page
-// Meat first (as requested), then proteins, fresh items, and pantry staples
+/**
+ * @deprecated Use `useIngredientCategories()` hook from `@/hooks/api/useIngredientCategories` instead.
+ * The category position field now determines display order.
+ * This constant is kept for backwards compatibility only.
+ */
 export const INGREDIENT_CATEGORY_ORDER = [
   "meat",
   "seafood",

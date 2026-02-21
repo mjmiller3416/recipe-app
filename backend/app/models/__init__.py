@@ -13,6 +13,8 @@ from .shopping_item_contribution import ShoppingItemContribution
 from .unit_conversion_rule import UnitConversionRule
 from .user import User
 from .user_category import UserCategory
+from .user_ingredient_category import UserIngredientCategory
+from .user_ingredient_unit import UserIngredientUnit
 from .user_settings import UserSettings
 from .user_usage import UserUsage
 
@@ -30,6 +32,8 @@ __all__ = [
     "UnitConversionRule",
     "User",
     "UserCategory",
+    "UserIngredientCategory",
+    "UserIngredientUnit",
     "UserSettings",
     "UserUsage",
 ]

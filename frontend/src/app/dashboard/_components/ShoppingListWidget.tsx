@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ShoppingCart, ArrowRight, CheckCircle2, Circle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useShoppingList, useRefreshShoppingList } from "@/hooks/api";
-import { INGREDIENT_CATEGORY_ORDER } from "@/lib/constants";
+import { useIngredientCategories } from "@/hooks/api/useIngredientCategories";
 import type { ShoppingListResponseDTO } from "@/types/shopping";
 
 interface CategoryProgress {
@@ -18,10 +18,11 @@ interface ShoppingListWidgetProps {
   shoppingData?: ShoppingListResponseDTO | null;
 }
 
-export function ShoppingListWidget({ shoppingData: initialData }: ShoppingListWidgetProps) {
+export function ShoppingListWidget({}: ShoppingListWidgetProps) {
   // Use React Query hook with automatic token injection
   const { data: shoppingData, isLoading } = useShoppingList();
   const refreshShoppingList = useRefreshShoppingList();
+  const { data: ingredientCategories = [] } = useIngredientCategories();
 
   // Listen for planner updates to refetch shopping list
   useEffect(() => {
@@ -48,17 +49,20 @@ export function ShoppingListWidget({ shoppingData: initialData }: ShoppingListWi
       }
     }
 
-    // Convert to array and sort by INGREDIENT_CATEGORY_ORDER
+    // Convert to array and sort by user's ingredient category order
     const categories = Object.entries(groups).map(([name, data]) => ({
       name,
       total: data.total,
       checked: data.checked,
     }));
 
-    // Sort by the predefined order
+    // Build order from user's ingredient categories (position-based)
+    const categoryOrder = ingredientCategories.map((c) => c.value);
+
+    // Sort by the user's category order
     categories.sort((a, b) => {
-      const aIndex = INGREDIENT_CATEGORY_ORDER.indexOf(a.name.toLowerCase() as typeof INGREDIENT_CATEGORY_ORDER[number]);
-      const bIndex = INGREDIENT_CATEGORY_ORDER.indexOf(b.name.toLowerCase() as typeof INGREDIENT_CATEGORY_ORDER[number]);
+      const aIndex = categoryOrder.indexOf(a.name.toLowerCase());
+      const bIndex = categoryOrder.indexOf(b.name.toLowerCase());
 
       // Items not in the order go to the end
       const aOrder = aIndex === -1 ? 999 : aIndex;
@@ -68,7 +72,7 @@ export function ShoppingListWidget({ shoppingData: initialData }: ShoppingListWi
     });
 
     return categories;
-  }, [shoppingData]);
+  }, [shoppingData, ingredientCategories]);
 
   // Calculate overall progress
   const totalItems = shoppingData?.total_items ?? 0;

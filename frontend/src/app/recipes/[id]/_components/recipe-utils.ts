@@ -1,4 +1,4 @@
-import { INGREDIENT_CATEGORY_ORDER } from "@/lib/constants";
+import { INGREDIENT_CATEGORY_ORDER as DEFAULT_CATEGORY_ORDER } from "@/lib/constants";
 import type { RecipeResponseDTO } from "@/types/recipe";
 
 /**
@@ -58,14 +58,16 @@ export function groupIngredientsByCategory(
  * Unknown categories are sorted to the end.
  */
 export function sortCategoryEntries(
-  entries: [string, RecipeResponseDTO["ingredients"]][]
+  entries: [string, RecipeResponseDTO["ingredients"]][],
+  categoryOrder?: string[]
 ): [string, RecipeResponseDTO["ingredients"]][] {
+  const order = categoryOrder ?? [...DEFAULT_CATEGORY_ORDER];
   return entries.sort(([a], [b]) => {
-    const aIndex = INGREDIENT_CATEGORY_ORDER.indexOf(a.toLowerCase() as typeof INGREDIENT_CATEGORY_ORDER[number]);
-    const bIndex = INGREDIENT_CATEGORY_ORDER.indexOf(b.toLowerCase() as typeof INGREDIENT_CATEGORY_ORDER[number]);
+    const aIndex = order.indexOf(a.toLowerCase());
+    const bIndex = order.indexOf(b.toLowerCase());
     // Unknown categories go to the end
-    const aOrder = aIndex === -1 ? INGREDIENT_CATEGORY_ORDER.length : aIndex;
-    const bOrder = bIndex === -1 ? INGREDIENT_CATEGORY_ORDER.length : bIndex;
+    const aOrder = aIndex === -1 ? order.length : aIndex;
+    const bOrder = bIndex === -1 ? order.length : bIndex;
     return aOrder - bOrder;
   });
 }

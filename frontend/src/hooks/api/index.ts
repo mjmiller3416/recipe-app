@@ -125,5 +125,39 @@ export {
   useResetCategories,
 } from "./useCategories";
 
+// Ingredient Category Hooks
+export {
+  // Query Keys
+  ingredientCategoryQueryKeys,
+  // Queries
+  useIngredientCategories,
+  useIngredientCategoryOptions,
+  useIngredientCategory,
+  // Mutations
+  useCreateIngredientCategory,
+  useUpdateIngredientCategory,
+  useDeleteIngredientCategory,
+  useReorderIngredientCategories,
+  useBulkUpdateIngredientCategories,
+  useResetIngredientCategories,
+} from "./useIngredientCategories";
+
+// Ingredient Unit Hooks
+export {
+  // Query Keys
+  ingredientUnitQueryKeys,
+  // Queries
+  useIngredientUnits,
+  useIngredientUnitOptions,
+  useIngredientUnit,
+  // Mutations
+  useCreateIngredientUnit,
+  useUpdateIngredientUnit,
+  useDeleteIngredientUnit,
+  useReorderIngredientUnits,
+  useBulkUpdateIngredientUnits,
+  useResetIngredientUnits,
+} from "./useIngredientUnits";
+
 // Unit Conversion Hooks
 export { useUnits } from "./useUnits";

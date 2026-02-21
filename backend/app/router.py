@@ -11,6 +11,8 @@ from app.api import (
     dashboard,
     data_management,
     feedback,
+    ingredient_categories,
+    ingredient_units,
     ingredients,
     meals,
     planner,
@@ -37,6 +39,8 @@ api_router.include_router(meals.router, prefix="/api/meals", tags=["meals"])
 api_router.include_router(planner.router, prefix="/api/planner", tags=["planner"])
 api_router.include_router(shopping.router, prefix="/api/shopping", tags=["shopping"])
 api_router.include_router(ingredients.router, prefix="/api/ingredients", tags=["ingredients"])
+api_router.include_router(ingredient_categories.router, prefix="/api/ingredient-categories", tags=["ingredient-categories"])
+api_router.include_router(ingredient_units.router, prefix="/api/ingredient-units", tags=["ingredient-units"])
 
 # ── Supporting routes ────────────────────────────────────────────────────
 api_router.include_router(data_management.router, prefix="/api/data-management", tags=["data-management"])

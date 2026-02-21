@@ -18,3 +18,5 @@ export { unitConversionApi } from "./units";
 export { settingsApi } from "./settings";
 export { recipeGroupApi } from "./recipe-groups";
 export { categoryApi } from "./categories";
+export { ingredientCategoryApi } from "./ingredient-categories";
+export { ingredientUnitApi } from "./ingredient-units";

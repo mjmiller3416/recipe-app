@@ -28,6 +28,7 @@ import {
   useDeleteRecipeGroup,
 } from "@/hooks/api/useRecipeGroups";
 import { RecipeCategoriesSection } from "./RecipeCategoriesSection";
+import { IngredientCategoriesSection } from "./IngredientCategoriesSection";
 
 const MAX_FILTERS = 5;
 
@@ -365,6 +366,12 @@ export function RecipePreferencesSection({
 
           {/* Recipe Categories Section */}
           <RecipeCategoriesSection />
+
+          {/* Divider */}
+          <div className="border-t border-border" />
+
+          {/* Ingredient Categories Section */}
+          <IngredientCategoriesSection />
         </div>
       </CardContent>
 

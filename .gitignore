@@ -75,3 +75,4 @@ frontend/lint-report.md
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+proto.jsx
