@@ -11,7 +11,7 @@ import {
   SortAsc,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 import {
   Select,
   SelectContent,
@@ -51,32 +51,28 @@ interface FilterChipProps {
 
 function FilterChip({ label, type, onRemove }: FilterChipProps) {
   const typeColors: Record<string, string> = {
-    category: "bg-primary/20 text-primary-on-surface border-primary/30",
-    mealType: "bg-secondary/20 text-secondary border-secondary/30",
-    dietary: "bg-accent/50 text-foreground border-accent",
-    favorite: "bg-destructive/20 text-destructive border-destructive/30",
-    time: "bg-secondary/20 text-secondary border-secondary/30",
+    category: "bg-primary/20 text-primary-on-surface border-primary/30 hover:bg-primary/30",
+    mealType: "bg-secondary/20 text-secondary border-secondary/30 hover:bg-secondary/30",
+    dietary: "bg-accent/50 text-foreground border-accent hover:bg-accent/60",
+    favorite: "bg-destructive/20 text-destructive border-destructive/30 hover:bg-destructive/30",
+    time: "bg-secondary/20 text-secondary border-secondary/30 hover:bg-secondary/30",
   };
 
   return (
-    <Badge
+    <Button
       variant="outline"
+      shape="pill"
+      size="sm"
+      onClick={onRemove}
+      aria-label={`Remove ${label} filter`}
       className={cn(
-        "gap-2 px-3 py-1 rounded-full transition-colors",
-        typeColors[type] || "bg-elevated text-foreground border-border"
+        "gap-2",
+        typeColors[type] || "bg-elevated text-foreground border-border hover:bg-elevated/80"
       )}
     >
       {label}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="size-5 p-0 rounded-full hover:bg-background/50"
-        onClick={onRemove}
-        aria-label={`Remove ${label} filter`}
-      >
-        <X className="size-3" strokeWidth={1.5} />
-      </Button>
-    </Badge>
+      <X className="size-3.5" strokeWidth={1.5} />
+    </Button>
   );
 }
 
