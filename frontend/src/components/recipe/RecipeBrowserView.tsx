@@ -318,6 +318,7 @@ export function RecipeBrowserView({
           variant="outline"
           size="sm"
           onClick={() => setFiltersOpen((prev) => !prev)}
+          data-filter-toggle
           className={cn(
             "gap-2",
             filterCount > 0 && "border-primary/50 bg-primary/5"
@@ -332,7 +333,7 @@ export function RecipeBrowserView({
           )}
         </Button>
 
-        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+        <Select value={sortBy} onValueChange={(v) => { setSortBy(v as SortOption); scrollToList(); }}>
           <SelectTrigger className="w-40 h-9">
             <SelectValue />
           </SelectTrigger>
@@ -351,7 +352,7 @@ export function RecipeBrowserView({
         <Button
           variant="outline"
           size="icon"
-          onClick={() => setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))}
+          onClick={() => { setSortDirection((prev) => (prev === "asc" ? "desc" : "asc")); scrollToList(); }}
           className="h-9 w-9"
           aria-label={`Sort ${sortDirection === "asc" ? "ascending" : "descending"}`}
         >
@@ -491,8 +492,13 @@ export function RecipeBrowserView({
     toggleFavoriteMutation.mutate(Number(recipe.id));
   };
 
+  const scrollToList = () => {
+    sortControlsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const toggleSortDirection = () => {
     setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    scrollToList();
   };
 
   // --------------------------------------------------------------------------
@@ -572,11 +578,11 @@ export function RecipeBrowserView({
       }
     >
       {/* Static filter/sort row (scrolls with page, observed for nav pinning) */}
-      <div ref={mode === "browse" ? sortControlsRef : undefined} className="mb-6">
+      <div ref={mode === "browse" ? sortControlsRef : undefined} className="mb-6 scroll-mt-20">
         <RecipeSortControls
           sortBy={sortBy}
           sortDirection={sortDirection}
-          onSortChange={setSortBy}
+          onSortChange={(v) => { setSortBy(v); scrollToList(); }}
           onSortDirectionToggle={toggleSortDirection}
           onOpenFilters={() => setFiltersOpen((prev) => !prev)}
           activeFilters={activeFiltersList}

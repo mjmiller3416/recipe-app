@@ -404,7 +404,7 @@ export function ShoppingListView() {
 
   return (
     <PageLayout
-      title="Grab & Go List"
+      title="Shopping List"
       description="Everything you need, consolidated and ready for the store."
       actions={headerActions}
       pinActionsToNav
