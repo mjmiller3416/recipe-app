@@ -253,6 +253,7 @@
   --duration-fast: 150ms;
   --duration-normal: 300ms;
   --duration-slow: 500ms;
+  --duration-carousel: 400ms;
 
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
@@ -718,6 +719,16 @@
 
 .animate-glow {
   animation: glow 2s ease-in-out infinite;
+}
+
+/* Carousel nav buttons - fade in on stage hover */
+.carousel-nav-btn {
+  opacity: 0;
+  transition: opacity 180ms ease, background-color 150ms ease;
+}
+
+.carousel-stage:hover .carousel-nav-btn {
+  opacity: 1;
 }
 
 @keyframes pill-slide-in {
