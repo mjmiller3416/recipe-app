@@ -7,7 +7,7 @@ import {
   CalendarDays,
   BookOpen,
   ShoppingCart,
-  Newspaper,
+
   Menu,
   Moon,
   Sun,
@@ -32,6 +32,7 @@ import { TopNavAddMenu } from "@/components/layout/TopNavAddMenu";
 import { NavButton } from "@/components/layout/NavButton";
 import { FeedbackDialog } from "@/components/common/FeedbackDialog";
 import { ChangelogDialog } from "@/components/common/ChangelogDialog";
+import { ChangelogPopover } from "@/components/common/ChangelogPopover";
 import { CHANGELOG_TOTAL_ITEMS } from "@/data/changelog";
 import { appConfig } from "@/lib/config";
 import { cn } from "@/lib/utils";
@@ -61,6 +62,7 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
   const [changelogOpen, setChangelogOpen] = useState(false);
   const [changelogBadgeDismissed, setChangelogBadgeDismissed] = useState(false);
   const [changelogCountReset, setChangelogCountReset] = useState(false);
+  const [changelogScrollTo, setChangelogScrollTo] = useState<number | null>(null);
 
   // Client-side state (lazy initializers read localStorage without triggering cascading renders)
   const [theme, setTheme] = useState<"light" | "dark">(() => {
@@ -136,6 +138,7 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
       setChangelogBadgeDismissed(true);
     } else {
       setChangelogCountReset(true);
+      setChangelogScrollTo(null);
     }
     setChangelogOpen(open);
   };
@@ -234,23 +237,19 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
           )}
 
           {/* Changelog / What's New */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="What's new"
-                onClick={() => handleChangelogOpenChange(true)}
-                className="relative"
-              >
-                <Newspaper className="size-5" strokeWidth={1.5} />
-                {hasNewUpdates && (
-                  <span className="absolute w-2 h-2 rounded-full top-1.5 right-1.5 bg-primary animate-pulse" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>What&apos;s New</TooltipContent>
-          </Tooltip>
+          <ChangelogPopover
+            newItemCount={newItemCount}
+            hasNewUpdates={hasNewUpdates}
+            onOpen={() => {
+              localStorage.setItem("lastSeenChangelogCount", String(CHANGELOG_TOTAL_ITEMS));
+              setChangelogBadgeDismissed(true);
+            }}
+            onViewAll={() => handleChangelogOpenChange(true)}
+            onViewItem={(globalIndex) => {
+              setChangelogScrollTo(globalIndex);
+              handleChangelogOpenChange(true);
+            }}
+          />
 
           {/* User avatar dropdown */}
           <TopNavUserMenu
@@ -311,6 +310,7 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
         open={changelogOpen}
         onOpenChange={handleChangelogOpenChange}
         newItemCount={newItemCount}
+        scrollToItem={changelogScrollTo}
       />
     </>
   );

@@ -2,9 +2,16 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-02-03 - New Features
+- In-App Notifications — stay informed about important updates, new features, and personalized cooking tips with in-app notifications. Click the bell icon in the sidebar to view your notifications and never miss out on the latest from your recipe app!
+
+## 2026-02-03 - Bug Fixes
+- Notifications — Fixed issue with in-app notifications not displaying for some users
+- Testing Notifications — now you can receive in-app notifications for important updates, new features, and personalized cooking tips. Click the bell icon in the sidebar to view your notifications and stay up-to-date with the latest from your recipe app!
+
 ## 2026-02-01 - New Features
 - Custom Recipe Groups — organize your recipes into collections like "Weeknight Dinners" or "Holiday Favorites" and filter by group in the Recipe Browser
-- Meal Planner now auto-selects the next meal after completing one — no need to manually pick the next meal in your queue
+- Meal Planner — now auto-selects the next meal after completing one — no need to manually pick the next meal in your queue
 
 ## 2026-02-01 - Bug Fixes
 - Fixed cooking streak not updating correctly when clearing completed meals from the planner
@@ -201,13 +208,23 @@ const CHANGELOG_MD = `
 `;
 
 // ============================================
-// Parser (don't edit below this line)
+// Parser & Helpers
 // ============================================
+import { Star, Bug, Zap, Sparkles, type LucideIcon } from "lucide-react";
+
 export interface ChangelogEntry {
   version: string;
   date: string;
   title: string;
   changes: string[];
+}
+
+export interface ChangelogItem {
+  change: string;
+  category: string;
+  rawDate: string;
+  date: string;
+  globalIndex: number;
 }
 
 function formatDate(dateStr: string): string {
@@ -259,4 +276,54 @@ export function getItemCountBeforeEntry(entryIndex: number): number {
     (sum, entry) => sum + entry.changes.length,
     0
   );
+}
+
+// Flatten all entries into individual change items (newest first)
+export function getFlattenedChanges(limit?: number): ChangelogItem[] {
+  const items: ChangelogItem[] = [];
+  let globalIndex = 0;
+
+  for (const entry of CHANGELOG_ENTRIES) {
+    for (const change of entry.changes) {
+      items.push({
+        change,
+        category: entry.title,
+        rawDate: entry.version,
+        date: entry.date,
+        globalIndex,
+      });
+      globalIndex++;
+      if (limit && items.length >= limit) return items;
+    }
+  }
+
+  return items;
+}
+
+// Parse "Title — description" pattern from change text
+export function parseChangeText(text: string): { title: string; description: string | null } {
+  const separatorIndex = text.indexOf("\u2014");
+  if (separatorIndex === -1) {
+    return { title: text, description: null };
+  }
+  return {
+    title: text.slice(0, separatorIndex).trim(),
+    description: text.slice(separatorIndex + 1).trim(),
+  };
+}
+
+// Get icon component based on changelog category
+export function getCategoryIcon(title: string): LucideIcon {
+  if (title.toLowerCase().includes("feature")) return Star;
+  if (title.toLowerCase().includes("fix")) return Bug;
+  if (title.toLowerCase().includes("improvement")) return Zap;
+  return Sparkles;
+}
+
+// Get accent color class based on changelog category
+export function getCategoryColor(title: string): string {
+  if (title.toLowerCase().includes("feature")) return "text-primary";
+  if (title.toLowerCase().includes("fix")) return "text-secondary";
+  if (title.toLowerCase().includes("improvement")) return "text-muted-foreground";
+  return "text-muted-foreground";
 }
