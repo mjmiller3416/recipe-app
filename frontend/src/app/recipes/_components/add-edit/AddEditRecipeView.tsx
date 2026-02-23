@@ -145,35 +145,41 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
   }
 
   // Page metadata
-  const pageTitle = isEditMode ? "Edit Recipe" : "Add New Recipe";
-  const pageDescription = isEditMode
+  const pageTitle = isEditMode
     ? `Editing "${initialData?.recipe_name}"`
-    : "Create a new recipe for your collection";
+    : "Create Recipe Card";
   const saveButtonText = isEditMode ? "Save Changes" : "Save Recipe";
+  
+  // Header Actions
+  const headerActions = (
+    <Button
+      variant="default"
+      className="hidden gap-2 md:flex"
+      onClick={form.handleSubmit}
+      disabled={form.isSubmitting}
+    >
+      {form.isSubmitting ? (
+        <Loader2 className="w-4 h-4 animate-spin" />
+      ) : (
+        <Save className="w-4 h-4" />
+      )}
+      {form.isSubmitting ? "Saving..." : saveButtonText}
+    </Button>
+  );
 
   return (
     <>
       <PageLayout
         title={pageTitle}
-        description={pageDescription}
+        description="Ingredients, steps, notes—organized and easy to reuse."
         onBackClick={isEditMode ? () => handleNavigation(`/recipes/${recipeId}`) : undefined}
         contentClassName="max-md:pb-40"
-        actions={
-          <Button
-            variant="default"
-            className="hidden gap-2 md:flex"
-            onClick={form.handleSubmit}
-            disabled={form.isSubmitting}
-          >
-            {form.isSubmitting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            {form.isSubmitting ? "Saving..." : saveButtonText}
-          </Button>
-        }
+        pinActionsToNav
+        actions={headerActions}
       >
+      
+
+
         <div className="flex flex-col gap-6 md:flex-row md:items-start">
           {/* Form Cards - Top on mobile, left column on desktop */}
           <div className="flex-1 min-w-0 space-y-6">
@@ -205,6 +211,7 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
               onAdd={form.addIngredient}
               onReorder={form.reorderIngredients}
               getError={form.getError}
+              getIngredientError={form.getIngredientError}
             />
 
             {/* Directions & Notes Section */}
@@ -221,14 +228,16 @@ export function AddEditRecipeView({ mode, recipeId }: AddEditRecipeViewProps) {
           {/* Image Upload - Bottom on mobile, right sidebar on desktop */}
           {/* Image Upload - Bottom on mobile, right sidebar on desktop */}
           <div className="md:w-80 md:flex-shrink-0 md:self-stretch">
-            <div className="md:sticky md:top-[113px] z-10 transform-gpu">
+            <div className="md:sticky md:top-28 z-10 transform-gpu">
               <ImageUploadCard
                 imagePreview={form.imagePreview}
                 onImageUpload={form.handleImageUpload}
                 onGeneratedImageAccept={form.handleGeneratedImageAccept}
+                onBannerOnlyAccept={form.handleBannerOnlyAccept}
                 recipeName={form.recipeName}
                 isAiGenerated={form.isAiGenerated}
                 onAiGeneratedChange={form.setIsAiGenerated}
+                isEditMode={isEditMode}
               />
             </div>
           </div>

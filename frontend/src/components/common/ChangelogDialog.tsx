@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,37 +8,81 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Bug, Zap, Star } from "lucide-react";
-import { CHANGELOG_ENTRIES, getItemCountBeforeEntry } from "@/data/changelog";
+import {
+  CHANGELOG_ENTRIES,
+  getItemCountBeforeEntry,
+  getCategoryIcon,
+  getCategoryColor,
+} from "@/data/changelog";
+import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChangelogDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   newItemCount?: number;
-}
-
-// Get icon based on changelog section title
-function getTitleIcon(title: string) {
-  if (title.toLowerCase().includes("feature")) return Star;
-  if (title.toLowerCase().includes("fix")) return Bug;
-  if (title.toLowerCase().includes("improvement")) return Zap;
-  return Sparkles;
-}
-
-// Get accent color based on changelog section title
-function getTitleColor(title: string) {
-  if (title.toLowerCase().includes("feature")) return "text-primary";
-  if (title.toLowerCase().includes("fix")) return "text-secondary";
-  if (title.toLowerCase().includes("improvement")) return "text-muted-foreground-foreground";
-  return "text-muted-foreground";
+  scrollToItem?: number | null;
 }
 
 export function ChangelogDialog({
   open,
   onOpenChange,
   newItemCount = 0,
+  scrollToItem,
 }: ChangelogDialogProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [highlightedEntry, setHighlightedEntry] = useState<number | null>(null);
+
+  // Find which entry index (in CHANGELOG_ENTRIES) contains the target globalIndex
+  const getEntryIndexForItem = (globalIndex: number): number => {
+    let count = 0;
+    for (let i = 0; i < CHANGELOG_ENTRIES.length; i++) {
+      count += CHANGELOG_ENTRIES[i].changes.length;
+      if (globalIndex < count) return i;
+    }
+    return 0;
+  };
+
+  // Clear highlight when dialog closes or scrollToItem resets
+  useEffect(() => {
+    if (!open || scrollToItem == null) return;
+    return () => setHighlightedEntry(null);
+  }, [open, scrollToItem]);
+
+  useEffect(() => {
+    if (!open || scrollToItem == null) return;
+
+    const entryIdx = getEntryIndexForItem(scrollToItem);
+    const targetEntry = CHANGELOG_ENTRIES[entryIdx];
+    const targetDate = targetEntry?.date;
+
+    // Delay to allow dialog animation to complete
+    const timer = setTimeout(() => {
+      const container = scrollContainerRef.current;
+      // Find the date header for this entry's date group
+      const dateHeader = container?.querySelector(
+        `[data-changelog-date="${targetDate}"]`
+      ) as HTMLElement | null;
+
+      if (dateHeader && container) {
+        // Scroll so the date header sits at the top of the scroll area
+        container.scrollTop = dateHeader.offsetTop - container.offsetTop;
+      }
+
+      // Highlight the entry card
+      setHighlightedEntry(entryIdx);
+    }, 150);
+
+    // Clear highlight after 2 seconds
+    const clearTimer = setTimeout(() => {
+      setHighlightedEntry(null);
+    }, 2150);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(clearTimer);
+    };
+  }, [open, scrollToItem]);
   // Collect all new items for the "What's New" section
   const newItems: { change: string; title: string; date: string }[] = [];
   let itemsCounted = 0;
@@ -75,7 +120,7 @@ export function ChangelogDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
           {/* Inner wrapper with padding for shadow room */}
           <div className="space-y-3 px-3">
           {/* NEW ITEMS SECTION - Only show if there are new items */}
@@ -114,13 +159,18 @@ export function ChangelogDialog({
               }
 
               return Object.entries(groupedByDate).map(
-                ([date, entries], dateIdx) => (
+                ([date, entries]) => {
+                  // Get the global index of the first entry in this date group
+                  const firstEntryGlobalIdx = CHANGELOG_ENTRIES.indexOf(entries[0]);
+
+                  return (
                   <div key={date} className="space-y-2">
                     {/* Date header - subtle inline */}
                     <div
+                      data-changelog-date={date}
                       className={cn(
                         "flex items-center gap-2",
-                        dateIdx > 0 && "mt-4 pt-3 border-t border-border/50"
+                        firstEntryGlobalIdx > 0 && "mt-4 pt-3 border-t border-border/50"
                       )}
                     >
                       <span className="text-xs text-muted-foreground-foreground">
@@ -130,15 +180,20 @@ export function ChangelogDialog({
 
                     {/* Entries for this date */}
                     {entries.map((entry) => {
-                      const Icon = getTitleIcon(entry.title);
-                      const colorClass = getTitleColor(entry.title);
+                      const Icon = getCategoryIcon(entry.title);
+                      const colorClass = getCategoryColor(entry.title);
                       const entryGlobalIdx = CHANGELOG_ENTRIES.indexOf(entry);
                       const itemsBefore = getItemCountBeforeEntry(entryGlobalIdx);
 
                       return (
                         <div
                           key={entryGlobalIdx}
-                          className="rounded-xl surface-raised p-3 space-y-2"
+                          className={cn(
+                            "rounded-xl surface-raised p-3 space-y-2 transition-all duration-500",
+                            highlightedEntry === entryGlobalIdx
+                              ? "ring-2 ring-primary shadow-glow-primary"
+                              : "ring-0 ring-transparent"
+                          )}
                         >
                           <div className="flex items-center gap-2">
                             <Icon className={cn("w-4 h-4", colorClass)} />
@@ -153,6 +208,7 @@ export function ChangelogDialog({
 
                               return (
                                 <li
+                                  id={`changelog-item-${globalItemIndex}`}
                                   key={changeIdx}
                                   className={cn(
                                     "text-sm flex items-start gap-2",
@@ -188,7 +244,8 @@ export function ChangelogDialog({
                       );
                     })}
                   </div>
-                )
+                  );
+                }
               );
             })()}
           </div>

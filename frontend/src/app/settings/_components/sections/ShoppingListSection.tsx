@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { SectionHeader } from "../SectionHeader";
 import { UnitConversionsSection } from "./UnitConversionsSection";
+import { IngredientUnitsSection } from "./IngredientUnitsSection";
 import { CategoryOrderSection } from "./CategoryOrderSection";
 
 type AutoClearOption = "manual" | "onRefresh" | "daily";
@@ -114,14 +115,18 @@ export function ShoppingListSection({
                 Choose when checked items are removed from your shopping list
               </p>
             </div>
+            <Separator />
+
+            {/* Unit Conversions */}
+            <UnitConversionsSection />
+
+            <Separator />
+
+            {/* Ingredient Units */}
+            <IngredientUnitsSection />
           </div>
         </CardContent>
       </Card>
-
-      <Separator />
-
-      {/* Unit Conversions - kept as a sub-section */}
-      <UnitConversionsSection />
     </div>
   );
 }

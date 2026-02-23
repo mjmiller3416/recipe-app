@@ -42,39 +42,11 @@ def get_entity(
         raise HTTPException(status_code=404, detail="Entity not found")
 ```
 
-## Error Mapping (CRITICAL)
+## Error Mapping
 
-**Map domain exceptions to HTTP status codes:**
+Map domain exceptions to HTTP status codes in route try/except blocks. See exceptions.md for the complete mapping table.
 
-| Domain Exception | HTTP Status | Usage |
-|-----------------|-------------|-------|
-| `NotFoundError` | 404 | Resource doesn't exist |
-| `DuplicateError` | 409 | Resource already exists |
-| `LimitError` | 409 | Constraint exceeded |
-| `ValidationError` | 400 | Invalid input data |
-| `SaveError` / `DeleteError` | 500 | Database failure |
-| Pydantic `ValidationError` | 422 | Request body validation (automatic) |
-
-```python
-@router.post("", response_model=EntityResponseDTO, status_code=201)
-def create_entity(
-    data: EntityCreateDTO,
-    session: Session = Depends(get_session),
-    current_user: dict = Depends(get_current_user),
-):
-    service = EntityService(session, current_user["id"])
-    try:
-        entity = service.create(data)
-        return EntityResponseDTO.from_model(entity)
-
-    # Map domain exceptions to HTTP status codes
-    except DuplicateEntityError as e:
-        raise HTTPException(status_code=409, detail=str(e))
-    except EntityValidationError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except EntitySaveError as e:
-        raise HTTPException(status_code=500, detail=str(e))
-```
+For POST/PUT endpoints, follow the same try/except pattern as the GET example above, catching multiple exception types.
 
 ## Query Parameters with Validation
 

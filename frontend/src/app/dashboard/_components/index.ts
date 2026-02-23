@@ -1,3 +1,2 @@
 export { DashboardView } from "./DashboardView";
-export { MealQueueWidget } from "./MealQueueWidget";
-export { ShoppingListWidget } from "./ShoppingListWidget";
+export { CarouselMealCard, MealCarouselWidget } from "./carousel";

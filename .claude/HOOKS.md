@@ -31,10 +31,11 @@ bash --version        # Should show bash version
 
 Located in `.claude/hooks/`:
 
-- `context-router.sh` - Loads context based on file path (PreToolUse hook)
-- `design-auditor.sh` - Checks for design violations (PostToolUse hook)
-- `session-init.sh` - Refreshes context after compaction (SessionStart hook)
-- `work-verification.sh` - Checks for uncommitted changes (Stop hook)
+- `context-router.sh` - Loads context modules based on file path (PreToolUse)
+- `memory-refresh.sh` - Periodic critical rules reminder every 10 edits (PreToolUse)
+- `design-auditor.sh` - Deterministic violation checks with line numbers (PostToolUse)
+- `session-init.sh` - Refreshes context after compaction (SessionStart)
+- `lint-on-stop.sh` - ESLint on changed files, blocks stopping if errors found (Stop)
 - `hooks.log` - Execution log showing what hooks ran and results
 
 ## Monitoring Hook Execution
@@ -59,9 +60,11 @@ watch -n 2 tail -20 .claude/hooks/hooks.log
 **Example log output:**
 ```
 [14:32:15] context-router | RecipeCard.tsx | Frontend context loaded
-[14:32:16] design-auditor | RecipeCard.tsx | ✓ No violations
+[14:32:16] design-auditor | RecipeCard.tsx | ✓ Pass
 [14:33:01] context-router | recipe_service.py | Backend context loaded
 [14:35:42] design-auditor | AddRecipeForm.tsx | ✗ 2 violation(s)
+[14:40:00] lint-on-stop | Linting 2 file(s): frontend/src/...
+[14:40:01] lint-on-stop | ✓ No issues
 ```
 
 ## Context Modules
@@ -76,8 +79,9 @@ Located in `.claude/context/`:
 - `component-inventory.md` - Available shadcn/ui and custom project components
 - `form-patterns.md` - Form handling patterns
 - `layout-patterns.md` - Layout component patterns
+- `data-fetching.md` - React Query patterns, guard order, mutations, cache invalidation
 - `accessibility.md` - Accessibility guidelines
-- `file-organization.md` - Frontend file organization
+- `structure.md` - Frontend organization rules (also loaded for new files)
 
 ### Backend Modules
 - `backend-core.md` - Core backend patterns
@@ -90,16 +94,52 @@ Located in `.claude/context/`:
 - `migrations.md` - Alembic migration patterns
 - `exceptions.md` - Error handling patterns
 
+## Design Auditor — Violation Checks
+
+The `design-auditor.sh` hook catches deterministic, grep-able violations only. Deeper analysis is handled by the `/audit` skill on commit.
+
+### Frontend Checks (frontend/src files)
+
+| ID | Check | Applies To |
+|---|---|---|
+| C.1 | Hardcoded color classes (gray, slate, red, blue, etc.) | `.tsx`, `.ts` |
+| C.2 | Arbitrary pixel values (`-[Npx]`) | `.tsx`, `.ts` |
+| C.4 | Raw `<button>` elements (use `<Button>`) | `.tsx` |
+| C.13 | `react-icons` imports (use `lucide-react`) | `.tsx` |
+
+### Backend Checks (backend/app files)
+
+| ID | Check | Applies To |
+|---|---|---|
+| S.4 | Repository calling `commit()` (use `flush()`) | `repositories/*.py` |
+| S.6 | `HTTPException` in service (use domain exceptions) | `services/*.py` |
+| S.10 | Direct DB queries in service (use repository) | `services/*.py` |
+
+Violations are reported via `systemMessage` with line numbers and criteria IDs. Criteria IDs map to `.claude/skills/audit/criteria/` checklists.
+
 ## How Marker Files Work
 
-The system uses marker files to track which context has been loaded in the current session. This prevents redundant loading and improves performance.
+The system uses marker files to optimize context loading performance. Marker files control **only the core (static) context** — file-path-dependent conditional context loads on every edit.
+
+### What loads once vs. every edit
+
+| Loaded Once (marker-gated) | Loaded Every Edit (file-dependent) |
+|---|---|
+| frontend-core.md | accessibility.md |
+| design-tokens.md | form-patterns.md (for *Form.tsx, forms/*.tsx) |
+| component-inventory.md | layout-patterns.md (for page.tsx, layout.tsx, *View.tsx) |
+| backend-core.md | data-fetching.md (for page.tsx, *View.tsx) |
+| architecture.md | component-patterns.md (for .tsx) |
+| | shadcn-patterns.md (for .tsx) |
+| | exceptions.md |
+| | models.md, dtos.md, services.md, etc. (by path) |
 
 ### Marker File Locations
 
 - **Windows**: `%TEMP%\claude-*-context-{session_id}`
 - **macOS/Linux**: `$TMPDIR/claude-*-context-{session_id}` or `/tmp/claude-*-context-{session_id}`
 
-Context is loaded **once per session** and persists until the session ends or is compacted.
+Core context is loaded **once per session** and persists until the session ends or is compacted. Conditional context loads on **every edit** based on the file being modified.
 
 ## Troubleshooting
 
@@ -216,7 +256,7 @@ To add new context modules:
 
 Edit hook scripts in `.claude/hooks/`:
 - Make sure scripts remain fast (<1s execution time)
-- Always output to stderr for debugging (`>&2`)
+- Output to stdout as JSON (`systemMessage`, `hookSpecificOutput`) — NOT stderr
 - Use marker files to prevent redundant work
 - Return exit code 0 for success
 

@@ -45,6 +45,7 @@ class Recipe(Base):
     banner_image_path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    is_ai_generated: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
 
     # User ownership
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)

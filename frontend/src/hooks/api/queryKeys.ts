@@ -41,5 +41,14 @@ export const aiQueryKeys = {
   cookingTip: () => [...aiQueryKeys.all, "cooking-tip"] as const,
 };
 
+export const categoryQueryKeys = {
+  all: ["categories"] as const,
+  lists: () => [...categoryQueryKeys.all, "list"] as const,
+  list: (includeDisabled?: boolean) =>
+    [...categoryQueryKeys.lists(), { includeDisabled }] as const,
+  details: () => [...categoryQueryKeys.all, "detail"] as const,
+  detail: (id: number) => [...categoryQueryKeys.details(), id] as const,
+};
+
 // Re-export shopping keys for consistency
 export { shoppingQueryKeys } from "./useShopping";

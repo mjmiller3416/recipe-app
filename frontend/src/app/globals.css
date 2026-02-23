@@ -7,101 +7,159 @@
   /* ============================================
      BACKGROUNDS
      ============================================ */
-  --background: #1a1a1a;        /* Main app background */
-  --background-subtle: #212121; /* Between background and sidebar */
-  --background-intense: #151515; /* Deeper than background (modals, overlays) */
-  --sidebar: #252525;            /* Sidebar background */
-  --elevated: #2f2f2f;          /* Cards, elevated surfaces */
-  --hover: #3d3d3d;             /* Hover state background */
-  
+  --background: #1a1a1a;
+  /* Main app background */
+  --background-subtle: #212121;
+  /* Between background and sidebar */
+  --background-intense: #151515;
+  /* Deeper than background (modals, overlays) */
+  --sidebar: #252525;
+  /* Sidebar background */
+  --elevated: #2f2f2f;
+  /* Cards, elevated surfaces */
+  --hover: #3d3d3d;
+  /* Hover state background */
+
   /* ============================================
      TEXT COLORS
      ============================================ */
-  --foreground: #f5f5f5;        /* Primary text */
-  --foreground-subtle: #d4d4d4; /* Between foreground and muted */
-  --foreground-disabled: #737373; /* Disabled text state */
+  --foreground: #f5f5f5;
+  /* Primary text */
+  --foreground-subtle: #d4d4d4;
+  /* Between foreground and muted */
+  --foreground-disabled: #737373;
+  /* Disabled text state */
 
   /* ============================================
      PRIMARY COLORS (Purple)
      ============================================ */
-  --primary: #8b5cf6;           /* Main brand color - badges, accents */
-  --primary-dark: #7c3aed;      /* Darker variant */
-  --primary-light: #a78bfa;     /* Lighter variant */
-  --primary-hover: #7c3aed;     /* Hover state */
-  --primary-active: #6d28d9;    /* Pressed/active state */
-  --primary-foreground: #ffffff; /* Text on primary background */
-  
+  --primary: #8b5cf6;
+  /* Main brand color - badges, accents */
+  --primary-dark: #7c3aed;
+  /* Darker variant */
+  --primary-light: #a78bfa;
+  /* Lighter variant */
+  --primary-hover: #7c3aed;
+  /* Hover state */
+  --primary-active: #6d28d9;
+  /* Pressed/active state */
+  --primary-foreground: #ffffff;
+  /* Text on primary background */
+
   /* Primary surface colors (for tinted backgrounds) */
-  --primary-surface: #2d2438;   /* Subtle purple-tinted background */
-  --primary-surface-hover: #3d3148; /* Hover state for surface */
-  --primary-muted: #4c3d5e;     /* Medium purple for borders, subtle accents */
-  --primary-on-surface: #c4b5fd; /* Text color on primary surface bg */
-  
+  --primary-surface: #2d2438;
+  /* Subtle purple-tinted background */
+  --primary-surface-hover: #3d3148;
+  /* Hover state for surface */
+  --primary-muted: #4c3d5e;
+  /* Medium purple for borders, subtle accents */
+  --primary-on-surface: #c4b5fd;
+  /* Text color on primary surface bg */
+
   /* ============================================
      SECONDARY COLORS (Teal)
      ============================================ */
-  --secondary: #14b8a6;         /* Secondary brand color - meal type badges */
-  --secondary-hover: #0d9488;   /* Hover state */
-  --secondary-active: #0f766e;  /* Pressed/active state */
-  --secondary-foreground: #ffffff; /* Text on secondary background */
-  
+  --secondary: #14b8a6;
+  /* Secondary brand color - meal type badges */
+  --secondary-hover: #0d9488;
+  /* Hover state */
+  --secondary-active: #0f766e;
+  /* Pressed/active state */
+  --secondary-foreground: #ffffff;
+  /* Text on secondary background */
+
   /* Secondary surface colors (for tinted backgrounds) */
-  --secondary-surface: #1a2e2b; /* Subtle teal-tinted background */
-  --secondary-surface-hover: #243d39; /* Hover state for surface */
-  --secondary-muted: #2d4a45;   /* Medium teal for borders */
-  --secondary-on-surface: #5eead4; /* Text color on secondary surface bg */
+  --secondary-surface: #1a2e2b;
+  /* Subtle teal-tinted background */
+  --secondary-surface-hover: #243d39;
+  /* Hover state for surface */
+  --secondary-muted: #2d4a45;
+  /* Medium teal for borders */
+  --secondary-on-surface: #5eead4;
+  /* Text color on secondary surface bg */
 
   /* Transparent secondary surfaces (for info boxes, stats cards) */
-  --secondary-surface-alpha: rgba(20, 184, 166, 0.08); /* 8% teal background */
-  --secondary-border-alpha: rgba(20, 184, 166, 0.2);   /* 20% teal border */
+  --secondary-surface-alpha: rgba(20, 184, 166, 0.08);
+  /* 8% teal background */
+  --secondary-border-alpha: rgba(20, 184, 166, 0.2);
+  /* 20% teal border */
 
   /* ============================================
      NEUTRAL COLORS
      ============================================ */
-  --neutral: #525252;           /* Neutral gray for non-brand components */
-  --neutral-foreground: #f5f5f5; /* Text on neutral background */
+  --neutral: #525252;
+  /* Neutral gray for non-brand components */
+  --neutral-foreground: #f5f5f5;
+  /* Text on neutral background */
 
   /* ============================================
      STATUS COLORS
      ============================================ */
-  --success: #10b981;           /* Success states */
-  --warning: #f59e0b;           /* Warning states */
-  --error: #ef4444;             /* Error states, favorites */
-  --destructive: #b94a4a;       /* Destructive actions - muted coral */
-  --destructive-foreground: #fafafa; /* Text on destructive background */
-  --info: #3b82f6;              /* Informational states */
-  --info-foreground: #ffffff;   /* Text on info background */
+  --success: #10b981;
+  /* Success states */
+  --warning: #f59e0b;
+  /* Warning states */
+  --error: #ef4444;
+  /* Error states, favorites */
+  --destructive: #b94a4a;
+  /* Destructive actions - muted coral */
+  --destructive-foreground: #fafafa;
+  /* Text on destructive background */
+  --info: #3b82f6;
+  /* Informational states */
+  --info-foreground: #ffffff;
+  /* Text on info background */
 
   /* Success surface colors (for tinted backgrounds) */
-  --success-surface: rgba(16, 185, 129, 0.08);      /* Subtle green background */
-  --success-surface-border: rgba(16, 185, 129, 0.4); /* Green border */
+  --success-surface: rgba(16, 185, 129, 0.08);
+  /* Subtle green background */
+  --success-surface-border: rgba(16, 185, 129, 0.4);
+  /* Green border */
 
   /* ============================================
      UI ELEMENTS
      ============================================ */
-  --accent: #3d3d3d;            /* Accent surfaces - dietary badges */
-  --accent-foreground: #f5f5f5; /* Text on accent background */
-  --popover: #2f2f2f;           /* Popover/dropdown backgrounds */
-  --popover-foreground: #f5f5f5; /* Text in popovers */
-  --card: #252525;              /* Card backgrounds (matches sidebar) */
-  --card-foreground: #f5f5f5;   /* Text on cards */
-  --muted: #262626;             /* Muted background surfaces */
-  --muted-foreground: #a3a3a3;  /* Text on muted backgrounds */
-  --border: #3d3d3d;            /* Border color */
-  --border-subtle: #2d2d2d;     /* Lighter than main border */
-  --border-strong: #525252;     /* Stronger than main border */
-  --input: #2f2f2f;             /* Input backgrounds */
-  --button-outline-bg: #27272a; /* Outline button background - visible but subtle */
-  --ring: #8b5cf6;              /* Focus ring color */
-  --radius: 0.5rem;             /* Default border radius for components */
+  --accent: #3d3d3d;
+  /* Accent surfaces - dietary badges */
+  --accent-foreground: #f5f5f5;
+  /* Text on accent background */
+  --popover: #2f2f2f;
+  /* Popover/dropdown backgrounds */
+  --popover-foreground: #f5f5f5;
+  /* Text in popovers */
+  --card: #252525;
+  /* Card backgrounds (matches sidebar) */
+  --card-foreground: #f5f5f5;
+  /* Text on cards */
+  --muted: #262626;
+  /* Muted background surfaces */
+  --muted-foreground: #a3a3a3;
+  /* Text on muted backgrounds */
+  --border: #3d3d3d;
+  /* Border color */
+  --border-subtle: #2d2d2d;
+  /* Lighter than main border */
+  --border-strong: #525252;
+  /* Stronger than main border */
+  --input: #2f2f2f;
+  /* Input backgrounds */
+  --button-outline-bg: #27272a;
+  /* Outline button background - visible but subtle */
+  --ring: #8b5cf6;
+  /* Focus ring color */
+  --radius: 0.5rem;
+  /* Default border radius for components */
 
   /* ============================================
      DISABLED STATES
      ============================================ */
-  --disabled-bg: #3d3d3d;       /* Disabled background */
-  --disabled-fg: #737373;       /* Disabled text */
-  --disabled-opacity: 0.5;      /* Opacity for disabled elements */
-  
+  --disabled-bg: #3d3d3d;
+  /* Disabled background */
+  --disabled-fg: #737373;
+  /* Disabled text */
+  --disabled-opacity: 0.5;
+  /* Opacity for disabled elements */
+
   /* ============================================
      SHADOWS (Standard)
      ============================================ */
@@ -109,58 +167,71 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
-  
+
   /* ============================================
      SHADOWS (Layered Depth System)
      ============================================ */
-  --shadow-raised: 
-    0 1px 2px rgba(0, 0, 0, 0.3), 
-    0 4px 8px rgba(0, 0, 0, 0.2), 
+  --shadow-raised:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 4px 8px rgba(0, 0, 0, 0.2),
     0 8px 16px rgba(0, 0, 0, 0.15);
-  
-  --shadow-elevated: 
-    0 2px 4px rgba(0, 0, 0, 0.3), 
-    0 8px 16px rgba(0, 0, 0, 0.25), 
+
+  --shadow-elevated:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 8px 16px rgba(0, 0, 0, 0.25),
     0 16px 32px rgba(0, 0, 0, 0.2);
-  
-  --shadow-floating: 
-    0 4px 8px rgba(0, 0, 0, 0.3), 
-    0 16px 32px rgba(0, 0, 0, 0.3), 
+
+  --shadow-floating:
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    0 16px 32px rgba(0, 0, 0, 0.3),
     0 32px 64px rgba(0, 0, 0, 0.25);
-  
+
   /* Pressed/inset shadows */
   --shadow-inset-sm: inset 0 1px 2px rgba(0, 0, 0, 0.25);
   --shadow-inset-md: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-  
+
   /* Glow effects for focus/active states */
   --shadow-glow-primary: 0 0 20px rgba(139, 92, 246, 0.3);
   --shadow-glow-secondary: 0 0 20px rgba(20, 184, 166, 0.3);
-  
+
   /* ============================================
      OVERLAYS
      ============================================ */
-  --overlay: rgba(0, 0, 0, 0.5);        /* Modal backdrop */
-  --overlay-light: rgba(0, 0, 0, 0.25); /* Subtle overlay */
-  --overlay-strong: rgba(0, 0, 0, 0.75); /* Strong overlay */
-  
+  --overlay: rgba(0, 0, 0, 0.5);
+  /* Modal backdrop */
+  --overlay-light: rgba(0, 0, 0, 0.25);
+  /* Subtle overlay */
+  --overlay-strong: rgba(0, 0, 0, 0.75);
+  /* Strong overlay */
+
   /* ============================================
      STATUS INDICATORS
      ============================================ */
-  --status-online: #10b981;     /* Online indicator */
-  --status-offline: #6b7280;    /* Offline indicator */
-  --status-busy: #ef4444;       /* Busy indicator */
-  --status-away: #f59e0b;       /* Away indicator */
-  
+  --status-online: #10b981;
+  /* Online indicator */
+  --status-offline: #6b7280;
+  /* Offline indicator */
+  --status-busy: #ef4444;
+  /* Busy indicator */
+  --status-away: #f59e0b;
+  /* Away indicator */
+
   /* ============================================
      CHART COLORS (for data visualization)
      ============================================ */
-  --chart-1: #8b5cf6;           /* Purple - primary */
-  --chart-2: #14b8a6;           /* Teal - secondary */
-  --chart-3: #f59e0b;           /* Amber */
-  --chart-4: #ec4899;           /* Pink */
-  --chart-5: #10b981;           /* Green */
-  --chart-6: #6366f1;           /* Indigo */
-  
+  --chart-1: #8b5cf6;
+  /* Purple - primary */
+  --chart-2: #14b8a6;
+  /* Teal - secondary */
+  --chart-3: #f59e0b;
+  /* Amber */
+  --chart-4: #ec4899;
+  /* Pink */
+  --chart-5: #10b981;
+  /* Green */
+  --chart-6: #6366f1;
+  /* Indigo */
+
   /* ============================================
      RECIPE CARD SPECIFIC (Computed from above)
      Used for badges and special elements
@@ -172,7 +243,8 @@
   --recipe-dietary-bg: var(--accent);
   --recipe-dietary-text: var(--accent-foreground);
   --recipe-favorite: var(--error);
-  --recipe-favorite-hover: #dc2626; /* Slightly darker red for hover */
+  --recipe-favorite-hover: #dc2626;
+  /* Slightly darker red for hover */
 
   /* ============================================
      ANIMATION TOKENS
@@ -181,6 +253,7 @@
   --duration-fast: 150ms;
   --duration-normal: 300ms;
   --duration-slow: 500ms;
+  --duration-carousel: 400ms;
 
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-in: cubic-bezier(0.4, 0, 1, 1);
@@ -194,26 +267,40 @@
   --font-mono: var(--font-geist-mono);
 
   /* Font Sizes with Line Heights (Size / Line-Height) */
-  --text-xs: 0.75rem;     /* 12px */
-  --text-xs--line: 1rem;  /* 16px */
-  
-  --text-sm: 0.875rem;    /* 14px */
-  --text-sm--line: 1.25rem; /* 20px */
-  
-  --text-base: 1rem;      /* 16px */
-  --text-base--line: 1.5rem; /* 24px */
-  
-  --text-lg: 1.125rem;    /* 18px */
-  --text-lg--line: 1.75rem; /* 28px */
-  
-  --text-xl: 1.25rem;     /* 20px */
-  --text-xl--line: 1.75rem; /* 28px */
-  
-  --text-2xl: 1.5rem;     /* 24px */
-  --text-2xl--line: 2rem;   /* 32px */
-  
-  --text-3xl: 1.875rem;   /* 30px */
-  --text-3xl--line: 2.25rem; /* 36px */
+  --text-xs: 0.75rem;
+  /* 12px */
+  --text-xs--line: 1rem;
+  /* 16px */
+
+  --text-sm: 0.875rem;
+  /* 14px */
+  --text-sm--line: 1.25rem;
+  /* 20px */
+
+  --text-base: 1rem;
+  /* 16px */
+  --text-base--line: 1.5rem;
+  /* 24px */
+
+  --text-lg: 1.125rem;
+  /* 18px */
+  --text-lg--line: 1.75rem;
+  /* 28px */
+
+  --text-xl: 1.25rem;
+  /* 20px */
+  --text-xl--line: 1.75rem;
+  /* 28px */
+
+  --text-2xl: 1.5rem;
+  /* 24px */
+  --text-2xl--line: 2rem;
+  /* 32px */
+
+  --text-3xl: 1.875rem;
+  /* 30px */
+  --text-3xl--line: 2.25rem;
+  /* 36px */
 
   /* Font Weights */
   --font-normal: 400;
@@ -229,101 +316,159 @@
   /* ============================================
      BACKGROUNDS
      ============================================ */
-  --background: #f5f5f5;        /* Main app background - improved contrast */
-  --background-subtle: #f3f3f3; /* Between background and sidebar */
-  --background-intense: #ffffff; /* Brightest surfaces (modals) */
-  --sidebar: #e8e8e8;           /* Sidebar background */
-  --elevated: #ffffff;          /* Cards, elevated surfaces - pure white */
-  --hover: #e0e0e0;             /* Hover state background */
-  
+  --background: #f8f9fa;
+  /* Main app background - warm light gray */
+  --background-subtle: #f3f4f6;
+  /* Between background and sidebar */
+  --background-intense: #ffffff;
+  /* Brightest surfaces (modals) */
+  --sidebar: #f1f1f4;
+  /* Sidebar background - subtle cool tint */
+  --elevated: #ffffff;
+  /* Cards, elevated surfaces - pure white */
+  --hover: #f3f4f6;
+  /* Hover state background */
+
   /* ============================================
      TEXT COLORS
      ============================================ */
-  --foreground: #1a1a1a;        /* Primary text - dark gray */
-  --foreground-subtle: #4b5563; /* Between foreground and muted */
-  --foreground-disabled: #9ca3af; /* Disabled text state */
+  --foreground: #1a1a1a;
+  /* Primary text - dark gray */
+  --foreground-subtle: #4b5563;
+  /* Between foreground and muted */
+  --foreground-disabled: #9ca3af;
+  /* Disabled text state */
 
   /* ============================================
      PRIMARY COLORS (Purple)
      ============================================ */
-  --primary: #8b5cf6;           /* Main brand color - same purple works well */
-  --primary-dark: #7c3aed;      /* Darker variant */
-  --primary-light: #a78bfa;     /* Decorative use only - NOT for text backgrounds */
-  --primary-hover: #7c3aed;     /* Hover state */
-  --primary-active: #6d28d9;    /* Pressed/active state */
-  --primary-foreground: #ffffff; /* White text on purple background */
-  
+  --primary: #8b5cf6;
+  /* Main brand color - same purple works well */
+  --primary-dark: #7c3aed;
+  /* Darker variant */
+  --primary-light: #a78bfa;
+  /* Decorative use only - NOT for text backgrounds */
+  --primary-hover: #7c3aed;
+  /* Hover state */
+  --primary-active: #6d28d9;
+  /* Pressed/active state */
+  --primary-foreground: #ffffff;
+  /* White text on purple background */
+
   /* Primary surface colors (for tinted backgrounds with proper contrast) */
-  --primary-surface: #f3f0ff;   /* Very light purple - selected states, highlights */
-  --primary-surface-hover: #ede9fe; /* Slightly darker on hover */
-  --primary-muted: #ddd6fe;     /* Medium - borders, subtle accents, badges */
-  --primary-on-surface: #5b21b6; /* Dark purple text ON primary-surface (~7:1 contrast) */
-  
+  --primary-surface: #f3f0ff;
+  /* Very light purple - selected states, highlights */
+  --primary-surface-hover: #ede9fe;
+  /* Slightly darker on hover */
+  --primary-muted: #ddd6fe;
+  /* Medium - borders, subtle accents, badges */
+  --primary-on-surface: #5b21b6;
+  /* Dark purple text ON primary-surface (~7:1 contrast) */
+
   /* ============================================
      SECONDARY COLORS (Teal)
      ============================================ */
-  --secondary: #14b8a6;         /* Secondary brand color - same teal */
-  --secondary-hover: #0d9488;   /* Hover state */
-  --secondary-active: #0f766e;  /* Pressed/active state */
-  --secondary-foreground: #ffffff; /* White text on teal */
-  
+  --secondary: #14b8a6;
+  /* Secondary brand color - same teal */
+  --secondary-hover: #0d9488;
+  /* Hover state */
+  --secondary-active: #0f766e;
+  /* Pressed/active state */
+  --secondary-foreground: #ffffff;
+  /* White text on teal */
+
   /* Secondary surface colors (for tinted backgrounds with proper contrast) */
-  --secondary-surface: #f0fdfa; /* Very light teal background */
-  --secondary-surface-hover: #ccfbf1; /* Hover state */
-  --secondary-muted: #99f6e4;   /* Medium teal for borders */
-  --secondary-on-surface: #0f766e; /* Dark teal text ON secondary-surface */
+  --secondary-surface: #f0fdfa;
+  /* Very light teal background */
+  --secondary-surface-hover: #ccfbf1;
+  /* Hover state */
+  --secondary-muted: #99f6e4;
+  /* Medium teal for borders */
+  --secondary-on-surface: #0f766e;
+  /* Dark teal text ON secondary-surface */
 
   /* Transparent secondary surfaces (for info boxes, stats cards) */
-  --secondary-surface-alpha: rgba(20, 184, 166, 0.08); /* 8% teal background */
-  --secondary-border-alpha: rgba(20, 184, 166, 0.2);   /* 20% teal border */
+  --secondary-surface-alpha: rgba(20, 184, 166, 0.08);
+  /* 8% teal background */
+  --secondary-border-alpha: rgba(20, 184, 166, 0.2);
+  /* 20% teal border */
 
   /* ============================================
      NEUTRAL COLORS
      ============================================ */
-  --neutral: #d4d4d4;           /* Neutral gray for non-brand components */
-  --neutral-foreground: #1a1a1a; /* Text on neutral background */
+  --neutral: #e5e7eb;
+  /* Neutral gray for non-brand components */
+  --neutral-foreground: #1a1a1a;
+  /* Text on neutral background */
 
   /* ============================================
      STATUS COLORS
      ============================================ */
-  --success: #10b981;           /* Success states */
-  --warning: #f59e0b;           /* Warning states */
-  --error: #ef4444;             /* Error states, favorites */
-  --destructive: #b94a4a;       /* Destructive actions - muted coral */
-  --destructive-foreground: #fafafa; /* Text on destructive background */
-  --info: #3b82f6;              /* Informational states */
-  --info-foreground: #ffffff;   /* Text on info background */
+  --success: #10b981;
+  /* Success states */
+  --warning: #f59e0b;
+  /* Warning states */
+  --error: #ef4444;
+  /* Error states, favorites */
+  --destructive: #b94a4a;
+  /* Destructive actions - muted coral */
+  --destructive-foreground: #fafafa;
+  /* Text on destructive background */
+  --info: #3b82f6;
+  /* Informational states */
+  --info-foreground: #ffffff;
+  /* Text on info background */
 
   /* Success surface colors (for tinted backgrounds - light mode) */
-  --success-surface: rgba(16, 185, 129, 0.1);       /* Slightly stronger for light bg */
-  --success-surface-border: rgba(16, 185, 129, 0.35); /* Softer border for light mode */
+  --success-surface: rgba(16, 185, 129, 0.1);
+  /* Slightly stronger for light bg */
+  --success-surface-border: rgba(16, 185, 129, 0.35);
+  /* Softer border for light mode */
 
   /* ============================================
      UI ELEMENTS
      ============================================ */
-  --accent: #e5e7eb;            /* Accent surfaces - light gray for dietary badges */
-  --accent-foreground: #374151; /* Dark gray text on light accent */
-  --popover: #ffffff;           /* Popover/dropdown backgrounds */
-  --popover-foreground: #1a1a1a; /* Text in popovers */
-  --card: #e8e8e8;              /* Card backgrounds (matches sidebar) */
-  --card-foreground: #1a1a1a;   /* Text on cards */
-  --muted: #f4f4f5;             /* Muted background surfaces */
-  --muted-foreground: #6b7280;  /* Text on muted backgrounds */
-  --border: #d6d6d6;            /* Softer border color */
-  --border-subtle: #e5e5e5;     /* Lighter than main border */
-  --border-strong: #a3a3a3;     /* Stronger than main border */
-  --input: #ffffff;             /* Input backgrounds - pure white */
-  --button-outline-bg: #f4f4f5; /* Outline button background - subtle gray */
-  --ring: #8b5cf6;              /* Focus ring color - same purple */
-  --radius: 0.5rem;             /* Default border radius for components */
+  --accent: #f3f4f6;
+  /* Accent surfaces - very light gray for dietary badges */
+  --accent-foreground: #374151;
+  /* Dark gray text on light accent */
+  --popover: #ffffff;
+  /* Popover/dropdown backgrounds */
+  --popover-foreground: #1a1a1a;
+  /* Text in popovers */
+  --card: #ffffff;
+  /* Card backgrounds - white, elevated via shadow */
+  --card-foreground: #1a1a1a;
+  /* Text on cards */
+  --muted: #f3f4f6;
+  /* Muted background surfaces */
+  --muted-foreground: #6b7280;
+  /* Text on muted backgrounds */
+  --border: #e5e7eb;
+  /* Softer border color */
+  --border-subtle: #f0f0f0;
+  /* Lighter than main border */
+  --border-strong: #d1d5db;
+  /* Stronger than main border */
+  --input: #ffffff;
+  /* Input backgrounds - pure white */
+  --button-outline-bg: #f9fafb;
+  /* Outline button background - barely off-white */
+  --ring: #8b5cf6;
+  /* Focus ring color - same purple */
+  --radius: 0.5rem;
+  /* Default border radius for components */
 
   /* ============================================
      DISABLED STATES
      ============================================ */
-  --disabled-bg: #e5e7eb;       /* Disabled background */
-  --disabled-fg: #9ca3af;       /* Disabled text */
-  --disabled-opacity: 0.5;      /* Opacity for disabled elements */
-  
+  --disabled-bg: #f3f4f6;
+  /* Disabled background */
+  --disabled-fg: #9ca3af;
+  /* Disabled text */
+  --disabled-opacity: 0.5;
+  /* Opacity for disabled elements */
+
   /* ============================================
      SHADOWS (Standard - Light Mode)
      ============================================ */
@@ -331,56 +476,69 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  
+
   /* ============================================
      SHADOWS (Layered Depth System - Light Mode)
      ============================================ */
-  --shadow-raised: 
-    0 1px 2px rgba(0, 0, 0, 0.08), 
-    0 4px 8px rgba(0, 0, 0, 0.06), 
+  --shadow-raised:
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    0 4px 8px rgba(0, 0, 0, 0.06),
     0 8px 16px rgba(0, 0, 0, 0.04);
-  
-  --shadow-elevated: 
-    0 2px 4px rgba(0, 0, 0, 0.08), 
-    0 8px 16px rgba(0, 0, 0, 0.08), 
+
+  --shadow-elevated:
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    0 8px 16px rgba(0, 0, 0, 0.08),
     0 16px 32px rgba(0, 0, 0, 0.06);
-  
-  --shadow-floating: 
-    0 4px 8px rgba(0, 0, 0, 0.08), 
-    0 16px 32px rgba(0, 0, 0, 0.1), 
+
+  --shadow-floating:
+    0 4px 8px rgba(0, 0, 0, 0.08),
+    0 16px 32px rgba(0, 0, 0, 0.1),
     0 32px 64px rgba(0, 0, 0, 0.08);
-  
+
   --shadow-inset-sm: inset 0 1px 2px rgba(0, 0, 0, 0.1);
   --shadow-inset-md: inset 0 2px 4px rgba(0, 0, 0, 0.12);
-  
+
   --shadow-glow-primary: 0 0 20px rgba(139, 92, 246, 0.2);
   --shadow-glow-secondary: 0 0 20px rgba(20, 184, 166, 0.2);
-  
+
   /* ============================================
      OVERLAYS
      ============================================ */
-  --overlay: rgba(0, 0, 0, 0.5);        /* Modal backdrop */
-  --overlay-light: rgba(0, 0, 0, 0.25); /* Subtle overlay */
-  --overlay-strong: rgba(0, 0, 0, 0.75); /* Strong overlay */
-  
+  --overlay: rgba(0, 0, 0, 0.5);
+  /* Modal backdrop */
+  --overlay-light: rgba(0, 0, 0, 0.25);
+  /* Subtle overlay */
+  --overlay-strong: rgba(0, 0, 0, 0.75);
+  /* Strong overlay */
+
   /* ============================================
      STATUS INDICATORS
      ============================================ */
-  --status-online: #10b981;     /* Online indicator */
-  --status-offline: #9ca3af;    /* Offline indicator - lighter gray */
-  --status-busy: #ef4444;       /* Busy indicator */
-  --status-away: #f59e0b;       /* Away indicator */
-  
+  --status-online: #10b981;
+  /* Online indicator */
+  --status-offline: #9ca3af;
+  /* Offline indicator - lighter gray */
+  --status-busy: #ef4444;
+  /* Busy indicator */
+  --status-away: #f59e0b;
+  /* Away indicator */
+
   /* ============================================
      CHART COLORS (for data visualization)
      ============================================ */
-  --chart-1: #8b5cf6;           /* Purple - primary */
-  --chart-2: #14b8a6;           /* Teal - secondary */
-  --chart-3: #f59e0b;           /* Amber */
-  --chart-4: #ec4899;           /* Pink */
-  --chart-5: #10b981;           /* Green */
-  --chart-6: #6366f1;           /* Indigo */
-  
+  --chart-1: #8b5cf6;
+  /* Purple - primary */
+  --chart-2: #14b8a6;
+  /* Teal - secondary */
+  --chart-3: #f59e0b;
+  /* Amber */
+  --chart-4: #ec4899;
+  /* Pink */
+  --chart-5: #10b981;
+  /* Green */
+  --chart-6: #6366f1;
+  /* Indigo */
+
   /* ============================================
      RECIPE CARD SPECIFIC (Computed from above)
      Used for badges and special elements
@@ -392,7 +550,8 @@
   --recipe-dietary-bg: var(--accent);
   --recipe-dietary-text: var(--accent-foreground);
   --recipe-favorite: var(--error);
-  --recipe-favorite-hover: #dc2626; /* Slightly darker red for hover */
+  --recipe-favorite-hover: #dc2626;
+  /* Slightly darker red for hover */
 }
 
 /* ============================================
@@ -400,13 +559,23 @@
    Reusable animations for consistent motion
    ============================================ */
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes slide-up {
@@ -414,6 +583,7 @@
     transform: translateY(10px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -425,6 +595,7 @@
     transform: translateY(-10px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -436,6 +607,7 @@
     transform: scale(0.95);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
@@ -443,10 +615,13 @@
 }
 
 @keyframes pulse-soft {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.7;
     transform: scale(0.95);
@@ -458,6 +633,7 @@
     height: 0;
     opacity: 0;
   }
+
   to {
     height: var(--radix-collapsible-content-height);
     opacity: 1;
@@ -469,6 +645,7 @@
     height: var(--radix-collapsible-content-height);
     opacity: 1;
   }
+
   to {
     height: 0;
     opacity: 0;
@@ -476,13 +653,27 @@
 }
 
 @keyframes bounce-subtle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 @keyframes glow {
-  0%, 100% { box-shadow: var(--shadow-glow-primary); }
-  50% { box-shadow: 0 0 30px rgba(139, 92, 246, 0.5); }
+
+  0%,
+  100% {
+    box-shadow: var(--shadow-glow-primary);
+  }
+
+  50% {
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
+  }
 }
 
 /* Animation utility classes */
@@ -530,10 +721,61 @@
   animation: glow 2s ease-in-out infinite;
 }
 
+/* Carousel nav buttons - fade in on stage hover */
+.carousel-nav-btn {
+  opacity: 0;
+  transition: opacity 180ms ease, background-color 150ms ease;
+}
+
+.carousel-stage:hover .carousel-nav-btn {
+  opacity: 1;
+}
+
+@keyframes pill-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes chip-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-pill-slide-in {
+  animation: pill-slide-in 0.25s var(--ease-out);
+}
+
+.animate-chip-in {
+  animation: chip-in 0.2s var(--ease-out);
+}
+
 /* OTP Input caret blink animation */
 @keyframes caret-blink {
-  0%, 70%, 100% { opacity: 1; }
-  20%, 50% { opacity: 0; }
+
+  0%,
+  70%,
+  100% {
+    opacity: 1;
+  }
+
+  20%,
+  50% {
+    opacity: 0;
+  }
 }
 
 .animate-caret-blink {
@@ -552,13 +794,13 @@
   --color-sidebar: var(--sidebar);
   --color-elevated: var(--elevated);
   --color-hover: var(--hover);
-  
+
   /* Text */
   --color-foreground: var(--foreground);
   --color-foreground-subtle: var(--foreground-subtle);
   --color-foreground-disabled: var(--foreground-disabled);
   --color-muted: var(--muted);
-  
+
   /* Primary */
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
@@ -582,11 +824,11 @@
   --color-secondary-on-surface: var(--secondary-on-surface);
   --color-secondary-surface-alpha: var(--secondary-surface-alpha);
   --color-secondary-border-alpha: var(--secondary-border-alpha);
-  
+
   /* Neutral */
   --color-neutral: var(--neutral);
   --color-neutral-foreground: var(--neutral-foreground);
-  
+
   /* Status */
   --color-success: var(--success);
   --color-success-surface: var(--success-surface);
@@ -618,13 +860,13 @@
   /* Disabled */
   --color-disabled-bg: var(--disabled-bg);
   --color-disabled-fg: var(--disabled-fg);
-  
+
   /* Shadows (Standard) */
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
-  
+
   /* Shadows (Layered Depth System) */
   --shadow-raised: var(--shadow-raised);
   --shadow-elevated: var(--shadow-elevated);
@@ -633,18 +875,18 @@
   --shadow-inset-md: var(--shadow-inset-md);
   --shadow-glow-primary: var(--shadow-glow-primary);
   --shadow-glow-secondary: var(--shadow-glow-secondary);
-  
+
   /* Overlays */
   --color-overlay: var(--overlay);
   --color-overlay-light: var(--overlay-light);
   --color-overlay-strong: var(--overlay-strong);
-  
+
   /* Status indicators */
   --color-status-online: var(--status-online);
   --color-status-offline: var(--status-offline);
   --color-status-busy: var(--status-busy);
   --color-status-away: var(--status-away);
-  
+
   /* Charts */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -652,7 +894,7 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
   --color-chart-6: var(--chart-6);
-  
+
   /* Recipe card specific */
   --color-recipe-category-bg: var(--recipe-category-bg);
   --color-recipe-category-text: var(--recipe-category-text);
@@ -661,25 +903,25 @@
   --color-recipe-dietary-bg: var(--recipe-dietary-bg);
   --color-recipe-dietary-text: var(--recipe-dietary-text);
   --color-recipe-favorite: var(--recipe-favorite);
-  
+
   /* Easing functions */
   --ease-physical: var(--ease-physical);
   --ease-bounce: var(--ease-bounce);
   --ease-snap: var(--ease-snap);
 
   /* Font Sizes */
-  --text-xs: var(--text-xs); 
+  --text-xs: var(--text-xs);
   --text-xs--line-height: var(--text-xs--line);
-  
+
   --text-sm: var(--text-sm);
   --text-sm--line-height: var(--text-sm--line);
-  
+
   --text-base: var(--text-base);
-  --text-base--line-height  : var(--text-base--line);
-  
+  --text-base--line-height: var(--text-base--line);
+
   --text-lg: var(--text-lg);
   --text-lg--line-height: var(--text-lg--line);
-  
+
   /* Font Weights */
   --font-weight-normal: var(--font-normal);
   --font-weight-medium: var(--font-medium);
@@ -770,7 +1012,7 @@
 /* Pressable - shrinks on click */
 @utility pressable {
   transition: transform var(--duration-fast) var(--ease-physical);
-  
+
   &:active {
     transform: scale(0.97);
   }
@@ -790,15 +1032,15 @@
 
 /* Interactive - combines lift on hover + press on click */
 @utility interactive {
-  transition: 
+  transition:
     transform var(--duration-normal) var(--ease-physical),
     box-shadow var(--duration-normal) var(--ease-physical);
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-elevated);
   }
-  
+
   &:active {
     transform: translateY(0) scale(0.98);
     box-shadow: var(--shadow-raised);
@@ -807,15 +1049,15 @@
 
 /* Bouncy - playful elastic effect */
 @utility bouncy {
-  transition: 
+  transition:
     transform var(--duration-slow) var(--ease-bounce),
     box-shadow var(--duration-slow) var(--ease-bounce);
-  
+
   &:hover {
     transform: scale(1.03);
     box-shadow: var(--shadow-elevated);
   }
-  
+
   &:active {
     transform: scale(0.97);
   }
@@ -823,15 +1065,15 @@
 
 /* Subtle - gentler version for smaller elements */
 @utility interactive-subtle {
-  transition: 
+  transition:
     transform var(--duration-fast) var(--ease-physical),
     box-shadow var(--duration-fast) var(--ease-physical);
-  
+
   &:hover {
     transform: translateY(-1px);
     box-shadow: var(--shadow-raised);
   }
-  
+
   &:active {
     transform: translateY(0) scale(0.99);
   }
@@ -868,6 +1110,16 @@
 
 
 /* ============================================
+   THEME TRANSITION SUPPRESSION
+   Applied briefly during theme switch to force
+   all CSS variable changes in a single frame
+   ============================================ */
+.no-transition,
+.no-transition * {
+  transition: none !important;
+}
+
+/* ============================================
    BASE STYLES
    ============================================ */
 
@@ -898,9 +1150,11 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-  /* ⚠️ MUST be hidden - see warning above. Do NOT change to visible/scroll */
-  overflow-x: hidden;
-  overflow-y: hidden;
+  /* ⚠️ MUST be clip/hidden - see warning above. Do NOT change to visible/scroll */
+  /* Using 'clip' instead of 'hidden' so we don't create a scroll container
+     (which would break position:sticky for descendants). */
+  overflow-x: clip;
+  overflow-y: clip;
 }
 
 /* ============================================
@@ -1021,20 +1275,26 @@ html body[data-scroll-locked="1"] {
 
 /* Hide scrollbar while maintaining scroll functionality */
 .scrollbar-hidden {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
 }
 
 .scrollbar-hidden::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
+  /* Chrome, Safari, Opera */
 }
 
 /* Overlay scrollbar - doesn't take layout space in Chromium browsers */
 .scrollbar-overlay {
   overflow-y: auto;
-  overflow-y: overlay; /* Chromium: draws on top of content, no layout space */
-  scrollbar-width: thin; /* Firefox fallback: narrower scrollbar */
-  scrollbar-color: var(--muted) transparent; /* Firefox scrollbar colors */
+  overflow-y: overlay;
+  /* Chromium: draws on top of content, no layout space */
+  scrollbar-width: thin;
+  /* Firefox fallback: narrower scrollbar */
+  scrollbar-color: var(--muted) transparent;
+  /* Firefox scrollbar colors */
 }
 
 .scrollbar-overlay::-webkit-scrollbar {
@@ -1103,10 +1363,13 @@ html body[data-scroll-locked="1"] {
    Pulsing indicator for nav items
    ============================================ */
 @keyframes nav-dot-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.6;
     transform: scale(0.9);
@@ -1126,7 +1389,8 @@ html body[data-scroll-locked="1"] {
   font-size: var(--text-2xl);
   line-height: var(--text-2xl--line);
   font-weight: var(--font-bold);
-  letter-spacing: -0.02em; /* Tighten large text */
+  letter-spacing: -0.02em;
+  /* Tighten large text */
   color: var(--foreground);
 }
 
@@ -1142,14 +1406,16 @@ html body[data-scroll-locked="1"] {
 /* Card Titles (e.g. "Bruschetta Shrimp Pasta") */
 @utility text-card-title {
   font-size: var(--text-base);
-  line-height: 1.4; /* Slightly tighter than standard body */
+  line-height: 1.4;
+  /* Slightly tighter than standard body */
   font-weight: var(--font-semibold);
   color: var(--foreground);
 }
 
 /* Body Text (Standard readability) */
 @utility text-body {
-  font-size: var(--text-sm); /* 14px is standard for dense apps */
+  font-size: var(--text-sm);
+  /* 14px is standard for dense apps */
   line-height: var(--text-sm--line);
   font-weight: var(--font-normal);
   color: var(--foreground-subtle);
@@ -1161,7 +1427,8 @@ html body[data-scroll-locked="1"] {
   line-height: var(--text-xs--line);
   font-weight: var(--font-medium);
   color: var(--muted-foreground);
-  letter-spacing: 0.01em; /* Widen tiny text slightly */
+  letter-spacing: 0.01em;
+  /* Widen tiny text slightly */
 }
 
 /* Input / Button Text */
@@ -1196,11 +1463,11 @@ html body[data-scroll-locked="1"] {
 @utility image-zoom-wrapper {
   overflow: hidden;
 
-  & > * {
+  &>* {
     transition: transform var(--duration-normal) var(--ease-physical);
   }
 
-  &:hover > * {
+  &:hover>* {
     transform: scale(1.05);
   }
 }

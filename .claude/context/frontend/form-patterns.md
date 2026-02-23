@@ -1,6 +1,6 @@
 # Form Patterns
 
-**Standard patterns for forms, inputs, and validation.**
+Project-specific form field patterns. All fields use shadcn/ui primitives with semantic tokens.
 
 ## Form Field Structure
 
@@ -39,7 +39,6 @@ import { Input } from "@/components/ui/input";
 
 ## Required Field Indicators
 
-**Required fields with asterisk:**
 ```tsx
 <div className="space-y-2">
   <Label htmlFor="name">
@@ -53,20 +52,17 @@ import { Input } from "@/components/ui/input";
 </div>
 ```
 
-**Form with required fields note:**
+**Optional "required fields" note at top of form:**
 ```tsx
-<form className="space-y-6">
-  <p className="text-sm text-muted-foreground">
-    Fields marked with <span className="text-destructive">*</span> are required
-  </p>
-
-  {/* Form fields */}
-</form>
+<p className="text-sm text-muted-foreground">
+  Fields marked with <span className="text-destructive">*</span> are required
+</p>
 ```
 
-## Validation Display
+## Error State Display
 
-**Error state:**
+Use `border-destructive` and `text-destructive` -- never hardcoded colors.
+
 ```tsx
 <div className="space-y-2">
   <Label htmlFor="name">
@@ -84,24 +80,10 @@ import { Input } from "@/components/ui/input";
 </div>
 ```
 
-**Success state:**
-```tsx
-<div className="space-y-2">
-  <Label htmlFor="name">Recipe Name</Label>
-  <Input
-    id="name"
-    className={cn(isValid && "border-green-500")}
-    value={name}
-  />
-  {isValid && (
-    <p className="text-sm text-green-600">Looks good!</p>
-  )}
-</div>
-```
-
 ## Textarea Fields
 
-**Standard textarea:**
+Always use `resize-none` on Textarea.
+
 ```tsx
 import { Textarea } from "@/components/ui/textarea";
 
@@ -125,77 +107,16 @@ import { Textarea } from "@/components/ui/textarea";
 
 ## Select Fields
 
-**Standard select:**
-```tsx
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-
-<div className="space-y-2">
-  <Label htmlFor="category">Category</Label>
-  <Select value={category} onValueChange={setCategory}>
-    <SelectTrigger id="category" className="h-10">
-      <SelectValue placeholder="Select category" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="breakfast">Breakfast</SelectItem>
-      <SelectItem value="lunch">Lunch</SelectItem>
-      <SelectItem value="dinner">Dinner</SelectItem>
-      <SelectItem value="dessert">Dessert</SelectItem>
-    </SelectContent>
-  </Select>
-</div>
-```
+See shadcn-patterns.md for Select component usage.
 
 ## Project-Specific Input Components
 
-**QuantityInput** - For ingredient quantities (fractions, decimals, whole numbers)
-See: `components/forms/QuantityInput.tsx`
+**QuantityInput** -- For ingredient quantities (fractions, decimals, whole numbers).
+Path: `components/forms/QuantityInput.tsx`
 
-**SmartIngredientInput** - Autocomplete for ingredient names
-See: `components/forms/SmartIngredientInput.tsx`
+**IngredientAutocomplete** -- Autocomplete for ingredient names.
+Path: `components/forms/IngredientAutocomplete.tsx`
 
 ## Form Submission
 
-**Handle form submission with loading states** - See [component-patterns.md](.claude/context/frontend/component-patterns.md) for loading state patterns.
-
-```tsx
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsLoading(true);
-  try {
-    await saveRecipe(formData);
-  } catch (error) {
-    // Handle error
-  } finally {
-    setIsLoading(false);
-  }
-};
-```
-
-## Form Validation Patterns
-
-**Basic validation example:**
-```tsx
-const [errors, setErrors] = useState<Record<string, string>>({});
-
-const validate = () => {
-  const newErrors: Record<string, string> = {};
-
-  if (!name.trim()) {
-    newErrors.name = "Recipe name is required";
-  }
-
-  if (servings < 1) {
-    newErrors.servings = "Servings must be at least 1";
-  }
-
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0;
-};
-
-const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!validate()) return;
-
-  // Submit form
-};
-```
+See component-patterns.md for loading state patterns on submit buttons.

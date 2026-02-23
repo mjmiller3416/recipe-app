@@ -42,6 +42,7 @@ export function mapRecipeForCard(dto: RecipeResponseDTO): RecipeCardData {
     mealType: dto.meal_type,
     dietaryPreference: dto.diet_pref ?? undefined,
     isFavorite: dto.is_favorite ?? false,
+    isAiGenerated: dto.is_ai_generated ?? false,
     ingredients: dto.ingredients?.map(mapIngredientForCard) ?? [],
     createdAt: dto.created_at ?? undefined,
     groupIds: dto.group_ids ?? [],

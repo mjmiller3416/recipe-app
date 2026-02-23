@@ -1,4 +1,4 @@
-"""app/core/utils/unit_conversion.py
+"""app/utils/unit_conversion.py
 
 Unit dimension classification and conversion utilities for shopping list aggregation.
 Converts quantities within the same dimension (mass, volume, count) to enable proper aggregation.

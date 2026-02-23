@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Info, Clock, Users, Tag, ChefHat, Leaf } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,9 +14,9 @@ import {
 } from "@/components/ui/select";
 import {
   MEAL_TYPE_OPTIONS,
-  RECIPE_CATEGORY_OPTIONS,
   DIETARY_PREFERENCES,
 } from "@/lib/constants";
+import { useCategoryOptions } from "@/hooks/api";
 import { cn } from "@/lib/utils";
 
 interface RecipeInfoCardProps {
@@ -36,7 +37,7 @@ interface RecipeInfoCardProps {
   autoFocusName?: boolean;
 }
 
-export function RecipeInfoCard({
+export const RecipeInfoCard = memo(function RecipeInfoCard({
   recipeName,
   setRecipeName,
   totalTime,
@@ -53,6 +54,8 @@ export function RecipeInfoCard({
   getError,
   autoFocusName = false,
 }: RecipeInfoCardProps) {
+  const { formOptions: categoryOptions } = useCategoryOptions();
+
   return (
     <Card>
       <CardContent className="pt-6">
@@ -164,7 +167,7 @@ export function RecipeInfoCard({
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent side="bottom">
-                  {RECIPE_CATEGORY_OPTIONS.map((cat) => (
+                  {categoryOptions.map((cat) => (
                     <SelectItem key={cat.value} value={cat.value}>
                       {cat.label}
                     </SelectItem>
@@ -201,4 +204,4 @@ export function RecipeInfoCard({
       </CardContent>
     </Card>
   );
-}
+});

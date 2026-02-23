@@ -4,10 +4,9 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Clock, Users, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { formatTime } from "@/lib/quantityUtils";
 import type { RecipeCardData } from "@/types/recipe";
-import { getRecipeCardUrl } from "@/lib/imageUtils";
 import { FavoriteButton } from "../common/FavoriteButton";
 import { RecipeBadge, RecipeBadgeGroup } from "./RecipeBadge";
 import { RecipeImage } from "./RecipeImage";
@@ -69,16 +68,6 @@ export function RecipeCard({
     }
   };
 
-  // Format total time
-  const formatTime = (minutes: number): string => {
-    if (minutes < 60) {
-      return `${minutes}m`;
-    }
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-  };
-
   // Render different sizes
   if (size === "small") {
     return <RecipeCardSmall
@@ -86,7 +75,6 @@ export function RecipeCard({
       onClick={handleClick}
       onFavoriteClick={handleFavoriteClick}
       onKeyDown={handleKeyDown}
-      formatTime={formatTime}
       className={className}
       showCategory={showCategory}
       showFavorite={showFavorite}
@@ -99,7 +87,6 @@ export function RecipeCard({
       onClick={handleClick}
       onFavoriteClick={handleFavoriteClick}
       onKeyDown={handleKeyDown}
-      formatTime={formatTime}
       className={className}
       showCategory={showCategory}
       showFavorite={showFavorite}
@@ -113,7 +100,6 @@ export function RecipeCard({
     onClick={handleClick}
     onFavoriteClick={handleFavoriteClick}
     onKeyDown={handleKeyDown}
-    formatTime={formatTime}
     className={className}
     showCategory={showCategory}
     showFavorite={showFavorite}
@@ -131,7 +117,6 @@ interface CardVariantProps {
   onClick: () => void;
   onFavoriteClick: (e: React.MouseEvent) => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
-  formatTime: (minutes: number) => string;
   className?: string;
   showCategory: boolean;
   showFavorite: boolean;
@@ -145,7 +130,6 @@ function RecipeCardSmall({
   onClick,
   onFavoriteClick,
   onKeyDown,
-  formatTime,
   className,
   showFavorite,
 }: CardVariantProps) {
@@ -217,11 +201,9 @@ function RecipeCardMedium({
   onClick,
   onFavoriteClick,
   onKeyDown,
-  formatTime,
   className,
   showCategory,
   isSelected = false,
-  selectionType = "main",
 }: CardVariantProps) {
   return (
     <Card
@@ -260,7 +242,7 @@ function RecipeCardMedium({
         {/* Selection checkmark indicator - top left, overlays meal type badge when selected */}
         {isSelected && (
           <div className="absolute top-4 left-4 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg animate-scale-in z-20">
-            <Check className="w-5 h-5 text-primary-foreground" strokeWidth={2} />
+            <Check className="size-5 text-primary-foreground" strokeWidth={1.5} />
           </div>
         )}
 
@@ -274,15 +256,25 @@ function RecipeCardMedium({
           />
         </div>
 
-        {/* Meal Type Badge - top left, hidden when selected (checkmark takes its place) */}
-        {showCategory && recipe.mealType && !isSelected && (
-          <div className="absolute top-4 left-4">
-            <RecipeBadge
-              label={recipe.mealType}
-              type="mealType"
-              size="md"
-              variant="overlay"
-            />
+        {/* Meal Type / AI Badge - top left, hidden when selected (checkmark takes its place) */}
+        {showCategory && !isSelected && (recipe.mealType || recipe.isAiGenerated) && (
+          <div className="absolute top-4 left-4 flex items-center gap-2">
+            {recipe.mealType && (
+              <RecipeBadge
+                label={recipe.mealType}
+                type="mealType"
+                size="md"
+                variant="overlay"
+              />
+            )}
+            {recipe.isAiGenerated && (
+              <RecipeBadge
+                label="AI"
+                type="ai"
+                size="md"
+                variant="overlay"
+              />
+            )}
           </div>
         )}
       </div>
@@ -325,12 +317,11 @@ function RecipeCardMedium({
 // LARGE CARD - Traditional Recipe Card with Ingredients
 // ============================================================================
 
-function RecipeCardLarge({ 
-  recipe, 
-  onClick, 
+function RecipeCardLarge({
+  recipe,
+  onClick,
   onFavoriteClick,
   onKeyDown,
-  formatTime,
   className,
   showCategory,
   maxIngredientsDisplay = 8,
@@ -406,6 +397,13 @@ function RecipeCardLarge({
                   <RecipeBadge
                     label={recipe.dietaryPreference}
                     type="dietary"
+                    size="md"
+                  />
+                )}
+                {recipe.isAiGenerated && (
+                  <RecipeBadge
+                    label="AI Generated"
+                    type="ai"
                     size="md"
                   />
                 )}
@@ -494,7 +492,7 @@ interface RecipeCardGridProps {
 export function RecipeCardGrid({ children, className, size = "medium" }: RecipeCardGridProps) {
   const gridClasses = {
     small: "grid grid-cols-1 gap-3",
-    medium: "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-6",
+    medium: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6",
     large: "grid grid-cols-1 gap-3 md:gap-6",
   };
 

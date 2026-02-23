@@ -101,6 +101,13 @@ export function RecipeHeaderCard({
               groups={recipeGroups}
             />
           )}
+          {recipe.is_ai_generated && (
+            <RecipeBadge
+              label="AI Generated"
+              type="ai"
+              size="md"
+            />
+          )}
         </RecipeBadgeGroup>
 
         {/* Quick Stats */}

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { getRecipeIcon } from "@/lib/recipeIcon";
 import type { RecipeIconData } from "@/components/common/RecipeIcon";
+import { useLocalStorageState } from "./useLocalStorageState";
 
 // ============================================================================
 // TYPES
@@ -21,7 +22,6 @@ export interface RecentRecipe {
 
 const STORAGE_KEY = "meal-genie-recent-recipes";
 const MAX_RECENT_RECIPES = 3;
-const CUSTOM_EVENT_NAME = "recent-recipes-updated";
 
 // ============================================================================
 // MIGRATION HELPERS
@@ -52,6 +52,18 @@ function migrateRecipe(recipe: LegacyRecentRecipe): RecentRecipe {
     icon: getRecipeIcon(recipe.name),
     viewedAt: recipe.viewedAt,
   };
+}
+
+/**
+ * Deserialize + migrate raw localStorage data into RecentRecipe[].
+ * Defined at module level for a stable reference (avoids effect re-runs).
+ */
+function deserializeRecipes(raw: unknown): RecentRecipe[] {
+  const parsed = raw as LegacyRecentRecipe[];
+  return parsed
+    .map(migrateRecipe)
+    .sort((a, b) => b.viewedAt - a.viewedAt)
+    .slice(0, MAX_RECENT_RECIPES);
 }
 
 // ============================================================================
@@ -95,117 +107,41 @@ interface UseRecentRecipesReturn {
  * ```
  */
 export function useRecentRecipes(): UseRecentRecipesReturn {
-  const [recentRecipes, setRecentRecipes] = useState<RecentRecipe[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  // Note: maxItems is intentionally omitted here. Newest recipes are prepended,
+  // so truncation uses .slice(0, N) inside addToRecent (keep first N) rather
+  // than useLocalStorageState's .slice(-N) (keep last N).
+  const [recentRecipes, setRecentRecipes, isLoaded] = useLocalStorageState<RecentRecipe[]>(
+    STORAGE_KEY,
+    [],
+    { deserialize: deserializeRecipes }
+  );
 
-  // Load from storage on mount + listen for updates from other components
-  useEffect(() => {
-    // Initial load from localStorage
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as LegacyRecentRecipe[];
-        const migrated = parsed.map(migrateRecipe);
-        const sorted = migrated.sort((a, b) => b.viewedAt - a.viewedAt);
-        setRecentRecipes(sorted.slice(0, MAX_RECENT_RECIPES));
-      }
-    } catch (error) {
-      console.error("[useRecentRecipes] Failed to load recent recipes:", error);
-    } finally {
-      setIsLoaded(true);
-    }
-
-    // Listen for custom event from same window (when another component updates)
-    const handleCustomEvent = (e: Event) => {
-      const customEvent = e as CustomEvent<RecentRecipe[]>;
-      if (customEvent.detail) {
-        setRecentRecipes(customEvent.detail);
-      }
-    };
-
-    // Listen for storage event from other tabs/windows
-    const handleStorageEvent = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        try {
-          const parsed = JSON.parse(e.newValue) as LegacyRecentRecipe[];
-          const migrated = parsed.map(migrateRecipe);
-          const sorted = migrated.sort((a, b) => b.viewedAt - a.viewedAt);
-          setRecentRecipes(sorted.slice(0, MAX_RECENT_RECIPES));
-        } catch (error) {
-          console.error("[useRecentRecipes] Failed to parse storage event:", error);
-        }
-      }
-    };
-
-    window.addEventListener(CUSTOM_EVENT_NAME, handleCustomEvent);
-    window.addEventListener("storage", handleStorageEvent);
-
-    return () => {
-      window.removeEventListener(CUSTOM_EVENT_NAME, handleCustomEvent);
-      window.removeEventListener("storage", handleStorageEvent);
-    };
-  }, []);
-
-  // Save to storage and notify other components in same window
-  const saveToStorage = useCallback((recipes: RecentRecipe[]) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
-      // Defer event dispatch to avoid "setState during render" errors
-      // when multiple components use this hook simultaneously
-      queueMicrotask(() => {
-        window.dispatchEvent(
-          new CustomEvent(CUSTOM_EVENT_NAME, { detail: recipes })
-        );
-      });
-    } catch (error) {
-      console.error("[useRecentRecipes] Failed to save recent recipes:", error);
-    }
-  }, []);
-
-  // Add a recipe to recent list
   const addToRecent = useCallback(
     (recipe: { id: number; name: string; category?: string }) => {
       setRecentRecipes((prev) => {
-        // Remove if already exists
         const filtered = prev.filter((r) => r.id !== recipe.id);
-
-        // Add to front with current timestamp
         const newRecipe: RecentRecipe = {
           id: recipe.id,
           name: recipe.name,
           icon: getRecipeIcon(recipe.name, recipe.category),
           viewedAt: Date.now(),
         };
-
-        // Keep only the max allowed
-        const updated = [newRecipe, ...filtered].slice(0, MAX_RECENT_RECIPES);
-
-        // Save to storage
-        saveToStorage(updated);
-
-        return updated;
+        return [newRecipe, ...filtered].slice(0, MAX_RECENT_RECIPES);
       });
     },
-    [saveToStorage]
+    [setRecentRecipes]
   );
 
-  // Remove a recipe from recent list
   const removeFromRecent = useCallback(
     (id: number) => {
-      setRecentRecipes((prev) => {
-        const updated = prev.filter((r) => r.id !== id);
-        saveToStorage(updated);
-        return updated;
-      });
+      setRecentRecipes((prev) => prev.filter((r) => r.id !== id));
     },
-    [saveToStorage]
+    [setRecentRecipes]
   );
 
-  // Clear all recent recipes
   const clearRecent = useCallback(() => {
     setRecentRecipes([]);
-    saveToStorage([]);
-  }, [saveToStorage]);
+  }, [setRecentRecipes]);
 
   return {
     recentRecipes,

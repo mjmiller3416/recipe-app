@@ -10,6 +10,7 @@ when modules cross-reference between repositories and services.
 """
 
 __all__ = [
+    "FeedbackRepo",
     "RecipeRepo",
     "IngredientRepo",
     "MealRepo",

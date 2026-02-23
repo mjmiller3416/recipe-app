@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { MealPlannerPage } from "@/app/meal-planner/_components";
+import { MealPlannerView } from "@/app/meal-planner/_components";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function MealPlannerLoading() {
@@ -28,7 +28,7 @@ function MealPlannerLoading() {
 export default function Page() {
   return (
     <Suspense fallback={<MealPlannerLoading />}>
-      <MealPlannerPage />
+      <MealPlannerView />
     </Suspense>
   );
 }

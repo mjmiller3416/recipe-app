@@ -16,7 +16,6 @@ from app.dtos.recipe_dtos import (
     RecipeCardDTO,
     RecipeCreateDTO,
     RecipeFilterDTO,
-    RecipeIngredientResponseDTO,
     RecipeResponseDTO,
     RecipeUpdateDTO,
 )
@@ -27,40 +26,6 @@ from app.services.recipe_service import (
 )
 
 router = APIRouter()
-
-
-def _recipe_to_response_dto(recipe) -> RecipeResponseDTO:
-    """Convert a Recipe model to RecipeResponseDTO."""
-    ingredients = []
-    for ri in recipe.ingredients:
-        ingredients.append(RecipeIngredientResponseDTO(
-            id=ri.ingredient.id,
-            ingredient_name=ri.ingredient.ingredient_name,
-            ingredient_category=ri.ingredient.ingredient_category,
-            quantity=ri.quantity,
-            unit=ri.unit,
-        ))
-
-    # Extract group IDs from the recipe's groups relationship
-    group_ids = [group.id for group in recipe.groups] if recipe.groups else []
-
-    return RecipeResponseDTO(
-        id=recipe.id,
-        recipe_name=recipe.recipe_name,
-        recipe_category=recipe.recipe_category,
-        meal_type=recipe.meal_type,
-        diet_pref=recipe.diet_pref,
-        total_time=recipe.total_time,
-        servings=recipe.servings,
-        directions=recipe.directions,
-        notes=recipe.notes,
-        reference_image_path=recipe.reference_image_path,
-        banner_image_path=recipe.banner_image_path,
-        is_favorite=recipe.is_favorite,
-        created_at=recipe.created_at.isoformat() if recipe.created_at else None,
-        ingredients=ingredients,
-        group_ids=group_ids,
-    )
 
 
 @router.get("", response_model=List[RecipeResponseDTO])
@@ -96,7 +61,7 @@ def list_recipes(
 
     service = RecipeService(session, current_user.id)
     recipes = service.list_filtered(filter_dto)
-    return [_recipe_to_response_dto(r) for r in recipes]
+    return [RecipeResponseDTO.from_recipe(r) for r in recipes]
 
 
 @router.get("/cards", response_model=List[RecipeCardDTO])
@@ -193,7 +158,7 @@ def get_recipe(
     recipe = service.get_recipe(recipe_id)
     if not recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
-    return _recipe_to_response_dto(recipe)
+    return RecipeResponseDTO.from_recipe(recipe)
 
 
 @router.post("", response_model=RecipeResponseDTO, status_code=201)
@@ -206,7 +171,7 @@ def create_recipe(
     service = RecipeService(session, current_user.id)
     try:
         recipe = service.create_recipe_with_ingredients(recipe_data)
-        return _recipe_to_response_dto(recipe)
+        return RecipeResponseDTO.from_recipe(recipe)
     except DuplicateRecipeError as e:
         raise HTTPException(status_code=409, detail=str(e))
     except RecipeSaveError as e:
@@ -224,7 +189,7 @@ def update_recipe(
     service = RecipeService(session, current_user.id)
     try:
         recipe = service.update_recipe(recipe_id, update_data)
-        return _recipe_to_response_dto(recipe)
+        return RecipeResponseDTO.from_recipe(recipe)
     except RecipeSaveError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -255,4 +220,4 @@ def toggle_favorite(
         raise HTTPException(status_code=404, detail="Recipe not found")
 
     updated_recipe = service.toggle_favorite(recipe_id)
-    return _recipe_to_response_dto(updated_recipe)
+    return RecipeResponseDTO.from_recipe(updated_recipe)

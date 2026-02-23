@@ -1,160 +1,75 @@
 # shadcn/ui Patterns
 
-**When and how to use shadcn/ui components correctly.**
+## Card
 
-## When to Use Card vs Raw Div
+**Always use `<Card>` instead of styled divs for content containers.**
 
-**Always use `<Card>` for:**
-- Content containers with visual separation
-- Recipe cards, meal cards, stat cards
-- Settings panels
-- Form sections
-
-**Never use:**
 ```tsx
-// ❌ Wrong - fake card
-<div className="bg-card border border-border rounded-xl p-4">
-```
+import { Card, CardHeader, CardTitle, CardContent, CardAction } from "@/components/ui/card";
 
-**Always use:**
-```tsx
-// ✅ Right - real Card component
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-
+// ❌ <div className="bg-card border border-border rounded-xl p-4">
+// ✅
 <Card>
   <CardHeader>
     <CardTitle>Title</CardTitle>
+    <CardAction><Button size="icon" aria-label="Edit"><Pencil /></Button></CardAction>
   </CardHeader>
-  <CardContent>Content here</CardContent>
+  <CardContent>Content</CardContent>
 </Card>
 ```
 
-## Button Variants and Sizes
+**Props:**
+- `size`: `"sm"` | `"default"` | `"lg"`
+- `interactive`: boolean — adds hover/focus/active states for clickable cards
 
-**Variants:**
-- `default` — Primary actions (save, submit, add)
-- `secondary` — Secondary actions (cancel, back)
-- `outline` — Tertiary actions, filters
-- `ghost` — Subtle actions, icon buttons in headers
-- `destructive` — Delete, remove, clear
-- `link` — Text links with button behavior
+**GOTCHA: Card applies `flex-col` by default. Add `flex-row` explicitly for horizontal layouts.**
 
-**Sizes:**
-- `sm` — Small buttons, compact UI
-- `default` — Standard buttons (40px height)
-- `lg` — Large buttons, CTAs
-- `icon` — Icon-only buttons (see accessibility.md for aria-label requirements)
+## Button
 
-**Examples:**
+**Variants:** `default`, `secondary`, `outline`, `ghost`, `destructive`, `link`, `dashed`
+
+**Sizes:** `sm`, `default`, `lg`, `icon`, `icon-sm`, `icon-lg`
+
+**Shape prop:** `shape="default"` (rounded-lg) | `shape="pill"` (rounded-full)
+
 ```tsx
 <Button variant="default">Save Recipe</Button>
 <Button variant="outline" size="sm">Filter</Button>
+<Button variant="dashed" shape="pill">+ Add Item</Button>
+<Button size="icon" aria-label="Close"><X strokeWidth={1.5} /></Button>
 ```
 
-## Badge Usage Patterns
+## Badge
 
-**Variants:**
-- `default` — General purpose
-- `secondary` — Less emphasis
-- `outline` — Subtle emphasis
-- `destructive` — Errors, warnings
+**Variants:** `default`, `secondary`, `outline`, `destructive`, `success`, `warning`, `info`, `muted`
 
-**Recipe-specific badges:**
+**Recipe-specific badges use semantic tokens:**
 ```tsx
-// Use semantic tokens for recipe badges
-<Badge className="bg-recipe-category-bg text-recipe-category-text">
-  {recipe.category}
-</Badge>
-
-<Badge className="bg-recipe-meal-type-bg text-recipe-meal-type-text">
-  {recipe.mealType}
-</Badge>
-
-<Badge className="bg-recipe-dietary-bg text-recipe-dietary-text">
-  {dietary}
-</Badge>
+<Badge className="bg-recipe-category-bg text-recipe-category-text">{recipe.category}</Badge>
+<Badge className="bg-recipe-meal-type-bg text-recipe-meal-type-text">{recipe.mealType}</Badge>
+<Badge className="bg-recipe-dietary-bg text-recipe-dietary-text">{dietary}</Badge>
 ```
 
-## Input, Select, Textarea Components
+## Form Components
 
-**Always use with Label:**
-```tsx
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+See `form-patterns.md` for Input/Select/Textarea patterns.
 
-<div className="space-y-2">
-  <Label htmlFor="name">Recipe Name</Label>
-  <Input id="name" placeholder="Enter name" />
-</div>
-```
-
-**Select pattern:**
-```tsx
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-
-<Select value={value} onValueChange={setValue}>
-  <SelectTrigger className="h-10">
-    <SelectValue placeholder="Select category" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="breakfast">Breakfast</SelectItem>
-    <SelectItem value="lunch">Lunch</SelectItem>
-  </SelectContent>
-</Select>
-```
-
-**Textarea pattern:**
-```tsx
-import { Textarea } from "@/components/ui/textarea";
-
-<Textarea
-  placeholder="Enter directions"
-  rows={4}
-  className="resize-none"
-/>
-```
-
-## Dialog Patterns
+## Dialog
 
 ```tsx
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-
 <Dialog open={open} onOpenChange={setOpen}>
-  <DialogTrigger asChild>
-    <Button>Open Dialog</Button>
-  </DialogTrigger>
+  <DialogTrigger asChild><Button>Open</Button></DialogTrigger>
   <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Dialog Title</DialogTitle>
-    </DialogHeader>
+    <DialogHeader><DialogTitle>Title</DialogTitle></DialogHeader>
     {/* Content */}
   </DialogContent>
 </Dialog>
 ```
 
-## Adding New shadcn Components
+## Adding shadcn Components
 
-**Command:**
 ```bash
-npx shadcn@latest add button dialog card
+npx shadcn@latest add <name>
 ```
 
-**Important:**
-- Components install to `components/ui/`
-- **Never modify files in `components/ui/`** directly
-- If you need customization, create a wrapper component
-- Example: `components/common/CustomButton.tsx` wraps `ui/button.tsx`
-
-## Common Mistakes
-
-❌ **Don't:**
-- Modify `components/ui/*` files
-- Create fake versions of shadcn components
-- Use raw HTML instead of shadcn components
-- Use non-lucide icons
-
-✅ **Do:**
-- Use shadcn components as-is
-- Extend with wrapper components if needed
-- Follow shadcn composition patterns
-- Check shadcn docs for component APIs
+Never modify `components/ui/` directly -- create wrappers in `components/common/` if needed.

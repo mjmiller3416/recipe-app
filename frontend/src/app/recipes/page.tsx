@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { RecipeBrowserView } from "./_components";
+import { RecipeBrowserView } from "@/components/recipe/RecipeBrowserView";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function RecipesLoading() {

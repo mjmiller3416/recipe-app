@@ -35,6 +35,9 @@ export interface MealPreviewPanelProps {
   /** Called when a side dish remove button is clicked */
   onRemoveSide?: (recipeId: number) => void;
 
+  /** Called when the "Add Side Dishes" button is clicked */
+  onAddSides?: () => void;
+
   /** Called when the "Add to Meal Queue" button is clicked */
   onAddToQueue?: () => void;
 
@@ -76,6 +79,7 @@ export function MealPreviewPanel({
   onSelectMain,
   onRemoveMain,
   onRemoveSide,
+  onAddSides,
   onAddToQueue,
   isSubmitting = false,
   showHeader = true,
@@ -93,7 +97,7 @@ export function MealPreviewPanel({
       {showHeader && (
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-primary-surface flex items-center justify-center">
-            <UtensilsCrossed className="w-5 h-5 text-primary" />
+            <UtensilsCrossed className="w-5 h-5 text-primary" strokeWidth={1.5} />
           </div>
           <div>
             <h2 className="text-lg font-semibold text-foreground">Meal Preview</h2>
@@ -105,7 +109,7 @@ export function MealPreviewPanel({
       {/* Main Dish Section */}
       <div className="mb-6">
         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-          <ChefHat className="w-4 h-4" />
+          <ChefHat className="w-4 h-4" strokeWidth={1.5} />
           Main Dish
           {!mainDish && <span className="text-primary">*required</span>}
         </label>
@@ -127,24 +131,27 @@ export function MealPreviewPanel({
                   </h3>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                     <span className="flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5" />
+                      <Users className="w-3.5 h-3.5" strokeWidth={1.5} />
                       {mainDish.servings}
                     </span>
                     {mainDish.totalTime > 0 && (
                       <span className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" />
+                        <Clock className="w-3.5 h-3.5" strokeWidth={1.5} />
                         {mainDish.totalTime}m
                       </span>
                     )}
                   </div>
                 </div>
                 {onRemoveMain && (
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={onRemoveMain}
-                    className="w-8 h-8 rounded-lg bg-error/10 hover:bg-error/20 flex items-center justify-center text-error transition-colors flex-shrink-0"
+                    aria-label="Remove main dish"
+                    className="bg-destructive/10 hover:bg-destructive/20 text-destructive flex-shrink-0"
                   >
-                    <X className="w-4 h-4" />
-                  </button>
+                    <X className="w-4 h-4" strokeWidth={1.5} />
+                  </Button>
                 )}
               </div>
             </Card>
@@ -152,9 +159,10 @@ export function MealPreviewPanel({
         ) : (
           <button
             onClick={onSelectMain}
+            aria-label="Select a main dish"
             className="w-full border-2 border-dashed border-border rounded-2xl p-6 text-center animate-pulse-soft hover:border-primary hover:bg-primary-surface/50 transition-colors cursor-pointer"
           >
-            <ChefHat className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
+            <ChefHat className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" strokeWidth={1.5} />
             <p className="text-sm text-muted-foreground/60">
               Click to select a main dish
             </p>
@@ -165,7 +173,7 @@ export function MealPreviewPanel({
       {/* Sides Section */}
       <div className="flex-1">
         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-          <Salad className="w-4 h-4" />
+          <Salad className="w-4 h-4" strokeWidth={1.5} />
           Sides
           <span className="text-muted-foreground/60 font-normal">
             ({sides.length}/3)
@@ -200,12 +208,15 @@ export function MealPreviewPanel({
                     )}
                   </div>
                   {onRemoveSide && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => onRemoveSide(Number(side.id))}
-                      className="w-7 h-7 rounded-lg bg-error/10 hover:bg-error/20 flex items-center justify-center text-error transition-colors flex-shrink-0"
+                      aria-label="Remove side dish"
+                      className="bg-destructive/10 hover:bg-destructive/20 text-destructive flex-shrink-0"
                     >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
+                      <X className="w-3.5 h-3.5" strokeWidth={1.5} />
+                    </Button>
                   )}
                 </div>
               </Card>
@@ -219,7 +230,7 @@ export function MealPreviewPanel({
               className="border border-dashed border-border rounded-xl p-3 flex items-center gap-3"
             >
               <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                <Plus className="w-4 h-4 text-muted-foreground/40" />
+                <Plus className="w-4 h-4 text-muted-foreground/40" strokeWidth={1.5} />
               </div>
               <p className="text-sm text-muted-foreground/60">Add a side dish</p>
             </div>
@@ -227,8 +238,19 @@ export function MealPreviewPanel({
         </div>
       </div>
 
-      {/* Action Button */}
-      <div className="mt-auto pt-4">
+      {/* Action Buttons */}
+      <div className="mt-auto pt-4 space-y-2">
+        {onAddSides && mainDish && sides.length < 3 && (
+          <Button
+            variant="outline"
+            onClick={onAddSides}
+            className="w-full gap-2"
+          >
+            <Plus className="w-4 h-4" strokeWidth={1.5} />
+            Add Side Dishes ({sides.length}/3)
+          </Button>
+        )}
+
         <Button
           variant="default"
           size="lg"
@@ -236,7 +258,7 @@ export function MealPreviewPanel({
           disabled={!isComplete || isSubmitting}
           className="w-full"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-5 h-5" strokeWidth={1.5} />
           {isSubmitting ? submittingText : buttonText}
         </Button>
 

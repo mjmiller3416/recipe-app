@@ -1,6 +1,8 @@
 "use client";
 
+import { memo } from "react";
 import { GripVertical, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { QuantityInput } from "@/components/forms/QuantityInput";
 import {
   Select,
@@ -9,12 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { INGREDIENT_CATEGORIES } from "@/lib/constants";
 import {
   IngredientAutocomplete,
-  Ingredient as AutocompleteIngredient,
-} from "./IngredientAutocomplete";
+  type AutocompleteIngredient,
+} from "@/components/forms/IngredientAutocomplete";
 import { useUnits } from "@/hooks/api";
+import { useIngredientCategoryOptions } from "@/hooks/api/useIngredientCategories";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -32,40 +34,44 @@ interface IngredientRowProps {
   onUpdate: (id: string, field: keyof Ingredient, value: string | number | null) => void;
   onDelete: (id: string) => void;
   showLabels?: boolean;
+  getIngredientError?: (ingredientId: string, field: 'name' | 'quantity') => string | undefined;
 }
 
-// Helper to find matching category value from INGREDIENT_CATEGORIES
-const findCategoryValue = (categoryFromDb: string): string => {
-  // Try exact match first
-  const exactMatch = INGREDIENT_CATEGORIES.find(
-    (cat) => cat.value === categoryFromDb
-  );
+// Helper to find matching category value from dynamic options
+const findCategoryValue = (
+  categoryFromDb: string,
+  categories: { value: string; label: string }[]
+): string => {
+  const exactMatch = categories.find((cat) => cat.value === categoryFromDb);
   if (exactMatch) return exactMatch.value;
 
-  // Try case-insensitive match on value
-  const caseInsensitiveValue = INGREDIENT_CATEGORIES.find(
+  const caseInsensitiveValue = categories.find(
     (cat) => cat.value.toLowerCase() === categoryFromDb.toLowerCase()
   );
   if (caseInsensitiveValue) return caseInsensitiveValue.value;
 
-  // Try case-insensitive match on label
-  const labelMatch = INGREDIENT_CATEGORIES.find(
+  const labelMatch = categories.find(
     (cat) => cat.label.toLowerCase() === categoryFromDb.toLowerCase()
   );
   if (labelMatch) return labelMatch.value;
 
-  // Return original if no match (Select will show placeholder)
   return categoryFromDb;
 };
 
-export function IngredientRow({
+export const IngredientRow = memo(function IngredientRow({
   ingredient,
   availableIngredients = [],
   onUpdate,
   onDelete,
-  showLabels = false,
+  // showLabels is available but not currently used
+  getIngredientError,
 }: IngredientRowProps) {
   const { data: units = [] } = useUnits();
+  const { options: ingredientCategories } = useIngredientCategoryOptions();
+
+  // Get field errors
+  const quantityError = getIngredientError?.(ingredient.id, 'quantity');
+  const nameError = getIngredientError?.(ingredient.id, 'name');
   const {
     attributes,
     listeners,
@@ -85,7 +91,7 @@ export function IngredientRow({
     onUpdate(ingredient.id, "name", selected.name);
     // Auto-fill category from the selected ingredient (normalized to match Select values)
     if (selected.category) {
-      const normalizedCategory = findCategoryValue(selected.category);
+      const normalizedCategory = findCategoryValue(selected.category, ingredientCategories);
       onUpdate(ingredient.id, "category", normalizedCategory);
     }
   };
@@ -112,6 +118,7 @@ export function IngredientRow({
             aria-label="Drag to reorder"
             {...attributes}
             {...listeners}
+            tabIndex={-1}
           >
             <GripVertical className="h-5 w-5" />
           </button>
@@ -120,16 +127,23 @@ export function IngredientRow({
             onClick={() => onDelete(ingredient.id)}
             className="p-1 text-muted-foreground hover:text-destructive transition-colors"
             aria-label="Delete ingredient"
+            tabIndex={-1}
           >
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="grid grid-cols-2 gap-2 mb-2">
-          <QuantityInput
-            value={ingredient.quantity}
-            onChange={(value) => onUpdate(ingredient.id, "quantity", value)}
-            placeholder="Qty"
-          />
+          <div>
+            <QuantityInput
+              value={ingredient.quantity}
+              onChange={(value) => onUpdate(ingredient.id, "quantity", value)}
+              placeholder="Qty"
+              className={cn(quantityError && "border-destructive")}
+            />
+            {quantityError && (
+              <p className="text-xs text-destructive mt-1">{quantityError}</p>
+            )}
+          </div>
           <Select
             value={ingredient.unit}
             onValueChange={(value) => onUpdate(ingredient.id, "unit", value)}
@@ -146,15 +160,20 @@ export function IngredientRow({
             </SelectContent>
           </Select>
         </div>
-        <IngredientAutocomplete
-          ingredients={availableIngredients}
-          value={ingredient.name}
-          onValueChange={(value) => onUpdate(ingredient.id, "name", value)}
-          onIngredientSelect={handleIngredientSelect}
-          onNewIngredient={handleNewIngredient}
-          placeholder="Ingredient name"
-          className="h-9 mb-2"
-        />
+        <div className="mb-2">
+          <IngredientAutocomplete
+            ingredients={availableIngredients}
+            value={ingredient.name}
+            onValueChange={(value) => onUpdate(ingredient.id, "name", value)}
+            onIngredientSelect={handleIngredientSelect}
+            onNewIngredient={handleNewIngredient}
+            placeholder="Ingredient name"
+            className={cn("h-9", nameError && "border-destructive")}
+          />
+          {nameError && (
+            <p className="text-xs text-destructive mt-1">{nameError}</p>
+          )}
+        </div>
         <Select
           value={ingredient.category}
           onValueChange={(value) => onUpdate(ingredient.id, "category", value)}
@@ -163,7 +182,7 @@ export function IngredientRow({
             <SelectValue placeholder="Category" />
           </SelectTrigger>
           <SelectContent>
-            {INGREDIENT_CATEGORIES.map((cat) => (
+            {ingredientCategories.map((cat) => (
               <SelectItem key={cat.value} value={cat.value}>
                 {cat.label}
               </SelectItem>
@@ -180,17 +199,22 @@ export function IngredientRow({
           aria-label="Drag to reorder"
           {...attributes}
           {...listeners}
+          tabIndex={-1}
         >
           <GripVertical className="h-5 w-5" />
         </button>
 
-        <div className="flex-1 flex items-center gap-2">
+        <div className="flex-1 flex items-start gap-2">
           <div className="flex-shrink-0 w-24">
             <QuantityInput
               value={ingredient.quantity}
               onChange={(value) => onUpdate(ingredient.id, "quantity", value)}
               placeholder="Qty"
+              className={cn(quantityError && "border-destructive")}
             />
+            {quantityError && (
+              <p className="text-xs text-destructive mt-1">{quantityError}</p>
+            )}
           </div>
 
           <div className="flex-shrink-0 w-28">
@@ -219,8 +243,11 @@ export function IngredientRow({
               onIngredientSelect={handleIngredientSelect}
               onNewIngredient={handleNewIngredient}
               placeholder="Ingredient name"
-              className="h-9"
+              className={cn("h-9", nameError && "border-destructive")}
             />
+            {nameError && (
+              <p className="text-xs text-destructive mt-1">{nameError}</p>
+            )}
           </div>
 
           <div className="flex-shrink-0 w-32">
@@ -232,7 +259,7 @@ export function IngredientRow({
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                {INGREDIENT_CATEGORIES.map((cat) => (
+                {ingredientCategories.map((cat) => (
                   <SelectItem key={cat.value} value={cat.value}>
                     {cat.label}
                   </SelectItem>
@@ -247,10 +274,11 @@ export function IngredientRow({
           onClick={() => onDelete(ingredient.id)}
           className="p-1 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
           aria-label="Delete ingredient"
+          tabIndex={-1}
         >
           <X className="h-5 w-5" />
         </button>
       </div>
     </div>
   );
-}
+});

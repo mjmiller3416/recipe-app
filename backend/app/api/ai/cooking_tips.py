@@ -3,8 +3,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.ai.dtos import CookingTipResponseDTO
-from app.ai.services import get_cooking_tip_service
+from app.dtos.cooking_tip_dtos import CookingTipResponseDTO
+from app.services.ai.cooking_tips import get_cooking_tip_service
 from app.api.auth import require_pro
 from app.database.db import get_session
 from app.models.user import User

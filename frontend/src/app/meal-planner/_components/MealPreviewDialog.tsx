@@ -7,10 +7,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MealPreviewPanel } from "./MealPreviewPanel";
+import { SavedView } from "./SavedView";
 import type { RecipeCardData } from "@/types/recipe";
+import type { PlannerEntryResponseDTO } from "@/types/planner";
 
 // ============================================================================
 // Types
@@ -39,6 +40,8 @@ export interface MealPreviewDialogProps {
   onConfirm: () => void;
   /** Whether the add button is in loading/submitting state */
   isSubmitting?: boolean;
+  /** Called when a saved meal is added to planner (create mode only) */
+  onSavedMealAdded?: (entry: PlannerEntryResponseDTO) => void;
 }
 
 // ============================================================================
@@ -46,10 +49,10 @@ export interface MealPreviewDialogProps {
 // ============================================================================
 
 /**
- * MealPreviewDialog - Dialog for previewing and confirming a meal selection
+ * MealPreviewDialog - Dialog for creating or editing a meal
  *
- * Wraps MealPreviewPanel inside a dialog for the meal creation flow.
- * Shows main dish, side dishes, and allows adding more sides.
+ * In create mode: shows tabs for "Create Meal" and "Saved Meals"
+ * In edit mode: shows MealPreviewPanel directly (no tabs)
  */
 export function MealPreviewDialog({
   open,
@@ -63,6 +66,7 @@ export function MealPreviewDialog({
   onAddSides,
   onConfirm,
   isSubmitting = false,
+  onSavedMealAdded,
 }: MealPreviewDialogProps) {
   const isEditMode = mode === "edit";
 
@@ -70,40 +74,59 @@ export function MealPreviewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent size="sm" className="max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
-          <DialogTitle>{isEditMode ? "Edit Meal" : "Confirm Your Meal"}</DialogTitle>
+          <DialogTitle>{isEditMode ? "Edit Meal" : "Add Meal"}</DialogTitle>
           <DialogDescription>
             {isEditMode
               ? "Update your meal selection"
-              : "Review your selection and add to the meal queue"}
+              : "Create a new meal or add a saved one"}
           </DialogDescription>
         </DialogHeader>
 
-        {/* Meal Preview Panel */}
-        <div className="mt-2">
-          <MealPreviewPanel
-            mainDish={mainDish}
-            sides={sides}
-            onSelectMain={onSelectMain}
-            onRemoveMain={onRemoveMain}
-            onRemoveSide={onRemoveSide}
-            onAddToQueue={onConfirm}
-            isSubmitting={isSubmitting}
-            showHeader={false}
-            buttonText={isEditMode ? "Save Changes" : "Add to Meal Queue"}
-            submittingText={isEditMode ? "Saving..." : "Adding..."}
-          />
-        </div>
+        {isEditMode ? (
+          <div className="mt-2 min-w-0">
+            <MealPreviewPanel
+              mainDish={mainDish}
+              sides={sides}
+              onSelectMain={onSelectMain}
+              onRemoveMain={onRemoveMain}
+              onRemoveSide={onRemoveSide}
+              onAddSides={onAddSides}
+              onAddToQueue={onConfirm}
+              isSubmitting={isSubmitting}
+              showHeader={false}
+              buttonText="Save Changes"
+              submittingText="Saving..."
+            />
+          </div>
+        ) : (
+          <Tabs defaultValue="create" className="mt-2 flex flex-col h-[35rem]">
+            <TabsList className="w-full">
+              <TabsTrigger value="create" className="flex-1">Create Meal</TabsTrigger>
+              <TabsTrigger value="saved" className="flex-1">Saved Meals</TabsTrigger>
+            </TabsList>
 
-        {/* Add Sides Button - shown when main is selected and fewer than 3 sides */}
-        {mainDish && sides.length < 3 && (
-          <Button
-            variant="outline"
-            onClick={onAddSides}
-            className="w-full mt-2 gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add Side Dishes ({sides.length}/3)
-          </Button>
+            <TabsContent value="create" className="min-w-0 flex-1 overflow-y-auto">
+              <MealPreviewPanel
+                mainDish={mainDish}
+                sides={sides}
+                onSelectMain={onSelectMain}
+                onRemoveMain={onRemoveMain}
+                onRemoveSide={onRemoveSide}
+                onAddSides={onAddSides}
+                onAddToQueue={onConfirm}
+                isSubmitting={isSubmitting}
+                showHeader={false}
+                buttonText="Add to Meal Queue"
+                submittingText="Adding..."
+              />
+            </TabsContent>
+
+            <TabsContent value="saved" className="min-w-0 flex-1 overflow-y-auto">
+              {onSavedMealAdded && (
+                <SavedView onEntryCreated={onSavedMealAdded} />
+              )}
+            </TabsContent>
+          </Tabs>
         )}
       </DialogContent>
     </Dialog>

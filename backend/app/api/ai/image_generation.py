@@ -5,13 +5,13 @@ import base64
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.ai.dtos import (
+from app.dtos.image_generation_dtos import (
     ImageGenerationRequestDTO,
     ImageGenerationResponseDTO,
     BannerGenerationRequestDTO,
     BannerGenerationResponseDTO,
 )
-from app.ai.services import get_image_generation_service
+from app.services.ai.image_generation import get_image_generation_service
 from app.api.auth import require_pro
 from app.database.db import get_session
 from app.models.user import User
@@ -42,14 +42,52 @@ async def generate_recipe_image(
 
     try:
         service = get_image_generation_service()
-        result = service.generate_dual_recipe_images(request.recipe_name)
 
-        if not result["success"]:
-            errors = result.get("errors", [])
-            raise HTTPException(
-                status_code=500,
-                detail="; ".join(errors) if errors else "Image generation failed",
+        if request.image_type == "both":
+            result = service.generate_dual_recipe_images(request.recipe_name)
+            if not result["success"]:
+                errors = result.get("errors", [])
+                raise HTTPException(
+                    status_code=500,
+                    detail="; ".join(errors) if errors else "Image generation failed",
+                )
+            reference_data = result.get("reference_image_data")
+            banner_data = result.get("banner_image_data")
+
+        elif request.image_type == "reference":
+            from app.services.ai.image_generation.config import PROMPT_TEMPLATE, ASPECT_RATIO
+
+            ref_result = service.generate_recipe_image(
+                request.recipe_name,
+                custom_prompt=PROMPT_TEMPLATE,
+                aspect_ratio=ASPECT_RATIO,
             )
+            if not ref_result["success"]:
+                raise HTTPException(
+                    status_code=500,
+                    detail=ref_result.get("error") or "Reference image generation failed",
+                )
+            reference_data = ref_result["image_data"]
+            banner_data = None
+
+        else:  # banner
+            from app.services.ai.image_generation.config import (
+                BANNER_PROMPT_TEMPLATE,
+                BANNER_ASPECT_RATIO,
+            )
+
+            banner_result = service.generate_recipe_image(
+                request.recipe_name,
+                custom_prompt=BANNER_PROMPT_TEMPLATE,
+                aspect_ratio=BANNER_ASPECT_RATIO,
+            )
+            if not banner_result["success"]:
+                raise HTTPException(
+                    status_code=500,
+                    detail=banner_result.get("error") or "Banner image generation failed",
+                )
+            reference_data = None
+            banner_data = banner_result["image_data"]
 
         # Track usage (silent fail - don't break AI feature for tracking issues)
         try:
@@ -59,8 +97,8 @@ async def generate_recipe_image(
 
         return ImageGenerationResponseDTO(
             success=True,
-            reference_image_data=result.get("reference_image_data"),
-            banner_image_data=result.get("banner_image_data"),
+            reference_image_data=reference_data,
+            banner_image_data=banner_data,
             error=None,
         )
 

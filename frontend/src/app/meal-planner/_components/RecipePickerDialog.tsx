@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { RecipeBrowserView } from "@/app/recipes/_components/RecipeBrowserView";
+import { RecipeBrowserView } from "@/components/recipe/RecipeBrowserView";
 import type { RecipeCardData } from "@/types/recipe";
 
 // ============================================================================

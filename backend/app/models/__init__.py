@@ -1,5 +1,6 @@
 # app/core/models/__init__.py
 
+from .feedback import Feedback
 from .ingredient import Ingredient
 from .meal import Meal
 from .planner_entry import PlannerEntry
@@ -11,10 +12,14 @@ from .shopping_item import ShoppingItem
 from .shopping_item_contribution import ShoppingItemContribution
 from .unit_conversion_rule import UnitConversionRule
 from .user import User
+from .user_category import UserCategory
+from .user_ingredient_category import UserIngredientCategory
+from .user_ingredient_unit import UserIngredientUnit
 from .user_settings import UserSettings
 from .user_usage import UserUsage
 
 __all__ = [
+    "Feedback",
     "Recipe",
     "RecipeGroup",
     "RecipeIngredient",
@@ -26,6 +31,9 @@ __all__ = [
     "ShoppingItemContribution",
     "UnitConversionRule",
     "User",
+    "UserCategory",
+    "UserIngredientCategory",
+    "UserIngredientUnit",
     "UserSettings",
     "UserUsage",
 ]

@@ -104,22 +104,8 @@ class RecipeCreateDTO(BaseModel):
         return v
 ```
 
-## DateTime Handling (Store as ISO Strings)
+## DateTime Handling
 
-```python
-# ✅ Store as string in DTO
-class EntityResponseDTO(BaseModel):
-    created_at: Optional[str] = None  # ISO format string
-
-    @classmethod
-    def from_model(cls, entity: "Entity") -> "EntityResponseDTO":
-        return cls(
-            # Convert datetime to ISO string
-            created_at=entity.created_at.isoformat() if entity.created_at else None
-        )
-
-# ❌ Don't store datetime objects in DTOs (serialization issues)
-created_at: Optional[datetime] = None  # WRONG!
-```
+DTOs store datetimes as ISO format strings (`Optional[str]`), not `datetime` objects. Convert in `from_model()` using `.isoformat()` — see the pattern above.
 
 **See:** [app/dtos/recipe_dtos.py](../../backend/app/dtos/recipe_dtos.py) for complete reference implementation.

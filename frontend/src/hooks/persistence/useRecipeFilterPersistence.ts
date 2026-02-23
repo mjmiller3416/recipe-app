@@ -1,18 +1,18 @@
 "use client";
 
 import { useCallback } from "react";
-import type { FilterState } from "@/app/recipes/_components/browser/RecipeFilters";
+import type { RecipeFilters } from "@/lib/filterUtils";
 import type {
   SortOption,
   SortDirection,
-} from "@/app/recipes/_components/browser/RecipeSortControls";
+} from "@/components/recipe/browser/FilterSortControls";
 
 // ============================================================================
 // Types
 // ============================================================================
 
 export interface SavedRecipeFilterState {
-  filters: FilterState;
+  filters: RecipeFilters;
   searchTerm: string;
   activeQuickFilters: string[];
   sortBy: SortOption;

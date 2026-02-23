@@ -129,10 +129,14 @@ Models (app/models/)    # SQLAlchemy ORM
 
 ### Key Patterns
 
-**API Client** (`lib/api.ts`): All backend calls use typed API methods:
+**API Client** (`lib/api/`): Domain-split API modules with barrel re-export:
 ```typescript
-// Centralized API client with methods for all backend services
-import { recipeApi, plannerApi, shoppingApi, mealGenieApi, ... } from "@/lib/api";
+// All imports go through the barrel index — same import path as before
+import { recipeApi, plannerApi, shoppingApi, AssistantApi, ... } from "@/lib/api";
+
+// Modules: base.ts, recipe.ts, planner.ts, shopping.ts, ai.ts,
+// ingredients.ts, upload.ts, dashboard.ts, data-management.ts,
+// feedback.ts, units.ts, settings.ts, recipe-groups.ts
 ```
 
 **API Authentication Layer**:

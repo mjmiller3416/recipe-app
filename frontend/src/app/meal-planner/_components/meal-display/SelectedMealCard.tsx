@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { Users, Clock, Plus, Check, Bookmark } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { formatTime } from "@/lib/quantityUtils";
+import { cn, getErrorMessage } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
@@ -34,19 +35,6 @@ interface SelectedMealCardProps {
   /** Called when Add Side is clicked */
   onAddSide?: () => void;
   className?: string;
-}
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-function formatTime(minutes: number): string {
-  if (minutes < 60) {
-    return `${minutes}m`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 }
 
 // ============================================================================
@@ -118,7 +106,7 @@ export function SelectedMealCard({
     return (
       <Card className={cn("p-6 text-center", className)}>
         <p className="text-destructive font-medium">
-          {error instanceof Error ? error.message : "Failed to load meal"}
+          {getErrorMessage(error, "Failed to load meal")}
         </p>
       </Card>
     );

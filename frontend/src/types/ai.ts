@@ -4,8 +4,11 @@
 // Image Generation Types
 // ============================================================================
 
+export type ImageGenerationType = "both" | "reference" | "banner";
+
 export interface ImageGenerationRequestDTO {
   recipe_name: string;
+  image_type?: ImageGenerationType;
 }
 
 export interface ImageGenerationResponseDTO {
@@ -51,17 +54,17 @@ export interface MealSuggestionsResponseDTO {
 // Meal Genie Types
 // ============================================================================
 
-export interface MealGenieMessage {
+export interface AssistantMessage {
   role: "user" | "assistant";
   content: string;
 }
 
-export interface MealGenieRequestDTO {
+export interface AssistantRequestDTO {
   message: string;
-  conversation_history?: MealGenieMessage[];
+  conversation_history?: AssistantMessage[];
 }
 
-export interface MealGenieResponseDTO {
+export interface AssistantResponseDTO {
   success: boolean;
   response?: string;
   error?: string;
@@ -96,7 +99,7 @@ export interface GeneratedRecipeDTO {
 
 export interface RecipeGenerationRequestDTO {
   message: string;
-  conversation_history?: MealGenieMessage[];
+  conversation_history?: AssistantMessage[];
   generate_image?: boolean;
 }
 
@@ -111,7 +114,7 @@ export interface RecipeGenerationResponseDTO {
 }
 
 // Extended message type for chat with recipe data
-export interface MealGenieChatMessage extends MealGenieMessage {
+export interface AssistantChatMessage extends AssistantMessage {
   recipe?: GeneratedRecipeDTO;
   imageData?: string;
 }

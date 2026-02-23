@@ -1,17 +1,16 @@
-import { INGREDIENT_CATEGORY_ORDER } from "@/lib/constants";
+import { INGREDIENT_CATEGORY_ORDER as DEFAULT_CATEGORY_ORDER } from "@/lib/constants";
 import type { RecipeResponseDTO } from "@/types/recipe";
 
 /**
- * Formats minutes into a human-readable time string.
- * @example formatTime(90) // "1h 30m"
- * @example formatTime(45) // "45 min"
+ * Verbose time format for recipe detail and print pages (e.g., "45 min", "1h 30m").
  */
 export function formatTime(minutes: number | null): string {
-  if (!minutes) return "—";
-  if (minutes < 60) return `${minutes} min`;
+  if (!minutes) return "\u2014";
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  if (hours === 0) return `${mins} min`;
+  if (mins === 0) return `${hours}h`;
+  return `${hours}h ${mins}m`;
 }
 
 /**
@@ -59,14 +58,16 @@ export function groupIngredientsByCategory(
  * Unknown categories are sorted to the end.
  */
 export function sortCategoryEntries(
-  entries: [string, RecipeResponseDTO["ingredients"]][]
+  entries: [string, RecipeResponseDTO["ingredients"]][],
+  categoryOrder?: string[]
 ): [string, RecipeResponseDTO["ingredients"]][] {
+  const order = categoryOrder ?? [...DEFAULT_CATEGORY_ORDER];
   return entries.sort(([a], [b]) => {
-    const aIndex = INGREDIENT_CATEGORY_ORDER.indexOf(a.toLowerCase() as typeof INGREDIENT_CATEGORY_ORDER[number]);
-    const bIndex = INGREDIENT_CATEGORY_ORDER.indexOf(b.toLowerCase() as typeof INGREDIENT_CATEGORY_ORDER[number]);
+    const aIndex = order.indexOf(a.toLowerCase());
+    const bIndex = order.indexOf(b.toLowerCase());
     // Unknown categories go to the end
-    const aOrder = aIndex === -1 ? INGREDIENT_CATEGORY_ORDER.length : aIndex;
-    const bOrder = bIndex === -1 ? INGREDIENT_CATEGORY_ORDER.length : bIndex;
+    const aOrder = aIndex === -1 ? order.length : aIndex;
+    const bOrder = bIndex === -1 ? order.length : bIndex;
     return aOrder - bOrder;
   });
 }

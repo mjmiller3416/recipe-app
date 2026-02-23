@@ -6,12 +6,13 @@ import {
   cookingTipApi,
   mealSuggestionsApi,
   imageGenerationApi,
-  mealGenieApi,
+  AssistantApi,
 } from "@/lib/api";
 import { aiQueryKeys } from "./queryKeys";
 import type {
+  ImageGenerationType,
   MealSuggestionsRequestDTO,
-  MealGenieMessage,
+  AssistantMessage,
 } from "@/types/ai";
 
 // ============================================================================
@@ -66,12 +67,14 @@ export function useGenerateImage() {
     mutationFn: async ({
       recipeName,
       customPrompt,
+      imageType,
     }: {
       recipeName: string;
       customPrompt?: string;
+      imageType?: ImageGenerationType;
     }) => {
       const token = await getToken();
-      return imageGenerationApi.generate(recipeName, customPrompt, token);
+      return imageGenerationApi.generate(recipeName, customPrompt, token, imageType);
     },
   });
 }
@@ -102,7 +105,7 @@ export function useGenerateBanner() {
  * Supports conversation history for context.
  * May return chat response, recipe suggestions, or a generated recipe.
  */
-export function useMealGenieChat() {
+export function useAssistantChat() {
   const { getToken } = useAuth();
 
   return useMutation({
@@ -111,20 +114,20 @@ export function useMealGenieChat() {
       conversationHistory,
     }: {
       message: string;
-      conversationHistory?: MealGenieMessage[];
+      conversationHistory?: AssistantMessage[];
     }) => {
       const token = await getToken();
-      return mealGenieApi.chat(message, conversationHistory, token);
+      return AssistantApi.chat(message, conversationHistory, token);
     },
   });
 }
 
 /**
  * Ask Meal Genie a question.
- * Alias for useMealGenieChat - uses the same endpoint.
+ * Alias for useAssistantChat - uses the same endpoint.
  * Supports conversation history for context.
  */
-export function useMealGenieAsk() {
+export function useAssistantAsk() {
   const { getToken } = useAuth();
 
   return useMutation({
@@ -133,10 +136,10 @@ export function useMealGenieAsk() {
       conversationHistory,
     }: {
       message: string;
-      conversationHistory?: MealGenieMessage[];
+      conversationHistory?: AssistantMessage[];
     }) => {
       const token = await getToken();
-      return mealGenieApi.ask(message, conversationHistory, token);
+      return AssistantApi.ask(message, conversationHistory, token);
     },
   });
 }

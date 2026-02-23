@@ -78,7 +78,7 @@ export function FeedbackSection() {
               placeholder="Tell us what's on your mind... (minimum 10 characters)"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="min-h-[150px] max-w-2xl"
+              className="min-h-40 max-w-2xl"
             />
             <p className="text-xs text-muted-foreground">
               Be as detailed as possible to help us understand your feedback
@@ -120,9 +120,8 @@ export function FeedbackSection() {
           {/* Info Box */}
           <div className="bg-elevated rounded-xl p-4 border border-border">
             <p className="text-sm text-muted-foreground">
-              Your feedback is submitted as a GitHub issue and helps us
-              prioritize improvements. Thank you for helping make Meal Genie
-              better!
+              Your feedback helps us prioritize improvements. Thank you
+              for helping make Meal Genie better!
             </p>
           </div>
         </div>

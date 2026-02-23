@@ -17,7 +17,6 @@ import {
   hasActiveFilters,
   getActiveFiltersList,
   removeFilter,
-  quickFiltersToRecipeFilters,
 } from "@/lib/filterUtils";
 import type { RecipeCardData } from "@/types/recipe";
 
@@ -28,13 +27,18 @@ import type { RecipeCardData } from "@/types/recipe";
 export interface UseRecipeFiltersOptions {
   /** Initial filter state */
   initialFilters?: Partial<RecipeFilters>;
+  /** Initial quick filter IDs (e.g. restored from persistence) */
+  initialQuickFilters?: string[];
   /** Callback when filters change */
   onFiltersChange?: (filters: RecipeFilters) => void;
+  /** Callback when clearAll is invoked (for persistence/URL cleanup) */
+  onClearAll?: () => void;
   /** Label mappings for display */
   filterOptions?: {
     categoryOptions?: FilterOption[];
     mealTypeOptions?: FilterOption[];
     dietaryOptions?: FilterOption[];
+    groupOptions?: FilterOption[];
   };
 }
 
@@ -52,6 +56,7 @@ export interface UseRecipeFiltersReturn {
   toggleCategory: (value: string) => void;
   toggleMealType: (value: string) => void;
   toggleDietary: (value: string) => void;
+  toggleGroup: (value: number) => void;
   toggleFavorites: () => void;
   setMaxCookTime: (minutes: number | null) => void;
   setNewDays: (days: number | null) => void;
@@ -63,6 +68,7 @@ export interface UseRecipeFiltersReturn {
   removeActiveFilter: (filter: ActiveFilter) => void;
   clearAll: () => void;
   setFilters: React.Dispatch<React.SetStateAction<RecipeFilters>>;
+  setActiveQuickFilters: React.Dispatch<React.SetStateAction<Set<string>>>;
 
   // Filter application
   applyTo: (recipes: RecipeCardData[]) => RecipeCardData[];
@@ -75,7 +81,7 @@ export interface UseRecipeFiltersReturn {
 export function useRecipeFilters(
   options: UseRecipeFiltersOptions = {}
 ): UseRecipeFiltersReturn {
-  const { initialFilters, onFiltersChange, filterOptions } = options;
+  const { initialFilters, initialQuickFilters, onFiltersChange, onClearAll, filterOptions } = options;
 
   // Main filter state
   const [filters, setFiltersInternal] = useState<RecipeFilters>({
@@ -85,7 +91,7 @@ export function useRecipeFilters(
 
   // Quick filter state (kept in sync with main filters)
   const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(
-    () => new Set()
+    () => new Set(initialQuickFilters ?? [])
   );
 
   // Wrapped setFilters that also calls onFiltersChange
@@ -184,6 +190,18 @@ export function useRecipeFilters(
           return next;
         });
       }
+    },
+    [setFilters]
+  );
+
+  const toggleGroup = useCallback(
+    (value: number) => {
+      setFilters((prev) => ({
+        ...prev,
+        groupIds: prev.groupIds.includes(value)
+          ? prev.groupIds.filter((g) => g !== value)
+          : [...prev.groupIds, value],
+      }));
     },
     [setFilters]
   );
@@ -323,7 +341,8 @@ export function useRecipeFilters(
   const clearAll = useCallback(() => {
     setFilters({ ...DEFAULT_FILTERS });
     setActiveQuickFilters(new Set());
-  }, [setFilters]);
+    onClearAll?.();
+  }, [setFilters, onClearAll]);
 
   // -------------------------------------------------------------------------
   // Filter Application
@@ -343,6 +362,7 @@ export function useRecipeFilters(
     toggleCategory,
     toggleMealType,
     toggleDietary,
+    toggleGroup,
     toggleFavorites,
     setMaxCookTime,
     setNewDays,
@@ -350,6 +370,7 @@ export function useRecipeFilters(
     removeActiveFilter,
     clearAll,
     setFilters,
+    setActiveQuickFilters,
     applyTo,
   };
 }

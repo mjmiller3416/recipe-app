@@ -7,7 +7,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { RecipeBannerImage } from "@/components/recipe/RecipeBannerImage";
-import { ShoppingCart, Users, Clock, Bookmark, GripVertical } from "lucide-react";
+import { ShoppingCart, Users, Clock, Bookmark } from "lucide-react";
+import { formatTime } from "@/lib/quantityUtils";
 import { ShoppingMode } from "@/types/shopping";
 
 // ============================================================================
@@ -28,24 +29,15 @@ export interface MealGridItem {
 interface MealGridCardProps {
   item: MealGridItem;
   isSelected?: boolean;
+  isAnyDragging?: boolean;
   onClick?: () => void;
   onCycleShoppingMode?: () => void;
-  isReorderMode?: boolean;
   className?: string;
 }
 
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
-
-function formatTime(minutes: number): string {
-  if (minutes < 60) {
-    return `${minutes}m`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
-}
 
 /** Get tooltip text explaining the current shopping mode */
 function getShoppingModeTooltip(mode: ShoppingMode): string {
@@ -82,9 +74,9 @@ function getShoppingModeAriaLabel(mode: ShoppingMode): string {
 export function MealGridCard({
   item,
   isSelected = false,
+  isAnyDragging = false,
   onClick,
   onCycleShoppingMode,
-  isReorderMode = false,
   className,
 }: MealGridCardProps) {
   const {
@@ -96,10 +88,16 @@ export function MealGridCard({
     isDragging,
   } = useSortable({ id: item.id });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  // When dragging: hide the original card (DragOverlay renders the floating copy).
+  // For non-dragged items: only apply transition while a drag is active so items
+  // smoothly shift to make room. When the drag ends, transitions are disabled
+  // so all cards snap instantly to their final positions (no flash).
+  const style = isDragging
+    ? undefined
+    : {
+        transform: CSS.Translate.toString(transform),
+      transition: isAnyDragging ? transition : 'none',
+      };
 
   const shoppingMode = item.shoppingMode ?? "all";
 
@@ -108,12 +106,10 @@ export function MealGridCard({
       ref={setNodeRef}
       style={style}
       onClick={onClick}
-      tabIndex={0}
-      role="button"
-      aria-label={`${item.name} - click to view`}
+      aria-label={`${item.name} - click to view, hold to reorder`}
       className={cn(
         // Base styles
-        "group cursor-pointer overflow-hidden",
+        "group cursor-pointer overflow-hidden touch-none",
         "pb-0 pt-0 gap-0",
         // Liftable hover effect (disabled while dragging to prevent transform conflicts)
         !isDragging && "liftable hover:bg-hover",
@@ -121,10 +117,12 @@ export function MealGridCard({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         // Selected state - use outline instead of ring so it persists on hover (ring uses box-shadow which gets overridden by liftable)
         isSelected && "outline outline-2 outline-primary",
-        // Dragging state - transition-none overrides Card's built-in transition-all
-        isDragging && "opacity-50 shadow-lg z-10 transition-none",
+        // Dragging state - hidden (space preserved) so DragOverlay can render the floating copy
+        isDragging && "opacity-0 transition-none",
         className
       )}
+      {...attributes}
+      {...listeners}
     >
       {/* Image Section */}
       <div className="relative w-full overflow-hidden">
@@ -138,22 +136,6 @@ export function MealGridCard({
             !isDragging && "transition-transform duration-300 group-hover:scale-105"
           )}
         />
-
-        {/* Drag Handle - Top Left (only visible in reorder mode) */}
-        {isReorderMode && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            shape="pill"
-            className="absolute top-2 left-2 size-6 bg-overlay-strong cursor-grab active:cursor-grabbing touch-none"
-            aria-label="Drag to reorder"
-            onClick={(e) => e.stopPropagation()}
-            {...attributes}
-            {...listeners}
-          >
-            <GripVertical className="size-3.5 text-muted-foreground" strokeWidth={1.5} />
-          </Button>
-        )}
 
         {/* Status Icons - Top Right */}
         <div className="absolute top-2 right-2 flex gap-1">
@@ -207,6 +189,83 @@ export function MealGridCard({
       {/* Content Section */}
       <div className="p-3">
         <h3 className="text-sm font-semibold text-foreground truncate mb-1 group-hover:text-primary transition-colors">
+          {item.name}
+        </h3>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          {item.servings != null && (
+            <span className="flex items-center gap-1">
+              <Users className="h-3.5 w-3.5" strokeWidth={1.5} />
+              {item.servings} servings
+            </span>
+          )}
+          {item.totalTime != null && (
+            <span className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" strokeWidth={1.5} />
+              {formatTime(item.totalTime)}
+            </span>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+// ============================================================================
+// DRAG OVERLAY COMPONENT (presentational — no useSortable hook)
+// ============================================================================
+
+/**
+ * Presentational clone of MealGridCard rendered inside DragOverlay.
+ * Renders outside the grid flow so it doesn't interfere with layout.
+ */
+export function MealGridCardOverlay({ item }: { item: MealGridItem }) {
+  const shoppingMode = item.shoppingMode ?? "all";
+
+  return (
+    <Card
+      className={cn(
+        "cursor-grabbing overflow-hidden",
+        "pb-0 pt-0 gap-0",
+        "shadow-lg scale-105 rotate-1"
+      )}
+    >
+      {/* Image Section */}
+      <div className="relative w-full overflow-hidden">
+        <RecipeBannerImage
+          bannerSrc={item.bannerImageUrl}
+          fallbackSrc={item.imageUrl}
+          alt={item.name}
+          aspectRatio="16/9"
+        />
+
+        {/* Status Icons - Top Right */}
+        <div className="absolute top-2 right-2 flex gap-1">
+          <div className="size-6 rounded-full bg-overlay-strong flex items-center justify-center">
+            <ShoppingCart
+              className={cn(
+                "size-3.5",
+                shoppingMode === "none" && "text-destructive",
+                shoppingMode === "produce_only" && "text-warning",
+                shoppingMode === "all" && "text-secondary"
+              )}
+              strokeWidth={1.5}
+            />
+          </div>
+
+          {item.isSaved && (
+            <div className="size-6 rounded-full bg-overlay-strong flex items-center justify-center">
+              <Bookmark
+                className="size-3.5 text-primary fill-current"
+                strokeWidth={1.5}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Content Section */}
+      <div className="p-3">
+        <h3 className="text-sm font-semibold text-foreground truncate mb-1">
           {item.name}
         </h3>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">

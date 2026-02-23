@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useId, useCallback } from "react";
+import { useState, useEffect, useId, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
@@ -9,13 +9,15 @@ import { base64ToFile } from "@/lib/utils";
 import type { GeneratedRecipeDTO } from "@/types/ai";
 import type { RecipeCreateDTO, RecipeUpdateDTO, RecipeIngredientDTO, RecipeResponseDTO } from "@/types/recipe";
 
-// Session storage key for AI-generated recipe (must match MealGenieChatContent)
+// Session storage key for AI-generated recipe (must match AssistantChatContent)
 const AI_RECIPE_STORAGE_KEY = "meal-genie-generated-recipe";
 import type { Ingredient } from "./IngredientRow";
-import type { Ingredient as AutocompleteIngredient } from "./IngredientAutocomplete";
+import type { AutocompleteIngredient } from "@/components/forms/IngredientAutocomplete";
 import {
   validateString,
   validateInteger,
+  validateIngredientRow,
+  type IngredientFieldErrors,
 } from "@/lib/formValidation";
 import { v4 as uuidv4 } from 'uuid';
 import { arrayMove } from '@dnd-kit/sortable';
@@ -98,6 +100,7 @@ export interface RecipeFormState {
     referenceDataUrl: string,
     bannerBase64?: string
   ) => void;
+  handleBannerOnlyAccept: (bannerBase64: string) => void;
 
   // Form submission
   handleSubmit: () => Promise<void>;
@@ -107,6 +110,7 @@ export interface RecipeFormState {
   errors: Record<string, string>;
   hasError: (field: string) => boolean;
   getError: (field: string) => string | undefined;
+  getIngredientError: (ingredientId: string, field: 'name' | 'quantity') => string | undefined;
   hasAttemptedSubmit: boolean;
 
   // Dirty tracking (for edit mode)
@@ -140,6 +144,10 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
 
   // Dirty tracking for unsaved changes
   const [isDirty, setIsDirty] = useState(false);
+  const isDirtyRef = useRef(false);
+  isDirtyRef.current = isDirty;
+  const isInitializedRef = useRef(mode === 'create');
+  isInitializedRef.current = isInitialized;
 
   // Recipe basic info state
   const [recipeName, setRecipeNameState] = useState("");
@@ -172,7 +180,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
 
   // Banner image state (21:9 ultrawide)
   const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
-  const [bannerImageData, setBannerImageData] = useState<string | null>(null);
+  const [, setBannerImageData] = useState<string | null>(null);
 
   // AI Image generation state
   const [isAiGenerated, setIsAiGenerated] = useState(false);
@@ -183,16 +191,20 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
 
   // Form validation state
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [ingredientFieldErrors, setIngredientFieldErrors] = useState<
+    Record<string, IngredientFieldErrors>
+  >({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   // Helper to mark form as dirty (only after initialization)
+  // Uses refs to avoid including isDirty/isInitialized in deps, keeping all downstream callbacks stable
   const markDirty = useCallback(() => {
-    if (isInitialized && !isDirty) {
+    if (isInitializedRef.current && !isDirtyRef.current) {
       setIsDirty(true);
       onDirtyChange?.(true);
     }
-  }, [isInitialized, isDirty, onDirtyChange]);
+  }, [onDirtyChange]);
 
   // Wrapped setters that track dirty state
   const setRecipeName = useCallback((value: string) => {
@@ -358,7 +370,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
       }
     };
     fetchIngredients();
-  }, []);
+  }, [getToken]);
 
   // Ingredient handlers
   const addIngredient = useCallback(() => {
@@ -446,6 +458,17 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
     [markDirty]
   );
 
+  // Banner-only accept handler (updates banner without touching reference image)
+  const handleBannerOnlyAccept = useCallback(
+    (bannerBase64: string) => {
+      markDirty();
+      setBannerImageData(bannerBase64);
+      const bannerFile = base64ToFile(bannerBase64, `recipe-ai-banner.png`);
+      setBannerImageFile(bannerFile);
+    },
+    [markDirty]
+  );
+
   // Validate entire form and return normalized values
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -503,9 +526,23 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
       newErrors.ingredients = "At least one ingredient is required";
     }
 
-    // TODO: Re-enable ingredient field validation (name length, quantity bounds)
-    // Disabled for now - validation was too strict during recipe entry
-    // See frontend/TODO.md for details
+    // Validate each ingredient's fields (name length, unit-aware quantity validation)
+    const newIngredientFieldErrors: Record<string, IngredientFieldErrors> = {};
+    ingredients.forEach((ing) => {
+      // Skip completely empty rows (no name, no quantity, no unit)
+      if (!ing.name.trim() && ing.quantity === null && !ing.unit) {
+        return;
+      }
+      const result = validateIngredientRow(ing.name, ing.quantity, ing.unit);
+      if (!result.isValid) {
+        newIngredientFieldErrors[ing.id] = result.errors;
+      }
+    });
+    setIngredientFieldErrors(newIngredientFieldErrors);
+
+    if (Object.keys(newIngredientFieldErrors).length > 0) {
+      newErrors.ingredientFields = "Some ingredients have errors";
+    }
 
     // Directions (required)
     const directionsResult = validateString(directions, {
@@ -564,6 +601,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
 
       if (mode === 'create') {
         // ===== CREATE MODE =====
+        const fromAi = searchParams.get('from') === 'ai';
         const payload: RecipeCreateDTO = {
           recipe_name: values.recipeName as string,
           recipe_category: values.category as string,
@@ -574,6 +612,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
           directions: values.directions as string,
           notes: values.notes,
           ingredients: apiIngredients,
+          is_ai_generated: fromAi,
         };
 
         const createdRecipe = await recipeApi.create(payload, token);
@@ -688,9 +727,24 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
     }
   };
 
-  // Helper to check if a field has an error
-  const hasError = (field: string) => hasAttemptedSubmit && !!errors[field];
-  const getError = (field: string) => (hasAttemptedSubmit ? errors[field] : undefined);
+  // Helper to check if a field has an error (memoized for stable references)
+  const hasError = useCallback(
+    (field: string) => hasAttemptedSubmit && !!errors[field],
+    [hasAttemptedSubmit, errors]
+  );
+  const getError = useCallback(
+    (field: string) => (hasAttemptedSubmit ? errors[field] : undefined),
+    [hasAttemptedSubmit, errors]
+  );
+
+  // Helper to get ingredient field-specific errors
+  const getIngredientError = useCallback(
+    (ingredientId: string, field: 'name' | 'quantity') => {
+      if (!hasAttemptedSubmit) return undefined;
+      return ingredientFieldErrors[ingredientId]?.[field];
+    },
+    [hasAttemptedSubmit, ingredientFieldErrors]
+  );
 
   return {
     // Mode info
@@ -734,6 +788,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
     // Image handlers
     handleImageUpload,
     handleGeneratedImageAccept,
+    handleBannerOnlyAccept,
 
     // Form submission
     handleSubmit,
@@ -743,6 +798,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
     errors,
     hasError,
     getError,
+    getIngredientError,
     hasAttemptedSubmit,
 
     // Dirty tracking

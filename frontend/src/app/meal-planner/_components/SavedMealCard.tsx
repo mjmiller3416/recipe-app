@@ -5,32 +5,8 @@ import { Card } from "@/components/ui/card";
 import { RecipeImage } from "@/components/recipe/RecipeImage";
 import { getRecipeIcon } from "@/lib/recipeIcon";
 import { RecipeIcon } from "@/components/common/RecipeIcon";
-import { cn } from "@/lib/utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
 import type { MealSelectionResponseDTO } from "@/types/meal";
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-/**
- * Format an ISO date string to relative time (e.g., "2 weeks ago")
- */
-function formatRelativeTime(isoDate: string): string {
-  const date = new Date(isoDate);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays < 0) return "Today";
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 14) return "1 week ago";
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  if (diffDays < 60) return "1 month ago";
-  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-  return `${Math.floor(diffDays / 365)} year${diffDays >= 730 ? "s" : ""} ago`;
-}
 
 // ============================================================================
 // TYPES

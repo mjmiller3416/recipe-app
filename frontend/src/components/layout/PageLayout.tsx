@@ -1,4 +1,7 @@
+"use client";
+
 import * as React from "react";
+import { useRef, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -8,18 +11,17 @@ import {
   PageHeaderTitle,
   PageHeaderActions,
 } from "./PageHeader";
+import { useNavActions } from "@/lib/providers/NavActionsProvider";
 
 interface PageLayoutProps {
-  /** Page title displayed in the header */
-  title: string;
+  /** Optional page title displayed in the header */
+  title?: string;
   /** Optional description displayed below the title */
   description?: string;
   /** Optional actions (buttons, etc.) displayed on the right side of the header */
   actions?: React.ReactNode;
-  /** Optional custom header content that replaces the default title/actions layout */
+  /** Optional custom header content that completely replaces the default title/actions layout */
   headerContent?: React.ReactNode;
-  /** Optional back button href - when provided, shows a back arrow before the title */
-  backHref?: string;
   /** Optional callback when back button is clicked (for custom navigation with unsaved changes) */
   onBackClick?: () => void;
   /** Page content */
@@ -34,93 +36,122 @@ interface PageLayoutProps {
   stickyHeader?: React.ReactNode;
   /** When true, page fills viewport height exactly with no scrolling (content must manage its own overflow) */
   fillViewport?: boolean;
+  /** When true, action buttons pin into the TopNav bar when the header scrolls out of view (desktop only) */
+  pinActionsToNav?: boolean;
 }
 
 /**
  * PageLayout - Standard page layout wrapper
  *
- * Supports two modes:
- * 1. Standard (default) - Page scrolls normally with sticky header
- * 2. Hero mode - Hero section at top, sticky subheader for filters/sort
+ * Supports three modes:
+ * 1. Standard with title (default) - Page scrolls normally with title/description header
+ * 2. Standard with custom header - Pass headerContent to override default header
+ * 3. Hero mode - Hero section at top, sticky subheader for filters/sort
  *
  * For sticky sidebars, use CSS `position: sticky` on child elements.
  *
  * @example
- * // Standard scrolling page
- * <PageLayout title="Settings">
+ * // Standard page with title, description, and actions
+ * <PageLayout
+ *   title="Shopping List"
+ *   description="Automatically generated from your meal plan."
+ *   actions={<Button>Clear All</Button>}
+ * >
  *   {content}
  * </PageLayout>
  *
  * @example
- * // Page with sticky sidebar (use sticky positioning on the sidebar element)
- * <PageLayout title="Add Recipe">
- *   <div className="flex gap-6">
- *     <main className="flex-1">{formContent}</main>
- *     <aside className="sticky self-start top-24">{sidebar}</aside>
- *   </div>
+ * // Page with custom header (overrides title/description)
+ * <PageLayout
+ *   headerContent={
+ *     <PageHeaderContent>
+ *       <CustomHeaderContent />
+ *     </PageHeaderContent>
+ *   }
+ * >
+ *   {content}
  * </PageLayout>
  *
  * @example
  * // Hero mode (RecipeBrowser)
  * <PageLayout
- *   title="Recipes"
  *   hero={<HeroSection />}
  *   stickyHeader={<SortAndFilters />}
  * >
  *   {content}
  * </PageLayout>
  */
-export function PageLayout({
-  title,
-  description,
-  actions,
-  headerContent,
-  backHref,
-  onBackClick,
-  children,
-  className,
-  contentClassName,
-  hero,
-  stickyHeader,
-  fillViewport = false,
-}: PageLayoutProps) {
-  // Determine if we should show a back button
-  const showBackButton = backHref || onBackClick;
+export function PageLayout(props: PageLayoutProps) {
+  const {
+    title,
+    description,
+    actions,
+    headerContent,
+    onBackClick,
+    children,
+    className,
+    contentClassName,
+    hero,
+    stickyHeader,
+    fillViewport = false,
+    pinActionsToNav = false,
+  } = props;
 
-  // Handle back button click
-  const handleBackClick = () => {
-    if (onBackClick) {
-      onBackClick();
-    } else if (backHref) {
-      window.location.href = backHref;
-    }
-  };
+  const headerRef = useRef<HTMLDivElement>(null);
+  const { setNavActions, setPinned, clearNavActions } = useNavActions();
+
+  // Register actions with nav context when pinActionsToNav is enabled
+  useEffect(() => {
+    if (!pinActionsToNav || !actions) return;
+    setNavActions(actions);
+    return () => clearNavActions();
+  }, [pinActionsToNav, actions, setNavActions, clearNavActions]);
+
+  // Observe header visibility to toggle pinned state
+  useEffect(() => {
+    if (!pinActionsToNav || !actions || !headerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setPinned(!entry.isIntersecting),
+      {
+        // Offset by TopNav height (h-16 = 64px) so pinning triggers
+        // when the header scrolls behind the fixed nav bar
+        rootMargin: "-64px 0px 0px 0px",
+        threshold: 0,
+      }
+    );
+
+    observer.observe(headerRef.current);
+    return () => observer.disconnect();
+  }, [pinActionsToNav, actions, setPinned]);
 
   // Build the header content (shared across modes)
-  const headerElement = (
-    <PageHeader>
-      {headerContent ?? (
-        <PageHeaderContent>
-          {showBackButton ? (
-            <div className="flex items-center flex-1 gap-4">
+  // Priority: headerContent > (title + actions) > actions only > back button only
+  const hasHeader = !!(headerContent || title || actions || onBackClick);
+  const headerElement = hasHeader ? (
+    <div ref={pinActionsToNav ? headerRef : undefined}>
+      <PageHeader>
+        {headerContent ? (
+          headerContent
+        ) : (
+          <PageHeaderContent>
+            {onBackClick && (
               <Button
                 variant="ghost"
                 size="icon"
                 aria-label="Go back"
-                onClick={handleBackClick}
+                onClick={onBackClick}
               >
-                <ArrowLeft className="w-4 h-4" />
+                <ArrowLeft className="size-4" strokeWidth={1.5} />
               </Button>
-              <PageHeaderTitle title={title} description={description} />
-            </div>
-          ) : (
-            <PageHeaderTitle title={title} description={description} />
-          )}
-          {actions && <PageHeaderActions>{actions}</PageHeaderActions>}
-        </PageHeaderContent>
-      )}
-    </PageHeader>
-  );
+            )}
+            {title && <PageHeaderTitle title={title} description={description} />}
+            {actions && <PageHeaderActions>{actions}</PageHeaderActions>}
+          </PageHeaderContent>
+        )}
+      </PageHeader>
+    </div>
+  ) : null;
 
   // ============================================
   // HERO MODE: Hero section with sticky subheader
@@ -136,7 +167,7 @@ export function PageLayout({
         {stickyHeader && (
           <div
             data-sticky-header
-            className="sticky top-0 z-40 border-b bg-background border-border"
+            className="sticky top-0 md:top-16 z-40 border-b bg-background border-border"
           >
             {stickyHeader}
           </div>

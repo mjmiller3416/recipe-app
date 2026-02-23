@@ -65,13 +65,15 @@ export function useIngredientAutocomplete({
   const [open, setOpen] = React.useState(false);
   const [highlightedIndex, setHighlightedIndex] = React.useState(0);
 
-  // Filter ingredients based on input value (matches start of any word)
+  // Filter ingredients based on input value (each search word must match the start of at least one ingredient word)
   const filteredIngredients = React.useMemo(() => {
     if (!value.trim()) return [];
-    const searchTerm = value.toLowerCase().trim();
+    const searchWords = value.toLowerCase().trim().split(/\s+/);
     return ingredients.filter((ing) => {
-      const words = ing.name.toLowerCase().split(/\s+/);
-      return words.some((word) => word.startsWith(searchTerm));
+      const ingredientWords = ing.name.toLowerCase().split(/\s+/);
+      return searchWords.every((searchWord) =>
+        ingredientWords.some((ingredientWord) => ingredientWord.startsWith(searchWord))
+      );
     });
   }, [ingredients, value]);
 
@@ -170,12 +172,18 @@ export function useIngredientAutocomplete({
           break;
 
         case "Tab":
-          setOpen(false);
-          // Auto-select single match when tabbing away
-          if (items.length === 1 && items[0].type === "ingredient" && items[0].data) {
-            onValueChange(items[0].data.name);
-            onIngredientSelect(items[0].data);
+          // Select highlighted item if menu is open with valid items
+          if (items.length > 0 && highlightedIndex >= 0 && highlightedIndex < items.length) {
+            const item = items[highlightedIndex];
+            if (item.type === "ingredient" && item.data) {
+              onValueChange(item.data.name);
+              onIngredientSelect(item.data);
+            } else if (item.type === "create" && item.name && onNewIngredient) {
+              onNewIngredient(item.name);
+            }
           }
+          setOpen(false);
+          // Don't prevent default - allow natural tab navigation
           break;
       }
     },

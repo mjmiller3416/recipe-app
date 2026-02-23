@@ -67,7 +67,7 @@ export {
   useMealSuggestions,
   useGenerateImage,
   useGenerateBanner,
-  useMealGenieChat,
+  useAssistantChat,
   // Utilities
   useRefreshCookingTip,
 } from "./useAI";
@@ -107,6 +107,57 @@ export {
   useAddRecipeToGroup,
   useRemoveRecipeFromGroup,
 } from "./useRecipeGroups";
+
+// Category Hooks
+export {
+  // Query Keys
+  categoryQueryKeys,
+  // Queries
+  useCategories,
+  useCategoryOptions,
+  useCategory,
+  // Mutations
+  useCreateCategory,
+  useUpdateCategory,
+  useDeleteCategory,
+  useReorderCategories,
+  useBulkUpdateCategories,
+  useResetCategories,
+} from "./useCategories";
+
+// Ingredient Category Hooks
+export {
+  // Query Keys
+  ingredientCategoryQueryKeys,
+  // Queries
+  useIngredientCategories,
+  useIngredientCategoryOptions,
+  useIngredientCategory,
+  // Mutations
+  useCreateIngredientCategory,
+  useUpdateIngredientCategory,
+  useDeleteIngredientCategory,
+  useReorderIngredientCategories,
+  useBulkUpdateIngredientCategories,
+  useResetIngredientCategories,
+} from "./useIngredientCategories";
+
+// Ingredient Unit Hooks
+export {
+  // Query Keys
+  ingredientUnitQueryKeys,
+  // Queries
+  useIngredientUnits,
+  useIngredientUnitOptions,
+  useIngredientUnit,
+  // Mutations
+  useCreateIngredientUnit,
+  useUpdateIngredientUnit,
+  useDeleteIngredientUnit,
+  useReorderIngredientUnits,
+  useBulkUpdateIngredientUnits,
+  useResetIngredientUnits,
+} from "./useIngredientUnits";
 
 // Unit Conversion Hooks
 export { useUnits } from "./useUnits";

@@ -59,36 +59,9 @@ def get(self, entity_id: int) -> Entity:
     return entity  # No commit needed
 ```
 
-## Domain Exceptions (Define at Top of Service)
+## Domain Exceptions
 
-```python
-# Define exceptions at top of service file
-class EntityNotFoundError(Exception):
-    """Raised when entity is not found."""
-    pass
-
-class DuplicateEntityError(Exception):
-    """Raised when entity already exists."""
-    pass
-
-class EntitySaveError(Exception):
-    """Raised when entity cannot be saved."""
-    pass
-
-class EntityValidationError(Exception):
-    """Raised when entity data is invalid."""
-    pass
-```
-
-## When to Raise Exceptions
-
-| Scenario | Exception | Example |
-|----------|-----------|---------|
-| Resource not found | `NotFoundError` | `raise RecipeNotFoundError(f"Recipe {id} not found")` |
-| Duplicate/conflict | `DuplicateError` | `raise DuplicateRecipeError(f"Recipe '{name}' exists")` |
-| Business rule violation | `ValidationError` | `raise RecipeValidationError("Servings must be >= 1")` |
-| Database failure | `SaveError` | `raise RecipeSaveError(f"Failed: {e}") from e` |
-| Constraint exceeded | `LimitError` | `raise PlannerLimitError("Max 15 entries allowed")` |
+Define exceptions at the top of each service file. See exceptions.md for naming patterns, the full hierarchy, and HTTP status mapping.
 
 ## Multi-Repository Coordination
 
