@@ -76,3 +76,5 @@ frontend/lint-report.md
 /playwright/.cache/
 /playwright/.auth/
 proto.jsx
+DreamAI.md
+Template.md
