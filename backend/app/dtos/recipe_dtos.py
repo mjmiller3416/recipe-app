@@ -44,8 +44,12 @@ class RecipeBaseDTO(BaseModel):
     recipe_category: str = Field(..., min_length=1)
     meal_type: str = Field(default="Dinner", min_length=1)
     diet_pref: Optional[str] = None  # match the model field name
+    description: Optional[str] = None
     total_time: Optional[int] = Field(None, ge=0)
+    prep_time: Optional[int] = Field(None, ge=0)
+    cook_time: Optional[int] = Field(None, ge=0)
     servings: Optional[int] = Field(None, ge=1)
+    difficulty: Optional[str] = None
     directions: Optional[str] = None
     notes: Optional[str] = None
     reference_image_path: Optional[str] = None
@@ -56,6 +60,13 @@ class RecipeBaseDTO(BaseModel):
     def strip_strings(cls, v):
         if isinstance(v, str):
             return v.strip()
+        return v
+
+    @field_validator("difficulty", mode="before")
+    @classmethod
+    def validate_difficulty(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in ("Easy", "Medium", "Hard", "Expert"):
+            raise ValueError("difficulty must be Easy, Medium, Hard, or Expert")
         return v
 
 # ── Recipe Card DTO ─────────────────────────────────────────────────────────────────────────────────────────
@@ -76,6 +87,7 @@ class RecipeCardDTO(BaseModel):
     recipe_category: Optional[str] = None
     meal_type: Optional[str] = None
     diet_pref: Optional[str] = None
+    difficulty: Optional[str] = None
     # Cooking stats (populated when needed)
     times_cooked: Optional[int] = None
     last_cooked: Optional[str] = None  # ISO datetime string
@@ -103,6 +115,7 @@ class RecipeCardDTO(BaseModel):
             recipe_category=recipe.recipe_category,
             meal_type=recipe.meal_type,
             diet_pref=recipe.diet_pref,
+            difficulty=recipe.difficulty,
             times_cooked=times_cooked,
             last_cooked=last_cooked,
             created_at=recipe.created_at.isoformat() if recipe.created_at else None,
@@ -124,8 +137,12 @@ class RecipeUpdateDTO(BaseModel):
     recipe_category: Optional[str] = Field(None, min_length=1)
     meal_type: Optional[str] = Field(None, min_length=1)
     diet_pref: Optional[str] = None
+    description: Optional[str] = None
     total_time: Optional[int] = Field(None, ge=0)
+    prep_time: Optional[int] = Field(None, ge=0)
+    cook_time: Optional[int] = Field(None, ge=0)
     servings: Optional[int] = Field(None, ge=1)
+    difficulty: Optional[str] = None
     directions: Optional[str] = None
     notes: Optional[str] = None
     reference_image_path: Optional[str] = None
@@ -138,6 +155,13 @@ class RecipeUpdateDTO(BaseModel):
     def strip_strings(cls, v):
         if isinstance(v, str) and v:
             return v.strip()
+        return v
+
+    @field_validator("difficulty", mode="before")
+    @classmethod
+    def validate_difficulty(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in ("Easy", "Medium", "Hard", "Expert"):
+            raise ValueError("difficulty must be Easy, Medium, Hard, or Expert")
         return v
 
 # ── Response DTO ────────────────────────────────────────────────────────────────────────────────────────────
@@ -182,8 +206,12 @@ class RecipeResponseDTO(RecipeBaseDTO):
             recipe_category=recipe.recipe_category,
             meal_type=recipe.meal_type,
             diet_pref=recipe.diet_pref,
+            description=recipe.description,
             total_time=recipe.total_time,
+            prep_time=recipe.prep_time,
+            cook_time=recipe.cook_time,
             servings=recipe.servings,
+            difficulty=recipe.difficulty,
             directions=recipe.directions,
             notes=recipe.notes,
             reference_image_path=recipe.reference_image_path,
