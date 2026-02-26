@@ -12,11 +12,13 @@ import { base64ToFile } from "@/lib/utils";
 import type {
   RecipeCreateDTO,
   RecipeIngredientDTO,
+  NutritionFactsCreateDTO,
   WizardCreationMethod,
   WizardStep,
   WizardIngredient,
   WizardDirection,
 } from "@/types/recipe";
+import type { NutritionFactsDTO } from "@/types/ai";
 import type { AutocompleteIngredient } from "@/components/forms/IngredientAutocomplete";
 import {
   validateString,
@@ -55,7 +57,7 @@ export function useRecipeWizard() {
   const [cookTime, setCookTime] = useState("");
   const [servings, setServings] = useState("");
   const [difficulty, setDifficulty] = useState("");
-  const [mealType, setMealType] = useState("Dinner");
+  const [mealType, setMealType] = useState("");
   const [category, setCategory] = useState("");
   const [dietaryPreference, setDietaryPreference] = useState("none");
 
@@ -87,6 +89,11 @@ export function useRecipeWizard() {
   const [isAiGenerated, setIsAiGenerated] = useState(false);
   const [generatedRefData, setGeneratedRefData] = useState<string | null>(null);
   const [generatedBannerData, setGeneratedBannerData] = useState<string | null>(null);
+
+  // ---------------------------------------------------------------------------
+  // Nutrition state
+  // ---------------------------------------------------------------------------
+  const [nutritionFacts, setNutritionFacts] = useState<NutritionFactsDTO | null>(null);
 
   // ---------------------------------------------------------------------------
   // Available ingredients (autocomplete)
@@ -202,14 +209,15 @@ export function useRecipeWizard() {
 
           // Per-ingredient validation
           ingredients.forEach((ing) => {
+            const qtyRaw = qtyStr(ing.quantity);
             if (
               !ing.ingredientName.trim() &&
-              !ing.quantity.trim() &&
+              !qtyRaw.trim() &&
               !ing.unit
             ) {
               return; // skip completely empty rows
             }
-            const qty = ing.quantity.trim() ? parseFloat(ing.quantity) : null;
+            const qty = qtyRaw.trim() ? parseFloat(qtyRaw) : null;
             const result = validateIngredientRow(
               ing.ingredientName,
               Number.isNaN(qty) ? null : qty,
@@ -474,7 +482,8 @@ export function useRecipeWizard() {
         (ing) => ing.ingredientName.trim() !== ""
       );
       const apiIngredients: RecipeIngredientDTO[] = validIngredients.map((ing) => {
-        const qty = ing.quantity.trim() ? parseFloat(ing.quantity) : null;
+        const qtyRaw = qtyStr(ing.quantity);
+        const qty = qtyRaw.trim() ? parseFloat(qtyRaw) : null;
         return {
           ingredient_name: ing.ingredientName.trim(),
           ingredient_category: ing.ingredientCategory || "Other",
@@ -504,6 +513,24 @@ export function useRecipeWizard() {
         totalTime = cook;
       }
 
+      // Build nutrition facts DTO if available
+      let nutritionPayload: NutritionFactsCreateDTO | null = null;
+      if (nutritionFacts) {
+        nutritionPayload = {
+          calories: nutritionFacts.calories,
+          protein_g: nutritionFacts.protein_g,
+          total_fat_g: nutritionFacts.total_fat_g,
+          saturated_fat_g: nutritionFacts.saturated_fat_g,
+          trans_fat_g: nutritionFacts.trans_fat_g,
+          cholesterol_mg: nutritionFacts.cholesterol_mg,
+          sodium_mg: nutritionFacts.sodium_mg,
+          total_carbs_g: nutritionFacts.total_carbs_g,
+          dietary_fiber_g: nutritionFacts.dietary_fiber_g,
+          total_sugars_g: nutritionFacts.total_sugars_g,
+          is_ai_estimated: nutritionFacts.is_ai_estimated,
+        };
+      }
+
       const payload: RecipeCreateDTO = {
         recipe_name: recipeName.trim(),
         recipe_category: category.trim(),
@@ -519,6 +546,7 @@ export function useRecipeWizard() {
         notes: notes.trim() || null,
         ingredients: apiIngredients,
         is_ai_generated: isAiGenerated,
+        nutrition_facts: nutritionPayload,
       };
 
       const createdRecipe = await recipeApi.create(payload, token);
@@ -631,6 +659,7 @@ export function useRecipeWizard() {
     bannerFile,
     generatedRefData,
     generatedBannerData,
+    nutritionFacts,
     router,
   ]);
 
@@ -700,6 +729,10 @@ export function useRecipeWizard() {
     handleGeneratedImageAccept,
     handleBannerOnlyAccept,
 
+    // Nutrition
+    nutritionFacts,
+    setNutritionFacts,
+
     // Validation
     errors,
     ingredientErrors,
@@ -717,6 +750,12 @@ export function useRecipeWizard() {
 // ============================================================================
 // HELPERS
 // ============================================================================
+
+/** Safely coerce quantity (string | number | null) to a string for `.trim()` calls. */
+function qtyStr(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  return String(value);
+}
 
 function createEmptyIngredient(): WizardIngredient {
   return {

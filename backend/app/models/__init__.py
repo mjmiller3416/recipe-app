@@ -3,6 +3,7 @@
 from .feedback import Feedback
 from .ingredient import Ingredient
 from .meal import Meal
+from .nutrition_facts import NutritionFacts
 from .planner_entry import PlannerEntry
 from .recipe import Recipe
 from .recipe_group import RecipeGroup
@@ -26,6 +27,7 @@ __all__ = [
     "RecipeHistory",
     "Ingredient",
     "Meal",
+    "NutritionFacts",
     "PlannerEntry",
     "ShoppingItem",
     "ShoppingItemContribution",

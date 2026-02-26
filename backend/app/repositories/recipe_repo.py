@@ -16,6 +16,7 @@ from ..dtos.recipe_dtos import (
     RecipeFilterDTO,
     RecipeIngredientDTO,
     RecipeUpdateDTO)
+from ..models.nutrition_facts import NutritionFacts
 from ..models.recipe import Recipe
 from ..models.recipe_history import RecipeHistory
 from ..models.recipe_ingredient import RecipeIngredient
@@ -104,6 +105,26 @@ class RecipeRepo:
             )
             self.session.add(link)
 
+        # Create nutrition facts if provided
+        if recipe_dto.nutrition_facts:
+            nf = recipe_dto.nutrition_facts
+            nutrition = NutritionFacts(
+                recipe_id=recipe.id,
+                calories=nf.calories,
+                protein_g=nf.protein_g,
+                total_fat_g=nf.total_fat_g,
+                saturated_fat_g=nf.saturated_fat_g,
+                trans_fat_g=nf.trans_fat_g,
+                cholesterol_mg=nf.cholesterol_mg,
+                sodium_mg=nf.sodium_mg,
+                total_carbs_g=nf.total_carbs_g,
+                dietary_fiber_g=nf.dietary_fiber_g,
+                total_sugars_g=nf.total_sugars_g,
+                is_ai_estimated=nf.is_ai_estimated,
+            )
+            self.session.add(nutrition)
+            self.session.flush()
+
         return recipe
 
     def get_by_id(self, recipe_id: int, user_id: Optional[int] = None) -> Optional[Recipe]:
@@ -123,6 +144,7 @@ class RecipeRepo:
             .options(
                 joinedload(Recipe.ingredients),
                 joinedload(Recipe.history),
+                joinedload(Recipe.nutrition_facts),
             )
             .where(Recipe.id == recipe_id)
         )
@@ -255,6 +277,51 @@ class RecipeRepo:
                         unit=ing_dto.unit,
                     )
                 )
+
+        # Handle nutrition_facts update
+        if "nutrition_facts" in update_data:
+            nf_data = update_data["nutrition_facts"]
+            if nf_data is None:
+                # Explicitly set to None — delete existing nutrition
+                if recipe.nutrition_facts:
+                    self.session.delete(recipe.nutrition_facts)
+                    self.session.flush()
+            else:
+                from ..dtos.nutrition_dtos import NutritionFactsDTO
+                nf_dto = (
+                    NutritionFactsDTO(**nf_data)
+                    if isinstance(nf_data, dict)
+                    else nf_data
+                )
+                if recipe.nutrition_facts:
+                    recipe.nutrition_facts.calories = nf_dto.calories
+                    recipe.nutrition_facts.protein_g = nf_dto.protein_g
+                    recipe.nutrition_facts.total_fat_g = nf_dto.total_fat_g
+                    recipe.nutrition_facts.saturated_fat_g = nf_dto.saturated_fat_g
+                    recipe.nutrition_facts.trans_fat_g = nf_dto.trans_fat_g
+                    recipe.nutrition_facts.cholesterol_mg = nf_dto.cholesterol_mg
+                    recipe.nutrition_facts.sodium_mg = nf_dto.sodium_mg
+                    recipe.nutrition_facts.total_carbs_g = nf_dto.total_carbs_g
+                    recipe.nutrition_facts.dietary_fiber_g = nf_dto.dietary_fiber_g
+                    recipe.nutrition_facts.total_sugars_g = nf_dto.total_sugars_g
+                    recipe.nutrition_facts.is_ai_estimated = nf_dto.is_ai_estimated
+                else:
+                    nutrition = NutritionFacts(
+                        recipe_id=recipe.id,
+                        calories=nf_dto.calories,
+                        protein_g=nf_dto.protein_g,
+                        total_fat_g=nf_dto.total_fat_g,
+                        saturated_fat_g=nf_dto.saturated_fat_g,
+                        trans_fat_g=nf_dto.trans_fat_g,
+                        cholesterol_mg=nf_dto.cholesterol_mg,
+                        sodium_mg=nf_dto.sodium_mg,
+                        total_carbs_g=nf_dto.total_carbs_g,
+                        dietary_fiber_g=nf_dto.dietary_fiber_g,
+                        total_sugars_g=nf_dto.total_sugars_g,
+                        is_ai_estimated=nf_dto.is_ai_estimated,
+                    )
+                    self.session.add(nutrition)
+                self.session.flush()
 
         return recipe
 

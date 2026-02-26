@@ -24,6 +24,7 @@ from .recipe_ingredient import RecipeIngredient
 
 if TYPE_CHECKING:
     from .meal import Meal
+    from .nutrition_facts import NutritionFacts
     from .recipe_group import RecipeGroup
     from .user import User
 
@@ -80,6 +81,13 @@ class Recipe(Base):
         "RecipeGroup",
         secondary="recipe_group_association",
         back_populates="recipes"
+    )
+
+    nutrition_facts: Mapped[Optional["NutritionFacts"]] = relationship(
+        "NutritionFacts",
+        back_populates="recipe",
+        cascade="all, delete-orphan",
+        uselist=False,
     )
 
     # ── String Representation ───────────────────────────────────────────────────────────────────────────────

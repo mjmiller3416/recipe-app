@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, BookOpen, Lightbulb, UtensilsCrossed } from "lucide-react";
+import { ArrowLeft, Beaker, BookOpen, Lightbulb, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { FavoriteButton } from "@/components/common/FavoriteButton";
-import type { RecipeResponseDTO } from "@/types/recipe";
+import type { RecipeResponseDTO, NutritionFactsResponseDTO } from "@/types/recipe";
 
 import { sortCategoryEntries } from "./recipe-utils";
 import { useRecipeView } from "./useRecipeView";
@@ -16,6 +18,78 @@ import { IngredientItem, DirectionStep } from "./ingredients-directions";
 import { AddToMealPlanDialog } from "./AddToMealPlanDialog";
 import { ManageGroupsDialog } from "./ManageGroupsDialog";
 import { PrintPreviewDialog, RecipePrintLayout, usePrintRecipe } from "./print";
+
+// ============================================================================
+// Nutrition Facts Card (local — only used in this view)
+// ============================================================================
+
+const NUTRITION_ROWS: {
+  key: keyof NutritionFactsResponseDTO;
+  label: string;
+  unit: string;
+  indent?: boolean;
+}[] = [
+  { key: "calories", label: "Calories", unit: "kcal" },
+  { key: "total_fat_g", label: "Total Fat", unit: "g" },
+  { key: "saturated_fat_g", label: "Saturated Fat", unit: "g", indent: true },
+  { key: "trans_fat_g", label: "Trans Fat", unit: "g", indent: true },
+  { key: "cholesterol_mg", label: "Cholesterol", unit: "mg" },
+  { key: "sodium_mg", label: "Sodium", unit: "mg" },
+  { key: "total_carbs_g", label: "Total Carbohydrates", unit: "g" },
+  { key: "dietary_fiber_g", label: "Dietary Fiber", unit: "g", indent: true },
+  { key: "total_sugars_g", label: "Total Sugars", unit: "g", indent: true },
+  { key: "protein_g", label: "Protein", unit: "g" },
+];
+
+function NutritionFactsCard({ nutritionFacts }: { nutritionFacts: NutritionFactsResponseDTO }) {
+  const formatValue = (value: number | null | boolean): string => {
+    if (value === null || typeof value === "boolean") return "—";
+    return Number.isInteger(value) ? value.toString() : value.toFixed(1);
+  };
+
+  return (
+    <Card className="mt-6 print:mt-4 print:static print:shadow-none print:border print:border-gray-200">
+      <CardContent className="p-6 print:p-4">
+        <div className="flex items-center justify-between mb-4 print:mb-2">
+          <div className="flex items-center gap-3 print:gap-0">
+            <div className="p-2 rounded-lg bg-primary/10 print:hidden">
+              <Beaker className="size-5 text-primary" strokeWidth={1.5} />
+            </div>
+            <h2 className="text-xl font-bold text-foreground print:text-lg print:text-black">
+              Nutrition Facts
+            </h2>
+          </div>
+          {nutritionFacts.is_ai_estimated && (
+            <Badge variant="secondary" className="print:hidden">AI Estimated</Badge>
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground mb-3 print:text-xs print:text-gray-500">
+          Per serving
+        </p>
+        <Separator className="mb-2" />
+        <div className="space-y-1">
+          {NUTRITION_ROWS.map((row) => {
+            const value = nutritionFacts[row.key];
+            return (
+              <div
+                key={row.key}
+                className={`flex items-center justify-between py-1 text-sm ${
+                  row.indent ? "pl-4" : ""
+                } ${!row.indent ? "font-medium" : "text-muted-foreground"}`}
+              >
+                <span>{row.label}</span>
+                <span>
+                  {formatValue(value)}
+                  {value !== null && typeof value !== "boolean" && ` ${row.unit}`}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 // ============================================================================
 // MAIN VIEW COMPONENT
@@ -185,6 +259,11 @@ export function FullRecipeView() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Nutrition Facts Card */}
+              {recipe.nutrition_facts && (
+                <NutritionFactsCard nutritionFacts={recipe.nutrition_facts} />
+              )}
             </div>
 
             {/* Directions Column */}
@@ -249,7 +328,7 @@ export function FullRecipeView() {
                       </div>
                       <div>
                         <h3 className="mb-2 text-lg font-bold text-foreground print:text-base print:text-black print:mb-1">
-                          Chef's Notes
+                          Chef&apos;s Notes
                         </h3>
                         <p className="leading-relaxed text-foreground/80 print:text-sm print:text-black">
                           {recipe.notes}

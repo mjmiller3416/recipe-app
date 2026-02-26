@@ -27,6 +27,7 @@ from app.api.ai import (
     cooking_tips_router,
     image_generation_router,
     meal_suggestions_router,
+    nutrition_estimation_router,
 )
 
 api_router = APIRouter()
@@ -56,3 +57,4 @@ api_router.include_router(cooking_tips_router, prefix="/api/ai/cooking-tip", tag
 api_router.include_router(assistant_router, prefix="/api/ai/meal-genie", tags=["ai", "meal-genie"])
 api_router.include_router(image_generation_router, prefix="/api/ai/image-generation", tags=["ai", "image-generation"])
 api_router.include_router(meal_suggestions_router, prefix="/api/ai/meal-suggestions", tags=["ai", "meal-suggestions"])
+api_router.include_router(nutrition_estimation_router, prefix="/api/ai/nutrition-estimation", tags=["ai", "nutrition-estimation"])
