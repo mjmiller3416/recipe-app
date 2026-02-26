@@ -53,8 +53,12 @@ export interface RecipeBaseDTO {
   recipe_category: string;
   meal_type: string;
   diet_pref: string | null;
+  description: string | null;
   total_time: number | null;
+  prep_time: number | null;
+  cook_time: number | null;
   servings: number | null;
+  difficulty: string | null;
   directions: string | null;
   notes: string | null;
   reference_image_path: string | null;
@@ -68,6 +72,23 @@ export interface RecipeResponseDTO extends RecipeBaseDTO {
   created_at: string | null;
   ingredients: RecipeIngredientResponseDTO[];
   group_ids: number[]; // IDs of recipe groups this recipe belongs to
+  nutrition_facts: NutritionFactsResponseDTO | null;
+}
+
+export interface NutritionFactsResponseDTO {
+  id: number;
+  recipe_id: number;
+  calories: number | null;
+  protein_g: number | null;
+  total_fat_g: number | null;
+  saturated_fat_g: number | null;
+  trans_fat_g: number | null;
+  cholesterol_mg: number | null;
+  sodium_mg: number | null;
+  total_carbs_g: number | null;
+  dietary_fiber_g: number | null;
+  total_sugars_g: number | null;
+  is_ai_estimated: boolean;
 }
 
 export interface RecipeCardDTO {
@@ -83,6 +104,7 @@ export interface RecipeCardDTO {
   recipe_category?: string | null;
   meal_type?: string | null;
   diet_pref?: string | null;
+  difficulty?: string | null;
   // Cooking stats (populated when available)
   times_cooked?: number | null;
   last_cooked?: string | null; // ISO datetime string
@@ -101,19 +123,38 @@ export interface RecipeIngredientDTO {
   unit?: string | null;
 }
 
+export interface NutritionFactsCreateDTO {
+  calories: number | null;
+  protein_g: number | null;
+  total_fat_g: number | null;
+  saturated_fat_g: number | null;
+  trans_fat_g: number | null;
+  cholesterol_mg: number | null;
+  sodium_mg: number | null;
+  total_carbs_g: number | null;
+  dietary_fiber_g: number | null;
+  total_sugars_g: number | null;
+  is_ai_estimated: boolean;
+}
+
 export interface RecipeCreateDTO {
   recipe_name: string;
   recipe_category: string;
   meal_type?: string;
   diet_pref?: string | null;
+  description?: string | null;
   total_time?: number | null;
+  prep_time?: number | null;
+  cook_time?: number | null;
   servings?: number | null;
+  difficulty?: string | null;
   directions?: string | null;
   notes?: string | null;
   reference_image_path?: string | null;
   banner_image_path?: string | null;
   ingredients?: RecipeIngredientDTO[];
   is_ai_generated?: boolean;
+  nutrition_facts?: NutritionFactsCreateDTO | null;
 }
 
 export interface RecipeUpdateDTO {
@@ -121,14 +162,19 @@ export interface RecipeUpdateDTO {
   recipe_category?: string;
   meal_type?: string;
   diet_pref?: string | null;
+  description?: string | null;
   total_time?: number | null;
+  prep_time?: number | null;
+  cook_time?: number | null;
   servings?: number | null;
+  difficulty?: string | null;
   directions?: string | null;
   notes?: string | null;
   reference_image_path?: string | null;
   banner_image_path?: string | null;
   ingredients?: RecipeIngredientDTO[];
   is_favorite?: boolean;
+  nutrition_facts?: NutritionFactsCreateDTO | null;
 }
 
 // ============================================================================
@@ -224,4 +270,28 @@ export interface CookingStreakDTO {
   week_activity: boolean[]; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
   last_cooked_date: string | null;
   today_index: number; // 0=Monday, 6=Sunday - from server to ensure timezone consistency
+}
+
+// ============================================================================
+// Recipe Wizard Types
+// ============================================================================
+
+export type WizardCreationMethod = "manual" | "ai-generate" | "url-import" | "file-import";
+
+export type WizardStep = 1 | 2 | 3 | 4 | 5;
+
+export type RecipeDifficulty = "Easy" | "Medium" | "Hard" | "Expert";
+
+export interface WizardDirection {
+  id: string;
+  text: string;
+}
+
+export interface WizardIngredient {
+  id: string;
+  ingredientName: string;
+  ingredientCategory: string;
+  quantity: string;
+  unit: string;
+  existingIngredientId?: number | null;
 }

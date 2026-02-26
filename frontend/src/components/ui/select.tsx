@@ -63,12 +63,17 @@ function SelectContent({
   position = "popper",
   align = "start",
   sideOffset = 4,
+  portal = false,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Content>) {
-  // NOTE: Portal removed to fix sticky header snapping issue.
+}: React.ComponentProps<typeof SelectPrimitive.Content> & {
+  /** Render inside a Radix Portal (use inside Dialogs to prevent overflow/layout-shift). */
+  portal?: boolean
+}) {
+  // NOTE: Portal is off by default to fix sticky header snapping issue.
   // Radix Portal triggers scroll-locking which breaks position:sticky.
-  // Without Portal, dropdown renders inline avoiding body-level modifications.
-  return (
+  // Enable portal={true} inside Dialogs where inline rendering causes
+  // dropdown overflow and layout shift.
+  const content = (
     <SelectPrimitive.Content
       data-slot="select-content"
       className={cn(
@@ -95,6 +100,12 @@ function SelectContent({
       <SelectScrollDownButton />
     </SelectPrimitive.Content>
   )
+
+  if (portal) {
+    return <SelectPrimitive.Portal>{content}</SelectPrimitive.Portal>
+  }
+
+  return content
 }
 
 function SelectLabel({

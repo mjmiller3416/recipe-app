@@ -118,3 +118,44 @@ export interface AssistantChatMessage extends AssistantMessage {
   recipe?: GeneratedRecipeDTO;
   imageData?: string;
 }
+
+// ============================================================================
+// Nutrition Estimation Types
+// ============================================================================
+
+export interface NutritionIngredientDTO {
+  name: string;
+  quantity: number | null;
+  unit: string | null;
+}
+
+export interface NutritionEstimationRequestDTO {
+  recipe_name: string;
+  ingredients: NutritionIngredientDTO[];
+  servings?: number | null;
+}
+
+export interface NutritionEstimationResponseDTO {
+  success: boolean;
+  nutrition_facts?: NutritionFactsDTO;
+  error?: string;
+}
+
+export interface NutritionFactsDTO {
+  calories: number | null;
+  protein_g: number | null;
+  total_fat_g: number | null;
+  saturated_fat_g: number | null;
+  trans_fat_g: number | null;
+  cholesterol_mg: number | null;
+  sodium_mg: number | null;
+  total_carbs_g: number | null;
+  dietary_fiber_g: number | null;
+  total_sugars_g: number | null;
+  is_ai_estimated: boolean;
+}
+
+export interface NutritionFactsResponseDTO extends NutritionFactsDTO {
+  id: number;
+  recipe_id: number;
+}
