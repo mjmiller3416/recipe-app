@@ -1,6 +1,6 @@
 """Add nutrition_facts table
 
-Revision ID: 8b9c0d1e2f3a
+Revision ID: 58d413ef2c47
 Revises: 5a6b7c8d9e0f
 Create Date: 2026-02-25
 
@@ -15,7 +15,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8b9c0d1e2f3a'
+revision: str = '58d413ef2c47'
 down_revision: Union[str, Sequence[str], None] = '5a6b7c8d9e0f'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
