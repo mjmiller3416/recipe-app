@@ -53,12 +53,8 @@ export interface RecipeBaseDTO {
   recipe_category: string;
   meal_type: string;
   diet_pref: string | null;
-  description: string | null;
   total_time: number | null;
-  prep_time: number | null;
-  cook_time: number | null;
   servings: number | null;
-  difficulty: string | null;
   directions: string | null;
   notes: string | null;
   reference_image_path: string | null;
@@ -87,7 +83,6 @@ export interface RecipeCardDTO {
   recipe_category?: string | null;
   meal_type?: string | null;
   diet_pref?: string | null;
-  difficulty?: string | null;
   // Cooking stats (populated when available)
   times_cooked?: number | null;
   last_cooked?: string | null; // ISO datetime string
@@ -111,12 +106,8 @@ export interface RecipeCreateDTO {
   recipe_category: string;
   meal_type?: string;
   diet_pref?: string | null;
-  description?: string | null;
   total_time?: number | null;
-  prep_time?: number | null;
-  cook_time?: number | null;
   servings?: number | null;
-  difficulty?: string | null;
   directions?: string | null;
   notes?: string | null;
   reference_image_path?: string | null;
@@ -130,12 +121,8 @@ export interface RecipeUpdateDTO {
   recipe_category?: string;
   meal_type?: string;
   diet_pref?: string | null;
-  description?: string | null;
   total_time?: number | null;
-  prep_time?: number | null;
-  cook_time?: number | null;
   servings?: number | null;
-  difficulty?: string | null;
   directions?: string | null;
   notes?: string | null;
   reference_image_path?: string | null;
@@ -237,28 +224,4 @@ export interface CookingStreakDTO {
   week_activity: boolean[]; // [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
   last_cooked_date: string | null;
   today_index: number; // 0=Monday, 6=Sunday - from server to ensure timezone consistency
-}
-
-// ============================================================================
-// Recipe Wizard Types
-// ============================================================================
-
-export type WizardCreationMethod = "manual" | "ai-generate" | "url-import" | "file-import";
-
-export type WizardStep = 1 | 2 | 3 | 4 | 5;
-
-export type RecipeDifficulty = "Easy" | "Medium" | "Hard" | "Expert";
-
-export interface WizardDirection {
-  id: string;
-  text: string;
-}
-
-export interface WizardIngredient {
-  id: string;
-  ingredientName: string;
-  ingredientCategory: string;
-  quantity: string;
-  unit: string;
-  existingIngredientId?: number | null;
 }

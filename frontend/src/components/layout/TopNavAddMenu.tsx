@@ -1,22 +1,19 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 import { Plus, BookOpen, UtensilsCrossed, ChevronDown } from "lucide-react";
-import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
 import { cn } from "@/lib/utils";
 
 export function TopNavAddMenu() {
+  const pathname = usePathname();
   const router = useRouter();
-  const { openWizard, isOpen: wizardOpen } = useRecipeWizardDialog();
   const [open, setOpen] = useState(false);
   const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleAddRecipe = () => {
-    setOpen(false);
-    openWizard();
-  };
+  const isActive = pathname === "/recipes/add";
 
   const handleAddMeal = () => {
     setOpen(false);
@@ -73,14 +70,14 @@ export function TopNavAddMenu() {
         className={cn(
           "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium",
           "transition-colors duration-200",
-          wizardOpen
+          isActive
             ? "text-primary bg-primary/10"
             : "text-muted-foreground hover:text-foreground hover:bg-hover/50"
         )}
         aria-expanded={open}
         aria-haspopup="true"
       >
-        <Plus className="h-4 w-4" strokeWidth={wizardOpen ? 2 : 1.5} />
+        <Plus className="h-4 w-4" strokeWidth={isActive ? 2 : 1.5} />
         <span>Add</span>
         <ChevronDown
           className={cn(
@@ -101,18 +98,19 @@ export function TopNavAddMenu() {
           )}
           role="menu"
         >
-          <button
+          <Link
+            href="/recipes/add"
             className={cn(
-              "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm",
+              "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm",
               "cursor-pointer select-none transition-colors duration-150 ease-out",
               "hover:bg-accent hover:text-accent-foreground active:bg-accent/80"
             )}
             role="menuitem"
-            onClick={handleAddRecipe}
+            onClick={() => setOpen(false)}
           >
             <BookOpen className="h-4 w-4" strokeWidth={1.5} />
             Add Recipe
-          </button>
+          </Link>
           <button
             className={cn(
               "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm",

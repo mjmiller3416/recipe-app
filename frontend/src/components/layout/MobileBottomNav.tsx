@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { CalendarDays, BookOpen, Plus, ShoppingCart, Sparkles, LucideIcon } from "lucide-react";
 import { SafeLink } from "@/components/common/SafeLink";
-import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
 import { cn } from "@/lib/utils";
 import { useShoppingList, useRefreshShoppingList } from "@/hooks/api";
 
@@ -18,6 +17,7 @@ interface NavItem {
 const navigation: NavItem[] = [
   { name: "Planner", href: "/meal-planner", icon: CalendarDays },
   { name: "Recipes", href: "/recipes", icon: BookOpen },
+  { name: "Add", href: "/recipes/add", icon: Plus },
   { name: "Shopping", href: "/shopping-list", icon: ShoppingCart, hasBadge: true },
 ];
 
@@ -27,7 +27,6 @@ interface MobileBottomNavProps {
 
 export function MobileBottomNav({ onOpenAssistant }: MobileBottomNavProps) {
   const pathname = usePathname();
-  const { openWizard, isOpen: wizardOpen } = useRecipeWizardDialog();
 
   // Use React Query hook with automatic token injection
   const { data: shoppingData } = useShoppingList();
@@ -62,9 +61,12 @@ export function MobileBottomNav({ onOpenAssistant }: MobileBottomNavProps) {
     >
       <div className="flex items-center justify-around h-16">
         {navigation.map((item) => {
+          // Special handling: /recipes active on detail pages but NOT on /recipes/add
           const isActive =
             pathname === item.href ||
-            (item.href === "/recipes" && pathname.startsWith("/recipes"));
+            (item.href === "/recipes" &&
+              pathname.startsWith("/recipes") &&
+              pathname !== "/recipes/add");
 
           return (
             <SafeLink
@@ -117,37 +119,6 @@ export function MobileBottomNav({ onOpenAssistant }: MobileBottomNavProps) {
             </SafeLink>
           );
         })}
-
-        {/* Add Recipe Button */}
-        <button
-          onClick={openWizard}
-          aria-label="Add new recipe"
-          className={cn(
-            // Layout
-            "flex flex-col items-center justify-center",
-            // Touch-friendly size
-            "min-w-[56px] h-14 px-1",
-            // Transitions
-            "transition-colors duration-200",
-            // Text color
-            wizardOpen ? "text-primary" : "text-muted-foreground hover:text-primary",
-            // Touch feedback
-            "active:scale-95"
-          )}
-        >
-          <Plus
-            className="h-6 w-6"
-            strokeWidth={wizardOpen ? 2 : 1.5}
-          />
-          <span
-            className={cn(
-              "text-[10px] mt-1 font-medium",
-              wizardOpen && "text-primary"
-            )}
-          >
-            Add
-          </span>
-        </button>
 
         {/* Meal Genie Button */}
         <button

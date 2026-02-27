@@ -7,7 +7,7 @@ import {
   CalendarDays,
   BookOpen,
   ShoppingCart,
-  Plus,
+
   Menu,
   Moon,
   Sun,
@@ -38,7 +38,6 @@ import { appConfig } from "@/lib/config";
 import { cn } from "@/lib/utils";
 import { useShoppingList, useRefreshShoppingList } from "@/hooks/api";
 import { useNavActions } from "@/lib/providers/NavActionsProvider";
-import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
 
 const navigation = [
   { name: "Home", href: "/dashboard", icon: LayoutDashboard },
@@ -54,7 +53,6 @@ interface TopNavProps {
 export function TopNav({ onOpenAssistant }: TopNavProps) {
   const pathname = usePathname();
   const { actions: navActions, isPinned } = useNavActions();
-  const { openWizard } = useRecipeWizardDialog();
 
   // Sheet state (hamburger menu for md-to-lg)
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -120,7 +118,7 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
   }, [refreshShoppingList, handlePlannerUpdated]);
 
   // Derived values
-  const hasNewUpdates = mounted && changelogNewItems > 0 && !changelogBadgeDismissed;
+  const hasNewUpdates = changelogNewItems > 0 && !changelogBadgeDismissed;
   const newItemCount = changelogCountReset ? 0 : changelogNewItems;
 
   const toggleTheme = () => {
@@ -288,25 +286,13 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
 
             {/* Add actions */}
             <div className="h-px bg-border my-2" />
-            <button
-              onClick={() => {
-                setSheetOpen(false);
-                openWizard();
-              }}
-              className={cn(
-                "flex items-center gap-3 px-3 py-3 rounded-xl w-full",
-                "transition-all duration-200 ease-physical",
-                "text-muted-foreground hover:text-foreground",
-                "hover:bg-hover/70",
-                "hover:translate-x-1",
-                "active:scale-[0.98]"
-              )}
-            >
-              <div className="relative p-2 rounded-lg transition-colors duration-200 group-hover:bg-hover/50">
-                <Plus className="h-5 w-5" strokeWidth={1.5} />
-              </div>
-              <span className="text-sm font-medium">Add Recipe</span>
-            </button>
+            <NavButton
+              icon={BookOpen}
+              label="Add Recipe"
+              href="/recipes/add"
+              isActive={pathname === "/recipes/add"}
+              onClick={handleSheetNavigate}
+            />
             <NavButton
               icon={UtensilsCrossed}
               label="Add Meal"
