@@ -11,8 +11,6 @@ from typing import TYPE_CHECKING, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from .nutrition_dtos import NutritionFactsDTO, NutritionFactsResponseDTO
-
 if TYPE_CHECKING:
     from ..models.recipe import Recipe
 
@@ -128,7 +126,6 @@ class RecipeCreateDTO(RecipeBaseDTO):
     """DTO used to create a new recipe with ingredients."""
     ingredients: List[RecipeIngredientDTO] = []
     is_ai_generated: bool = False
-    nutrition_facts: Optional[NutritionFactsDTO] = None
 
 # ── Update DTO ──────────────────────────────────────────────────────────────────────────────────────────────
 class RecipeUpdateDTO(BaseModel):
@@ -152,7 +149,6 @@ class RecipeUpdateDTO(BaseModel):
     banner_image_path: Optional[str] = None
     ingredients: Optional[List[RecipeIngredientDTO]] = None
     is_favorite: Optional[bool] = None
-    nutrition_facts: Optional[NutritionFactsDTO] = None
 
     @field_validator("recipe_name", "recipe_category", "meal_type", mode="before")
     @classmethod
@@ -188,7 +184,6 @@ class RecipeResponseDTO(RecipeBaseDTO):
     created_at: Optional[str] = None  # ISO format datetime string
     ingredients: List["RecipeIngredientResponseDTO"] = []
     group_ids: List[int] = []  # IDs of recipe groups this recipe belongs to
-    nutrition_facts: Optional[NutritionFactsResponseDTO] = None
 
     @classmethod
     def from_recipe(cls, recipe: "Recipe") -> "RecipeResponseDTO":
@@ -204,10 +199,6 @@ class RecipeResponseDTO(RecipeBaseDTO):
             for ri in recipe.ingredients
         ]
         group_ids = [g.id for g in recipe.groups] if recipe.groups else []
-
-        nutrition = None
-        if recipe.nutrition_facts:
-            nutrition = NutritionFactsResponseDTO.from_model(recipe.nutrition_facts)
 
         return cls(
             id=recipe.id,
@@ -230,7 +221,6 @@ class RecipeResponseDTO(RecipeBaseDTO):
             created_at=recipe.created_at.isoformat() if recipe.created_at else None,
             ingredients=ingredients,
             group_ids=group_ids,
-            nutrition_facts=nutrition,
         )
 
 # ── Filter DTO ──────────────────────────────────────────────────────────────────────────────────────────────

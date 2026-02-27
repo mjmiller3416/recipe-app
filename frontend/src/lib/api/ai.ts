@@ -8,8 +8,6 @@ import type {
   RecipeGenerationResponseDTO,
   MealSuggestionsRequestDTO,
   MealSuggestionsResponseDTO,
-  NutritionEstimationRequestDTO,
-  NutritionEstimationResponseDTO,
 } from "@/types/ai";
 import { fetchApi } from "./base";
 
@@ -88,21 +86,6 @@ export const mealSuggestionsApi = {
   ): Promise<MealSuggestionsResponseDTO> =>
     fetchApi<MealSuggestionsResponseDTO>(
       "/api/ai/meal-suggestions",
-      {
-        method: "POST",
-        body: JSON.stringify(request),
-      },
-      token
-    ),
-};
-
-export const nutritionEstimationApi = {
-  estimate: (
-    request: NutritionEstimationRequestDTO,
-    token?: string | null
-  ): Promise<NutritionEstimationResponseDTO> =>
-    fetchApi<NutritionEstimationResponseDTO>(
-      "/api/ai/nutrition-estimation",
       {
         method: "POST",
         body: JSON.stringify(request),

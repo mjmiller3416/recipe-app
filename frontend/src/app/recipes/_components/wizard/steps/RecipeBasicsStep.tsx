@@ -171,7 +171,7 @@ export function RecipeBasicsStep({
               >
                 <SelectValue placeholder="Select difficulty" />
               </SelectTrigger>
-              <SelectContent portal>
+              <SelectContent>
                 {DIFFICULTY_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}
@@ -198,7 +198,7 @@ export function RecipeBasicsStep({
             >
               <SelectValue placeholder="Select meal type" />
             </SelectTrigger>
-            <SelectContent portal>
+            <SelectContent>
               {MEAL_TYPE_OPTIONS.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
@@ -223,7 +223,7 @@ export function RecipeBasicsStep({
             >
               <SelectValue placeholder="Select category" />
             </SelectTrigger>
-            <SelectContent portal>
+            <SelectContent>
               {categoryOptions.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
@@ -248,7 +248,7 @@ export function RecipeBasicsStep({
             >
               <SelectValue placeholder="Select preference" />
             </SelectTrigger>
-            <SelectContent portal>
+            <SelectContent>
               {DIETARY_PREFERENCES.map((opt) => (
                 <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}

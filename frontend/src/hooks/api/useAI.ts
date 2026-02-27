@@ -6,14 +6,12 @@ import {
   cookingTipApi,
   mealSuggestionsApi,
   imageGenerationApi,
-  nutritionEstimationApi,
   AssistantApi,
 } from "@/lib/api";
 import { aiQueryKeys } from "./queryKeys";
 import type {
   ImageGenerationType,
   MealSuggestionsRequestDTO,
-  NutritionEstimationRequestDTO,
   AssistantMessage,
 } from "@/types/ai";
 
@@ -142,21 +140,6 @@ export function useAssistantAsk() {
     }) => {
       const token = await getToken();
       return AssistantApi.ask(message, conversationHistory, token);
-    },
-  });
-}
-
-/**
- * Estimate nutrition facts for a recipe using AI.
- * Requires recipe name, ingredients, and optional servings.
- */
-export function useEstimateNutrition() {
-  const { getToken } = useAuth();
-
-  return useMutation({
-    mutationFn: async (request: NutritionEstimationRequestDTO) => {
-      const token = await getToken();
-      return nutritionEstimationApi.estimate(request, token);
     },
   });
 }

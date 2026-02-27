@@ -72,23 +72,6 @@ export interface RecipeResponseDTO extends RecipeBaseDTO {
   created_at: string | null;
   ingredients: RecipeIngredientResponseDTO[];
   group_ids: number[]; // IDs of recipe groups this recipe belongs to
-  nutrition_facts: NutritionFactsResponseDTO | null;
-}
-
-export interface NutritionFactsResponseDTO {
-  id: number;
-  recipe_id: number;
-  calories: number | null;
-  protein_g: number | null;
-  total_fat_g: number | null;
-  saturated_fat_g: number | null;
-  trans_fat_g: number | null;
-  cholesterol_mg: number | null;
-  sodium_mg: number | null;
-  total_carbs_g: number | null;
-  dietary_fiber_g: number | null;
-  total_sugars_g: number | null;
-  is_ai_estimated: boolean;
 }
 
 export interface RecipeCardDTO {
@@ -123,20 +106,6 @@ export interface RecipeIngredientDTO {
   unit?: string | null;
 }
 
-export interface NutritionFactsCreateDTO {
-  calories: number | null;
-  protein_g: number | null;
-  total_fat_g: number | null;
-  saturated_fat_g: number | null;
-  trans_fat_g: number | null;
-  cholesterol_mg: number | null;
-  sodium_mg: number | null;
-  total_carbs_g: number | null;
-  dietary_fiber_g: number | null;
-  total_sugars_g: number | null;
-  is_ai_estimated: boolean;
-}
-
 export interface RecipeCreateDTO {
   recipe_name: string;
   recipe_category: string;
@@ -154,7 +123,6 @@ export interface RecipeCreateDTO {
   banner_image_path?: string | null;
   ingredients?: RecipeIngredientDTO[];
   is_ai_generated?: boolean;
-  nutrition_facts?: NutritionFactsCreateDTO | null;
 }
 
 export interface RecipeUpdateDTO {
@@ -174,7 +142,6 @@ export interface RecipeUpdateDTO {
   banner_image_path?: string | null;
   ingredients?: RecipeIngredientDTO[];
   is_favorite?: boolean;
-  nutrition_facts?: NutritionFactsCreateDTO | null;
 }
 
 // ============================================================================

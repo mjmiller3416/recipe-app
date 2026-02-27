@@ -1234,18 +1234,6 @@ html body[data-scroll-locked="1"] {
    SCROLLBAR STYLING
    ============================================ */
 
-/* Hide default number input spinners — they use browser-native styling
-   that clashes with the dark theme. Users can still type or use arrow keys. */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-input[type="number"] {
-  -moz-appearance: textfield;
-}
-
 /* Custom scrollbar variables (derived from theme) */
 :root {
   --scrollbar-width: 16px;
