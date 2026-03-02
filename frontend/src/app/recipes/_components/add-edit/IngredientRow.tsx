@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useCallback } from "react";
 import { GripVertical, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { QuantityInput } from "@/components/forms/QuantityInput";
@@ -15,10 +15,13 @@ import {
   IngredientAutocomplete,
   type AutocompleteIngredient,
 } from "@/components/forms/IngredientAutocomplete";
-import { useUnits } from "@/hooks/api";
-import { useIngredientCategoryOptions } from "@/hooks/api/useIngredientCategories";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import type { UnitOptionDTO } from "@/types/common";
+
+// ============================================================================
+// Types
+// ============================================================================
 
 export interface Ingredient {
   id: string;
@@ -28,19 +31,32 @@ export interface Ingredient {
   category: string;
 }
 
+interface CategoryOption {
+  value: string;
+  label: string;
+}
+
 interface IngredientRowProps {
   ingredient: Ingredient;
   availableIngredients?: AutocompleteIngredient[];
+  /** Pre-fetched units — lifted from the parent to avoid per-row hook calls */
+  units: UnitOptionDTO[];
+  /** Pre-fetched categories — lifted from the parent to avoid per-row hook calls */
+  ingredientCategories: CategoryOption[];
   onUpdate: (id: string, field: keyof Ingredient, value: string | number | null) => void;
   onDelete: (id: string) => void;
   showLabels?: boolean;
-  getIngredientError?: (ingredientId: string, field: 'name' | 'quantity') => string | undefined;
+  getIngredientError?: (ingredientId: string, field: "name" | "quantity") => string | undefined;
 }
 
-// Helper to find matching category value from dynamic options
+// ============================================================================
+// Helpers
+// ============================================================================
+
+/** Find the matching category value from a dynamic options list */
 const findCategoryValue = (
   categoryFromDb: string,
-  categories: { value: string; label: string }[]
+  categories: CategoryOption[]
 ): string => {
   const exactMatch = categories.find((cat) => cat.value === categoryFromDb);
   if (exactMatch) return exactMatch.value;
@@ -58,20 +74,23 @@ const findCategoryValue = (
   return categoryFromDb;
 };
 
+// ============================================================================
+// Component
+// ============================================================================
+
 export const IngredientRow = memo(function IngredientRow({
   ingredient,
   availableIngredients = [],
+  units,
+  ingredientCategories,
   onUpdate,
   onDelete,
-  // showLabels is available but not currently used
   getIngredientError,
 }: IngredientRowProps) {
-  const { data: units = [] } = useUnits();
-  const { options: ingredientCategories } = useIngredientCategoryOptions();
+  // Field errors
+  const quantityError = getIngredientError?.(ingredient.id, "quantity");
+  const nameError = getIngredientError?.(ingredient.id, "name");
 
-  // Get field errors
-  const quantityError = getIngredientError?.(ingredient.id, 'quantity');
-  const nameError = getIngredientError?.(ingredient.id, 'name');
   const {
     attributes,
     listeners,
@@ -87,29 +106,38 @@ export const IngredientRow = memo(function IngredientRow({
   };
 
   // Handle selecting an existing ingredient from autocomplete
-  const handleIngredientSelect = (selected: AutocompleteIngredient) => {
-    onUpdate(ingredient.id, "name", selected.name);
-    // Auto-fill category from the selected ingredient (normalized to match Select values)
-    if (selected.category) {
-      const normalizedCategory = findCategoryValue(selected.category, ingredientCategories);
-      onUpdate(ingredient.id, "category", normalizedCategory);
-    }
-  };
+  const handleIngredientSelect = useCallback(
+    (selected: AutocompleteIngredient) => {
+      onUpdate(ingredient.id, "name", selected.name);
+      if (selected.category) {
+        const normalizedCategory = findCategoryValue(
+          selected.category,
+          ingredientCategories
+        );
+        onUpdate(ingredient.id, "category", normalizedCategory);
+      }
+    },
+    [ingredient.id, ingredientCategories, onUpdate]
+  );
 
   // Handle creating a new ingredient (just updates the name)
-  const handleNewIngredient = (name: string) => {
-    onUpdate(ingredient.id, "name", name);
-  };
+  const handleNewIngredient = useCallback(
+    (name: string) => {
+      onUpdate(ingredient.id, "name", name);
+    },
+    [ingredient.id, onUpdate]
+  );
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`group bg-elevated hover:bg-hover transition-colors rounded-lg p-3 border border-border ${
-        isDragging ? "opacity-50 shadow-lg" : ""
-      }`}
+      className={cn(
+        "group bg-elevated hover:bg-hover transition-colors rounded-lg p-3 border border-border",
+        isDragging && "opacity-50 shadow-lg"
+      )}
     >
-      {/* Mobile Layout: Grid with drag/delete on top row */}
+      {/* ── Mobile layout ──────────────────────────────────────── */}
       <div className="md:hidden">
         <div className="flex items-center justify-between mb-2">
           <button
@@ -120,7 +148,7 @@ export const IngredientRow = memo(function IngredientRow({
             {...listeners}
             tabIndex={-1}
           >
-            <GripVertical className="h-5 w-5" />
+            <GripVertical className="size-5" strokeWidth={1.5} />
           </button>
           <button
             type="button"
@@ -129,9 +157,10 @@ export const IngredientRow = memo(function IngredientRow({
             aria-label="Delete ingredient"
             tabIndex={-1}
           >
-            <X className="h-5 w-5" />
+            <X className="size-5" strokeWidth={1.5} />
           </button>
         </div>
+
         <div className="grid grid-cols-2 gap-2 mb-2">
           <div>
             <QuantityInput
@@ -160,6 +189,7 @@ export const IngredientRow = memo(function IngredientRow({
             </SelectContent>
           </Select>
         </div>
+
         <div className="mb-2">
           <IngredientAutocomplete
             ingredients={availableIngredients}
@@ -174,6 +204,7 @@ export const IngredientRow = memo(function IngredientRow({
             <p className="text-xs text-destructive mt-1">{nameError}</p>
           )}
         </div>
+
         <Select
           value={ingredient.category}
           onValueChange={(value) => onUpdate(ingredient.id, "category", value)}
@@ -191,21 +222,21 @@ export const IngredientRow = memo(function IngredientRow({
         </Select>
       </div>
 
-      {/* Desktop Layout: Horizontal row */}
+      {/* ── Desktop layout ─────────────────────────────────────── */}
       <div className="hidden md:flex items-center gap-3">
         <button
           type="button"
-          className="p-1 text-muted-foreground hover:text-foreground transition-colors cursor-grab active:cursor-grabbing flex-shrink-0 touch-none"
+          className="p-1 text-muted-foreground hover:text-foreground transition-colors cursor-grab active:cursor-grabbing shrink-0 touch-none"
           aria-label="Drag to reorder"
           {...attributes}
           {...listeners}
           tabIndex={-1}
         >
-          <GripVertical className="h-5 w-5" />
+          <GripVertical className="size-5" strokeWidth={1.5} />
         </button>
 
         <div className="flex-1 flex items-start gap-2">
-          <div className="flex-shrink-0 w-24">
+          <div className="shrink-0 w-24">
             <QuantityInput
               value={ingredient.quantity}
               onChange={(value) => onUpdate(ingredient.id, "quantity", value)}
@@ -217,7 +248,7 @@ export const IngredientRow = memo(function IngredientRow({
             )}
           </div>
 
-          <div className="flex-shrink-0 w-28">
+          <div className="shrink-0 w-28">
             <Select
               value={ingredient.unit}
               onValueChange={(value) => onUpdate(ingredient.id, "unit", value)}
@@ -250,10 +281,12 @@ export const IngredientRow = memo(function IngredientRow({
             )}
           </div>
 
-          <div className="flex-shrink-0 w-32">
+          <div className="shrink-0 w-32">
             <Select
               value={ingredient.category}
-              onValueChange={(value) => onUpdate(ingredient.id, "category", value)}
+              onValueChange={(value) =>
+                onUpdate(ingredient.id, "category", value)
+              }
             >
               <SelectTrigger id={`category-${ingredient.id}`} className="h-9">
                 <SelectValue placeholder="Category" />
@@ -272,11 +305,11 @@ export const IngredientRow = memo(function IngredientRow({
         <button
           type="button"
           onClick={() => onDelete(ingredient.id)}
-          className="p-1 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
+          className="p-1 text-muted-foreground hover:text-destructive transition-colors shrink-0"
           aria-label="Delete ingredient"
           tabIndex={-1}
         >
-          <X className="h-5 w-5" />
+          <X className="size-5" strokeWidth={1.5} />
         </button>
       </div>
     </div>

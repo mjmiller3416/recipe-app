@@ -4,7 +4,7 @@ import { useState, useEffect, useId, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
-import { recipeApi, ingredientApi, uploadApi } from "@/lib/api";
+import { recipeApi, ingredientApi, uploadApi, ApiError } from "@/lib/api";
 import { base64ToFile } from "@/lib/utils";
 import type { GeneratedRecipeDTO } from "@/types/ai";
 import type { RecipeCreateDTO, RecipeUpdateDTO, RecipeIngredientDTO, RecipeResponseDTO } from "@/types/recipe";
@@ -721,7 +721,11 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
       }
     } catch (error) {
       console.error("Failed to save recipe:", error);
-      toast.error(`Failed to ${mode === 'create' ? 'create' : 'update'} recipe. Please try again.`);
+      if (error instanceof ApiError) {
+        toast.error(error.message || `Failed to ${mode === 'create' ? 'create' : 'update'} recipe.`);
+      } else {
+        toast.error(`Failed to ${mode === 'create' ? 'create' : 'update'} recipe. Please try again.`);
+      }
     } finally {
       setIsSubmitting(false);
     }

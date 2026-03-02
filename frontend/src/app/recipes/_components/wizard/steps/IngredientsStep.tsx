@@ -17,8 +17,14 @@ import {
   type Ingredient,
 } from "@/app/recipes/_components/add-edit/IngredientRow";
 import { useSortableDnd } from "@/hooks/ui/useSortableDnd";
+import { useUnits } from "@/hooks/api";
+import { useIngredientCategoryOptions } from "@/hooks/api/useIngredientCategories";
 import type { AutocompleteIngredient } from "@/hooks/forms/useIngredientAutocomplete";
 import type { WizardIngredient } from "@/types/recipe";
+
+// ============================================================================
+// Props
+// ============================================================================
 
 interface IngredientsStepProps {
   ingredients: WizardIngredient[];
@@ -33,18 +39,9 @@ interface IngredientsStepProps {
   getIngredientError: (id: string, field: string) => string | undefined;
 }
 
-/**
- * Adapts WizardIngredient shape to the Ingredient shape expected by IngredientRow.
- */
-function toRowIngredient(wi: WizardIngredient): Ingredient {
-  return {
-    id: wi.id,
-    quantity: wi.quantity ? parseFloat(wi.quantity) : null,
-    unit: wi.unit,
-    name: wi.ingredientName,
-    category: wi.ingredientCategory,
-  };
-}
+// ============================================================================
+// Component
+// ============================================================================
 
 export function IngredientsStep({
   ingredients,
@@ -59,6 +56,31 @@ export function IngredientsStep({
   getIngredientError,
 }: IngredientsStepProps) {
   const { sensors, modifiers } = useSortableDnd();
+
+  // ── Lift data-fetching hooks to the parent ──────────────────
+  // These were previously inside each IngredientRow, causing N×2
+  // hook executions per drag frame. Fetched once here and passed
+  // down as stable props so React.memo can skip re-renders.
+  const { data: units = [] } = useUnits();
+  const { options: ingredientCategories } = useIngredientCategoryOptions();
+
+  // ── Memoize the WizardIngredient → Ingredient adaptation ────
+  // Previously, `toRowIngredient()` was called inline during render,
+  // creating a new object reference every time. This defeated memo
+  // on IngredientRow since the `ingredient` prop always looked new.
+  const rowIngredients = useMemo(
+    () =>
+      ingredients.map(
+        (wi): Ingredient => ({
+          id: wi.id,
+          quantity: wi.quantity ? parseFloat(wi.quantity) : null,
+          unit: wi.unit,
+          name: wi.ingredientName,
+          category: wi.ingredientCategory,
+        })
+      ),
+    [ingredients]
+  );
 
   const sortableIds = useMemo(
     () => ingredients.map((ing) => ing.id),
@@ -76,9 +98,9 @@ export function IngredientsStep({
   );
 
   /**
-   * Adapts IngredientRow's onUpdate callback to the wizard's field naming convention.
-   * IngredientRow calls with Ingredient field keys (name, category, quantity, unit),
-   * but the wizard uses WizardIngredient keys (ingredientName, ingredientCategory, etc.).
+   * Adapts IngredientRow's onUpdate callback to the wizard's field naming.
+   * IngredientRow calls with Ingredient field keys (name, category, …),
+   * but the wizard uses WizardIngredient keys (ingredientName, …).
    */
   const handleRowUpdate = useCallback(
     (id: string, field: keyof Ingredient, value: string | number | null) => {
@@ -95,8 +117,8 @@ export function IngredientsStep({
   );
 
   /**
-   * Adapts the wizard's getIngredientError to the IngredientRow's expected signature.
-   * IngredientRow calls with 'name' | 'quantity', wizard uses 'ingredientName' etc.
+   * Adapts the wizard's getIngredientError to the IngredientRow's
+   * expected field names ('name' | 'quantity').
    */
   const handleGetIngredientError = useCallback(
     (ingredientId: string, field: "name" | "quantity") => {
@@ -171,11 +193,13 @@ export function IngredientsStep({
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-2">
-            {ingredients.map((ingredient) => (
+            {rowIngredients.map((ingredient) => (
               <IngredientRow
                 key={ingredient.id}
-                ingredient={toRowIngredient(ingredient)}
+                ingredient={ingredient}
                 availableIngredients={availableIngredients}
+                units={units}
+                ingredientCategories={ingredientCategories}
                 onUpdate={handleRowUpdate}
                 onDelete={onDelete}
                 getIngredientError={handleGetIngredientError}

@@ -47,7 +47,7 @@ const METHOD_OPTIONS: MethodOption[] = [
     icon: <Sparkles className="size-6" strokeWidth={1.5} />,
     title: "AI Generate",
     description: "Describe what you want and AI will create a full recipe.",
-    isAvailable: false,
+    isAvailable: true,
     isNew: true,
   },
 ];
@@ -58,14 +58,10 @@ export function MethodSelectionStep({
 }: MethodSelectionStepProps) {
   return (
     <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <h2 className="text-xl font-semibold text-foreground">
-          How would you like to add your recipe?
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Choose a method to get started. More options coming soon.
-        </p>
-      </div>
+      {/* Subtitle only — title comes from the wizard header */}
+      <p className="text-sm text-muted-foreground">
+        Choose a method to get started. More options coming soon.
+      </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {METHOD_OPTIONS.map((option) => {
@@ -79,7 +75,7 @@ export function MethodSelectionStep({
               className={cn(
                 "relative transition-all",
                 isSelected &&
-                  "border-primary ring-2 ring-primary/20 bg-primary-surface",
+                "border-primary ring-2 ring-primary/20 bg-primary-surface",
                 isDisabled && "opacity-50 pointer-events-none"
               )}
               role="button"

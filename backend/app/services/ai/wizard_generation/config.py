@@ -1,0 +1,58 @@
+"""Configuration for the Wizard Generation AI service."""
+
+# Model settings
+MODEL_NAME = "gemini-2.0-flash"
+TEMPERATURE = 0.7  # Balanced creativity + consistency
+MAX_OUTPUT_TOKENS = 4096  # Full recipe needs more tokens than nutrition
+
+# Environment variable for API key (reuses the assistant key)
+API_KEY_ENV_VAR = "GEMINI_WIZARD_API_KEY"
+
+# Prompt template for generating a complete recipe from a user description
+PROMPT_TEMPLATE = """You are a professional recipe developer. Generate a complete, detailed recipe based on the user's request.
+
+User's request: {prompt}
+{preferences_text}
+
+Return ONLY valid JSON with this exact structure:
+{{
+  "recipe_name": "<creative, descriptive name>",
+  "description": "<1-2 sentence appetizing description>",
+  "recipe_category": "<one of: beef|chicken|pork|seafood|vegetarian|vegan|pasta|soup|salad|other>",
+  "meal_type": "<one of: appetizer|breakfast|lunch|dinner|dessert|side|snack|sauce|other>",
+  "diet_pref": "<one of: none|vegetarian|vegan|gluten-free|dairy-free|keto|paleo>",
+  "prep_time": <integer minutes>,
+  "cook_time": <integer minutes>,
+  "total_time": <integer minutes (prep + cook)>,
+  "difficulty": "<one of: Easy|Medium|Hard|Expert>",
+  "servings": <integer>,
+  "ingredients": [
+    {{"ingredient_name": "Ingredient Name", "ingredient_category": "<category>", "quantity": <float>, "unit": "<unit>"}}
+  ],
+  "directions": "<Step one.\\nStep two.\\nStep three.>",
+  "notes": "<optional tips or serving suggestions>"{nutrition_schema}
+}}
+
+Rules:
+- 6-15 ingredients with names in Title Case
+- 5-10 direction steps separated by \\n (no step numbers)
+- ingredient_category must be one of: produce|dairy|deli|meat|condiments|oils-and-vinegars|seafood|pantry|spices|frozen|bakery|baking|beverages|other
+- unit must be one of: tbs|tsp|cup|oz|lbs|stick|bag|box|can|jar|package|piece|slice|whole|pinch|dash|to-taste
+- diet_pref: use "none" unless the recipe is specifically dietary (never null)
+- Be realistic with quantities and cooking times
+- Base nutrition estimates on standard USDA data if included"""
+
+# Nutrition schema fragment appended when estimate_nutrition=True
+NUTRITION_SCHEMA = """,
+  "nutrition_facts": {{
+    "calories": <integer or null>,
+    "protein_g": <float or null>,
+    "total_fat_g": <float or null>,
+    "saturated_fat_g": <float or null>,
+    "trans_fat_g": <float or null>,
+    "cholesterol_mg": <float or null>,
+    "sodium_mg": <float or null>,
+    "total_carbs_g": <float or null>,
+    "dietary_fiber_g": <float or null>,
+    "total_sugars_g": <float or null>
+  }}"""

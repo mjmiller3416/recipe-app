@@ -124,7 +124,7 @@ export interface AssistantChatMessage extends AssistantMessage {
 // ============================================================================
 
 export interface NutritionIngredientDTO {
-  name: string;
+  ingredient_name: string;
   quantity: number | null;
   unit: string | null;
 }
@@ -158,4 +158,40 @@ export interface NutritionFactsDTO {
 export interface NutritionFactsResponseDTO extends NutritionFactsDTO {
   id: number;
   recipe_id: number;
+}
+
+// ============================================================================
+// Wizard Generation Types
+// ============================================================================
+
+export interface WizardGenerationPreferencesDTO {
+  cuisine?: string;
+  dietary?: string;
+  difficulty?: string;
+  servings?: number;
+  meal_type?: string;
+}
+
+export interface WizardGenerationRequestDTO {
+  prompt: string;
+  preferences?: WizardGenerationPreferencesDTO;
+  generate_image?: boolean;
+  estimate_nutrition?: boolean;
+}
+
+export interface WizardGeneratedRecipeDTO extends GeneratedRecipeDTO {
+  description?: string;
+  prep_time?: number;
+  cook_time?: number;
+  total_time?: number;
+  difficulty?: string;
+}
+
+export interface WizardGenerationResponseDTO {
+  success: boolean;
+  recipe?: WizardGeneratedRecipeDTO;
+  nutrition_facts?: NutritionFactsDTO;
+  reference_image_data?: string;
+  banner_image_data?: string;
+  error?: string;
 }

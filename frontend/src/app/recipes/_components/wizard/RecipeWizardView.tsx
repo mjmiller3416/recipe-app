@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
-import { ArrowLeft, ArrowRight, Loader2, Save } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, Loader2, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,7 +11,16 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useRecipeWizard } from "./useRecipeWizard";
 import {
   MethodSelectionStep,
@@ -19,18 +28,19 @@ import {
   IngredientsStep,
   DirectionsNotesStep,
   NutritionStep,
+  AIGenerateStep,
 } from "./steps";
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-const STEP_LABELS = [
-  "Method",
-  "Basics",
+const STEP_TITLES = [
+  "Choose Method",
+  "Recipe Basics",
   "Ingredients",
-  "Directions",
-  "Finish",
+  "Directions & Notes",
+  "Nutrition Facts",
 ];
 
 const TOTAL_STEPS = 5;
@@ -49,18 +59,23 @@ interface RecipeWizardViewProps {
 // ============================================================================
 
 export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) {
-  const wizard = useRecipeWizard();
+  const handleSave = useCallback(() => {
+    onOpenChange(false);
+  }, [onOpenChange]);
 
-  const progressPercent = ((wizard.currentStep - 1) / (TOTAL_STEPS - 1)) * 100;
+  const wizard = useRecipeWizard({ onSave: handleSave });
+  const { currentStep, resetWizard } = wizard;
+
+  const progressPercent = ((currentStep - 1) / (TOTAL_STEPS - 1)) * 100;
 
   // Suppress transition-all on form inputs during step changes so
   // elements don't animate from their initial state on mount.
   const contentRef = useRef<HTMLDivElement>(null);
-  const prevStepRef = useRef(wizard.currentStep);
+  const prevStepRef = useRef(currentStep);
 
   useEffect(() => {
-    if (prevStepRef.current !== wizard.currentStep) {
-      prevStepRef.current = wizard.currentStep;
+    if (prevStepRef.current !== currentStep) {
+      prevStepRef.current = currentStep;
       const el = contentRef.current;
       if (!el) return;
       el.classList.add("no-transition");
@@ -70,49 +85,113 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
         });
       });
     }
-  }, [wizard.currentStep]);
+  }, [currentStep]);
+
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   const handleCancel = useCallback(() => {
     onOpenChange(false);
   }, [onOpenChange]);
 
+  const handleDiscardClick = useCallback(() => {
+    if (!wizard.hasUnsavedData) {
+      resetWizard();
+      return;
+    }
+    setShowDiscardConfirm(true);
+  }, [wizard.hasUnsavedData, resetWizard]);
+
+  const handleDiscardConfirm = useCallback(() => {
+    setShowDiscardConfirm(false);
+    resetWizard();
+  }, [resetWizard]);
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
+      {/*
+        Layout: fixed-height flex column with 3 zones.
+        ─────────────────────────────────────
+        │  Header  (shrink-0)               │
+        ├───────────────────────────────────┤
+        │  Scrollable step content (flex-1) │
+        ├───────────────────────────────────┤
+        │  Footer nav (shrink-0)            │
+        ─────────────────────────────────────
+
+        NOTE: If your DialogContent already applies padding/gap via
+        shadcn defaults, add these overrides to your dialog.tsx
+        variant instead of using !important here:
+          - padding: 0
+          - gap: 0
+          - display: flex / flex-direction: column
+      */}
       <DialogContent
         size="xl"
-        className="h-[85vh] !p-0 overflow-hidden data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100"
+        className="flex flex-col h-[85vh] p-0 gap-0 overflow-hidden"
       >
-        {/* Inner flex wrapper avoids grid/gap conflict from DialogContent base */}
-        <div className="flex flex-col h-full">
-          {/* ── Header ──────────────────────────────────────────────── */}
-          <div className="shrink-0 px-6 pt-6 pb-4 space-y-4">
-            <DialogHeader className="text-center sm:text-center">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Create New Recipe
-              </p>
-              <DialogTitle className="text-xl">Add New Recipe</DialogTitle>
-              <DialogDescription>
-                Step {wizard.currentStep} of {TOTAL_STEPS} —{" "}
-                {STEP_LABELS[wizard.currentStep - 1]}
-              </DialogDescription>
-            </DialogHeader>
+        {/* ── Header ──────────────────────────────────────────────── */}
+        <div className="shrink-0 px-6 pt-5 pb-4 space-y-3">
+          <DialogHeader className="text-center sm:text-center">
+            <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+              Create New Recipe
+            </p>
+            <DialogTitle className="text-2xl font-bold">
+              {wizard.currentStep === 2 && wizard.creationMethod === "ai-generate"
+                ? "AI Recipe Generator"
+                : STEP_TITLES[wizard.currentStep - 1]}
+            </DialogTitle>
+            <DialogDescription>
+              Step {wizard.currentStep} of {TOTAL_STEPS}
+            </DialogDescription>
+          </DialogHeader>
 
-            {/* Progress bar */}
-            <Progress value={progressPercent} className="h-1.5" />
-          </div>
+          {/* Dev: fill sample data */}
+          {process.env.NODE_ENV === "development" && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={wizard.fillSampleData}
+              className="mx-auto text-xs"
+            >
+              Dev: Fill Sample Data
+            </Button>
+          )}
 
-          <Separator className="shrink-0" />
+          {/* Progress bar */}
+          <Progress value={progressPercent} className="h-1" />
+        </div>
 
-          {/* ── Scrollable step content ─────────────────────────────── */}
-          <div ref={contentRef} className="flex-1 min-h-0 overflow-y-auto px-6 py-6">
-            {wizard.currentStep === 1 && (
-              <MethodSelectionStep
-                selectedMethod={wizard.creationMethod}
-                onSelect={wizard.setCreationMethod}
+        {/* ── Scrollable step content ─────────────────────────────── */}
+        <div
+          ref={contentRef}
+          className="flex-1 min-h-0 overflow-y-auto border-t border-border px-6 py-6"
+        >
+          {wizard.currentStep === 1 && (
+            <MethodSelectionStep
+              selectedMethod={wizard.creationMethod}
+              onSelect={(method) => {
+                wizard.setCreationMethod(method);
+                wizard.goToStep(2);
+              }}
+            />
+          )}
+
+          {wizard.currentStep === 2 && (
+            wizard.creationMethod === "ai-generate" ? (
+              <AIGenerateStep
+                prompt={wizard.aiPrompt}
+                setPrompt={wizard.setAiPrompt}
+                preferences={wizard.aiPreferences}
+                setPreferences={wizard.setAiPreferences}
+                generatedRecipe={wizard.generatedRecipe}
+                isGenerating={wizard.isGenerating}
+                error={wizard.aiError}
+                onGenerate={wizard.handleWizardGenerate}
+                onAcceptRecipe={wizard.handleAcceptGeneratedRecipe}
               />
-            )}
-
-            {wizard.currentStep === 2 && (
+            ) : (
               <RecipeBasicsStep
                 recipeName={wizard.recipeName}
                 setRecipeName={wizard.setRecipeName}
@@ -134,118 +213,146 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
                 setDietaryPreference={wizard.setDietaryPreference}
                 hasError={wizard.hasError}
                 getError={wizard.getError}
-              />
-            )}
-
-            {wizard.currentStep === 3 && (
-              <IngredientsStep
-                ingredients={wizard.ingredients}
-                availableIngredients={wizard.availableIngredients}
-                onAdd={wizard.addIngredient}
-                onUpdate={wizard.updateIngredient}
-                onDelete={wizard.deleteIngredient}
-                onReorder={wizard.reorderIngredients}
-                onClearAll={wizard.clearAllIngredients}
-                hasError={wizard.hasError}
-                getError={wizard.getError}
-                getIngredientError={wizard.getIngredientError}
-              />
-            )}
-
-            {wizard.currentStep === 4 && (
-              <DirectionsNotesStep
-                directions={wizard.directions}
-                notes={wizard.notes}
-                setNotes={wizard.setNotes}
-                onAddDirection={wizard.addDirection}
-                onUpdateDirection={wizard.updateDirection}
-                onDeleteDirection={wizard.deleteDirection}
-                onReorderDirections={wizard.reorderDirections}
-                hasError={wizard.hasError}
-                getError={wizard.getError}
-              />
-            )}
-
-            {wizard.currentStep === 5 && (
-              <NutritionStep
-                recipeName={wizard.recipeName}
                 imagePreview={wizard.imagePreview}
                 isAiGenerated={wizard.isAiGenerated}
-                setIsAiGenerated={() => {
-                  // Read-only in this context — handled by image generation flow
-                }}
                 onImageUpload={wizard.handleImageUpload}
                 onGeneratedImageAccept={wizard.handleGeneratedImageAccept}
                 onBannerOnlyAccept={wizard.handleBannerOnlyAccept}
-                nutritionFacts={wizard.nutritionFacts}
-                onNutritionChange={wizard.setNutritionFacts}
-                ingredients={wizard.ingredients}
-                servings={wizard.servings}
               />
+            )
+          )}
+
+          {wizard.currentStep === 3 && (
+            <IngredientsStep
+              ingredients={wizard.ingredients}
+              availableIngredients={wizard.availableIngredients}
+              onAdd={wizard.addIngredient}
+              onUpdate={wizard.updateIngredient}
+              onDelete={wizard.deleteIngredient}
+              onReorder={wizard.reorderIngredients}
+              onClearAll={wizard.clearAllIngredients}
+              hasError={wizard.hasError}
+              getError={wizard.getError}
+              getIngredientError={wizard.getIngredientError}
+            />
+          )}
+
+          {wizard.currentStep === 4 && (
+            <DirectionsNotesStep
+              directions={wizard.directions}
+              notes={wizard.notes}
+              setNotes={wizard.setNotes}
+              onAddDirection={wizard.addDirection}
+              onUpdateDirection={wizard.updateDirection}
+              onDeleteDirection={wizard.deleteDirection}
+              onReorderDirections={wizard.reorderDirections}
+              hasError={wizard.hasError}
+              getError={wizard.getError}
+            />
+          )}
+
+          {wizard.currentStep === 5 && (
+            <NutritionStep
+              recipeName={wizard.recipeName}
+              nutritionFacts={wizard.nutritionFacts}
+              onNutritionChange={wizard.setNutritionFacts}
+              ingredients={wizard.ingredients}
+              servings={wizard.servings}
+            />
+          )}
+        </div>
+
+        {/* ── Footer navigation ───────────────────────────────────── */}
+        <div className="shrink-0 flex items-center justify-between border-t border-border px-6 py-4">
+          {/* Left: Cancel (step 1) / Back + Discard (steps 3+) / Discard only (step 2) */}
+          <div className="flex items-center gap-2">
+            {currentStep === 1 ? (
+              <Button type="button" variant="ghost" onClick={handleCancel}>
+                Cancel
+              </Button>
+            ) : (
+              <>
+                {currentStep > 2 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={wizard.prevStep}
+                    disabled={wizard.isSubmitting}
+                  >
+                    <ArrowLeft className="size-4 mr-2" strokeWidth={1.5} />
+                    Back
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDiscardClick}
+                  disabled={wizard.isSubmitting}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <X className="size-3.5 mr-1.5" strokeWidth={1.5} />
+                  Discard
+                </Button>
+              </>
             )}
           </div>
 
-          <Separator className="shrink-0" />
-
-          {/* ── Footer navigation ───────────────────────────────────── */}
-          <div className="shrink-0 flex items-center justify-between px-6 py-4">
-            {/* Left: Cancel / Back */}
-            <div>
-              {wizard.currentStep === 1 ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCancel}
-                >
-                  Cancel
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={wizard.prevStep}
-                  disabled={wizard.isSubmitting}
-                >
-                  <ArrowLeft className="size-4 mr-2" strokeWidth={1.5} />
-                  Back
-                </Button>
-              )}
-            </div>
-
-            {/* Right: Next / Save */}
-            <div>
-              {wizard.currentStep < TOTAL_STEPS ? (
-                <Button
-                  type="button"
-                  onClick={wizard.nextStep}
-                  disabled={!wizard.canProceed}
-                >
-                  Next Step
-                  <ArrowRight className="size-4 ml-2" strokeWidth={1.5} />
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  onClick={wizard.handleSubmit}
-                  disabled={wizard.isSubmitting}
-                >
-                  {wizard.isSubmitting ? (
-                    <>
-                      <Loader2 className="size-4 mr-2 animate-spin" strokeWidth={1.5} />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="size-4 mr-2" strokeWidth={1.5} />
-                      Save Recipe
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
+          {/* Right: Next / Save (hidden on step 1 — method cards navigate directly) */}
+          <div className="flex items-center gap-2">
+            {wizard.currentStep > 1 && wizard.currentStep < TOTAL_STEPS && !(wizard.currentStep === 2 && wizard.creationMethod === "ai-generate") && (
+              <Button
+                type="button"
+                onClick={wizard.nextStep}
+                disabled={!wizard.canProceed}
+              >
+                Next Step
+                <ArrowRight className="size-4 ml-2" strokeWidth={1.5} />
+              </Button>
+            )}
+            {wizard.currentStep === TOTAL_STEPS && (
+              <Button
+                type="button"
+                onClick={wizard.handleSubmit}
+                disabled={wizard.isSubmitting}
+              >
+                {wizard.isSubmitting ? (
+                  <>
+                    <Loader2 className="size-4 mr-2 animate-spin" strokeWidth={1.5} />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="size-4 mr-2" strokeWidth={1.5} />
+                    Save Recipe
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Discard this recipe?</AlertDialogTitle>
+          <AlertDialogDescription>
+            All progress will be lost. This can&apos;t be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Keep Editing</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDiscardConfirm}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Discard
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

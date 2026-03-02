@@ -7,6 +7,7 @@ import {
   mealSuggestionsApi,
   imageGenerationApi,
   nutritionEstimationApi,
+  wizardGenerationApi,
   AssistantApi,
 } from "@/lib/api";
 import { aiQueryKeys } from "./queryKeys";
@@ -14,6 +15,7 @@ import type {
   ImageGenerationType,
   MealSuggestionsRequestDTO,
   NutritionEstimationRequestDTO,
+  WizardGenerationRequestDTO,
   AssistantMessage,
 } from "@/types/ai";
 
@@ -157,6 +159,21 @@ export function useEstimateNutrition() {
     mutationFn: async (request: NutritionEstimationRequestDTO) => {
       const token = await getToken();
       return nutritionEstimationApi.estimate(request, token);
+    },
+  });
+}
+
+/**
+ * Generate a complete recipe from a text prompt using AI (wizard flow).
+ * Returns recipe data with optional nutrition facts and images.
+ */
+export function useWizardGenerate() {
+  const { getToken } = useAuth();
+
+  return useMutation({
+    mutationFn: async (request: WizardGenerationRequestDTO) => {
+      const token = await getToken();
+      return wizardGenerationApi.generate(request, token);
     },
   });
 }

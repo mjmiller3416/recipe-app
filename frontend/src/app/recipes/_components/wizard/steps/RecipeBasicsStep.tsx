@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { MEAL_TYPE_OPTIONS, DIETARY_PREFERENCES } from "@/lib/constants";
 import { useCategoryOptions } from "@/hooks/api";
+import { ImageUploadCard } from "@/app/recipes/_components/add-edit/ImageUploadCard";
 
 interface RecipeBasicsStepProps {
   recipeName: string;
@@ -35,6 +36,16 @@ interface RecipeBasicsStepProps {
   setDietaryPreference: (v: string) => void;
   hasError: (field: string) => boolean;
   getError: (field: string) => string | undefined;
+  // Image props
+  imagePreview: string | null;
+  isAiGenerated: boolean;
+  onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onGeneratedImageAccept: (
+    refBase64: string,
+    refDataUrl: string,
+    bannerBase64?: string
+  ) => void;
+  onBannerOnlyAccept: (bannerBase64: string) => void;
 }
 
 const DIFFICULTY_OPTIONS = [
@@ -65,53 +76,73 @@ export function RecipeBasicsStep({
   setDietaryPreference,
   hasError,
   getError,
+  imagePreview,
+  isAiGenerated,
+  onImageUpload,
+  onGeneratedImageAccept,
+  onBannerOnlyAccept,
 }: RecipeBasicsStepProps) {
   const { formOptions: categoryOptions } = useCategoryOptions();
 
   return (
-    <div className="space-y-6">
-      {/* Two-column grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left column */}
-        <div className="space-y-4">
-          {/* Recipe Title */}
-          <div className="space-y-2">
-            <Label htmlFor="wizard-recipe-name">
-              Recipe Title <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="wizard-recipe-name"
-              value={recipeName}
-              onChange={(e) => setRecipeName(e.target.value)}
-              placeholder="e.g. Grandma's Chocolate Chip Cookies"
-              className={cn(hasError("recipeName") && "border-destructive")}
-            />
-            {hasError("recipeName") && (
-              <p className="text-sm text-destructive">{getError("recipeName")}</p>
-            )}
-          </div>
+    /*
+      Layout: flex row with fixed-width image column + fluid form column.
+      On mobile (<md), stacks vertically with image centered.
+    */
+    <div className="flex flex-col md:flex-row gap-6">
+      {/* ── Left column — Image (fixed width, 1:1 aspect ratio) ───── */}
+      <div className="w-full md:w-60 shrink-0 overflow-hidden">
+        <ImageUploadCard
+          recipeName={recipeName}
+          imagePreview={imagePreview}
+          isAiGenerated={isAiGenerated}
+          onImageUpload={onImageUpload}
+          onGeneratedImageAccept={onGeneratedImageAccept}
+          onBannerOnlyAccept={onBannerOnlyAccept}
+          compact
+        />
+      </div>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="wizard-description">Description</Label>
-            <Textarea
-              id="wizard-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="A brief description of your recipe..."
-              rows={4}
-              className={cn(hasError("description") && "border-destructive")}
-            />
-            {hasError("description") && (
-              <p className="text-sm text-destructive">{getError("description")}</p>
-            )}
-          </div>
+      {/* ── Right column — All form fields ────────────────────────── */}
+      <div className="flex-1 min-w-0 space-y-4">
+        {/* Recipe Title */}
+        <div className="space-y-1.5">
+          <Label htmlFor="wizard-recipe-name">
+            Recipe Title <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="wizard-recipe-name"
+            value={recipeName}
+            onChange={(e) => setRecipeName(e.target.value)}
+            placeholder="e.g. Grandma's Chocolate Chip Cookies"
+            className={cn(hasError("recipeName") && "border-destructive")}
+          />
+          {hasError("recipeName") && (
+            <p className="text-sm text-destructive">{getError("recipeName")}</p>
+          )}
         </div>
 
-        {/* Right column */}
-        <div className="space-y-4">
-          {/* Prep Time */}
-          <div className="space-y-2">
+        {/* Description */}
+        <div className="space-y-1.5">
+          <Label htmlFor="wizard-description">Description</Label>
+          <Textarea
+            id="wizard-description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="A brief description of your recipe..."
+            rows={3}
+            className={cn(hasError("description") && "border-destructive")}
+          />
+          {hasError("description") && (
+            <p className="text-sm text-destructive">
+              {getError("description")}
+            </p>
+          )}
+        </div>
+
+        {/* Prep / Cook / Servings — 3-column row */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-1.5">
             <Label htmlFor="wizard-prep-time">Prep Time (min)</Label>
             <Input
               id="wizard-prep-time"
@@ -123,12 +154,13 @@ export function RecipeBasicsStep({
               className={cn(hasError("prepTime") && "border-destructive")}
             />
             {hasError("prepTime") && (
-              <p className="text-sm text-destructive">{getError("prepTime")}</p>
+              <p className="text-xs text-destructive">
+                {getError("prepTime")}
+              </p>
             )}
           </div>
 
-          {/* Cook Time */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="wizard-cook-time">Cook Time (min)</Label>
             <Input
               id="wizard-cook-time"
@@ -140,12 +172,13 @@ export function RecipeBasicsStep({
               className={cn(hasError("cookTime") && "border-destructive")}
             />
             {hasError("cookTime") && (
-              <p className="text-sm text-destructive">{getError("cookTime")}</p>
+              <p className="text-xs text-destructive">
+                {getError("cookTime")}
+              </p>
             )}
           </div>
 
-          {/* Servings */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <Label htmlFor="wizard-servings">Servings</Label>
             <Input
               id="wizard-servings"
@@ -157,19 +190,23 @@ export function RecipeBasicsStep({
               className={cn(hasError("servings") && "border-destructive")}
             />
             {hasError("servings") && (
-              <p className="text-sm text-destructive">{getError("servings")}</p>
+              <p className="text-xs text-destructive">
+                {getError("servings")}
+              </p>
             )}
           </div>
+        </div>
 
-          {/* Difficulty */}
-          <div className="space-y-2">
+        {/* Difficulty / Category — 2-column row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
             <Label htmlFor="wizard-difficulty">Difficulty</Label>
             <Select value={difficulty} onValueChange={setDifficulty}>
               <SelectTrigger
                 id="wizard-difficulty"
                 className={cn(hasError("difficulty") && "border-destructive")}
               >
-                <SelectValue placeholder="Select difficulty" />
+                <SelectValue placeholder="Select" />
               </SelectTrigger>
               <SelectContent portal>
                 {DIFFICULTY_OPTIONS.map((opt) => (
@@ -180,87 +217,90 @@ export function RecipeBasicsStep({
               </SelectContent>
             </Select>
             {hasError("difficulty") && (
-              <p className="text-sm text-destructive">{getError("difficulty")}</p>
+              <p className="text-xs text-destructive">
+                {getError("difficulty")}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="wizard-category">
+              Category <span className="text-destructive">*</span>
+            </Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger
+                id="wizard-category"
+                className={cn(hasError("category") && "border-destructive")}
+              >
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent portal>
+                {categoryOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {hasError("category") && (
+              <p className="text-xs text-destructive">
+                {getError("category")}
+              </p>
             )}
           </div>
         </div>
-      </div>
 
-      {/* Full-width row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Meal Type */}
-        <div className="space-y-2">
-          <Label htmlFor="wizard-meal-type">Meal Type</Label>
-          <Select value={mealType} onValueChange={setMealType}>
-            <SelectTrigger
-              id="wizard-meal-type"
-              className={cn(hasError("mealType") && "border-destructive")}
-            >
-              <SelectValue placeholder="Select meal type" />
-            </SelectTrigger>
-            <SelectContent portal>
-              {MEAL_TYPE_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {hasError("mealType") && (
-            <p className="text-sm text-destructive">{getError("mealType")}</p>
-          )}
-        </div>
+        {/* Meal Type / Dietary — 2-column row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="wizard-meal-type">Meal Type</Label>
+            <Select value={mealType} onValueChange={setMealType}>
+              <SelectTrigger
+                id="wizard-meal-type"
+                className={cn(hasError("mealType") && "border-destructive")}
+              >
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent portal>
+                {MEAL_TYPE_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {hasError("mealType") && (
+              <p className="text-xs text-destructive">
+                {getError("mealType")}
+              </p>
+            )}
+          </div>
 
-        {/* Category */}
-        <div className="space-y-2">
-          <Label htmlFor="wizard-category">
-            Category <span className="text-destructive">*</span>
-          </Label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger
-              id="wizard-category"
-              className={cn(hasError("category") && "border-destructive")}
-            >
-              <SelectValue placeholder="Select category" />
-            </SelectTrigger>
-            <SelectContent portal>
-              {categoryOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {hasError("category") && (
-            <p className="text-sm text-destructive">{getError("category")}</p>
-          )}
-        </div>
-
-        {/* Dietary Preference */}
-        <div className="space-y-2">
-          <Label htmlFor="wizard-dietary">Dietary Preference</Label>
-          <Select value={dietaryPreference} onValueChange={setDietaryPreference}>
-            <SelectTrigger
-              id="wizard-dietary"
-              className={cn(
-                hasError("dietaryPreference") && "border-destructive"
-              )}
-            >
-              <SelectValue placeholder="Select preference" />
-            </SelectTrigger>
-            <SelectContent portal>
-              {DIETARY_PREFERENCES.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {hasError("dietaryPreference") && (
-            <p className="text-sm text-destructive">
-              {getError("dietaryPreference")}
-            </p>
-          )}
+          <div className="space-y-1.5">
+            <Label htmlFor="wizard-dietary">Dietary Preference</Label>
+            <Select value={dietaryPreference} onValueChange={setDietaryPreference}>
+              <SelectTrigger
+                id="wizard-dietary"
+                className={cn(
+                  hasError("dietaryPreference") && "border-destructive"
+                )}
+              >
+                <SelectValue placeholder="None" />
+              </SelectTrigger>
+              <SelectContent portal>
+                {DIETARY_PREFERENCES.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {hasError("dietaryPreference") && (
+              <p className="text-xs text-destructive">
+                {getError("dietaryPreference")}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

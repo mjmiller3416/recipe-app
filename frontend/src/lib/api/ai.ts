@@ -10,6 +10,8 @@ import type {
   MealSuggestionsResponseDTO,
   NutritionEstimationRequestDTO,
   NutritionEstimationResponseDTO,
+  WizardGenerationRequestDTO,
+  WizardGenerationResponseDTO,
 } from "@/types/ai";
 import { fetchApi } from "./base";
 
@@ -103,6 +105,27 @@ export const nutritionEstimationApi = {
   ): Promise<NutritionEstimationResponseDTO> =>
     fetchApi<NutritionEstimationResponseDTO>(
       "/api/ai/nutrition-estimation",
+      {
+        method: "POST",
+        body: JSON.stringify(request),
+      },
+      token
+    ),
+};
+
+export const wizardGenerationApi = {
+  /**
+   * Generate a complete recipe from a text prompt using AI.
+   * @param request - Prompt, optional preferences, and feature flags.
+   * @param token - Optional auth token for authenticated requests.
+   * @returns Response with generated recipe, optional nutrition and images.
+   */
+  generate: (
+    request: WizardGenerationRequestDTO,
+    token?: string | null
+  ): Promise<WizardGenerationResponseDTO> =>
+    fetchApi<WizardGenerationResponseDTO>(
+      "/api/ai/wizard-generation",
       {
         method: "POST",
         body: JSON.stringify(request),

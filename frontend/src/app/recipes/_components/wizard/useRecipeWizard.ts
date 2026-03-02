@@ -1,24 +1,29 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 import { arrayMove } from "@dnd-kit/sortable";
 
-import { recipeApi, ingredientApi, uploadApi } from "@/lib/api";
+import { recipeApi, ingredientApi, uploadApi, wizardGenerationApi, ApiError } from "@/lib/api";
 import { base64ToFile } from "@/lib/utils";
 import type {
   RecipeCreateDTO,
   RecipeIngredientDTO,
   NutritionFactsCreateDTO,
   WizardCreationMethod,
-  WizardStep,
+  WizardStep, 
   WizardIngredient,
   WizardDirection,
 } from "@/types/recipe";
-import type { NutritionFactsDTO } from "@/types/ai";
+import type {
+  NutritionFactsDTO,
+  WizardGenerationPreferencesDTO,
+  WizardGeneratedRecipeDTO,
+  WizardGenerationResponseDTO,
+} from "@/types/ai";
 import type { AutocompleteIngredient } from "@/components/forms/IngredientAutocomplete";
 import {
   validateString,
@@ -38,7 +43,11 @@ const LAST_STEP: WizardStep = 5;
 // HOOK
 // ============================================================================
 
-export function useRecipeWizard() {
+interface UseRecipeWizardOptions {
+  onSave?: () => void;
+}
+
+export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
   const router = useRouter();
   const { getToken } = useAuth();
 
@@ -96,6 +105,16 @@ export function useRecipeWizard() {
   const [nutritionFacts, setNutritionFacts] = useState<NutritionFactsDTO | null>(null);
 
   // ---------------------------------------------------------------------------
+  // AI generation state
+  // ---------------------------------------------------------------------------
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiPreferences, setAiPreferences] = useState<WizardGenerationPreferencesDTO>({});
+  const [generatedRecipe, setGeneratedRecipe] = useState<WizardGeneratedRecipeDTO | null>(null);
+  const [generationResponse, setGenerationResponse] = useState<WizardGenerationResponseDTO | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  // ---------------------------------------------------------------------------
   // Available ingredients (autocomplete)
   // ---------------------------------------------------------------------------
   const [availableIngredients, setAvailableIngredients] = useState<AutocompleteIngredient[]>([]);
@@ -151,6 +170,13 @@ export function useRecipeWizard() {
         }
 
         case 2: {
+          // AI generate method: no manual field validation — just need a generated recipe
+          if (creationMethod === "ai-generate") {
+            // Step 2 for AI is handled by "Use This Recipe" → advances directly to step 3.
+            // No field-level validation needed here.
+            break;
+          }
+
           const nameResult = validateString(recipeName, {
             required: true,
             min: 1,
@@ -274,6 +300,9 @@ export function useRecipeWizard() {
       case 1:
         return creationMethod !== null;
       case 2:
+        if (creationMethod === "ai-generate") {
+          return generatedRecipe !== null;
+        }
         return recipeName.trim().length > 0 && category.trim().length > 0 && mealType.trim().length > 0;
       case 3:
         return ingredients.some((ing) => ing.ingredientName.trim().length > 0);
@@ -295,18 +324,6 @@ export function useRecipeWizard() {
     },
     []
   );
-
-  const nextStep = useCallback((): boolean => {
-    hasAttemptedStepRef.current[currentStep] = true;
-
-    const isValid = validateStep(currentStep);
-    if (!isValid) return false;
-
-    if (currentStep < LAST_STEP) {
-      setCurrentStep((prev) => (prev + 1) as WizardStep);
-    }
-    return isValid;
-  }, [currentStep, validateStep]);
 
   const prevStep = useCallback((): void => {
     if (currentStep > FIRST_STEP) {
@@ -425,6 +442,149 @@ export function useRecipeWizard() {
   }, []);
 
   // ---------------------------------------------------------------------------
+  // AI generation: populate wizard from generated recipe
+  // ---------------------------------------------------------------------------
+  const populateFromGeneration = useCallback(
+    (response: WizardGenerationResponseDTO): void => {
+      const recipe = response.recipe;
+      if (!recipe) return;
+
+      // Recipe basics
+      setRecipeName(recipe.recipe_name || "");
+      setDescription(recipe.description || "");
+      setCategory(recipe.recipe_category || "");
+      setMealType(recipe.meal_type || "");
+      setDietaryPreference(recipe.diet_pref || "none");
+      setPrepTime(recipe.prep_time != null ? String(recipe.prep_time) : "");
+      setCookTime(recipe.cook_time != null ? String(recipe.cook_time) : "");
+      setServings(recipe.servings != null ? String(recipe.servings) : "");
+      setDifficulty(recipe.difficulty || "");
+
+      // Ingredients → WizardIngredient[]
+      if (recipe.ingredients.length > 0) {
+        const mapped: WizardIngredient[] = recipe.ingredients.map((ing) => ({
+          id: uuidv4(),
+          ingredientName: ing.ingredient_name,
+          ingredientCategory: ing.ingredient_category || "",
+          quantity: ing.quantity != null ? String(ing.quantity) : "",
+          unit: ing.unit || "",
+          existingIngredientId: null,
+        }));
+        setIngredients(mapped);
+      }
+
+      // Directions → WizardDirection[]
+      if (recipe.directions) {
+        const lines = recipe.directions
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean);
+        if (lines.length > 0) {
+          const mapped: WizardDirection[] = lines.map((text) => ({
+            id: uuidv4(),
+            text,
+          }));
+          setDirections(mapped);
+        }
+      }
+
+      // Notes
+      if (recipe.notes) {
+        setNotes(recipe.notes);
+      }
+
+      // Nutrition
+      if (response.nutrition_facts) {
+        setNutritionFacts(response.nutrition_facts);
+      }
+
+      // Images
+      if (response.reference_image_data) {
+        const refDataUrl = `data:image/png;base64,${response.reference_image_data}`;
+        setImagePreview(refDataUrl);
+        setGeneratedRefData(response.reference_image_data);
+        setIsAiGenerated(true);
+        const refFile = base64ToFile(response.reference_image_data, "recipe-ai-reference.png");
+        setImageFile(refFile);
+      }
+      if (response.banner_image_data) {
+        setGeneratedBannerData(response.banner_image_data);
+        const banner = base64ToFile(response.banner_image_data, "recipe-ai-banner.png");
+        setBannerFile(banner);
+      }
+    },
+    []
+  );
+
+  // ---------------------------------------------------------------------------
+  // AI generation: call API
+  // ---------------------------------------------------------------------------
+  const handleWizardGenerate = useCallback(async (): Promise<void> => {
+    if (!aiPrompt.trim() || isGenerating) return;
+
+    setIsGenerating(true);
+    setAiError(null);
+    setGeneratedRecipe(null);
+    setGenerationResponse(null);
+
+    try {
+      const token = await getToken();
+      const response = await wizardGenerationApi.generate(
+        {
+          prompt: aiPrompt.trim(),
+          preferences: Object.keys(aiPreferences).length > 0 ? aiPreferences : undefined,
+          estimate_nutrition: true,
+          generate_image: true,
+        },
+        token
+      );
+
+      if (!response.success || !response.recipe) {
+        setAiError(response.error || "Failed to generate recipe. Please try again.");
+        return;
+      }
+
+      setGeneratedRecipe(response.recipe);
+      setGenerationResponse(response);
+      toast.success(`"${response.recipe.recipe_name}" is ready! Tap View Recipe to review it.`);
+    } catch (error) {
+      console.error("AI generation failed:", error);
+      setAiError("Something went wrong. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [aiPrompt, aiPreferences, isGenerating, getToken]);
+
+  // ---------------------------------------------------------------------------
+  // AI generation: accept generated recipe and populate wizard fields
+  // ---------------------------------------------------------------------------
+  const handleAcceptGeneratedRecipe = useCallback((): void => {
+    if (!generationResponse) return;
+
+    populateFromGeneration(generationResponse);
+    setIsAiGenerated(true);
+
+    // Switch to manual method so step 2 shows the Recipe Basics form
+    setCreationMethod("manual");
+    setCurrentStep(2);
+  }, [generationResponse, populateFromGeneration]);
+
+  // ---------------------------------------------------------------------------
+  // Navigation: nextStep (after AI callbacks so populateFromGeneration is in scope)
+  // ---------------------------------------------------------------------------
+  const nextStep = useCallback((): boolean => {
+    hasAttemptedStepRef.current[currentStep] = true;
+
+    const isValid = validateStep(currentStep);
+    if (!isValid) return false;
+
+    if (currentStep < LAST_STEP) {
+      setCurrentStep((prev) => (prev + 1) as WizardStep);
+    }
+    return isValid;
+  }, [currentStep, validateStep]);
+
+  // ---------------------------------------------------------------------------
   // Validation helpers
   // ---------------------------------------------------------------------------
   const hasError = useCallback(
@@ -455,6 +615,59 @@ export function useRecipeWizard() {
     },
     [hasAttemptedSubmit, ingredientErrors]
   );
+
+  // ---------------------------------------------------------------------------
+  // Computed: has the user entered any meaningful data?
+  // ---------------------------------------------------------------------------
+  const hasUnsavedData = useMemo(() => {
+    return !!(
+      recipeName.trim() ||
+      description.trim() ||
+      ingredients.some((ing) => ing.ingredientName.trim()) ||
+      directions.some((d) => d.text.trim()) ||
+      imagePreview ||
+      nutritionFacts ||
+      aiPrompt.trim() ||
+      generatedRecipe
+    );
+  }, [recipeName, description, ingredients, directions, imagePreview, nutritionFacts, aiPrompt, generatedRecipe]);
+
+  // ---------------------------------------------------------------------------
+  // Reset wizard to initial state
+  // ---------------------------------------------------------------------------
+  const resetWizard = useCallback((): void => {
+    setCurrentStep(1);
+    setCreationMethod(null);
+    setRecipeName("");
+    setDescription("");
+    setPrepTime("");
+    setCookTime("");
+    setServings("");
+    setDifficulty("");
+    setMealType("");
+    setCategory("");
+    setDietaryPreference("none");
+    setIngredients([createEmptyIngredient()]);
+    setDirections([createEmptyDirection()]);
+    setNotes("");
+    setImagePreview(null);
+    setImageFile(null);
+    setBannerFile(null);
+    setIsAiGenerated(false);
+    setGeneratedRefData(null);
+    setGeneratedBannerData(null);
+    setNutritionFacts(null);
+    setAiPrompt("");
+    setAiPreferences({});
+    setGeneratedRecipe(null);
+    setGenerationResponse(null);
+    setIsGenerating(false);
+    setAiError(null);
+    setErrors({});
+    setIngredientErrors({});
+    setHasAttemptedSubmit(false);
+    hasAttemptedStepRef.current = {};
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Submit
@@ -632,10 +845,22 @@ export function useRecipeWizard() {
       }
 
       toast.success("Recipe created successfully!");
+      resetWizard();
+      onSave?.();
       router.push(`/recipes/${createdRecipe.id}`);
     } catch (error) {
       console.error("Failed to create recipe:", error);
-      toast.error("Failed to create recipe. Please try again.");
+      if (error instanceof ApiError) {
+        if (error.status === 409) {
+          // Duplicate recipe — jump to the basics step where name/category are set
+          setCurrentStep(2);
+          toast.error(error.message);
+        } else {
+          toast.error(error.message || "Failed to create recipe.");
+        }
+      } else {
+        toast.error("Failed to create recipe. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -661,7 +886,53 @@ export function useRecipeWizard() {
     generatedBannerData,
     nutritionFacts,
     router,
+    onSave,
+    resetWizard,
   ]);
+
+  // ---------------------------------------------------------------------------
+  // Dev: fill all fields with sample data for quick testing
+  // ---------------------------------------------------------------------------
+  const fillSampleData = useCallback((): void => {
+    switch (currentStep) {
+      case 1:
+        setCreationMethod("manual");
+        break;
+      case 2:
+        setRecipeName("Classic Spaghetti Carbonara");
+        setDescription("A rich and creamy Italian pasta dish with eggs, cheese, pancetta, and black pepper.");
+        setPrepTime("15");
+        setCookTime("20");
+        setServings("4");
+        setDifficulty("Medium");
+        setMealType("dinner");
+        setCategory("italian");
+        setDietaryPreference("none");
+        break;
+      case 3:
+        setIngredients([
+          { id: uuidv4(), ingredientName: "Spaghetti", ingredientCategory: "pantry", quantity: "14", unit: "oz", existingIngredientId: null },
+          { id: uuidv4(), ingredientName: "Pancetta", ingredientCategory: "meat", quantity: "7", unit: "oz", existingIngredientId: null },
+          { id: uuidv4(), ingredientName: "Eggs", ingredientCategory: "dairy", quantity: "4", unit: "whole", existingIngredientId: null },
+          { id: uuidv4(), ingredientName: "Parmesan Cheese", ingredientCategory: "dairy", quantity: "3.5", unit: "oz", existingIngredientId: null },
+          { id: uuidv4(), ingredientName: "Black Pepper", ingredientCategory: "spices", quantity: "1", unit: "tsp", existingIngredientId: null },
+        ]);
+        break;
+      case 4:
+        setDirections([
+          { id: uuidv4(), text: "Bring a large pot of salted water to a boil and cook spaghetti until al dente." },
+          { id: uuidv4(), text: "While pasta cooks, fry pancetta in a large skillet over medium heat until crispy." },
+          { id: uuidv4(), text: "Whisk eggs, grated Parmesan, and black pepper together in a bowl." },
+          { id: uuidv4(), text: "Drain pasta, reserving 1 cup of pasta water. Add pasta to the pancetta skillet off heat." },
+          { id: uuidv4(), text: "Pour egg mixture over pasta and toss quickly, adding pasta water as needed for a creamy sauce." },
+        ]);
+        setNotes("Use guanciale instead of pancetta for a more traditional version. Pecorino Romano can substitute for Parmesan.");
+        break;
+      case 5:
+        // Nutrition — no sample data needed, the step handles estimation
+        break;
+    }
+  }, [currentStep]);
 
   // ---------------------------------------------------------------------------
   // Return
@@ -733,6 +1004,17 @@ export function useRecipeWizard() {
     nutritionFacts,
     setNutritionFacts,
 
+    // AI generation
+    aiPrompt,
+    setAiPrompt,
+    aiPreferences,
+    setAiPreferences,
+    generatedRecipe,
+    isGenerating,
+    aiError,
+    handleWizardGenerate,
+    handleAcceptGeneratedRecipe,
+
     // Validation
     errors,
     ingredientErrors,
@@ -744,6 +1026,15 @@ export function useRecipeWizard() {
     // Submission
     handleSubmit,
     isSubmitting,
+
+    // Unsaved data detection
+    hasUnsavedData,
+
+    // Reset
+    resetWizard,
+
+    // Dev
+    fillSampleData,
   };
 }
 
