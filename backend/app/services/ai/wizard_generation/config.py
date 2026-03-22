@@ -24,7 +24,7 @@ Return ONLY valid JSON with this exact structure:
   "prep_time": <integer minutes>,
   "cook_time": <integer minutes>,
   "total_time": <integer minutes (prep + cook)>,
-  "difficulty": "<one of: Easy|Medium|Hard|Expert>",
+  "difficulty": "<one of: Easy|Medium|Hard>",
   "servings": <integer>,
   "ingredients": [
     {{"ingredient_name": "Ingredient Name", "ingredient_category": "<category>", "quantity": <float>, "unit": "<unit>"}}

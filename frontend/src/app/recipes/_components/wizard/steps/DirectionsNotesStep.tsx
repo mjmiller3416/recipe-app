@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useCallback } from "react";
+import { useFormContext, useFieldArray } from "react-hook-form";
 import {
   DndContext,
   closestCenter,
@@ -24,23 +25,8 @@ import {
   TabsContent,
 } from "@/components/ui/tabs";
 import { useSortableDnd } from "@/hooks/ui/useSortableDnd";
-import type { WizardDirection } from "@/types/recipe";
-
-// ---------------------------------------------------------------------------
-// Props
-// ---------------------------------------------------------------------------
-
-interface DirectionsNotesStepProps {
-  directions: WizardDirection[];
-  notes: string;
-  setNotes: (v: string) => void;
-  onAddDirection: () => void;
-  onUpdateDirection: (id: string, text: string) => void;
-  onDeleteDirection: (id: string) => void;
-  onReorderDirections: (activeId: string, overId: string) => void;
-  hasError: (field: string) => boolean;
-  getError: (field: string) => string | undefined;
-}
+import { createEmptyDirection } from "../useRecipeWizard";
+import type { WizardFormValues } from "../wizardSchema";
 
 // ---------------------------------------------------------------------------
 // Sortable Direction Row
@@ -53,14 +39,16 @@ const STEP_PLACEHOLDERS = [
 ];
 
 interface DirectionRowProps {
-  direction: WizardDirection;
+  id: string;
+  text: string;
   index: number;
-  onUpdate: (id: string, text: string) => void;
-  onDelete: (id: string) => void;
+  onUpdate: (index: number, text: string) => void;
+  onDelete: (index: number) => void;
 }
 
 function SortableDirectionRow({
-  direction,
+  id,
+  text,
   index,
   onUpdate,
   onDelete,
@@ -72,7 +60,7 @@ function SortableDirectionRow({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: direction.id });
+  } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -109,13 +97,13 @@ function SortableDirectionRow({
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Step {index + 1}
           </span>
-          <Label htmlFor={`direction-${direction.id}`} className="sr-only">
+          <Label htmlFor={`direction-${id}`} className="sr-only">
             Step {index + 1} instructions
           </Label>
           <Textarea
-            id={`direction-${direction.id}`}
-            value={direction.text}
-            onChange={(e) => onUpdate(direction.id, e.target.value)}
+            id={`direction-${id}`}
+            value={text}
+            onChange={(e) => onUpdate(index, e.target.value)}
             placeholder={placeholder}
             rows={3}
             className="resize-none"
@@ -128,7 +116,7 @@ function SortableDirectionRow({
           size="icon"
           variant="ghost"
           className="mt-2 shrink-0 text-muted-foreground hover:text-destructive"
-          onClick={() => onDelete(direction.id)}
+          onClick={() => onDelete(index)}
           aria-label={`Delete step ${index + 1}`}
         >
           <Trash2 className="size-4" strokeWidth={1.5} />
@@ -139,36 +127,55 @@ function SortableDirectionRow({
 }
 
 // ---------------------------------------------------------------------------
-// Main Component
+// Main Component (no props — everything from form context)
 // ---------------------------------------------------------------------------
 
-export function DirectionsNotesStep({
-  directions,
-  notes,
-  setNotes,
-  onAddDirection,
-  onUpdateDirection,
-  onDeleteDirection,
-  onReorderDirections,
-  hasError,
-  getError,
-}: DirectionsNotesStepProps) {
+export function DirectionsNotesStep() {
+  const form = useFormContext<WizardFormValues>();
+  const { fields, append, remove, move } = useFieldArray({
+    control: form.control,
+    name: "directions",
+  });
+
   const { sensors, modifiers } = useSortableDnd();
+  const notes = form.watch("notes");
 
   const sortableIds = useMemo(
-    () => directions.map((d) => d.id),
-    [directions]
+    () => fields.map((d) => d.id),
+    [fields]
   );
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (over && active.id !== over.id) {
-        onReorderDirections(String(active.id), String(over.id));
+        const oldIndex = fields.findIndex((f) => f.id === String(active.id));
+        const newIndex = fields.findIndex((f) => f.id === String(over.id));
+        if (oldIndex !== -1 && newIndex !== -1) {
+          move(oldIndex, newIndex);
+        }
       }
     },
-    [onReorderDirections]
+    [fields, move]
   );
+
+  const handleUpdateDirection = useCallback(
+    (index: number, text: string) => {
+      form.setValue(`directions.${index}.text`, text);
+    },
+    [form]
+  );
+
+  const handleDeleteDirection = useCallback(
+    (index: number) => {
+      remove(index);
+    },
+    [remove]
+  );
+
+  // Root-level error (e.g. "At least one direction step is required")
+  const rootError = (form.formState.errors.directions as { root?: { message?: string } } | undefined)?.root?.message
+    ?? form.formState.errors.directions?.message;
 
   return (
     <Tabs defaultValue="directions" className="space-y-4">
@@ -192,13 +199,14 @@ export function DirectionsNotesStep({
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-2">
-              {directions.map((direction, index) => (
+              {fields.map((field, index) => (
                 <SortableDirectionRow
-                  key={direction.id}
-                  direction={direction}
+                  key={field.id}
+                  id={field.id}
+                  text={field.text}
                   index={index}
-                  onUpdate={onUpdateDirection}
-                  onDelete={onDeleteDirection}
+                  onUpdate={handleUpdateDirection}
+                  onDelete={handleDeleteDirection}
                 />
               ))}
             </div>
@@ -206,9 +214,9 @@ export function DirectionsNotesStep({
         </DndContext>
 
         {/* Error message for directions */}
-        {hasError("directions") && (
+        {rootError && (
           <p className="text-sm text-destructive" role="alert">
-            {getError("directions")}
+            {rootError}
           </p>
         )}
 
@@ -217,7 +225,7 @@ export function DirectionsNotesStep({
           type="button"
           variant="outline"
           className="w-full"
-          onClick={onAddDirection}
+          onClick={() => append(createEmptyDirection())}
         >
           <PlusCircle className="size-4 mr-2" strokeWidth={1.5} />
           Add Next Step
@@ -244,7 +252,7 @@ export function DirectionsNotesStep({
           <Textarea
             id="wizard-notes"
             value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+            onChange={(e) => form.setValue("notes", e.target.value)}
             placeholder={[
               "Add helpful notes for this recipe, such as:",
               "  - Ingredient substitutions",

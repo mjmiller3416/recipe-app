@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Collapsible,
   CollapsibleContent,
@@ -198,24 +199,22 @@ export function AIGenerateStep({
 
               {/* Difficulty */}
               <div className="space-y-2">
-                <Label htmlFor="pref-difficulty">Difficulty</Label>
-                <Select
+                <Label>Difficulty</Label>
+                <ToggleGroup
+                  type="single"
+                  variant="outline"
                   value={preferences.difficulty || ""}
-                  onValueChange={(value) =>
-                    setPreferences({ ...preferences, difficulty: value || undefined })
+                  onValueChange={(val) =>
+                    setPreferences({ ...preferences, difficulty: val || undefined })
                   }
                   disabled={isGenerating}
+                  aria-label="Recipe difficulty preference"
+                  className="w-full"
                 >
-                  <SelectTrigger id="pref-difficulty">
-                    <SelectValue placeholder="Any" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Easy">Easy</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="Hard">Hard</SelectItem>
-                    <SelectItem value="Expert">Expert</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <ToggleGroupItem value="Easy" className="flex-1">Easy</ToggleGroupItem>
+                  <ToggleGroupItem value="Medium" className="flex-1">Med</ToggleGroupItem>
+                  <ToggleGroupItem value="Hard" className="flex-1">Hard</ToggleGroupItem>
+                </ToggleGroup>
               </div>
 
               {/* Servings */}

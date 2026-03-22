@@ -280,7 +280,7 @@ export type WizardCreationMethod = "manual" | "ai-generate" | "url-import" | "fi
 
 export type WizardStep = 1 | 2 | 3 | 4 | 5;
 
-export type RecipeDifficulty = "Easy" | "Medium" | "Hard" | "Expert";
+export type RecipeDifficulty = "Easy" | "Medium" | "Hard";
 
 export interface WizardDirection {
   id: string;

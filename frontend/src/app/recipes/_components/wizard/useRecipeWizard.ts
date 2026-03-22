@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
-import { arrayMove } from "@dnd-kit/sortable";
 
 import { recipeApi, ingredientApi, uploadApi, wizardGenerationApi, ApiError } from "@/lib/api";
 import { base64ToFile } from "@/lib/utils";
@@ -14,7 +15,7 @@ import type {
   RecipeIngredientDTO,
   NutritionFactsCreateDTO,
   WizardCreationMethod,
-  WizardStep, 
+  WizardStep,
   WizardIngredient,
   WizardDirection,
 } from "@/types/recipe";
@@ -25,12 +26,7 @@ import type {
   WizardGenerationResponseDTO,
 } from "@/types/ai";
 import type { AutocompleteIngredient } from "@/components/forms/IngredientAutocomplete";
-import {
-  validateString,
-  validateInteger,
-  validateIngredientRow,
-  type IngredientFieldErrors,
-} from "@/lib/formValidation";
+import { wizardFormSchema, WIZARD_STEP_FIELDS, type WizardFormValues } from "./wizardSchema";
 
 // ============================================================================
 // CONSTANTS
@@ -52,45 +48,38 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
   const { getToken } = useAuth();
 
   // ---------------------------------------------------------------------------
-  // Step navigation
+  // React Hook Form (replaces individual useState for recipe fields)
+  // ---------------------------------------------------------------------------
+  const form = useForm<WizardFormValues>({
+    resolver: zodResolver(wizardFormSchema),
+    defaultValues: {
+      recipeName: "",
+      description: "",
+      prepTime: 0,
+      cookTime: 0,
+      servings: 4,
+      difficulty: "",
+      mealType: "",
+      category: "",
+      dietaryPreference: "none",
+      ingredients: [createEmptyIngredient()],
+      directions: [createEmptyDirection()],
+      notes: "",
+    },
+    mode: "onTouched",
+  });
+
+  // Subscribe to all form changes for reactive computed values
+  const watchedValues = form.watch();
+
+  // ---------------------------------------------------------------------------
+  // Step navigation (non-form state)
   // ---------------------------------------------------------------------------
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
   const [creationMethod, setCreationMethod] = useState<WizardCreationMethod | null>(null);
 
   // ---------------------------------------------------------------------------
-  // Recipe basics
-  // ---------------------------------------------------------------------------
-  const [recipeName, setRecipeName] = useState("");
-  const [description, setDescription] = useState("");
-  const [prepTime, setPrepTime] = useState("");
-  const [cookTime, setCookTime] = useState("");
-  const [servings, setServings] = useState("");
-  const [difficulty, setDifficulty] = useState("");
-  const [mealType, setMealType] = useState("");
-  const [category, setCategory] = useState("");
-  const [dietaryPreference, setDietaryPreference] = useState("none");
-
-  // ---------------------------------------------------------------------------
-  // Ingredients
-  // ---------------------------------------------------------------------------
-  const [ingredients, setIngredients] = useState<WizardIngredient[]>(() => [
-    createEmptyIngredient(),
-  ]);
-
-  // ---------------------------------------------------------------------------
-  // Directions
-  // ---------------------------------------------------------------------------
-  const [directions, setDirections] = useState<WizardDirection[]>(() => [
-    createEmptyDirection(),
-  ]);
-
-  // ---------------------------------------------------------------------------
-  // Notes
-  // ---------------------------------------------------------------------------
-  const [notes, setNotes] = useState("");
-
-  // ---------------------------------------------------------------------------
-  // Image state
+  // Image state (non-form)
   // ---------------------------------------------------------------------------
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -100,12 +89,12 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
   const [generatedBannerData, setGeneratedBannerData] = useState<string | null>(null);
 
   // ---------------------------------------------------------------------------
-  // Nutrition state
+  // Nutrition state (non-form — optional AI blob)
   // ---------------------------------------------------------------------------
   const [nutritionFacts, setNutritionFacts] = useState<NutritionFactsDTO | null>(null);
 
   // ---------------------------------------------------------------------------
-  // AI generation state
+  // AI generation state (non-form)
   // ---------------------------------------------------------------------------
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiPreferences, setAiPreferences] = useState<WizardGenerationPreferencesDTO>({});
@@ -118,14 +107,6 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
   // Available ingredients (autocomplete)
   // ---------------------------------------------------------------------------
   const [availableIngredients, setAvailableIngredients] = useState<AutocompleteIngredient[]>([]);
-
-  // ---------------------------------------------------------------------------
-  // Validation
-  // ---------------------------------------------------------------------------
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [ingredientErrors, setIngredientErrors] = useState<Record<string, IngredientFieldErrors>>({});
-  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
-  const hasAttemptedStepRef = useRef<Record<number, boolean>>({});
 
   // ---------------------------------------------------------------------------
   // Submission
@@ -154,142 +135,57 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
   }, [getToken]);
 
   // ---------------------------------------------------------------------------
-  // Step-specific validation
+  // Step-specific validation via form.trigger()
   // ---------------------------------------------------------------------------
   const validateStep = useCallback(
-    (step: WizardStep): boolean => {
-      const newErrors: Record<string, string> = {};
-      const newIngredientErrors: Record<string, IngredientFieldErrors> = {};
-
-      switch (step) {
-        case 1: {
-          if (!creationMethod) {
-            newErrors.creationMethod = "Please select how you want to create your recipe";
-          }
-          break;
-        }
-
-        case 2: {
-          // AI generate method: no manual field validation — just need a generated recipe
-          if (creationMethod === "ai-generate") {
-            // Step 2 for AI is handled by "Use This Recipe" → advances directly to step 3.
-            // No field-level validation needed here.
-            break;
-          }
-
-          const nameResult = validateString(recipeName, {
-            required: true,
-            min: 1,
-            max: 255,
-            label: "Recipe name",
-          });
-          if (!nameResult.isValid && nameResult.error) {
-            newErrors.recipeName = nameResult.error;
-          }
-
-          const categoryResult = validateString(category, {
-            required: true,
-            label: "Category",
-          });
-          if (!categoryResult.isValid && categoryResult.error) {
-            newErrors.category = categoryResult.error;
-          }
-
-          const mealTypeResult = validateString(mealType, {
-            required: true,
-            label: "Meal type",
-          });
-          if (!mealTypeResult.isValid && mealTypeResult.error) {
-            newErrors.mealType = mealTypeResult.error;
-          }
-
-          // Optional numeric fields: validate only if provided
-          if (prepTime) {
-            const prepResult = validateInteger(prepTime, { min: 0, label: "Prep time" });
-            if (!prepResult.isValid && prepResult.error) {
-              newErrors.prepTime = prepResult.error;
-            }
-          }
-          if (cookTime) {
-            const cookResult = validateInteger(cookTime, { min: 0, label: "Cook time" });
-            if (!cookResult.isValid && cookResult.error) {
-              newErrors.cookTime = cookResult.error;
-            }
-          }
-          if (servings) {
-            const servingsResult = validateInteger(servings, { min: 1, label: "Servings" });
-            if (!servingsResult.isValid && servingsResult.error) {
-              newErrors.servings = servingsResult.error;
-            }
-          }
-          break;
-        }
-
-        case 3: {
-          const filledIngredients = ingredients.filter(
-            (ing) => ing.ingredientName.trim() !== ""
-          );
-          if (filledIngredients.length === 0) {
-            newErrors.ingredients = "At least one ingredient is required";
-          }
-
-          // Per-ingredient validation
-          ingredients.forEach((ing) => {
-            const qtyRaw = qtyStr(ing.quantity);
-            if (
-              !ing.ingredientName.trim() &&
-              !qtyRaw.trim() &&
-              !ing.unit
-            ) {
-              return; // skip completely empty rows
-            }
-            const qty = qtyRaw.trim() ? parseFloat(qtyRaw) : null;
-            const result = validateIngredientRow(
-              ing.ingredientName,
-              Number.isNaN(qty) ? null : qty,
-              ing.unit
-            );
-            if (!result.isValid) {
-              newIngredientErrors[ing.id] = result.errors;
-            }
-          });
-
-          if (Object.keys(newIngredientErrors).length > 0) {
-            newErrors.ingredientFields = "Some ingredients have errors";
-          }
-          break;
-        }
-
-        case 4: {
-          const filledDirections = directions.filter(
-            (dir) => dir.text.trim() !== ""
-          );
-          if (filledDirections.length === 0) {
-            newErrors.directions = "At least one direction step is required";
-          }
-          break;
-        }
-
-        case 5:
-          // No validation required (optional review / image step)
-          break;
+    async (step: WizardStep): Promise<boolean> => {
+      // Step 1: creationMethod is non-form state
+      if (step === 1) {
+        return creationMethod !== null;
       }
 
-      setErrors(newErrors);
-      setIngredientErrors(newIngredientErrors);
-      return Object.keys(newErrors).length === 0;
+      // Step 2 AI mode: no form validation
+      if (step === 2 && creationMethod === "ai-generate") {
+        return true;
+      }
+
+      // Step 3: check at least one filled ingredient before field validation
+      if (step === 3) {
+        const ingredients = form.getValues("ingredients");
+        const hasFilledIngredient = ingredients.some(
+          (ing) => ing.ingredientName.trim().length > 0
+        );
+        if (!hasFilledIngredient) {
+          form.setError("ingredients.root" as `ingredients.${number}`, {
+            type: "manual",
+            message: "At least one ingredient is required",
+          });
+          return false;
+        }
+      }
+
+      // Step 4: check at least one filled direction
+      if (step === 4) {
+        const directions = form.getValues("directions");
+        const hasFilledDirection = directions.some(
+          (dir) => dir.text.trim().length > 0
+        );
+        if (!hasFilledDirection) {
+          form.setError("directions.root" as `directions.${number}`, {
+            type: "manual",
+            message: "At least one direction step is required",
+          });
+          return false;
+        }
+      }
+
+      // Validate the fields for the given step
+      const fields = WIZARD_STEP_FIELDS[step];
+      if (!fields || fields.length === 0) return true;
+
+      return form.trigger(fields);
     },
-    [
-      creationMethod,
-      recipeName,
-      category,
-      mealType,
-      prepTime,
-      cookTime,
-      servings,
-      ingredients,
-      directions,
-    ]
+    [creationMethod, form]
   );
 
   // ---------------------------------------------------------------------------
@@ -303,11 +199,19 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
         if (creationMethod === "ai-generate") {
           return generatedRecipe !== null;
         }
-        return recipeName.trim().length > 0 && category.trim().length > 0 && mealType.trim().length > 0;
+        return (
+          watchedValues.recipeName.trim().length > 0 &&
+          watchedValues.category.trim().length > 0 &&
+          watchedValues.mealType.trim().length > 0
+        );
       case 3:
-        return ingredients.some((ing) => ing.ingredientName.trim().length > 0);
+        return watchedValues.ingredients.some(
+          (ing) => ing.ingredientName.trim().length > 0
+        );
       case 4:
-        return directions.some((dir) => dir.text.trim().length > 0);
+        return watchedValues.directions.some(
+          (dir) => dir.text.trim().length > 0
+        );
       case 5:
         return true;
       default:
@@ -331,68 +235,15 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
     }
   }, [currentStep]);
 
-  // ---------------------------------------------------------------------------
-  // Ingredient handlers
-  // ---------------------------------------------------------------------------
-  const addIngredient = useCallback((): void => {
-    setIngredients((prev) => [...prev, createEmptyIngredient()]);
-  }, []);
+  const nextStep = useCallback(async (): Promise<boolean> => {
+    const isValid = await validateStep(currentStep);
+    if (!isValid) return false;
 
-  const updateIngredient = useCallback(
-    (id: string, field: string, value: string | number | null): void => {
-      setIngredients((prev) =>
-        prev.map((ing) => (ing.id === id ? { ...ing, [field]: value } : ing))
-      );
-    },
-    []
-  );
-
-  const deleteIngredient = useCallback((id: string): void => {
-    setIngredients((prev) => {
-      if (prev.length <= 1) return prev;
-      return prev.filter((ing) => ing.id !== id);
-    });
-  }, []);
-
-  const reorderIngredients = useCallback((activeId: string, overId: string): void => {
-    setIngredients((prev) => {
-      const oldIndex = prev.findIndex((ing) => ing.id === activeId);
-      const newIndex = prev.findIndex((ing) => ing.id === overId);
-      return arrayMove(prev, oldIndex, newIndex);
-    });
-  }, []);
-
-  const clearAllIngredients = useCallback((): void => {
-    setIngredients([createEmptyIngredient()]);
-  }, []);
-
-  // ---------------------------------------------------------------------------
-  // Direction handlers
-  // ---------------------------------------------------------------------------
-  const addDirection = useCallback((): void => {
-    setDirections((prev) => [...prev, createEmptyDirection()]);
-  }, []);
-
-  const updateDirection = useCallback((id: string, text: string): void => {
-    setDirections((prev) =>
-      prev.map((dir) => (dir.id === id ? { ...dir, text } : dir))
-    );
-  }, []);
-
-  const deleteDirection = useCallback((id: string): void => {
-    setDirections((prev) => {
-      if (prev.length <= 1) return prev;
-      return prev.filter((dir) => dir.id !== id);
-    });
-  }, []);
-
-  const reorderDirections = useCallback((activeId: string, overId: string): void => {
-    setDirections((prev) => {
-      const oldIndex = prev.findIndex((dir) => dir.id === activeId);
-      const newIndex = prev.findIndex((dir) => dir.id === overId);
-      return arrayMove(prev, oldIndex, newIndex);
-    });
-  }, []);
+    if (currentStep < LAST_STEP) {
+      setCurrentStep((prev) => (prev + 1) as WizardStep);
+    }
+    return true;
+  }, [currentStep, validateStep]);
 
   // ---------------------------------------------------------------------------
   // Image handlers
@@ -449,18 +300,18 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
       const recipe = response.recipe;
       if (!recipe) return;
 
-      // Recipe basics
-      setRecipeName(recipe.recipe_name || "");
-      setDescription(recipe.description || "");
-      setCategory(recipe.recipe_category || "");
-      setMealType(recipe.meal_type || "");
-      setDietaryPreference(recipe.diet_pref || "none");
-      setPrepTime(recipe.prep_time != null ? String(recipe.prep_time) : "");
-      setCookTime(recipe.cook_time != null ? String(recipe.cook_time) : "");
-      setServings(recipe.servings != null ? String(recipe.servings) : "");
-      setDifficulty(recipe.difficulty || "");
+      // Recipe basics via form.setValue
+      form.setValue("recipeName", recipe.recipe_name || "");
+      form.setValue("description", recipe.description || "");
+      form.setValue("category", recipe.recipe_category || "");
+      form.setValue("mealType", recipe.meal_type || "");
+      form.setValue("dietaryPreference", recipe.diet_pref || "none");
+      form.setValue("prepTime", recipe.prep_time ?? 0);
+      form.setValue("cookTime", recipe.cook_time ?? 0);
+      form.setValue("servings", recipe.servings ?? 4);
+      form.setValue("difficulty", recipe.difficulty || "");
 
-      // Ingredients → WizardIngredient[]
+      // Ingredients
       if (recipe.ingredients.length > 0) {
         const mapped: WizardIngredient[] = recipe.ingredients.map((ing) => ({
           id: uuidv4(),
@@ -470,10 +321,10 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
           unit: ing.unit || "",
           existingIngredientId: null,
         }));
-        setIngredients(mapped);
+        form.setValue("ingredients", mapped);
       }
 
-      // Directions → WizardDirection[]
+      // Directions
       if (recipe.directions) {
         const lines = recipe.directions
           .split("\n")
@@ -484,21 +335,21 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
             id: uuidv4(),
             text,
           }));
-          setDirections(mapped);
+          form.setValue("directions", mapped);
         }
       }
 
       // Notes
       if (recipe.notes) {
-        setNotes(recipe.notes);
+        form.setValue("notes", recipe.notes);
       }
 
-      // Nutrition
+      // Nutrition (non-form state)
       if (response.nutrition_facts) {
         setNutritionFacts(response.nutrition_facts);
       }
 
-      // Images
+      // Images (non-form state)
       if (response.reference_image_data) {
         const refDataUrl = `data:image/png;base64,${response.reference_image_data}`;
         setImagePreview(refDataUrl);
@@ -513,7 +364,7 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
         setBannerFile(banner);
       }
     },
-    []
+    [form]
   );
 
   // ---------------------------------------------------------------------------
@@ -570,67 +421,20 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
   }, [generationResponse, populateFromGeneration]);
 
   // ---------------------------------------------------------------------------
-  // Navigation: nextStep (after AI callbacks so populateFromGeneration is in scope)
-  // ---------------------------------------------------------------------------
-  const nextStep = useCallback((): boolean => {
-    hasAttemptedStepRef.current[currentStep] = true;
-
-    const isValid = validateStep(currentStep);
-    if (!isValid) return false;
-
-    if (currentStep < LAST_STEP) {
-      setCurrentStep((prev) => (prev + 1) as WizardStep);
-    }
-    return isValid;
-  }, [currentStep, validateStep]);
-
-  // ---------------------------------------------------------------------------
-  // Validation helpers
-  // ---------------------------------------------------------------------------
-  const hasError = useCallback(
-    (field: string): boolean => {
-      const attempted =
-        hasAttemptedSubmit || !!hasAttemptedStepRef.current[currentStep];
-      return attempted && !!errors[field];
-    },
-    [hasAttemptedSubmit, currentStep, errors]
-  );
-
-  const getError = useCallback(
-    (field: string): string | undefined => {
-      const attempted =
-        hasAttemptedSubmit || !!hasAttemptedStepRef.current[currentStep];
-      return attempted ? errors[field] : undefined;
-    },
-    [hasAttemptedSubmit, currentStep, errors]
-  );
-
-  const getIngredientError = useCallback(
-    (id: string, field: string): string | undefined => {
-      const attempted =
-        hasAttemptedSubmit || !!hasAttemptedStepRef.current[3];
-      if (!attempted) return undefined;
-      const fieldKey = field as "name" | "quantity";
-      return ingredientErrors[id]?.[fieldKey];
-    },
-    [hasAttemptedSubmit, ingredientErrors]
-  );
-
-  // ---------------------------------------------------------------------------
   // Computed: has the user entered any meaningful data?
   // ---------------------------------------------------------------------------
   const hasUnsavedData = useMemo(() => {
     return !!(
-      recipeName.trim() ||
-      description.trim() ||
-      ingredients.some((ing) => ing.ingredientName.trim()) ||
-      directions.some((d) => d.text.trim()) ||
+      watchedValues.recipeName.trim() ||
+      watchedValues.description.trim() ||
+      watchedValues.ingredients.some((ing) => ing.ingredientName.trim()) ||
+      watchedValues.directions.some((d) => d.text.trim()) ||
       imagePreview ||
       nutritionFacts ||
       aiPrompt.trim() ||
       generatedRecipe
     );
-  }, [recipeName, description, ingredients, directions, imagePreview, nutritionFacts, aiPrompt, generatedRecipe]);
+  }, [watchedValues, imagePreview, nutritionFacts, aiPrompt, generatedRecipe]);
 
   // ---------------------------------------------------------------------------
   // Reset wizard to initial state
@@ -638,18 +442,8 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
   const resetWizard = useCallback((): void => {
     setCurrentStep(1);
     setCreationMethod(null);
-    setRecipeName("");
-    setDescription("");
-    setPrepTime("");
-    setCookTime("");
-    setServings("");
-    setDifficulty("");
-    setMealType("");
-    setCategory("");
-    setDietaryPreference("none");
-    setIngredients([createEmptyIngredient()]);
-    setDirections([createEmptyDirection()]);
-    setNotes("");
+    form.reset();
+    // Non-form state
     setImagePreview(null);
     setImageFile(null);
     setBannerFile(null);
@@ -663,21 +457,15 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
     setGenerationResponse(null);
     setIsGenerating(false);
     setAiError(null);
-    setErrors({});
-    setIngredientErrors({});
-    setHasAttemptedSubmit(false);
-    hasAttemptedStepRef.current = {};
-  }, []);
+  }, [form]);
 
   // ---------------------------------------------------------------------------
   // Submit
   // ---------------------------------------------------------------------------
   const handleSubmit = useCallback(async (): Promise<void> => {
-    setHasAttemptedSubmit(true);
-
     // Validate all steps before submission
     for (let step = 1; step <= LAST_STEP; step++) {
-      const isValid = validateStep(step as WizardStep);
+      const isValid = await validateStep(step as WizardStep);
       if (!isValid) {
         setCurrentStep(step as WizardStep);
         toast.error("Please fix the errors before submitting.");
@@ -689,14 +477,14 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
 
     try {
       const token = await getToken();
+      const values = form.getValues();
 
       // Build ingredients DTO
-      const validIngredients = ingredients.filter(
+      const validIngredients = values.ingredients.filter(
         (ing) => ing.ingredientName.trim() !== ""
       );
       const apiIngredients: RecipeIngredientDTO[] = validIngredients.map((ing) => {
-        const qtyRaw = qtyStr(ing.quantity);
-        const qty = qtyRaw.trim() ? parseFloat(qtyRaw) : null;
+        const qty = ing.quantity.trim() ? parseFloat(ing.quantity) : null;
         return {
           ingredient_name: ing.ingredientName.trim(),
           ingredient_category: ing.ingredientCategory || "Other",
@@ -709,14 +497,14 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
       });
 
       // Build directions string (each step on its own line)
-      const directionsText = directions
+      const directionsText = values.directions
         .filter((dir) => dir.text.trim() !== "")
         .map((dir) => dir.text.trim())
         .join("\n");
 
-      // Calculate total_time
-      const prep = prepTime.trim() ? parseInt(prepTime, 10) : null;
-      const cook = cookTime.trim() ? parseInt(cookTime, 10) : null;
+      // Calculate total_time (now numbers, not strings)
+      const prep = values.prepTime || null;
+      const cook = values.cookTime || null;
       let totalTime: number | null = null;
       if (prep !== null && cook !== null) {
         totalTime = prep + cook;
@@ -745,18 +533,18 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
       }
 
       const payload: RecipeCreateDTO = {
-        recipe_name: recipeName.trim(),
-        recipe_category: category.trim(),
-        meal_type: mealType.trim(),
-        diet_pref: dietaryPreference === "none" ? null : dietaryPreference,
-        description: description.trim() || null,
+        recipe_name: values.recipeName.trim(),
+        recipe_category: values.category.trim(),
+        meal_type: values.mealType.trim(),
+        diet_pref: values.dietaryPreference === "none" ? null : values.dietaryPreference,
+        description: values.description.trim() || null,
         total_time: totalTime,
         prep_time: prep,
         cook_time: cook,
-        servings: servings.trim() ? parseInt(servings, 10) : null,
-        difficulty: difficulty || null,
+        servings: values.servings || null,
+        difficulty: values.difficulty || null,
         directions: directionsText || null,
-        notes: notes.trim() || null,
+        notes: values.notes.trim() || null,
         ingredients: apiIngredients,
         is_ai_generated: isAiGenerated,
         nutrition_facts: nutritionPayload,
@@ -852,7 +640,6 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
       console.error("Failed to create recipe:", error);
       if (error instanceof ApiError) {
         if (error.status === 409) {
-          // Duplicate recipe — jump to the basics step where name/category are set
           setCurrentStep(2);
           toast.error(error.message);
         } else {
@@ -867,18 +654,7 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
   }, [
     validateStep,
     getToken,
-    ingredients,
-    directions,
-    recipeName,
-    description,
-    category,
-    mealType,
-    dietaryPreference,
-    prepTime,
-    cookTime,
-    servings,
-    difficulty,
-    notes,
+    form,
     isAiGenerated,
     imageFile,
     bannerFile,
@@ -899,18 +675,18 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
         setCreationMethod("manual");
         break;
       case 2:
-        setRecipeName("Classic Spaghetti Carbonara");
-        setDescription("A rich and creamy Italian pasta dish with eggs, cheese, pancetta, and black pepper.");
-        setPrepTime("15");
-        setCookTime("20");
-        setServings("4");
-        setDifficulty("Medium");
-        setMealType("dinner");
-        setCategory("italian");
-        setDietaryPreference("none");
+        form.setValue("recipeName", "Classic Spaghetti Carbonara");
+        form.setValue("description", "A rich and creamy Italian pasta dish with eggs, cheese, pancetta, and black pepper.");
+        form.setValue("prepTime", 15);
+        form.setValue("cookTime", 20);
+        form.setValue("servings", 4);
+        form.setValue("difficulty", "Medium");
+        form.setValue("mealType", "dinner");
+        form.setValue("category", "italian");
+        form.setValue("dietaryPreference", "none");
         break;
       case 3:
-        setIngredients([
+        form.setValue("ingredients", [
           { id: uuidv4(), ingredientName: "Spaghetti", ingredientCategory: "pantry", quantity: "14", unit: "oz", existingIngredientId: null },
           { id: uuidv4(), ingredientName: "Pancetta", ingredientCategory: "meat", quantity: "7", unit: "oz", existingIngredientId: null },
           { id: uuidv4(), ingredientName: "Eggs", ingredientCategory: "dairy", quantity: "4", unit: "whole", existingIngredientId: null },
@@ -919,25 +695,27 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
         ]);
         break;
       case 4:
-        setDirections([
+        form.setValue("directions", [
           { id: uuidv4(), text: "Bring a large pot of salted water to a boil and cook spaghetti until al dente." },
           { id: uuidv4(), text: "While pasta cooks, fry pancetta in a large skillet over medium heat until crispy." },
           { id: uuidv4(), text: "Whisk eggs, grated Parmesan, and black pepper together in a bowl." },
           { id: uuidv4(), text: "Drain pasta, reserving 1 cup of pasta water. Add pasta to the pancetta skillet off heat." },
           { id: uuidv4(), text: "Pour egg mixture over pasta and toss quickly, adding pasta water as needed for a creamy sauce." },
         ]);
-        setNotes("Use guanciale instead of pancetta for a more traditional version. Pecorino Romano can substitute for Parmesan.");
+        form.setValue("notes", "Use guanciale instead of pancetta for a more traditional version. Pecorino Romano can substitute for Parmesan.");
         break;
       case 5:
-        // Nutrition — no sample data needed, the step handles estimation
         break;
     }
-  }, [currentStep]);
+  }, [currentStep, form]);
 
   // ---------------------------------------------------------------------------
   // Return
   // ---------------------------------------------------------------------------
   return {
+    // Form (react-hook-form — used by FormProvider and step components)
+    form,
+
     // Step navigation
     currentStep,
     goToStep,
@@ -949,53 +727,9 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
     creationMethod,
     setCreationMethod,
 
-    // Recipe basics
-    recipeName,
-    setRecipeName,
-    description,
-    setDescription,
-    prepTime,
-    setPrepTime,
-    cookTime,
-    setCookTime,
-    servings,
-    setServings,
-    difficulty,
-    setDifficulty,
-    mealType,
-    setMealType,
-    category,
-    setCategory,
-    dietaryPreference,
-    setDietaryPreference,
-
-    // Ingredients
-    ingredients,
-    addIngredient,
-    updateIngredient,
-    deleteIngredient,
-    reorderIngredients,
-    clearAllIngredients,
-    availableIngredients,
-
-    // Directions
-    directions,
-    addDirection,
-    updateDirection,
-    deleteDirection,
-    reorderDirections,
-
-    // Notes
-    notes,
-    setNotes,
-
     // Image
     imagePreview,
-    imageFile,
-    bannerFile,
     isAiGenerated,
-    generatedRefData,
-    generatedBannerData,
     handleImageUpload,
     handleGeneratedImageAccept,
     handleBannerOnlyAccept,
@@ -1015,13 +749,8 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
     handleWizardGenerate,
     handleAcceptGeneratedRecipe,
 
-    // Validation
-    errors,
-    ingredientErrors,
-    hasError,
-    getError,
-    getIngredientError,
-    hasAttemptedSubmit,
+    // Autocomplete data
+    availableIngredients,
 
     // Submission
     handleSubmit,
@@ -1039,16 +768,10 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
 }
 
 // ============================================================================
-// HELPERS
+// HELPERS (exported for use by step components)
 // ============================================================================
 
-/** Safely coerce quantity (string | number | null) to a string for `.trim()` calls. */
-function qtyStr(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  return String(value);
-}
-
-function createEmptyIngredient(): WizardIngredient {
+export function createEmptyIngredient(): WizardIngredient {
   return {
     id: uuidv4(),
     ingredientName: "",
@@ -1059,7 +782,7 @@ function createEmptyIngredient(): WizardIngredient {
   };
 }
 
-function createEmptyDirection(): WizardDirection {
+export function createEmptyDirection(): WizardDirection {
   return {
     id: uuidv4(),
     text: "",

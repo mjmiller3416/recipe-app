@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useId } from "react";
+import { useFormContext } from "react-hook-form";
 import {
   Flame,
   Loader2,
@@ -16,18 +17,15 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useEstimateNutrition } from "@/hooks/api/useAI";
 import type { NutritionFactsDTO } from "@/types/ai";
-import type { WizardIngredient } from "@/types/recipe";
+import type { WizardFormValues } from "../wizardSchema";
 
 // ============================================================================
-// Constants
+// Props (only non-form state — form data via useFormContext)
 // ============================================================================
 
 interface NutritionStepProps {
-  recipeName: string;
   nutritionFacts: NutritionFactsDTO | null;
   onNutritionChange: (facts: NutritionFactsDTO | null) => void;
-  ingredients: WizardIngredient[];
-  servings: string;
 }
 
 /** Default empty nutrition facts for manual editing. */
@@ -61,12 +59,14 @@ const LARGE_INPUT_CLASS =
 // ============================================================================
 
 export function NutritionStep({
-  recipeName,
   nutritionFacts,
   onNutritionChange,
-  ingredients,
-  servings,
 }: NutritionStepProps) {
+  const form = useFormContext<WizardFormValues>();
+  const recipeName = form.watch("recipeName");
+  const ingredients = form.watch("ingredients");
+  const servings = form.watch("servings");
+
   const estimateMutation = useEstimateNutrition();
   const fieldIdPrefix = useId();
 
@@ -121,13 +121,11 @@ export function NutritionStep({
         unit: ing.unit || null,
       }));
 
-    const servingsNum = servings.trim() ? parseInt(servings, 10) : null;
-
     estimateMutation.mutate(
       {
         recipe_name: recipeName.trim(),
         ingredients: validIngredients,
-        servings: Number.isNaN(servingsNum) ? null : servingsNum,
+        servings: servings || null,
       },
       {
         onSuccess: (data) => {
@@ -145,7 +143,7 @@ export function NutritionStep({
 
   // ── Render ───────────────────────────────────────────────────────────────
 
-  const servingsDisplay = servings.trim() ? parseInt(servings, 10) : "—";
+  const servingsDisplay = servings || "—";
 
   return (
     <div className="space-y-4">

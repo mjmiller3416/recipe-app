@@ -67,8 +67,8 @@ class RecipeBaseDTO(BaseModel):
     @field_validator("difficulty", mode="before")
     @classmethod
     def validate_difficulty(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None and v not in ("Easy", "Medium", "Hard", "Expert"):
-            raise ValueError("difficulty must be Easy, Medium, Hard, or Expert")
+        if v is not None and v not in ("Easy", "Medium", "Hard"):
+            raise ValueError("difficulty must be Easy, Medium, or Hard")
         return v
 
 # ── Recipe Card DTO ─────────────────────────────────────────────────────────────────────────────────────────
@@ -164,8 +164,8 @@ class RecipeUpdateDTO(BaseModel):
     @field_validator("difficulty", mode="before")
     @classmethod
     def validate_difficulty(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None and v not in ("Easy", "Medium", "Hard", "Expert"):
-            raise ValueError("difficulty must be Easy, Medium, Hard, or Expert")
+        if v is not None and v not in ("Easy", "Medium", "Hard"):
+            raise ValueError("difficulty must be Easy, Medium, or Hard")
         return v
 
 # ── Response DTO ────────────────────────────────────────────────────────────────────────────────────────────

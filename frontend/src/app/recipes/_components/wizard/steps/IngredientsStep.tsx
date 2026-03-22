@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useCallback } from "react";
+import { useFormContext, useFieldArray } from "react-hook-form";
 import {
   DndContext,
   closestCenter,
@@ -20,23 +21,15 @@ import { useSortableDnd } from "@/hooks/ui/useSortableDnd";
 import { useUnits } from "@/hooks/api";
 import { useIngredientCategoryOptions } from "@/hooks/api/useIngredientCategories";
 import type { AutocompleteIngredient } from "@/hooks/forms/useIngredientAutocomplete";
-import type { WizardIngredient } from "@/types/recipe";
+import { createEmptyIngredient } from "../useRecipeWizard";
+import type { WizardFormValues } from "../wizardSchema";
 
 // ============================================================================
-// Props
+// Props (only external data — form data via useFormContext)
 // ============================================================================
 
 interface IngredientsStepProps {
-  ingredients: WizardIngredient[];
   availableIngredients: AutocompleteIngredient[];
-  onAdd: () => void;
-  onUpdate: (id: string, field: string, value: string | number | null) => void;
-  onDelete: (id: string) => void;
-  onReorder: (activeId: string, overId: string) => void;
-  onClearAll: () => void;
-  hasError: (field: string) => boolean;
-  getError: (field: string) => string | undefined;
-  getIngredientError: (id: string, field: string) => string | undefined;
 }
 
 // ============================================================================
@@ -44,57 +37,52 @@ interface IngredientsStepProps {
 // ============================================================================
 
 export function IngredientsStep({
-  ingredients,
   availableIngredients,
-  onAdd,
-  onUpdate,
-  onDelete,
-  onReorder,
-  onClearAll,
-  hasError,
-  getError,
-  getIngredientError,
 }: IngredientsStepProps) {
+  const form = useFormContext<WizardFormValues>();
+  const { fields, append, remove, move } = useFieldArray({
+    control: form.control,
+    name: "ingredients",
+  });
+
   const { sensors, modifiers } = useSortableDnd();
 
   // ── Lift data-fetching hooks to the parent ──────────────────
-  // These were previously inside each IngredientRow, causing N×2
-  // hook executions per drag frame. Fetched once here and passed
-  // down as stable props so React.memo can skip re-renders.
   const { data: units = [] } = useUnits();
   const { options: ingredientCategories } = useIngredientCategoryOptions();
 
   // ── Memoize the WizardIngredient → Ingredient adaptation ────
-  // Previously, `toRowIngredient()` was called inline during render,
-  // creating a new object reference every time. This defeated memo
-  // on IngredientRow since the `ingredient` prop always looked new.
   const rowIngredients = useMemo(
     () =>
-      ingredients.map(
-        (wi): Ingredient => ({
-          id: wi.id,
-          quantity: wi.quantity ? parseFloat(wi.quantity) : null,
-          unit: wi.unit,
-          name: wi.ingredientName,
-          category: wi.ingredientCategory,
+      fields.map(
+        (f): Ingredient => ({
+          id: f.id,
+          quantity: f.quantity ? parseFloat(f.quantity) : null,
+          unit: f.unit,
+          name: f.ingredientName,
+          category: f.ingredientCategory,
         })
       ),
-    [ingredients]
+    [fields]
   );
 
   const sortableIds = useMemo(
-    () => ingredients.map((ing) => ing.id),
-    [ingredients]
+    () => fields.map((f) => f.id),
+    [fields]
   );
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (over && active.id !== over.id) {
-        onReorder(String(active.id), String(over.id));
+        const oldIndex = fields.findIndex((f) => f.id === String(active.id));
+        const newIndex = fields.findIndex((f) => f.id === String(over.id));
+        if (oldIndex !== -1 && newIndex !== -1) {
+          move(oldIndex, newIndex);
+        }
       }
     },
-    [onReorder]
+    [fields, move]
   );
 
   /**
@@ -111,13 +99,32 @@ export function IngredientsStep({
         unit: "unit",
       };
       const wizardField = fieldMap[field] || field;
-      onUpdate(id, wizardField, value);
+      const index = fields.findIndex((f) => f.id === id);
+      if (index === -1) return;
+
+      const stringValue = value === null ? "" : String(value);
+      form.setValue(
+        `ingredients.${index}.${wizardField}` as `ingredients.${number}.ingredientName`,
+        stringValue
+      );
     },
-    [onUpdate]
+    [fields, form]
   );
 
+  const handleDelete = useCallback(
+    (id: string) => {
+      const index = fields.findIndex((f) => f.id === id);
+      if (index !== -1) remove(index);
+    },
+    [fields, remove]
+  );
+
+  const handleClearAll = useCallback(() => {
+    form.setValue("ingredients", [createEmptyIngredient()]);
+  }, [form]);
+
   /**
-   * Adapts the wizard's getIngredientError to the IngredientRow's
+   * Adapts the wizard's per-row errors to the IngredientRow's
    * expected field names ('name' | 'quantity').
    */
   const handleGetIngredientError = useCallback(
@@ -126,10 +133,20 @@ export function IngredientsStep({
         name: "ingredientName",
         quantity: "quantity",
       };
-      return getIngredientError(ingredientId, fieldMap[field] || field);
+      const wizardField = fieldMap[field] || field;
+      const index = fields.findIndex((f) => f.id === ingredientId);
+      if (index === -1) return undefined;
+
+      const errors = form.formState.errors.ingredients;
+      const rowErrors = errors?.[index] as Record<string, { message?: string }> | undefined;
+      return rowErrors?.[wizardField]?.message;
     },
-    [getIngredientError]
+    [fields, form.formState.errors.ingredients]
   );
+
+  // Root-level error (e.g. "At least one ingredient is required")
+  const rootError = (form.formState.errors.ingredients as { root?: { message?: string } } | undefined)?.root?.message
+    ?? form.formState.errors.ingredients?.message;
 
   return (
     <div className="space-y-6">
@@ -151,15 +168,15 @@ export function IngredientsStep({
       {/* Section header with Clear All */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">
-          Ingredients ({ingredients.length})
+          Ingredients ({fields.length})
         </h3>
-        {ingredients.length > 0 && (
+        {fields.length > 0 && (
           <Button
             type="button"
             variant="ghost"
             size="sm"
             className="text-destructive hover:text-destructive"
-            onClick={onClearAll}
+            onClick={handleClearAll}
           >
             <Trash2 className="size-4 mr-1.5" strokeWidth={1.5} />
             Clear All
@@ -168,7 +185,7 @@ export function IngredientsStep({
       </div>
 
       {/* Column headers (desktop only) */}
-      {ingredients.length > 0 && (
+      {fields.length > 0 && (
         <div className="hidden md:flex items-center gap-3 px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
           <div className="w-7 shrink-0">Drag</div>
           <div className="flex-1 flex items-center gap-2">
@@ -201,7 +218,7 @@ export function IngredientsStep({
                 units={units}
                 ingredientCategories={ingredientCategories}
                 onUpdate={handleRowUpdate}
-                onDelete={onDelete}
+                onDelete={handleDelete}
                 getIngredientError={handleGetIngredientError}
               />
             ))}
@@ -210,9 +227,9 @@ export function IngredientsStep({
       </DndContext>
 
       {/* Error message for the ingredient list */}
-      {hasError("ingredients") && (
+      {rootError && (
         <p className="text-sm text-destructive" role="alert">
-          {getError("ingredients")}
+          {rootError}
         </p>
       )}
 
@@ -221,7 +238,7 @@ export function IngredientsStep({
         type="button"
         variant="dashed"
         className="w-full"
-        onClick={onAdd}
+        onClick={() => append(createEmptyIngredient())}
       >
         <Plus className="size-4 mr-2" strokeWidth={1.5} />
         Add Ingredient

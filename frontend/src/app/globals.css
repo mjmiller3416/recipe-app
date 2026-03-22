@@ -1370,6 +1370,27 @@ input[type="number"] {
   }
 }
 
+/* Specific Ghost variant for Modals/Cancel actions */
+@utility button-modal-cancel {
+  background-color: transparent;
+  border: 1px solid var(--border);
+  color: var(--foreground-subtle);
+  transition: all var(--duration-normal) var(--ease-physical);
+
+  &:hover {
+    background-color: var(--hover);
+    border-color: var(--border-strong);
+    color: var(--foreground);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  &:active {
+    transform: translateY(0);
+    background-color: var(--background-intense);
+  }
+}
+
 /* ============================================
    NAV NOTIFICATION DOT
    Pulsing indicator for nav items
