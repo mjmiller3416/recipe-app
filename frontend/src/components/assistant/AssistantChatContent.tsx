@@ -101,7 +101,15 @@ export function AssistantChatContent({
   // Navigate to recipe form when user clicks "View Recipe Draft"
   const handleViewRecipe = useCallback(() => {
     if (!pendingRecipe) return;
-    sessionStorage.setItem(AI_RECIPE_STORAGE_KEY, JSON.stringify(pendingRecipe));
+    try {
+      sessionStorage.setItem(AI_RECIPE_STORAGE_KEY, JSON.stringify(pendingRecipe));
+    } catch {
+      // Base64 images can exceed sessionStorage quota — store without images
+      sessionStorage.setItem(
+        AI_RECIPE_STORAGE_KEY,
+        JSON.stringify({ ...pendingRecipe, referenceImageData: null, bannerImageData: null })
+      );
+    }
     router.push("/recipes/add?from=ai");
     setPendingRecipe(null);
   }, [pendingRecipe, router]);
