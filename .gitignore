@@ -114,3 +114,5 @@ backend/tests/test_nutrition_service.py
 backend/tests/test_wizard_generation_api.py
 backend/tests/test_wizard_generation_service.py
 chat_example.md
+sarah.md
+nora.md
