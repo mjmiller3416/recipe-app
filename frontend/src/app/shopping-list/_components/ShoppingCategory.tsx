@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { ShoppingItem } from "./ShoppingItem";
 import type { ShoppingItemResponseDTO } from "@/types/shopping";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ const COLLAPSED_STORAGE_KEY = "shopping-category-collapsed";
  * Uses lowercase keys to match against normalized category values.
  */
 const CATEGORY_ICONS: Record<string, RecipeIconData> = {
-  produce: { type: "icon", value: "group-of-vegetables" },
+  produce: { type: "icon", value: "broccoli" },
   dairy: { type: "icon", value: "cheese" },
   deli: { type: "icon", value: "salami" },
   meat: { type: "icon", value: "cuts-of-beef" },
@@ -91,7 +91,7 @@ export function ShoppingCategory({
   });
 
   // Track previous complete state to detect when category becomes complete
-  const wasComplete = useRef(false);
+  const [wasComplete, setWasComplete] = useState(false);
 
   // Sort items: flagged first, then unchecked, then alphabetically
   const sortedItems = [...items].sort((a, b) => {
@@ -114,18 +114,15 @@ export function ShoppingCategory({
   const isComplete = totalItems > 0 && checkedCount === totalItems;
 
   // Auto-collapse when category becomes complete, auto-expand when items are added
-  useEffect(() => {
-    if (isComplete && !wasComplete.current) {
-      // Category just became complete - collapse it
-      setIsExpanded(false);
-      localStorage.setItem(storageKey, "collapsed");
-    } else if (!isComplete && wasComplete.current) {
-      // Category was complete but now has unchecked items - expand it
-      setIsExpanded(true);
-      localStorage.setItem(storageKey, "expanded");
-    }
-    wasComplete.current = isComplete;
-  }, [isComplete, storageKey]);
+  if (isComplete && !wasComplete) {
+    setWasComplete(true);
+    setIsExpanded(false);
+    localStorage.setItem(storageKey, "collapsed");
+  } else if (!isComplete && wasComplete) {
+    setWasComplete(false);
+    setIsExpanded(true);
+    localStorage.setItem(storageKey, "expanded");
+  }
 
   // Persist expanded state changes to localStorage
   const handleToggleExpanded = () => {

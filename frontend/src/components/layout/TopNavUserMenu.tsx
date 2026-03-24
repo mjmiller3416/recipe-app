@@ -3,7 +3,8 @@
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Settings, LogOut, ChevronDown, MessageSquarePlus, Sparkles } from "lucide-react";
+import { Settings, LogOut, ChevronDown, MessageSquarePlus, Sparkles, Shield } from "lucide-react";
+import { useCurrentUser } from "@/hooks/api";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,6 +26,7 @@ export function TopNavUserMenu({ onOpenAssistant, onOpenFeedback }: TopNavUserMe
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
+  const { isAdmin } = useCurrentUser();
 
   const handleSignOut = async () => {
     await signOut();
@@ -115,6 +117,18 @@ export function TopNavUserMenu({ onOpenAssistant, onOpenFeedback }: TopNavUserMe
             Settings
           </Link>
         </DropdownMenuItem>
+
+        {isAdmin && (
+          <DropdownMenuItem asChild>
+            <Link
+              href="/admin"
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <Shield className="h-4 w-4" />
+              Admin Panel
+            </Link>
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuItem
           onClick={onOpenFeedback}

@@ -1,3 +1,6 @@
+"use client";
+
+import type React from "react";
 import {
   User,
   Palette,
@@ -8,6 +11,7 @@ import {
   MessageSquare,
   Sparkles,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 // ============================================================================
@@ -101,50 +105,54 @@ export function CategoryNav({
   activeCategory,
   onCategoryChange,
 }: CategoryNavProps) {
-  return (
-    <nav className="space-y-1">
-      {categories.map((category) => {
-        const Icon = category.icon;
-        const isActive = activeCategory === category.id;
+  const renderButton = (category: CategoryConfig) => {
+    const Icon = category.icon;
+    const isActive = activeCategory === category.id;
 
-        return (
-          <button
-            key={category.id}
-            onClick={() => onCategoryChange(category.id)}
+    return (
+      <Button
+        key={category.id}
+        variant="ghost"
+        onClick={() => onCategoryChange(category.id)}
+        className={cn(
+          "w-full h-auto flex items-center gap-3 px-4 py-3 rounded-xl text-left justify-start transition-all duration-200",
+          isActive
+            ? "bg-primary text-primary-foreground shadow-md hover:bg-primary/90"
+            : "text-muted-foreground hover:text-foreground hover:bg-hover"
+        )}
+      >
+        <Icon
+          className={cn(
+            "size-5 flex-shrink-0",
+            isActive && "text-primary-foreground"
+          )}
+          strokeWidth={1.5}
+        />
+        <div className="flex-1 min-w-0">
+          <p
             className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200",
-              isActive
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "text-muted-foreground hover:text-foreground hover:bg-hover"
+              "text-sm font-medium",
+              isActive && "text-primary-foreground"
             )}
           >
-            <Icon
-              className={cn(
-                "h-5 w-5 flex-shrink-0",
-                isActive && "text-primary-foreground"
-              )}
-            />
-            <div className="flex-1 min-w-0">
-              <p
-                className={cn(
-                  "text-sm font-medium",
-                  isActive && "text-primary-foreground"
-                )}
-              >
-                {category.label}
-              </p>
-              <p
-                className={cn(
-                  "text-xs truncate mt-0.5",
-                  isActive ? "text-primary-foreground/70" : "text-muted-foreground"
-                )}
-              >
-                {category.description}
-              </p>
-            </div>
-          </button>
-        );
-      })}
+            {category.label}
+          </p>
+          <p
+            className={cn(
+              "text-xs truncate mt-0.5",
+              isActive ? "text-primary-foreground/70" : "text-muted-foreground"
+            )}
+          >
+            {category.description}
+          </p>
+        </div>
+      </Button>
+    );
+  };
+
+  return (
+    <nav className="space-y-1">
+      {categories.map(renderButton)}
     </nav>
   );
 }
