@@ -2,6 +2,10 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-03-24 - New Features
+- Mobile Bottom Nav "More" Menu — access additional pages and features from a new expandable menu in the mobile navigation bar
+- Mobile Assistant UX — improved Meal Genie chat experience on mobile devices
+
 ## 2026-02-22 - New Features
 - Meal Planner Drag Overlay — Long-press on meal cards in the planner to enter drag-and-drop mode, allowing you to easily rearrange your weekly menu with a visual overlay showing potential drop targets.
 - Dashboard Meal Carousel — Browse your upcoming meals in a swipeable carousel with recipe images and details at a glance.
