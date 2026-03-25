@@ -7,7 +7,11 @@ import { AssistantPopup } from "@/components/assistant/AssistantPopup";
 import { NavActionsProvider } from "@/lib/providers/NavActionsProvider";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
-  const [isAssistantOpen, setIsAssistantOpen] = useState(true);
+  // Auto-show the minimized FAB on desktop only (mobile opens via More menu)
+  const [isAssistantOpen, setIsAssistantOpen] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth >= 768;
+  });
 
   return (
     <NavActionsProvider>

@@ -6,6 +6,7 @@ Centralised route registration for the Meal Genie API.
 from fastapi import APIRouter
 
 from app.api import (
+    admin,
     categories,
     conversion_rules,
     dashboard,
@@ -21,6 +22,7 @@ from app.api import (
     settings,
     shopping,
     upload,
+    users,
 )
 from app.api.ai import (
     assistant_router,
@@ -49,6 +51,10 @@ api_router.include_router(feedback.router, prefix="/api/feedback", tags=["feedba
 api_router.include_router(conversion_rules.router, prefix="/api/unit-conversions", tags=["unit-conversions"])
 api_router.include_router(dashboard.router, prefix="/api/dashboard", tags=["dashboard"])
 api_router.include_router(settings.router, prefix="/api/settings", tags=["settings"])
+api_router.include_router(users.router, prefix="/api/users", tags=["users"])
+
+# ── Admin routes ─────────────────────────────────────────────────────────
+api_router.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 
 # ── AI-powered routes ────────────────────────────────────────────────────
 api_router.include_router(cooking_tips_router, prefix="/api/ai/cooking-tip", tags=["ai", "cooking-tips"])

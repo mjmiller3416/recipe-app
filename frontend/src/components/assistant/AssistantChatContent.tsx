@@ -49,12 +49,12 @@ export function AssistantChatContent({
     bannerImageData: string | null;
   } | null>(null);
 
-  // Focus input when expanded
+  // Focus input when expanded (desktop only — mobile auto-focus opens the keyboard)
   useEffect(() => {
-    if (!isMinimized && inputRef.current) {
+    if (!isMinimized && !isMobile && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [isMinimized]);
+  }, [isMinimized, isMobile]);
 
   const handleSubmit = useCallback(async (messageText?: string) => {
     const textToSend = messageText || input.trim();
@@ -207,6 +207,7 @@ export function AssistantChatContent({
             size="icon"
             onClick={onClose}
             className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            aria-label="Close chat"
           >
             <X className="h-4 w-4" />
           </Button>

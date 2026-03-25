@@ -1,5 +1,16 @@
 # app/dtos/__init__.py
 
+from .admin_dtos import (
+    AdminFeedbackDetailDTO,
+    AdminFeedbackListItemDTO,
+    AdminFeedbackListResponseDTO,
+    AdminFeedbackUpdateDTO,
+    AdminGrantProDTO,
+    AdminToggleAdminDTO,
+    AdminUserListDTO,
+    AdminUserListResponseDTO,
+    CurrentUserDTO,
+)
 from .assistant_dtos import (
     AssistantMessageDTO,
     AssistantRequestDTO,
@@ -76,6 +87,17 @@ from .shopping_dtos import (
 )
 
 __all__ = [
+    # Admin DTOs
+    "CurrentUserDTO",
+    "AdminUserListDTO",
+    "AdminUserListResponseDTO",
+    "AdminGrantProDTO",
+    "AdminToggleAdminDTO",
+    "AdminFeedbackListItemDTO",
+    "AdminFeedbackDetailDTO",
+    "AdminFeedbackListResponseDTO",
+    "AdminFeedbackUpdateDTO",
+
     # Assistant (AI Chat) DTOs
     "AssistantMessageDTO",
     "AssistantRequestDTO",
