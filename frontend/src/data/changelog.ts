@@ -2,6 +2,9 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-03-24 - Improvements
+- Meal Genie Assistant Visibility — the assistant now intelligently manages its visibility based on screen size and user interaction for a cleaner browsing experience
+
 ## 2026-03-24 - New Features
 - Mobile Bottom Nav "More" Menu — access additional pages and features from a new expandable menu in the mobile navigation bar
 - Mobile Assistant UX — improved Meal Genie chat experience on mobile devices
