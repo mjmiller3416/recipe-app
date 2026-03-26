@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import Boolean, Enum, Float, ForeignKey, String
+from sqlalchemy import Boolean, Enum, Float, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database.base import Base
@@ -23,6 +23,9 @@ if TYPE_CHECKING:
 # ── Shopping Item Model ─────────────────────────────────────────────────────────────────────────────────────
 class ShoppingItem(Base):
     __tablename__ = "shopping_items"
+    __table_args__ = (
+        UniqueConstraint("aggregation_key", "user_id", name="uq_shopping_item_aggregation_user"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
@@ -43,7 +46,7 @@ class ShoppingItem(Base):
 
     # Unique key for aggregation: "ingredient_name::dimension"
     # Used to identify items for diff-based sync (recipe items only)
-    aggregation_key: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, unique=True, index=True)
+    aggregation_key: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, index=True)
 
     # User ownership
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
