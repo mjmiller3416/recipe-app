@@ -16,6 +16,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { useSortableDnd } from "@/hooks/ui";
+import { useUnits } from "@/hooks/api";
+import { useIngredientCategoryOptions } from "@/hooks/api/useIngredientCategories";
 
 interface IngredientsCardProps {
   ingredients: Ingredient[];
@@ -38,6 +40,10 @@ export const IngredientsCard = memo(function IngredientsCard({
   getError,
   getIngredientError,
 }: IngredientsCardProps) {
+  // Fetch units & categories once so each row doesn't call its own hook
+  const { data: units = [] } = useUnits();
+  const { options: ingredientCategories } = useIngredientCategoryOptions();
+
   // Track previous ingredients length to detect new additions
   const prevIngredientsLengthRef = useRef(ingredients.length);
 
@@ -106,6 +112,8 @@ export const IngredientsCard = memo(function IngredientsCard({
                   key={ingredient.id}
                   ingredient={ingredient}
                   availableIngredients={availableIngredients}
+                  units={units}
+                  ingredientCategories={ingredientCategories}
                   onUpdate={onUpdate}
                   onDelete={onDelete}
                   getIngredientError={getIngredientError}
