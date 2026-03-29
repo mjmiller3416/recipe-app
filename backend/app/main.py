@@ -19,11 +19,15 @@ app = FastAPI(
 # Get allowed origins from environment or use wildcard for development
 CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*").split(",")
 
+# CORS spec forbids wildcard origin with credentials — only enable
+# credentials when specific origins are configured
+allow_credentials = CORS_ORIGINS != ["*"]
+
 # Configure CORS for Next.js frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
