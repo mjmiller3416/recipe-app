@@ -103,11 +103,13 @@ export function useUnsavedChanges({
   const historyStateAddedRef = useRef(false);
   // Store isDirty in a ref so popstate handler has current value
   const isDirtyRef = useRef(isDirty);
-  isDirtyRef.current = isDirty;
   // Store pendingNavigation in ref to ensure it's available during confirm
   const pendingNavigationRef = useRef<string | null>(null);
 
-  // Keep ref in sync with state
+  // Keep refs in sync with state
+  useEffect(() => {
+    isDirtyRef.current = isDirty;
+  }, [isDirty]);
   useEffect(() => {
     pendingNavigationRef.current = pendingNavigation;
   }, [pendingNavigation]);

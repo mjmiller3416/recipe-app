@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCookingTip, useRefreshCookingTip } from "@/hooks/api";
 
 export function ChefTipWidget() {
-  const { data, isLoading, isFetching, refetch } = useCookingTip();
+  const { data, isLoading, isFetching } = useCookingTip();
   const refreshTip = useRefreshCookingTip();
 
   const tip = data?.success && data.tip ? data.tip : null;
