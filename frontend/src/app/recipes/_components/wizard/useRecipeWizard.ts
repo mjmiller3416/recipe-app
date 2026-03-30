@@ -129,6 +129,7 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
         setAvailableIngredients(transformed);
       } catch (error) {
         console.error("Failed to fetch ingredients:", error);
+        toast.error("Couldn't load ingredient suggestions. Autocomplete may be limited.");
       }
     };
     fetchIngredients();
@@ -397,7 +398,7 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
 
       setGeneratedRecipe(response.recipe);
       setGenerationResponse(response);
-      toast.success(`"${response.recipe.recipe_name}" is ready! Tap View Recipe to review it.`);
+      toast.success(`"${response.recipe.recipe_name}" is ready! Tap Accept & Edit to review it.`);
     } catch (error) {
       console.error("AI generation failed:", error);
       setAiError("Something went wrong. Please try again.");

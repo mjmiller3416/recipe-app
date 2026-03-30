@@ -191,7 +191,7 @@ export function RecipeBasicsStep({
             name="difficulty"
             render={({ field }) => (
               <FormItem>
-                <FormLabel htmlFor={undefined}>Difficulty</FormLabel>
+                <FormLabel>Difficulty</FormLabel>
                   <ToggleGroup
                     type="single"
                     variant="outline"

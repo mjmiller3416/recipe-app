@@ -69,65 +69,61 @@ export function MethodSelectionStep({
           const isDisabled = !option.isAvailable;
 
           return (
-            <Card
+            <button
               key={option.method}
-              interactive={option.isAvailable}
-              className={cn(
-                "relative transition-all",
-                isSelected &&
-                "border-primary ring-2 ring-primary/20 bg-primary-surface",
-                isDisabled && "opacity-50 pointer-events-none"
-              )}
-              role="button"
-              tabIndex={isDisabled ? -1 : 0}
+              type="button"
+              className="w-full text-left appearance-none bg-transparent border-0 p-0"
               onClick={() => {
                 if (option.isAvailable) {
                   onSelect(option.method);
                 }
               }}
-              onKeyDown={(e) => {
-                if (
-                  option.isAvailable &&
-                  (e.key === "Enter" || e.key === " ")
-                ) {
-                  e.preventDefault();
-                  onSelect(option.method);
-                }
-              }}
               aria-pressed={isSelected}
               aria-disabled={isDisabled}
+              tabIndex={isDisabled ? -1 : 0}
+              disabled={isDisabled}
             >
-              {/* Badges in top-right corner */}
-              {(option.isNew || isDisabled) && (
-                <div className="absolute top-3 right-3 flex gap-1.5">
-                  {option.isNew && <Badge>NEW</Badge>}
-                  {isDisabled && (
-                    <Badge variant="outline">Coming Soon</Badge>
-                  )}
-                </div>
-              )}
+              <Card
+                interactive={option.isAvailable}
+                className={cn(
+                  "relative transition-all h-full",
+                  isSelected &&
+                  "border-primary ring-2 ring-primary/20 bg-primary-surface",
+                  isDisabled && "opacity-50 pointer-events-none"
+                )}
+              >
+                {/* Badges in top-right corner */}
+                {(option.isNew || isDisabled) && (
+                  <div className="absolute top-3 right-3 flex gap-1.5">
+                    {option.isNew && <Badge>NEW</Badge>}
+                    {isDisabled && (
+                      <Badge variant="outline">Coming Soon</Badge>
+                    )}
+                  </div>
+                )}
 
-              <CardContent className="flex flex-col items-center text-center gap-3 pt-8 pb-6">
-                <div
-                  className={cn(
-                    "rounded-full p-3",
-                    isSelected
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  {option.icon}
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-semibold text-foreground">
-                    {option.title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {option.description}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+                <CardContent className="flex flex-col items-center text-center gap-3 pt-8 pb-6">
+                  <div
+                    className={cn(
+                      "rounded-full p-3",
+                      isSelected
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {option.icon}
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="font-semibold text-foreground">
+                      {option.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {option.description}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </button>
           );
         })}
       </div>

@@ -114,27 +114,17 @@ export function AIGenerateStep({
         {/* Quick Suggestion Chips */}
         <div className="flex flex-wrap gap-2">
           {QUICK_SUGGESTIONS.map((suggestion) => (
-            <Badge
+            <Button
               key={suggestion}
+              type="button"
               variant="outline"
-              className="cursor-pointer hover:bg-accent transition-colors"
-              onClick={() => {
-                if (!isGenerating) setPrompt(suggestion);
-              }}
-              role="button"
-              tabIndex={isGenerating ? -1 : 0}
-              onKeyDown={(e) => {
-                if (
-                  !isGenerating &&
-                  (e.key === "Enter" || e.key === " ")
-                ) {
-                  e.preventDefault();
-                  setPrompt(suggestion);
-                }
-              }}
+              size="sm"
+              className="h-auto px-2.5 py-0.5 text-xs font-medium rounded-full"
+              onClick={() => setPrompt(suggestion)}
+              disabled={isGenerating}
             >
               {suggestion}
-            </Badge>
+            </Button>
           ))}
         </div>
       </div>
@@ -269,7 +259,7 @@ export function AIGenerateStep({
       {/* Generate Button */}
       <Button
         variant="outline"
-        className="w-full bg-primary/10 border-primary/20 hover:bg-primary/15 hover:border-primary/30"
+        className="w-full bg-primary-surface border-primary-muted hover:bg-primary-surface-hover"
         size="lg"
         onClick={onGenerate}
         disabled={!prompt.trim() || isGenerating}
@@ -359,7 +349,7 @@ export function AIGenerateStep({
               {/* Accept Button */}
               <Button className="w-full" onClick={onAcceptRecipe}>
                 <Sparkles className="size-4 mr-2" strokeWidth={1.5} />
-                View Recipe
+                Accept & Edit
               </Button>
             </CardContent>
           </Card>

@@ -285,9 +285,11 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
                   type="button"
                   onClick={wizard.handleSubmit}
                   disabled={wizard.isSubmitting}
+                  aria-busy={wizard.isSubmitting}
+                  aria-label={wizard.isSubmitting ? "Saving recipe..." : "Save Recipe"}
                 >
-                  {wizard.isSubmitting ? <Loader2 className="animate-spin" /> : <Save className="size-4 mr-2" />}
-                  Save Recipe
+                  {wizard.isSubmitting ? <Loader2 className="animate-spin" /> : <Save className="size-4 mr-2" strokeWidth={1.5} />}
+                  {wizard.isSubmitting ? "Saving..." : "Save Recipe"}
                 </Button>
               )}
             </div>
