@@ -8,9 +8,9 @@ from typing import Optional
 from app.dtos.nutrition_dtos import (
     NutritionEstimationRequestDTO,
     NutritionEstimationResponseDTO,
-    NutritionFactsDTO,
 )
 from app.services.ai.gemini_client import get_gemini_client
+from app.services.ai.parse_utils import parse_nutrition_dict
 from app.services.ai.response_utils import extract_text_from_response
 
 from .config import (
@@ -91,19 +91,7 @@ class NutritionEstimationService:
 
             data = json.loads(json_match.group())
 
-            nutrition = NutritionFactsDTO(
-                calories=_safe_int(data.get("calories")),
-                protein_g=_safe_float(data.get("protein_g")),
-                total_fat_g=_safe_float(data.get("total_fat_g")),
-                saturated_fat_g=_safe_float(data.get("saturated_fat_g")),
-                trans_fat_g=_safe_float(data.get("trans_fat_g")),
-                cholesterol_mg=_safe_float(data.get("cholesterol_mg")),
-                sodium_mg=_safe_float(data.get("sodium_mg")),
-                total_carbs_g=_safe_float(data.get("total_carbs_g")),
-                dietary_fiber_g=_safe_float(data.get("dietary_fiber_g")),
-                total_sugars_g=_safe_float(data.get("total_sugars_g")),
-                is_ai_estimated=True,
-            )
+            nutrition = parse_nutrition_dict(data)
 
             logger.info(
                 f"[Nutrition] Estimated for '{request.recipe_name}': "
@@ -128,26 +116,6 @@ class NutritionEstimationService:
             return NutritionEstimationResponseDTO(
                 success=False, error=f"Nutrition estimation failed: {str(e)}"
             )
-
-
-def _safe_int(value: object) -> Optional[int]:
-    """Safely convert a value to int, returning None on failure."""
-    if value is None:
-        return None
-    try:
-        return int(float(value))
-    except (ValueError, TypeError):
-        return None
-
-
-def _safe_float(value: object) -> Optional[float]:
-    """Safely convert a value to float, returning None on failure."""
-    if value is None:
-        return None
-    try:
-        return round(float(value), 1)
-    except (ValueError, TypeError):
-        return None
 
 
 # Singleton instance

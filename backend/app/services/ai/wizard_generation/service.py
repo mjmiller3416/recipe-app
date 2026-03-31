@@ -12,6 +12,7 @@ from app.dtos.wizard_dtos import (
     WizardGenerationResponseDTO,
 )
 from app.services.ai.gemini_client import get_gemini_client
+from app.services.ai.parse_utils import parse_nutrition_dict, safe_int
 from app.services.ai.response_utils import extract_text_from_response
 
 from .config import (
@@ -105,7 +106,7 @@ class WizardGenerationService:
             # Parse nutrition if included
             nutrition_facts: Optional[NutritionFactsDTO] = None
             if request.estimate_nutrition and "nutrition_facts" in data:
-                nutrition_facts = self._parse_nutrition(data["nutrition_facts"])
+                nutrition_facts = parse_nutrition_dict(data["nutrition_facts"])
 
             logger.info(
                 f"[Wizard] Generated recipe '{recipe.recipe_name}' "
@@ -184,34 +185,14 @@ class WizardGenerationService:
             meal_type=data.get("meal_type", "dinner"),
             diet_pref=data.get("diet_pref", "none"),
             description=data.get("description"),
-            prep_time=_safe_int(data.get("prep_time")),
-            cook_time=_safe_int(data.get("cook_time")),
-            total_time=_safe_int(data.get("total_time")),
+            prep_time=safe_int(data.get("prep_time")),
+            cook_time=safe_int(data.get("cook_time")),
+            total_time=safe_int(data.get("total_time")),
             difficulty=data.get("difficulty"),
-            servings=_safe_int(data.get("servings")),
+            servings=safe_int(data.get("servings")),
             directions=data.get("directions"),
             notes=data.get("notes"),
             ingredients=ingredients,
-        )
-
-    @staticmethod
-    def _parse_nutrition(nf_data: dict) -> Optional[NutritionFactsDTO]:
-        """Parse nutrition facts from the AI JSON response."""
-        if not nf_data:
-            return None
-
-        return NutritionFactsDTO(
-            calories=_safe_int(nf_data.get("calories")),
-            protein_g=_safe_float(nf_data.get("protein_g")),
-            total_fat_g=_safe_float(nf_data.get("total_fat_g")),
-            saturated_fat_g=_safe_float(nf_data.get("saturated_fat_g")),
-            trans_fat_g=_safe_float(nf_data.get("trans_fat_g")),
-            cholesterol_mg=_safe_float(nf_data.get("cholesterol_mg")),
-            sodium_mg=_safe_float(nf_data.get("sodium_mg")),
-            total_carbs_g=_safe_float(nf_data.get("total_carbs_g")),
-            dietary_fiber_g=_safe_float(nf_data.get("dietary_fiber_g")),
-            total_sugars_g=_safe_float(nf_data.get("total_sugars_g")),
-            is_ai_estimated=True,
         )
 
     @staticmethod
@@ -243,29 +224,6 @@ class WizardGenerationService:
                 f"[Wizard] Image generation skipped for '{recipe_name}': {e}"
             )
             return None, None
-
-
-# ── Module-Level Helpers ─────────────────────────────────────────────────────
-
-
-def _safe_int(value: object) -> Optional[int]:
-    """Safely convert a value to int, returning None on failure."""
-    if value is None:
-        return None
-    try:
-        return int(float(value))
-    except (ValueError, TypeError):
-        return None
-
-
-def _safe_float(value: object) -> Optional[float]:
-    """Safely convert a value to float, returning None on failure."""
-    if value is None:
-        return None
-    try:
-        return round(float(value), 1)
-    except (ValueError, TypeError):
-        return None
 
 
 # ── Singleton ────────────────────────────────────────────────────────────────
