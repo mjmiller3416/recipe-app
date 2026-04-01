@@ -6,7 +6,7 @@ import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { recipeApi, ingredientApi, uploadApi, ApiError } from "@/lib/api";
 import { base64ToFile } from "@/lib/utils";
-import type { GeneratedRecipeDTO } from "@/types/ai";
+import type { RecipeGeneratedDTO } from "@/types/ai";
 import type { RecipeCreateDTO, RecipeUpdateDTO, RecipeIngredientDTO, RecipeResponseDTO } from "@/types/recipe";
 
 // Session storage key for AI-generated recipe (must match AssistantChatContent)
@@ -293,7 +293,7 @@ export function useRecipeForm(options: UseRecipeFormOptions = {}): RecipeFormSta
       }
 
       const { recipe, referenceImageData, bannerImageData: storedBannerImageData } = JSON.parse(storedData) as {
-        recipe: GeneratedRecipeDTO;
+        recipe: RecipeGeneratedDTO;
         referenceImageData: string | null;
         bannerImageData: string | null;
       };

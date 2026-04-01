@@ -4,14 +4,17 @@ AI content generation methods for the assistant.
 Handles recipe suggestions, full recipe generation, and cooking question answers.
 """
 
-import json
+import logging
 from typing import Optional
 
-from app.dtos.assistant_dtos import GeneratedRecipeDTO, GeneratedIngredientDTO
+from app.dtos.recipe_generation_dtos import RecipeGeneratedDTO, RecipeGenerationRequestDTO
 from app.services.ai.gemini_client import get_gemini_client
+from app.services.ai.recipe_generation import get_recipe_generation_service
 from app.services.ai.response_utils import extract_text_from_response
 
 from .prompts import MODEL_NAME, API_KEY_ENV_VAR
+
+logger = logging.getLogger(__name__)
 
 
 class GeneratorsMixin:
@@ -128,74 +131,48 @@ Use your friendly Meal Genie personality."""
             "tool_args": args,
         }
 
-    def _generate_recipe_from_args(self, args: dict) -> Optional[GeneratedRecipeDTO]:
-        """Generate a structured recipe from tool arguments."""
-        client = get_gemini_client(API_KEY_ENV_VAR)
+    def _generate_recipe_from_args(self, args: dict) -> Optional[RecipeGeneratedDTO]:
+        """Generate a structured recipe by delegating to the recipe generation service.
 
+        Bridges the assistant's tool-call arguments to the shared recipe
+        generation service, which uses the same prompt template and parsing
+        logic as the wizard/prompt-based flow.
+        """
         recipe_name = args.get("recipe_name", "Untitled Recipe")
         style_notes = args.get("style_notes", "")
-        dietary = args.get("dietary_restrictions", "none")
+        dietary = args.get("dietary_restrictions", "")
         servings = args.get("servings", 4)
 
-        generation_prompt = f"""Generate a complete recipe for: {recipe_name}
-Style notes: {style_notes}
-Dietary restrictions: {dietary}
-Servings: {servings}
+        # Build a natural-language prompt from the tool arguments
+        prompt_parts = [f"Generate a complete recipe for: {recipe_name}"]
+        if style_notes:
+            prompt_parts.append(f"Style notes: {style_notes}")
+        if dietary and dietary != "none":
+            prompt_parts.append(f"Dietary restrictions: {dietary}")
 
-Return ONLY valid JSON (no markdown, no code blocks) with this exact structure:
-{{
-  "recipe_name": "{recipe_name}",
-  "recipe_category": "beef|chicken|pork|seafood|vegetarian|other",
-  "meal_type": "appetizer|breakfast|lunch|dinner|dessert|side|snack|sauce|other",
-  "diet_pref": "{dietary if dietary else 'none'}",
-  "total_time": <integer minutes>,
-  "servings": {servings},
-  "directions": "Step one.\\nStep two.\\nStep three...",
-  "notes": "Optional tips or serving suggestions",
-  "ingredients": [
-    {{"ingredient_name": "Ingredient Name", "ingredient_category": "produce|dairy|meat|pantry|spices|etc", "quantity": 1.0, "unit": "cup|tbs|oz|lbs|etc"}}
-  ]
-}}
-
-Rules:
-- 6-15 ingredients, names in Title Case
-- 5-10 direction steps, separated by \\n (no numbers)
-- ingredient_category: produce|dairy|deli|meat|condiments|oils-and-vinegars|seafood|pantry|spices|frozen|bakery|baking|beverages|other
-- unit: tbs|tsp|cup|oz|lbs|stick|bag|box|can|jar|package|piece|slice|whole|pinch|dash|to-taste
-- diet_pref: always use "none" unless specified (never null)"""
-
-        # Use JSON response mode for guaranteed JSON output
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=[{"role": "user", "parts": [{"text": generation_prompt}]}],
-            config={
-                "temperature": 0.7,
-                "response_mime_type": "application/json",
-            },
+        request = RecipeGenerationRequestDTO(
+            prompt="\n".join(prompt_parts),
+            preferences=None,
+            generate_image=False,
+            estimate_nutrition=False,
         )
+        # Override servings in the prompt via preferences if non-default
+        if servings and servings != 4:
+            from app.dtos.recipe_generation_dtos import RecipeGenerationPreferencesDTO
+            request.preferences = RecipeGenerationPreferencesDTO(servings=servings)
 
-        # Parse JSON from response
-        raw_text = extract_text_from_response(response)
-        if raw_text:
-            try:
-                data = json.loads(raw_text)
-                ingredients = [
-                    GeneratedIngredientDTO(**ing)
-                    for ing in data.get("ingredients", [])
-                ]
-                return GeneratedRecipeDTO(
-                    recipe_name=data.get("recipe_name", recipe_name),
-                    recipe_category=data.get("recipe_category", "other"),
-                    meal_type=data.get("meal_type", "dinner"),
-                    diet_pref=data.get("diet_pref", "none"),
-                    total_time=data.get("total_time"),
-                    servings=data.get("servings", servings),
-                    directions=data.get("directions"),
-                    notes=data.get("notes"),
-                    ingredients=ingredients,
-                )
-            except json.JSONDecodeError:
-                pass
+        try:
+            service = get_recipe_generation_service()
+            result = service.generate(request)
+            if result.success and result.recipe:
+                return result.recipe
+        except Exception as e:
+            logger.warning(f"[Assistant] Recipe generation via service failed: {e}")
 
-        # Fallback: return empty recipe with just the name
-        return GeneratedRecipeDTO(recipe_name=recipe_name, ingredients=[])
+        # Fallback: return minimal recipe with just the name
+        return RecipeGeneratedDTO(
+            recipe_name=recipe_name,
+            recipe_category="other",
+            meal_type="dinner",
+            ingredients=[],
+        )

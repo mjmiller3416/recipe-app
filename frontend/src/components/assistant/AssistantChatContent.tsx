@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ChatMessageList } from "./ChatMessageList";
-import type { GeneratedRecipeDTO } from "@/types/ai";
+import type { RecipeGeneratedDTO } from "@/types/ai";
 
 // Session storage key for AI-generated recipe (must match useRecipeForm.ts)
 const AI_RECIPE_STORAGE_KEY = "meal-genie-generated-recipe";
@@ -44,7 +44,7 @@ export function AssistantChatContent({
 
   // Track pending recipe for "View Recipe Draft" button
   const [pendingRecipe, setPendingRecipe] = useState<{
-    recipe: GeneratedRecipeDTO;
+    recipe: RecipeGeneratedDTO;
     referenceImageData: string | null;
     bannerImageData: string | null;
   } | null>(null);

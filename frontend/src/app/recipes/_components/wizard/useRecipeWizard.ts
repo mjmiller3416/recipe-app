@@ -8,7 +8,7 @@ import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 
-import { recipeApi, ingredientApi, uploadApi, wizardGenerationApi, ApiError } from "@/lib/api";
+import { recipeApi, ingredientApi, uploadApi, recipeGenerationApi, ApiError } from "@/lib/api";
 import { base64ToFile } from "@/lib/utils";
 import type {
   RecipeCreateDTO,
@@ -21,9 +21,9 @@ import type {
 } from "@/types/recipe";
 import type {
   NutritionFactsDTO,
-  WizardGenerationPreferencesDTO,
-  WizardGeneratedRecipeDTO,
-  WizardGenerationResponseDTO,
+  RecipeGenerationPreferencesDTO,
+  RecipeGeneratedDTO,
+  RecipeGenerationResponseDTO,
 } from "@/types/ai";
 import type { AutocompleteIngredient } from "@/components/forms/IngredientAutocomplete";
 import { wizardFormSchema, WIZARD_STEP_FIELDS, type WizardFormValues } from "./wizardSchema";
@@ -97,9 +97,9 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
   // AI generation state (non-form)
   // ---------------------------------------------------------------------------
   const [aiPrompt, setAiPrompt] = useState("");
-  const [aiPreferences, setAiPreferences] = useState<WizardGenerationPreferencesDTO>({});
-  const [generatedRecipe, setGeneratedRecipe] = useState<WizardGeneratedRecipeDTO | null>(null);
-  const [generationResponse, setGenerationResponse] = useState<WizardGenerationResponseDTO | null>(null);
+  const [aiPreferences, setAiPreferences] = useState<RecipeGenerationPreferencesDTO>({});
+  const [generatedRecipe, setGeneratedRecipe] = useState<RecipeGeneratedDTO | null>(null);
+  const [generationResponse, setGenerationResponse] = useState<RecipeGenerationResponseDTO | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
 
@@ -297,7 +297,7 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
   // AI generation: populate wizard from generated recipe
   // ---------------------------------------------------------------------------
   const populateFromGeneration = useCallback(
-    (response: WizardGenerationResponseDTO): void => {
+    (response: RecipeGenerationResponseDTO): void => {
       const recipe = response.recipe;
       if (!recipe) return;
 
@@ -381,7 +381,7 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
 
     try {
       const token = await getToken();
-      const response = await wizardGenerationApi.generate(
+      const response = await recipeGenerationApi.generate(
         {
           prompt: aiPrompt.trim(),
           preferences: Object.keys(aiPreferences).length > 0 ? aiPreferences : undefined,

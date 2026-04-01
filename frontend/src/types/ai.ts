@@ -69,7 +69,7 @@ export interface AssistantResponseDTO {
   response?: string;
   error?: string;
   // Optional recipe data (if AI generated one)
-  recipe?: GeneratedRecipeDTO;
+  recipe?: RecipeGeneratedDTO;
   reference_image_data?: string;
   banner_image_data?: string;
 }
@@ -85,27 +85,34 @@ export interface GeneratedIngredientDTO {
   unit?: string;
 }
 
-export interface GeneratedRecipeDTO {
+export interface RecipeGeneratedDTO {
   recipe_name: string;
   recipe_category: string;
   meal_type: string;
   diet_pref?: string;
+  description?: string;
+  prep_time?: number;
+  cook_time?: number;
   total_time?: number;
+  difficulty?: string;
   servings?: number;
   directions?: string;
   notes?: string;
   ingredients: GeneratedIngredientDTO[];
 }
 
-export interface RecipeGenerationRequestDTO {
+/** @deprecated Use RecipeGeneratedDTO instead */
+export type GeneratedRecipeDTO = RecipeGeneratedDTO;
+
+export interface AssistantRecipeRequestDTO {
   message: string;
   conversation_history?: AssistantMessage[];
   generate_image?: boolean;
 }
 
-export interface RecipeGenerationResponseDTO {
+export interface AssistantRecipeResponseDTO {
   success: boolean;
-  recipe?: GeneratedRecipeDTO;
+  recipe?: RecipeGeneratedDTO;
   reference_image_data?: string; // Base64 encoded (1:1 square)
   banner_image_data?: string; // Base64 encoded (21:9 ultrawide)
   ai_message?: string;
@@ -115,7 +122,7 @@ export interface RecipeGenerationResponseDTO {
 
 // Extended message type for chat with recipe data
 export interface AssistantChatMessage extends AssistantMessage {
-  recipe?: GeneratedRecipeDTO;
+  recipe?: RecipeGeneratedDTO;
   imageData?: string;
 }
 
@@ -161,37 +168,38 @@ export interface NutritionFactsResponseDTO extends NutritionFactsDTO {
 }
 
 // ============================================================================
-// Wizard Generation Types
+// Recipe Generation Types (prompt-based wizard flow)
 // ============================================================================
 
-export interface WizardGenerationPreferencesDTO {
-  cuisine?: string;
+export interface RecipeGenerationPreferencesDTO {
+  category?: string;
   dietary?: string;
   difficulty?: string;
   servings?: number;
   meal_type?: string;
 }
 
-export interface WizardGenerationRequestDTO {
+export interface RecipeGenerationRequestDTO {
   prompt: string;
-  preferences?: WizardGenerationPreferencesDTO;
+  preferences?: RecipeGenerationPreferencesDTO;
   generate_image?: boolean;
   estimate_nutrition?: boolean;
 }
 
-export interface WizardGeneratedRecipeDTO extends GeneratedRecipeDTO {
-  description?: string;
-  prep_time?: number;
-  cook_time?: number;
-  total_time?: number;
-  difficulty?: string;
-}
-
-export interface WizardGenerationResponseDTO {
+export interface RecipeGenerationResponseDTO {
   success: boolean;
-  recipe?: WizardGeneratedRecipeDTO;
+  recipe?: RecipeGeneratedDTO;
   nutrition_facts?: NutritionFactsDTO;
   reference_image_data?: string;
   banner_image_data?: string;
   error?: string;
 }
+
+/** @deprecated Use RecipeGenerationPreferencesDTO instead */
+export type WizardGenerationPreferencesDTO = RecipeGenerationPreferencesDTO;
+/** @deprecated Use RecipeGenerationRequestDTO instead */
+export type WizardGenerationRequestDTO = RecipeGenerationRequestDTO;
+/** @deprecated Use RecipeGeneratedDTO instead */
+export type WizardGeneratedRecipeDTO = RecipeGeneratedDTO;
+/** @deprecated Use RecipeGenerationResponseDTO instead */
+export type WizardGenerationResponseDTO = RecipeGenerationResponseDTO;

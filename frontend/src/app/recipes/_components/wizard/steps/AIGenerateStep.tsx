@@ -33,9 +33,10 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import type {
-  WizardGenerationPreferencesDTO,
-  WizardGeneratedRecipeDTO,
+  RecipeGenerationPreferencesDTO,
+  RecipeGeneratedDTO,
 } from "@/types/ai";
+import type { UserCategoryDTO } from "@/types/category";
 
 // ============================================================================
 // Props
@@ -44,13 +45,14 @@ import type {
 interface AIGenerateStepProps {
   prompt: string;
   setPrompt: (value: string) => void;
-  preferences: WizardGenerationPreferencesDTO;
-  setPreferences: (value: WizardGenerationPreferencesDTO) => void;
-  generatedRecipe: WizardGeneratedRecipeDTO | null;
+  preferences: RecipeGenerationPreferencesDTO;
+  setPreferences: (value: RecipeGenerationPreferencesDTO) => void;
+  generatedRecipe: RecipeGeneratedDTO | null;
   isGenerating: boolean;
   error: string | null;
   onGenerate: () => void;
   onAcceptRecipe: () => void;
+  categories?: UserCategoryDTO[];
 }
 
 // ============================================================================
@@ -80,6 +82,7 @@ export function AIGenerateStep({
   error,
   onGenerate,
   onAcceptRecipe,
+  categories = [],
 }: AIGenerateStepProps) {
   const [showOptions, setShowOptions] = useState(false);
 
@@ -148,18 +151,28 @@ export function AIGenerateStep({
         <CollapsibleContent className="pt-3">
           <Card>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-              {/* Cuisine */}
+              {/* Category */}
               <div className="space-y-2">
-                <Label htmlFor="pref-cuisine">Cuisine</Label>
-                <Input
-                  id="pref-cuisine"
-                  placeholder="e.g., Thai, Italian, Mexican"
-                  value={preferences.cuisine || ""}
-                  onChange={(e) =>
-                    setPreferences({ ...preferences, cuisine: e.target.value || undefined })
+                <Label htmlFor="pref-category">Category</Label>
+                <Select
+                  value={preferences.category || ""}
+                  onValueChange={(value) =>
+                    setPreferences({ ...preferences, category: value || undefined })
                   }
                   disabled={isGenerating}
-                />
+                >
+                  <SelectTrigger id="pref-category">
+                    <SelectValue placeholder="Any" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.value}>
+                        {cat.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Dietary */}

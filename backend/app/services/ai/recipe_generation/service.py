@@ -1,22 +1,22 @@
-"""Service for generating complete recipes via the wizard using Gemini."""
+"""Service for generating complete recipes using Gemini AI."""
 
 import json
 import logging
 from typing import Optional
 
-from app.dtos.assistant_dtos import GeneratedIngredientDTO
 from app.dtos.nutrition_dtos import NutritionFactsDTO
-from app.dtos.wizard_dtos import (
-    WizardGeneratedRecipeDTO,
-    WizardGenerationRequestDTO,
-    WizardGenerationResponseDTO,
+from app.dtos.recipe_generation_dtos import (
+    RecipeGeneratedDTO,
+    RecipeGenerationRequestDTO,
+    RecipeGenerationResponseDTO,
 )
 from app.services.ai.gemini_client import get_gemini_client
-from app.services.ai.parse_utils import parse_nutrition_dict, safe_int
+from app.services.ai.parse_utils import parse_nutrition_dict, parse_recipe_dict
 from app.services.ai.response_utils import extract_text_from_response
 
 from .config import (
     API_KEY_ENV_VAR,
+    DEFAULT_CATEGORIES,
     MAX_OUTPUT_TOKENS,
     MODEL_NAME,
     NUTRITION_SCHEMA,
@@ -30,13 +30,13 @@ logger = logging.getLogger(__name__)
 # ── Domain Exceptions ────────────────────────────────────────────────────────
 
 
-class WizardGenerationError(Exception):
+class RecipeGenerationError(Exception):
     """Raised when recipe generation fails."""
 
     pass
 
 
-class WizardParseError(Exception):
+class RecipeParseError(Exception):
     """Raised when AI response cannot be parsed."""
 
     pass
@@ -45,31 +45,29 @@ class WizardParseError(Exception):
 # ── Service ──────────────────────────────────────────────────────────────────
 
 
-class WizardGenerationService:
+class RecipeGenerationService:
     """Service for generating complete recipes using Gemini AI."""
 
     def __init__(self) -> None:
-        """Initialize the wizard generation service."""
+        """Initialize the recipe generation service."""
         get_gemini_client(API_KEY_ENV_VAR)
 
     def generate(
-        self, request: WizardGenerationRequestDTO
-    ) -> WizardGenerationResponseDTO:
+        self, request: RecipeGenerationRequestDTO
+    ) -> RecipeGenerationResponseDTO:
         """Generate a complete recipe from a user prompt and optional preferences.
 
         Args:
             request: The generation request with prompt, preferences, and flags.
 
         Returns:
-            WizardGenerationResponseDTO with recipe data, optional nutrition and images.
+            RecipeGenerationResponseDTO with recipe data, optional nutrition and images.
 
         Raises:
-            WizardGenerationError: If the generation process fails entirely.
-            WizardParseError: If the AI response cannot be parsed.
+            RecipeGenerationError: If the generation process fails entirely.
+            RecipeParseError: If the AI response cannot be parsed.
         """
         try:
-            from google.genai import types
-
             client = get_gemini_client(API_KEY_ENV_VAR)
 
             # Build preferences text
@@ -78,10 +76,15 @@ class WizardGenerationService:
             # Include nutrition schema in prompt if requested
             nutrition_schema = NUTRITION_SCHEMA if request.estimate_nutrition else ""
 
+            # Build allowed categories string from request or defaults
+            categories = request.allowed_categories or DEFAULT_CATEGORIES
+            allowed_categories = "|".join(categories)
+
             prompt = PROMPT_TEMPLATE.format(
                 prompt=request.prompt,
                 preferences_text=preferences_text,
                 nutrition_schema=nutrition_schema,
+                allowed_categories=allowed_categories,
             )
 
             response = client.models.generate_content(
@@ -96,12 +99,12 @@ class WizardGenerationService:
 
             raw_text = extract_text_from_response(response)
             if not raw_text:
-                raise WizardGenerationError("No response from AI model")
+                raise RecipeGenerationError("No response from AI model")
 
             data = json.loads(raw_text)
 
-            # Parse recipe
-            recipe = self._parse_recipe(data)
+            # Parse recipe using shared utility
+            recipe = parse_recipe_dict(data)
 
             # Parse nutrition if included
             nutrition_facts: Optional[NutritionFactsDTO] = None
@@ -109,7 +112,7 @@ class WizardGenerationService:
                 nutrition_facts = parse_nutrition_dict(data["nutrition_facts"])
 
             logger.info(
-                f"[Wizard] Generated recipe '{recipe.recipe_name}' "
+                f"[RecipeGeneration] Generated recipe '{recipe.recipe_name}' "
                 f"with {len(recipe.ingredients)} ingredients"
             )
 
@@ -121,7 +124,7 @@ class WizardGenerationService:
                     self._generate_images(recipe.recipe_name)
                 )
 
-            return WizardGenerationResponseDTO(
+            return RecipeGenerationResponseDTO(
                 success=True,
                 recipe=recipe,
                 nutrition_facts=nutrition_facts,
@@ -130,34 +133,34 @@ class WizardGenerationService:
             )
 
         except json.JSONDecodeError as e:
-            logger.error(f"[Wizard] JSON parse error: {e}")
-            raise WizardParseError(
+            logger.error(f"[RecipeGeneration] JSON parse error: {e}")
+            raise RecipeParseError(
                 "Failed to parse recipe data from AI response"
             ) from e
-        except (WizardGenerationError, WizardParseError):
+        except (RecipeGenerationError, RecipeParseError):
             raise
         except ImportError as e:
-            raise WizardGenerationError(
+            raise RecipeGenerationError(
                 "google-genai package is not installed"
             ) from e
         except Exception as e:
-            logger.error(f"[Wizard] Generation failed: {e}")
-            raise WizardGenerationError(
+            logger.error(f"[RecipeGeneration] Generation failed: {e}")
+            raise RecipeGenerationError(
                 f"Recipe generation failed: {str(e)}"
             ) from e
 
     # ── Private Helpers ──────────────────────────────────────────────────────
 
     @staticmethod
-    def _build_preferences_text(request: WizardGenerationRequestDTO) -> str:
+    def _build_preferences_text(request: RecipeGenerationRequestDTO) -> str:
         """Build a preferences section for the prompt."""
         if not request.preferences:
             return ""
 
         prefs = request.preferences
         lines: list[str] = []
-        if prefs.cuisine:
-            lines.append(f"Cuisine: {prefs.cuisine}")
+        if prefs.category:
+            lines.append(f"Category: {prefs.category}")
         if prefs.dietary:
             lines.append(f"Dietary preference: {prefs.dietary}")
         if prefs.difficulty:
@@ -170,30 +173,6 @@ class WizardGenerationService:
         if not lines:
             return ""
         return "\nPreferences:\n" + "\n".join(f"- {line}" for line in lines)
-
-    @staticmethod
-    def _parse_recipe(data: dict) -> WizardGeneratedRecipeDTO:
-        """Parse a recipe from the AI JSON response."""
-        ingredients = [
-            GeneratedIngredientDTO(**ing)
-            for ing in data.get("ingredients", [])
-        ]
-
-        return WizardGeneratedRecipeDTO(
-            recipe_name=data.get("recipe_name", "Untitled Recipe"),
-            recipe_category=data.get("recipe_category", "other"),
-            meal_type=data.get("meal_type", "dinner"),
-            diet_pref=data.get("diet_pref", "none"),
-            description=data.get("description"),
-            prep_time=safe_int(data.get("prep_time")),
-            cook_time=safe_int(data.get("cook_time")),
-            total_time=safe_int(data.get("total_time")),
-            difficulty=data.get("difficulty"),
-            servings=safe_int(data.get("servings")),
-            directions=data.get("directions"),
-            notes=data.get("notes"),
-            ingredients=ingredients,
-        )
 
     @staticmethod
     def _generate_images(
@@ -214,26 +193,26 @@ class WizardGenerationService:
             if not result.get("success"):
                 errors = result.get("errors", [])
                 logger.warning(
-                    f"[Wizard] Image generation failed for '{recipe_name}': {errors}"
+                    f"[RecipeGeneration] Image generation failed for '{recipe_name}': {errors}"
                 )
 
             return reference, banner
 
         except Exception as e:
             logger.warning(
-                f"[Wizard] Image generation skipped for '{recipe_name}': {e}"
+                f"[RecipeGeneration] Image generation skipped for '{recipe_name}': {e}"
             )
             return None, None
 
 
 # ── Singleton ────────────────────────────────────────────────────────────────
 
-_service_instance: Optional[WizardGenerationService] = None
+_service_instance: Optional[RecipeGenerationService] = None
 
 
-def get_wizard_generation_service() -> WizardGenerationService:
-    """Get the singleton instance of the wizard generation service."""
+def get_recipe_generation_service() -> RecipeGenerationService:
+    """Get the singleton instance of the recipe generation service."""
     global _service_instance
     if _service_instance is None:
-        _service_instance = WizardGenerationService()
+        _service_instance = RecipeGenerationService()
     return _service_instance

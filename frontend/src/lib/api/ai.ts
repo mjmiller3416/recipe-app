@@ -5,13 +5,13 @@ import type {
   CookingTipResponseDTO,
   AssistantMessage,
   AssistantResponseDTO,
-  RecipeGenerationResponseDTO,
+  AssistantRecipeResponseDTO,
   MealSuggestionsRequestDTO,
   MealSuggestionsResponseDTO,
   NutritionEstimationRequestDTO,
   NutritionEstimationResponseDTO,
-  WizardGenerationRequestDTO,
-  WizardGenerationResponseDTO,
+  RecipeGenerationRequestDTO,
+  RecipeGenerationResponseDTO,
 } from "@/types/ai";
 import { fetchApi } from "./base";
 
@@ -113,7 +113,7 @@ export const nutritionEstimationApi = {
     ),
 };
 
-export const wizardGenerationApi = {
+export const recipeGenerationApi = {
   /**
    * Generate a complete recipe from a text prompt using AI.
    * @param request - Prompt, optional preferences, and feature flags.
@@ -121,10 +121,10 @@ export const wizardGenerationApi = {
    * @returns Response with generated recipe, optional nutrition and images.
    */
   generate: (
-    request: WizardGenerationRequestDTO,
+    request: RecipeGenerationRequestDTO,
     token?: string | null
-  ): Promise<WizardGenerationResponseDTO> =>
-    fetchApi<WizardGenerationResponseDTO>(
+  ): Promise<RecipeGenerationResponseDTO> =>
+    fetchApi<RecipeGenerationResponseDTO>(
       "/api/ai/wizard-generation",
       {
         method: "POST",
@@ -133,6 +133,9 @@ export const wizardGenerationApi = {
       token
     ),
 };
+
+/** @deprecated Use recipeGenerationApi instead */
+export const wizardGenerationApi = recipeGenerationApi;
 
 export const AssistantApi = {
   /**
@@ -198,8 +201,8 @@ export const AssistantApi = {
     conversationHistory?: AssistantMessage[],
     generateImage = true,
     token?: string | null
-  ): Promise<RecipeGenerationResponseDTO> =>
-    fetchApi<RecipeGenerationResponseDTO>(
+  ): Promise<AssistantRecipeResponseDTO> =>
+    fetchApi<AssistantRecipeResponseDTO>(
       "/api/ai/meal-genie/generate-recipe",
       {
         method: "POST",

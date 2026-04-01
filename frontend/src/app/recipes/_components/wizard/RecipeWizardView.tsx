@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
+import { useCategories } from "@/hooks/api/useCategories";
 import { useRecipeWizard } from "./useRecipeWizard";
 import {
   MethodSelectionStep,
@@ -60,6 +61,8 @@ interface RecipeWizardViewProps {
 // ============================================================================
 
 export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) {
+  const { data: categories = [] } = useCategories();
+
   const handleSave = useCallback(() => {
     onOpenChange(false);
   }, [onOpenChange]);
@@ -192,6 +195,7 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
                 error={wizard.aiError}
                 onGenerate={wizard.handleWizardGenerate}
                 onAcceptRecipe={wizard.handleAcceptGeneratedRecipe}
+                categories={categories}
               />
             ) : (
               <RecipeBasicsStep

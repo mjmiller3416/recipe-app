@@ -7,6 +7,7 @@ used across recipe generation, nutrition estimation, and other AI services.
 from typing import Optional
 
 from app.dtos.nutrition_dtos import NutritionFactsDTO
+from app.dtos.recipe_generation_dtos import GeneratedIngredientDTO, RecipeGeneratedDTO
 
 
 def safe_int(value: object) -> Optional[int]:
@@ -56,4 +57,39 @@ def parse_nutrition_dict(data: dict) -> Optional[NutritionFactsDTO]:
         dietary_fiber_g=safe_float(data.get("dietary_fiber_g")),
         total_sugars_g=safe_float(data.get("total_sugars_g")),
         is_ai_estimated=True,
+    )
+
+
+def parse_recipe_dict(data: dict) -> RecipeGeneratedDTO:
+    """Parse a recipe dictionary from an AI response into a RecipeGeneratedDTO.
+
+    Handles missing fields, type coercion for time/servings values,
+    and ingredient list construction. Used by both the recipe generation
+    service and the assistant's recipe generation flow.
+
+    Args:
+        data: Raw recipe dictionary from an AI JSON response.
+
+    Returns:
+        A fully populated RecipeGeneratedDTO with safe defaults for missing fields.
+    """
+    ingredients = [
+        GeneratedIngredientDTO(**ing)
+        for ing in data.get("ingredients", [])
+    ]
+
+    return RecipeGeneratedDTO(
+        recipe_name=data.get("recipe_name", "Untitled Recipe"),
+        recipe_category=data.get("recipe_category", "other"),
+        meal_type=data.get("meal_type", "dinner"),
+        diet_pref=data.get("diet_pref", "none"),
+        description=data.get("description"),
+        prep_time=safe_int(data.get("prep_time")),
+        cook_time=safe_int(data.get("cook_time")),
+        total_time=safe_int(data.get("total_time")),
+        difficulty=data.get("difficulty"),
+        servings=safe_int(data.get("servings")),
+        directions=data.get("directions"),
+        notes=data.get("notes"),
+        ingredients=ingredients,
     )

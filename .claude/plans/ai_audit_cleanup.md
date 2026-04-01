@@ -93,15 +93,56 @@ This is a multi-phase plan to audit and clean up the AI services. Each phase bui
 **Test results:** 63/63 tests passing, zero regressions.
 
 ### Phase 2: Rename & Consolidate Recipe Generation
-- [ ] Rename wizard_generation/ → recipe_generation/ — Update all imports across api, services, tests — naming
-- [ ] Rename DTOs — drop Wizard prefix — WizardGeneratedRecipeDTO → RecipeGeneratedDTO, etc. — naming
-- [ ] Add parse_recipe_dict() to parse_utils — Extract from (now renamed) recipe generation service — audit #3
-- [ ] Retire GeneratedRecipeDTO from assistant — Replace with RecipeGeneratedDTO everywhere — audit #3
-- [ ] Replace _generate_recipe_from_args() in assistant — Delete inline generation, call get_recipe_generation_service() instead — audit #3
-- [ ] Update request DTO — Remove cuisine, add category: Optional[str] and allowed_categories: list[str] — audit #4
-- [ ] Fetch and inject user categories at the API layer — Same pattern as user context for the assistant — audit #4
-- [ ] Replace hardcoded enum in prompt template with dynamic interpolation from allowed_categories — audit #4
-- [ ] Frontend: replace free-text Cuisine field with Category dropdown in AI generation preferences panel — audit #4
+- [x] Rename wizard_generation/ → recipe_generation/ — Update all imports across api, services, tests — naming
+- [x] Rename DTOs — drop Wizard prefix — WizardGeneratedRecipeDTO → RecipeGeneratedDTO, etc. — naming
+- [x] Add parse_recipe_dict() to parse_utils — Extract from (now renamed) recipe generation service — audit #3
+- [x] Retire GeneratedRecipeDTO from assistant — Replace with RecipeGeneratedDTO everywhere — audit #3
+- [x] Replace _generate_recipe_from_args() in assistant — Delete inline generation, call get_recipe_generation_service() instead — audit #3
+- [x] Update request DTO — Remove cuisine, add category: Optional[str] and allowed_categories: list[str] — audit #4
+- [x] Fetch and inject user categories at the API layer — Same pattern as user context for the assistant — audit #4
+- [x] Replace hardcoded enum in prompt template with dynamic interpolation from allowed_categories — audit #4
+- [x] Frontend: replace free-text Cuisine field with Category dropdown in AI generation preferences panel — audit #4
+- [x] Update frontend types — Rename GeneratedRecipeDTO → RecipeGeneratedDTO, WizardGeneration* → RecipeGeneration* with deprecated aliases
+- [x] Update frontend API client — wizardGenerationApi → recipeGenerationApi with deprecated alias
+- [x] Update frontend hooks — useWizardGenerate → useRecipeGenerate with deprecated alias
+- [x] Delete old wizard_generation backend files (wizard_dtos.py, wizard_generation/ service dir, wizard_generation.py route, old test files)
+
+**Phase 2 is complete. Here's a summary of what was done:**
+
+**Backend — Created:**
+- `app/dtos/recipe_generation_dtos.py` — Renamed DTOs: `RecipeGenerationPreferencesDTO` (with `category` replacing `cuisine`, plus `allowed_categories`), `RecipeGenerationRequestDTO`, `RecipeGeneratedDTO`, `RecipeGenerationResponseDTO`
+- `app/services/ai/recipe_generation/` — New service directory with `service.py`, `config.py`, `__init__.py`; prompt template uses dynamic `allowed_categories` interpolation
+- `app/api/ai/recipe_generation.py` — New route that fetches user categories at the API layer and passes them to the service
+- `backend/tests/test_recipe_generation_api.py` and `test_recipe_generation_service.py` — New test files
+
+**Backend — Updated:**
+- `app/dtos/assistant_dtos.py` — Uses `RecipeGeneratedDTO` instead of old `GeneratedRecipeDTO`
+- `app/services/ai/parse_utils.py` — Added `parse_recipe_dict()` shared helper
+- `app/services/ai/assistant/generators.py` — Calls `get_recipe_generation_service()` instead of inline generation; uses shared `RecipeGeneratedDTO`
+- `app/api/ai/assistant.py` — Updated imports for renamed DTOs
+- `app/api/ai/__init__.py` — Registers new recipe_generation router
+- `app/router.py` — Routes to new module (URL prefix kept as `/api/ai/wizard-generation` for backwards compatibility)
+- `app/dtos/__init__.py` — Updated barrel exports
+
+**Backend — Deleted:**
+- `app/dtos/wizard_dtos.py`
+- `app/services/ai/wizard_generation/` (entire directory)
+- `app/api/ai/wizard_generation.py`
+- `backend/tests/test_wizard_generation_api.py`
+- `backend/tests/test_wizard_generation_service.py`
+
+**Frontend — Updated:**
+- `types/ai.ts` — Consolidated `GeneratedRecipeDTO` + `WizardGeneratedRecipeDTO` into `RecipeGeneratedDTO`; renamed `WizardGeneration*` → `RecipeGeneration*`; added deprecated type aliases for all old names
+- `lib/api/ai.ts` — `wizardGenerationApi` → `recipeGenerationApi` with deprecated alias
+- `lib/api/index.ts` — Barrel exports both new and deprecated names
+- `hooks/api/useAI.ts` — `useWizardGenerate` → `useRecipeGenerate` with deprecated alias
+- `app/recipes/_components/wizard/useRecipeWizard.ts` — Updated all type and API client references
+- `app/recipes/_components/wizard/steps/AIGenerateStep.tsx` — Replaced free-text Cuisine input with Category `<Select>` dropdown; accepts `categories` prop
+- `app/recipes/_components/wizard/RecipeWizardView.tsx` — Fetches categories via `useCategories()` hook; passes to `AIGenerateStep`
+- `components/assistant/AssistantChatContent.tsx` — `GeneratedRecipeDTO` → `RecipeGeneratedDTO`
+- `app/recipes/_components/add-edit/useRecipeForm.ts` — `GeneratedRecipeDTO` → `RecipeGeneratedDTO`
+
+**Test results:** 141/141 backend tests passing. Frontend TypeScript compiles clean (only pre-existing unrelated `.next/types` error).
 
 ### Phase 3: Flatten Small Services
 - [ ] Flatten cooking_tips/ → cooking_tips.py — Fold config constants into top of file, standardize to dict config, delete subdirectory — structure + audit #6

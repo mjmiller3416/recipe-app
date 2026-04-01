@@ -1,4 +1,4 @@
-"""Configuration for the Wizard Generation AI service."""
+"""Configuration for the Recipe Generation AI service."""
 
 # Model settings
 MODEL_NAME = "gemini-2.0-flash"
@@ -8,7 +8,14 @@ MAX_OUTPUT_TOKENS = 4096  # Full recipe needs more tokens than nutrition
 # Environment variable for API key (reuses the assistant key)
 API_KEY_ENV_VAR = "GEMINI_WIZARD_API_KEY"
 
-# Prompt template for generating a complete recipe from a user description
+# Default categories used when no user categories are provided
+DEFAULT_CATEGORIES = [
+    "american", "chinese", "french", "indian", "italian",
+    "japanese", "mediterranean", "mexican", "thai", "other",
+]
+
+# Prompt template for generating a complete recipe from a user description.
+# {allowed_categories} is dynamically interpolated from the user's enabled categories.
 PROMPT_TEMPLATE = """You are a professional recipe developer. Generate a complete, detailed recipe based on the user's request.
 
 User's request: {prompt}
@@ -18,7 +25,7 @@ Return ONLY valid JSON with this exact structure:
 {{
   "recipe_name": "<creative, descriptive name>",
   "description": "<1-2 sentence appetizing description>",
-  "recipe_category": "<one of: beef|chicken|pork|seafood|vegetarian|vegan|pasta|soup|salad|other>",
+  "recipe_category": "<one of: {allowed_categories}>",
   "meal_type": "<one of: appetizer|breakfast|lunch|dinner|dessert|side|snack|sauce|other>",
   "diet_pref": "<one of: none|vegetarian|vegan|gluten-free|dairy-free|keto|paleo>",
   "prep_time": <integer minutes>,

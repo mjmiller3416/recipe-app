@@ -4,8 +4,13 @@ from .assistant_dtos import (
     AssistantMessageDTO,
     AssistantRequestDTO,
     AssistantResponseDTO,
+    AssistantRecipeRequestDTO,
+    AssistantRecipeResponseDTO,
+)
+from .recipe_generation_dtos import (
     GeneratedIngredientDTO,
-    GeneratedRecipeDTO,
+    RecipeGeneratedDTO,
+    RecipeGenerationPreferencesDTO,
     RecipeGenerationRequestDTO,
     RecipeGenerationResponseDTO,
 )
@@ -80,8 +85,13 @@ __all__ = [
     "AssistantMessageDTO",
     "AssistantRequestDTO",
     "AssistantResponseDTO",
+    "AssistantRecipeRequestDTO",
+    "AssistantRecipeResponseDTO",
+
+    # Recipe Generation DTOs
     "GeneratedIngredientDTO",
-    "GeneratedRecipeDTO",
+    "RecipeGeneratedDTO",
+    "RecipeGenerationPreferencesDTO",
     "RecipeGenerationRequestDTO",
     "RecipeGenerationResponseDTO",
 
