@@ -6,7 +6,7 @@ TEMPERATURE = 0.7  # Balanced creativity + consistency
 MAX_OUTPUT_TOKENS = 4096  # Full recipe needs more tokens than nutrition
 
 # Environment variable for API key (reuses the assistant key)
-API_KEY_ENV_VAR = "GEMINI_WIZARD_API_KEY"
+API_KEY_ENV_VAR = "GEMINI_RECIPE_GENERATION_API_KEY"
 
 # Default categories used when no user categories are provided
 DEFAULT_CATEGORIES = [

@@ -176,9 +176,9 @@ export function AssistantChatContent({
               aria-label={isExpanded ? "Collapse chat" : "Expand chat"}
             >
               {isExpanded ? (
-                <Minimize2 className="h-4 w-4" />
+                <Minimize2 className="h-4 w-4" strokeWidth={1.5} />
               ) : (
-                <Maximize2 className="h-4 w-4" />
+                <Maximize2 className="h-4 w-4" strokeWidth={1.5} />
               )}
             </Button>
           )}
@@ -191,7 +191,7 @@ export function AssistantChatContent({
               className="h-7 w-7 text-muted-foreground hover:text-foreground"
               aria-label="Minimize to icon"
             >
-              <Minus className="h-4 w-4" />
+              <Minus className="h-4 w-4" strokeWidth={1.5} />
             </Button>
           )}
           <Button
@@ -199,8 +199,9 @@ export function AssistantChatContent({
             size="icon"
             onClick={onClose}
             className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            aria-label="Close"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" strokeWidth={1.5} />
           </Button>
         </div>
       </div>
@@ -261,7 +262,7 @@ export function AssistantChatContent({
             aria-label="Send message"
             className="bg-primary hover:bg-primary-hover text-primary-foreground shadow-sm disabled:bg-muted disabled:text-muted-foreground"
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-4 w-4" strokeWidth={1.5} />
           </Button>
         </div>
       </div>

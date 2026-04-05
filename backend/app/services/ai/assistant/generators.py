@@ -7,7 +7,11 @@ Handles recipe suggestions, full recipe generation, and cooking question answers
 import logging
 from typing import Optional
 
-from app.dtos.recipe_generation_dtos import RecipeGeneratedDTO, RecipeGenerationRequestDTO
+from app.dtos.recipe_generation_dtos import (
+    RecipeGeneratedDTO,
+    RecipeGenerationPreferencesDTO,
+    RecipeGenerationRequestDTO,
+)
 from app.services.ai.gemini_client import get_gemini_client
 from app.services.ai.recipe_generation import get_recipe_generation_service
 from app.services.ai.response_utils import extract_text_from_response
@@ -136,7 +140,7 @@ Use your friendly Meal Genie personality."""
 
         Bridges the assistant's tool-call arguments to the shared recipe
         generation service, which uses the same prompt template and parsing
-        logic as the wizard/prompt-based flow.
+        logic as the prompt-based generation flow.
         """
         recipe_name = args.get("recipe_name", "Untitled Recipe")
         style_notes = args.get("style_notes", "")
@@ -158,7 +162,6 @@ Use your friendly Meal Genie personality."""
         )
         # Override servings in the prompt via preferences if non-default
         if servings and servings != 4:
-            from app.dtos.recipe_generation_dtos import RecipeGenerationPreferencesDTO
             request.preferences = RecipeGenerationPreferencesDTO(servings=servings)
 
         try:
