@@ -40,7 +40,7 @@ class GeneratorsMixin:
 
         elif tool_name == "create_recipe":
             # Generate a full recipe with structured JSON
-            recipe = self._generate_recipe_from_args(args)
+            recipe = self._generate_recipe_from_args(args, context_data)
             return {
                 "type": "recipe",
                 "response": f"Here's your {args.get('recipe_name', 'recipe')}! 🎉",
@@ -135,7 +135,9 @@ Use your friendly Meal Genie personality."""
             "tool_args": args,
         }
 
-    def _generate_recipe_from_args(self, args: dict) -> Optional[RecipeGeneratedDTO]:
+    def _generate_recipe_from_args(
+        self, args: dict, context_data: Optional[dict] = None
+    ) -> Optional[RecipeGeneratedDTO]:
         """Generate a structured recipe by delegating to the recipe generation service.
 
         Bridges the assistant's tool-call arguments to the shared recipe
@@ -154,8 +156,14 @@ Use your friendly Meal Genie personality."""
         if dietary and dietary != "none":
             prompt_parts.append(f"Dietary restrictions: {dietary}")
 
+        # Use user's enabled categories from context, falling back to service defaults
+        allowed_categories = (
+            context_data.get("allowed_categories", []) if context_data else []
+        )
+
         request = RecipeGenerationRequestDTO(
             prompt="\n".join(prompt_parts),
+            allowed_categories=allowed_categories,
             preferences=None,
             generate_image=False,
             estimate_nutrition=False,

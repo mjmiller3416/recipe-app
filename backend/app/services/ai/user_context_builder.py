@@ -11,6 +11,7 @@ from app.repositories.recipe_repo import RecipeRepo
 from app.repositories.planner import PlannerRepo
 from app.repositories.shopping import ShoppingRepo
 from app.dtos.recipe_dtos import RecipeFilterDTO
+from app.services.user_category_service import UserCategoryService
 
 
 class UserContextBuilder:
@@ -45,6 +46,7 @@ class UserContextBuilder:
         data: Dict[str, any] = {
             "saved_recipes": self._get_saved_recipes(),
             "meal_plan": self._get_meal_plan(),
+            "allowed_categories": self._get_enabled_categories(),
         }
 
         if include_ingredients:
@@ -153,6 +155,12 @@ class UserContextBuilder:
             }
             for entry in entries
         ]
+
+    def _get_enabled_categories(self) -> List[str]:
+        """Get the user's enabled category values for recipe generation."""
+        category_service = UserCategoryService(self.session, self.user_id)
+        categories = category_service.get_all_categories(include_disabled=False)
+        return [cat.value for cat in categories]
 
     def _get_shopping_list(self) -> dict:
         """Get shopping list split by have/need."""
