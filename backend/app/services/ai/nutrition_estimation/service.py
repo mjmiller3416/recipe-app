@@ -93,10 +93,11 @@ class NutritionEstimationService:
 
             nutrition = parse_nutrition_dict(data)
 
-            logger.info(
-                f"[Nutrition] Estimated for '{request.recipe_name}': "
-                f"{nutrition.calories} cal, {nutrition.protein_g}g protein"
-            )
+            if nutrition:
+                logger.info(
+                    f"[Nutrition] Estimated for '{request.recipe_name}': "
+                    f"{nutrition.calories} cal, {nutrition.protein_g}g protein"
+                )
 
             return NutritionEstimationResponseDTO(
                 success=True, nutrition_facts=nutrition
