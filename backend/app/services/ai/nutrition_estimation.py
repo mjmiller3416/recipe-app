@@ -2,7 +2,6 @@
 
 import json
 import logging
-import re
 from typing import Optional
 
 from app.dtos.nutrition_dtos import (
@@ -96,6 +95,7 @@ class NutritionEstimationService:
                 config={
                     "temperature": TEMPERATURE,
                     "max_output_tokens": MAX_OUTPUT_TOKENS,
+                    "response_mime_type": "application/json",
                 },
             )
 
@@ -105,14 +105,7 @@ class NutritionEstimationService:
                     success=False, error="No response from AI model"
                 )
 
-            # Extract JSON from response (handle markdown code blocks)
-            json_match = re.search(r"\{[^}]+\}", raw_text, re.DOTALL)
-            if not json_match:
-                return NutritionEstimationResponseDTO(
-                    success=False, error="Could not parse nutrition data from AI response"
-                )
-
-            data = json.loads(json_match.group())
+            data = json.loads(raw_text)
 
             nutrition = parse_nutrition_dict(data)
 

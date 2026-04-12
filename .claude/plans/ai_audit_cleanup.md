@@ -50,7 +50,7 @@ No recipe_constants.py needed — the source of truth is the user's settings, no
 
 **Resolution:** `cuisine` replaced with `category` + `allowed_categories` on the DTO. API layer fetches user categories. Prompt uses dynamic interpolation. Frontend uses Category `<Select>` dropdown.
 
-### Issue 5 — Nutrition estimation uses a fragile JSON regex ⏳ Open (Phase 4)
+### Issue 5 — ~~Nutrition estimation uses a fragile JSON regex~~ ✅ Fixed (Phase 4)
 *Location: nutrition_estimation.py → re.search(r"\{[^}]+\}", raw_text, re.DOTALL)*
 
 This regex matches from the first { to the first }. It will fail silently on any JSON that contains nested objects — and NutritionFactsDTO fields are all at the top level, so it happens to work right now, but it's one field change away from breaking.
@@ -59,16 +59,18 @@ Meanwhile `recipe_generation` and the assistant recipe generator both use `respo
 
 > Fix: Add `response_mime_type: "application/json"` to the nutrition estimation call and remove the regex. Consistent with how the other JSON-producing calls already work.
 
-### Issue 6 — ~~Dead import / inconsistent config patterns~~ ⚠️ Partially Fixed (Phases 2 + 3)
+**Resolution:** Added `response_mime_type: "application/json"` to config dict. Removed `re` import and JSON regex extraction. `json.loads(raw_text)` now parses the clean JSON directly. Test updated: `test_json_in_markdown_code_block` renamed to `test_markdown_wrapped_json_rejected` (markdown wrapping is no longer a valid scenario with structured output).
+
+### Issue 6 — ~~Dead import / inconsistent config patterns~~ ✅ Fully Fixed (Phases 2 + 3 + 4)
 Line 1 of the generate() method: from google.genai import types — imported but never used. The config dict is used instead (config={...}), which is correct and the pattern you should be using everywhere.
 
 Secondary: `cooking_tips` and `nutrition_estimation` still use `types.GenerateContentConfig(...)` for their call config. Both patterns work but this will be standardized to dict config when those services are flattened in Phase 3 — no separate action needed.
 
 **Resolution (Phase 3):** `cooking_tips`, `nutrition_estimation`, and `meal_suggestions` all standardized to dict config. Dead `from google.genai import types` imports removed from all three flat modules.
 
-**Remaining (Phase 4):** `recipe_generation/service.py` still has the dead `from google.genai import types` import.
+**Phase 4 update:** Confirmed `recipe_generation/service.py` no longer has the dead import (already cleaned up in Phase 2). All AI services now use dict config consistently.
 
-### Issue 7 — Dead legacy code in user_context_builder.py ⏳ Open (Phase 4)
+### Issue 7 — ~~Dead legacy code in user_context_builder.py~~ ✅ Fixed (Phase 4)
 The class has two parallel APIs. The modern one (`build_context_data()`) is what *assistant.py* actually calls (confirmed in the API layer). The legacy string-based one — `build_context()`, `_build_recipes_context()`, `_build_meal_plan_context()`, `_build_shopping_context()` — is never called from anywhere in the API layer. That's roughly 50 lines that exist purely to confuse future maintainers.
 
 > Fix: Delete the four legacy methods. If nothing calls them, they're gone. `build_context_data()` is the real API.
@@ -190,7 +192,25 @@ This is a multi-phase plan to audit and clean up the AI services. Each phase bui
 
 **Test results:** 141/141 tests passing, zero regressions.
 
-### Phase 4: Cleanup
-- [ ] Fix nutrition estimation JSON parsing — Remove regex, add response_mime_type: "application/json" — audit #5
-- [ ] Remove dead from google.genai import types — Unused import in recipe_generation/service.py — audit #6
-- [ ] Delete legacy methods from user_context_builder.py — Remove build_context() and 3 private _build_* methods — audit #7
+### Phase 4: Cleanup ✅
+- [x] Fix nutrition estimation JSON parsing — Remove regex, add response_mime_type: "application/json" — audit #5
+- [x] Remove dead from google.genai import types — Unused import in recipe_generation/service.py — audit #6
+- [x] Delete legacy methods from user_context_builder.py — Remove build_context() and 3 private _build_* methods — audit #7
+
+**Phase 4 is complete. Here's a summary of what was done:**
+
+**Updated:**
+- `app/services/ai/nutrition_estimation.py` — Added `response_mime_type: "application/json"` to Gemini config, removed `re` import and JSON regex extraction, `json.loads()` parses clean JSON directly
+- `app/services/ai/user_context_builder.py` — Deleted 4 legacy methods (`build_context()`, `_build_recipes_context()`, `_build_meal_plan_context()`, `_build_shopping_context()`), ~52 lines removed. Removed unused `Optional` import
+- `tests/test_nutrition_service.py` — Renamed `test_json_in_markdown_code_block` to `test_markdown_wrapped_json_rejected` (markdown wrapping can no longer occur with structured JSON output)
+
+**Not changed:**
+- `recipe_generation/service.py` dead import (audit #6) — confirmed already cleaned up in Phase 2
+
+**Test results:** 141/141 tests passing, zero regressions.
+
+---
+
+## Audit Complete
+
+All 7 issues and both structural issues are now resolved across Phases 1-4. The AI services module is clean, consistent, and maintainable.
