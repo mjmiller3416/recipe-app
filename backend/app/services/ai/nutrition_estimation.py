@@ -13,15 +13,40 @@ from app.services.ai.gemini_client import get_gemini_client
 from app.services.ai.parse_utils import parse_nutrition_dict
 from app.services.ai.response_utils import extract_text_from_response
 
-from .config import (
-    API_KEY_ENV_VAR,
-    MAX_OUTPUT_TOKENS,
-    MODEL_NAME,
-    PROMPT_TEMPLATE,
-    TEMPERATURE,
-)
-
 logger = logging.getLogger(__name__)
+
+# ── Model settings ───────────────────────────────────────────────────────
+MODEL_NAME = "gemini-2.0-flash"
+TEMPERATURE = 0.3  # Low temperature for factual accuracy
+MAX_OUTPUT_TOKENS = 1024
+
+# Environment variable for API key
+API_KEY_ENV_VAR = "GEMINI_NUTRITION_API_KEY"
+
+# Prompt template for estimating nutrition facts
+PROMPT_TEMPLATE = """You are a professional nutritionist. Estimate the nutrition facts PER SERVING for this recipe.
+
+Recipe: {recipe_name}
+Servings: {servings}
+
+Ingredients:
+{ingredients_text}
+
+Return ONLY valid JSON with these exact fields (all numeric values, no units in values):
+{{
+  "calories": <integer or null>,
+  "protein_g": <float or null>,
+  "total_fat_g": <float or null>,
+  "saturated_fat_g": <float or null>,
+  "trans_fat_g": <float or null>,
+  "cholesterol_mg": <float or null>,
+  "sodium_mg": <float or null>,
+  "total_carbs_g": <float or null>,
+  "dietary_fiber_g": <float or null>,
+  "total_sugars_g": <float or null>
+}}
+
+Be realistic and base estimates on standard USDA nutrition data. Round to 1 decimal place for grams, whole numbers for mg and calories. Return ONLY the JSON object, no other text."""
 
 
 class NutritionEstimationService:
@@ -43,8 +68,6 @@ class NutritionEstimationService:
             NutritionEstimationResponseDTO with estimated nutrition facts or error.
         """
         try:
-            from google.genai import types
-
             client = get_gemini_client(API_KEY_ENV_VAR)
 
             # Build ingredients text
@@ -70,10 +93,10 @@ class NutritionEstimationService:
             response = client.models.generate_content(
                 model=MODEL_NAME,
                 contents=[prompt],
-                config=types.GenerateContentConfig(
-                    temperature=TEMPERATURE,
-                    max_output_tokens=MAX_OUTPUT_TOKENS,
-                ),
+                config={
+                    "temperature": TEMPERATURE,
+                    "max_output_tokens": MAX_OUTPUT_TOKENS,
+                },
             )
 
             raw_text = extract_text_from_response(response)
@@ -107,10 +130,6 @@ class NutritionEstimationService:
             logger.error(f"[Nutrition] JSON parse error: {e}")
             return NutritionEstimationResponseDTO(
                 success=False, error="Failed to parse nutrition data from AI response"
-            )
-        except ImportError:
-            return NutritionEstimationResponseDTO(
-                success=False, error="google-genai package is not installed"
             )
         except Exception as e:
             logger.error(f"[Nutrition] Estimation failed: {e}")

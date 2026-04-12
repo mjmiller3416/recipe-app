@@ -3,21 +3,25 @@
 ## Summary
 The AI services have accumulated a number of code quality issues over time, including duplicated parsing logic, inconsistent enums, and some dead code. This plan outlines a comprehensive audit and cleanup effort to address these issues in a structured way, improving maintainability and reducing the risk of bugs.
 
-### Issue 1 — _safe_int / _safe_float are copy-pasted between two services
+### Issue 1 — ~~_safe_int / _safe_float are copy-pasted between two services~~ ✅ Fixed (Phase 1)
 *Location: wizard_generation/service.py lines ~210–228 and nutrition_estimation/service.py lines ~110–124.*
 
 Byte-for-byte identical implementations. Both define module-level `_safe_int` and `_safe_float` private helpers. These belong in *response_utils.py* (or a new *parse_utils.py*) as public functions. This is also the only thing `nutrition_estimation` uses from the wizard's module pattern — it shouldn't be duplicating it.
 
 > Fix: Move to *parse_utils.py* (preferred, since *response_utils.py* already has a clear Gemini-response-parsing responsibility — type casting is a different concern). Export as `safe_int` / `safe_float`.
 
-### Issue 2 — Nutrition parsing logic duplicated
+**Resolution:** Extracted to `parse_utils.py` as `safe_int()` / `safe_float()`. Both services now import from shared module.
+
+### Issue 2 — ~~Nutrition parsing logic duplicated~~ ✅ Fixed (Phase 1)
 *Location: wizard_generation/service.py → _parse_nutrition(data: dict) and nutrition_estimation/service.py → inline nutrition dict → NutritionFactsDTO construction.*
 
 Both take the same dict shape and construct the same NutritionFactsDTO. Wizard has this as a named static method; nutrition estimation re-implements it inline with the same _safe_int / _safe_float calls. The new url_import service will need this a third time.
 
 > Fix: Extract to `parse_utils.parse_nutrition_dict(data: dict) → NutritionFactsDTO`. Both existing services import and call it.
 
-### Issue 3 — Recipe parsing duplicated between wizard and assistant
+**Resolution:** Extracted to `parse_utils.parse_nutrition_dict()`. Both services import and call it.
+
+### Issue 3 — ~~Recipe parsing duplicated between wizard and assistant~~ ✅ Fixed (Phase 2)
 *Location: wizard_generation/service.py → _parse_recipe(data: dict) and assistant/generators.py → _generate_recipe_from_args() inline.*
 
 Both deserialize the same JSON shape into a recipe DTO. The only difference is the output type — wizard uses WizardGeneratedRecipeDTO, assistant uses GeneratedRecipeDTO. When you look at these two DTOs side by side, GeneratedRecipeDTO is just a strict subset of WizardGeneratedRecipeDTO — it's missing description, prep_time, cook_time, and difficulty. The assistant silently drops those fields during generation.
@@ -26,7 +30,9 @@ This is both a duplication issue and a data fidelity issue — if the assistant 
 
 > Fix: Two-part. First, retire GeneratedRecipeDTO and have the assistant use RecipeGeneratedDTO instead (it already has all the fields — this is the renamed WizardGeneratedRecipeDTO from Phase 2). Second, extract `parse_utils.parse_recipe_dict(data: dict) → RecipeGeneratedDTO` and use it in both services. url_import will use this exact same function.
 
-### Issue 4 — recipe_category enum is hardcoded but should be user-defined
+**Resolution:** `GeneratedRecipeDTO` retired. Both services use `RecipeGeneratedDTO`. Shared `parse_recipe_dict()` in `parse_utils.py`. Assistant now calls `get_recipe_generation_service()` instead of inline generation.
+
+### Issue 4 — ~~recipe_category enum is hardcoded but should be user-defined~~ ✅ Fixed (Phase 2)
 This one is more consequential than it first appears. The wizard prompt hardcodes 10 category values and the assistant hardcodes 6 different ones — but the deeper problem isn't the mismatch between services, it's that neither should be hardcoded at all.
 
 Recipe categories are user-configured at runtime. The app already supports built-in defaults that can be toggled, plus fully custom user-created categories. A static enum in a prompt can never reflect that — it will always be out of sync for any user who has customized their list, and it means a recipe generated with categories like "Weeknight Meals" or "Testing 123" would fall back to "other" because the AI was never told those were valid options.
@@ -42,34 +48,40 @@ Additionally, the free-text cuisine field in the AI generation preferences panel
 
 No recipe_constants.py needed — the source of truth is the user's settings, not a file.
 
-### Issue 5 — Nutrition estimation uses a fragile JSON regex
-*Location: nutrition_estimation/service.py → re.search(r"\{[^}]+\}", raw_text, re.DOTALL)*
+**Resolution:** `cuisine` replaced with `category` + `allowed_categories` on the DTO. API layer fetches user categories. Prompt uses dynamic interpolation. Frontend uses Category `<Select>` dropdown.
+
+### Issue 5 — Nutrition estimation uses a fragile JSON regex ⏳ Open (Phase 4)
+*Location: nutrition_estimation.py → re.search(r"\{[^}]+\}", raw_text, re.DOTALL)*
 
 This regex matches from the first { to the first }. It will fail silently on any JSON that contains nested objects — and NutritionFactsDTO fields are all at the top level, so it happens to work right now, but it's one field change away from breaking.
 
-Meanwhile `wizard_generation` and the assistant recipe generator both use `response_mime_type: "application/json"` in the Gemini config, which forces clean JSON output and makes the regex unnecessary entirely.
+Meanwhile `recipe_generation` and the assistant recipe generator both use `response_mime_type: "application/json"` in the Gemini config, which forces clean JSON output and makes the regex unnecessary entirely.
 
 > Fix: Add `response_mime_type: "application/json"` to the nutrition estimation call and remove the regex. Consistent with how the other JSON-producing calls already work.
 
-### Issue 6 — Dead import in wizard_generation/service.py
+### Issue 6 — ~~Dead import / inconsistent config patterns~~ ⚠️ Partially Fixed (Phases 2 + 3)
 Line 1 of the generate() method: from google.genai import types — imported but never used. The config dict is used instead (config={...}), which is correct and the pattern you should be using everywhere.
 
 Secondary: `cooking_tips` and `nutrition_estimation` still use `types.GenerateContentConfig(...)` for their call config. Both patterns work but this will be standardized to dict config when those services are flattened in Phase 3 — no separate action needed.
 
-### Issue 7 — Dead legacy code in user_context_builder.py
+**Resolution (Phase 3):** `cooking_tips`, `nutrition_estimation`, and `meal_suggestions` all standardized to dict config. Dead `from google.genai import types` imports removed from all three flat modules.
+
+**Remaining (Phase 4):** `recipe_generation/service.py` still has the dead `from google.genai import types` import.
+
+### Issue 7 — Dead legacy code in user_context_builder.py ⏳ Open (Phase 4)
 The class has two parallel APIs. The modern one (`build_context_data()`) is what *assistant.py* actually calls (confirmed in the API layer). The legacy string-based one — `build_context()`, `_build_recipes_context()`, `_build_meal_plan_context()`, `_build_shopping_context()` — is never called from anywhere in the API layer. That's roughly 50 lines that exist purely to confuse future maintainers.
 
 > Fix: Delete the four legacy methods. If nothing calls them, they're gone. `build_context_data()` is the real API.
 
-## Overall Structure Issues
-In addition to the specific issues above, there are some broader structure and naming issues that make the codebase harder to navigate and maintain:
-- The recipe generation logic is split between two services (`wizard_generation` and `assistant/generators`) with different DTOs and parsing logic. This should be consolidated into a single recipe_generation service with a shared DTO and parsing function.
-- The cooking tips, nutrition estimation, and assistant suggestions services all have their own subdirectories with a single service.py file inside. This is overkill for such small services and adds unnecessary nesting. They should be flattened to *cooking_tips.py*, *nutrition_estimation.py*, and *meal_suggestions.py* (also renaming assistant_suggestions to meal_suggestions for clarity and consistency).
+## Overall Structure Issues — ✅ All Resolved
+In addition to the specific issues above, there were broader structure and naming issues that made the codebase harder to navigate and maintain:
+- ~~The recipe generation logic is split between two services (`wizard_generation` and `assistant/generators`) with different DTOs and parsing logic.~~ **Fixed (Phase 2):** Consolidated into `recipe_generation/` with shared `RecipeGeneratedDTO` and `parse_recipe_dict()`. Assistant delegates to `get_recipe_generation_service()`.
+- ~~The cooking tips, nutrition estimation, and assistant suggestions services all have their own subdirectories with a single service.py file inside.~~ **Fixed (Phase 3):** Flattened to `cooking_tips.py`, `nutrition_estimation.py`, and `meal_suggestions.py` (renamed from `assistant_suggestions`).
 
 ## Action Plan
 This is a multi-phase plan to audit and clean up the AI services. Each phase builds on the previous one, so they should be done in order. The audit numbers correspond to the issues outlined above.
 
-### Phase 1: Shared Parsing Utilities
+### Phase 1: Shared Parsing Utilities ✅
 - [x] Create parse_utils.py — New file in services/ai/ — audit #1
 - [x] Move safe_int / safe_float into it — Remove from wizard_generation and nutrition_estimation — audit #1
 - [x] Add parse_nutrition_dict() to parse_utils — Extract from wizard, replace inline version in nutrition estimation — audit #2
@@ -92,7 +104,7 @@ This is a multi-phase plan to audit and clean up the AI services. Each phase bui
 
 **Test results:** 63/63 tests passing, zero regressions.
 
-### Phase 2: Rename & Consolidate Recipe Generation
+### Phase 2: Rename & Consolidate Recipe Generation ✅
 - [x] Rename wizard_generation/ → recipe_generation/ — Update all imports across api, services, tests — naming
 - [x] Rename DTOs — drop Wizard prefix — WizardGeneratedRecipeDTO → RecipeGeneratedDTO, etc. — naming
 - [x] Add parse_recipe_dict() to parse_utils — Extract from (now renamed) recipe generation service — audit #3
@@ -144,10 +156,39 @@ This is a multi-phase plan to audit and clean up the AI services. Each phase bui
 
 **Test results:** 141/141 backend tests passing. Frontend TypeScript compiles clean (only pre-existing unrelated `.next/types` error).
 
-### Phase 3: Flatten Small Services
-- [ ] Flatten cooking_tips/ → cooking_tips.py — Fold config constants into top of file, standardize to dict config, delete subdirectory — structure + audit #6
-- [ ] Flatten nutrition_estimation/ → nutrition_estimation.py — Fold config constants into top of file, standardize to dict config, delete subdirectory — structure + audit #6
-- [ ] Flatten + rename assistant_suggestions/ → meal_suggestions.py — Fix directory/class/DTO name inconsistency in one pass — structure
+### Phase 3: Flatten Small Services ✅
+- [x] Flatten cooking_tips/ → cooking_tips.py — Fold config constants into top of file, standardize to dict config, delete subdirectory — structure + audit #6
+- [x] Flatten nutrition_estimation/ → nutrition_estimation.py — Fold config constants into top of file, standardize to dict config, delete subdirectory — structure + audit #6
+- [x] Flatten + rename assistant_suggestions/ → meal_suggestions.py — Fix directory/class/DTO name inconsistency in one pass — structure
+
+**Phase 3 is complete. Here's a summary of what was done:**
+
+**Created (flat modules replacing package directories):**
+- `app/services/ai/cooking_tips.py` — CookingTipService + config constants + dict config
+- `app/services/ai/nutrition_estimation.py` — NutritionEstimationService + config constants + dict config
+- `app/services/ai/meal_suggestions.py` — MealSuggestionsService + config constants + dict config (renamed from assistant_suggestions)
+
+**Updated:**
+- `app/api/ai/meal_suggestions.py` — Import path changed from `assistant_suggestions` to `meal_suggestions`
+- `app/services/ai/__init__.py` — Docstring updated to reflect flat module imports
+- `tests/test_nutrition_service.py` — Import path and mock patch target updated for flat module
+
+**Deleted (old package directories):**
+- `app/services/ai/cooking_tips/` (3 files: `__init__.py`, `config.py`, `service.py`)
+- `app/services/ai/nutrition_estimation/` (3 files: `__init__.py`, `config.py`, `service.py`)
+- `app/services/ai/assistant_suggestions/` (3 files: `__init__.py`, `config.py`, `service.py`)
+
+**Standardization applied:**
+- All three services now use dict config (`config={"temperature": ..., "max_output_tokens": ...}`) instead of `types.GenerateContentConfig(...)`
+- Removed `from google.genai import types` dead imports from all three services (audit #6 partially addressed)
+- Removed separate `ImportError` catch blocks — the `google.genai` import is no longer done inside methods
+
+**Not changed (intentionally out of scope):**
+- The fragile JSON regex in nutrition_estimation (audit #5, Phase 4)
+- The `from google.genai import types` dead import in recipe_generation (audit #6, Phase 4)
+- Legacy methods in user_context_builder.py (audit #7, Phase 4)
+
+**Test results:** 141/141 tests passing, zero regressions.
 
 ### Phase 4: Cleanup
 - [ ] Fix nutrition estimation JSON parsing — Remove regex, add response_mime_type: "application/json" — audit #5
