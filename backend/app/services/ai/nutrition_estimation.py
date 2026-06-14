@@ -8,6 +8,7 @@ from app.dtos.nutrition_dtos import (
     NutritionEstimationRequestDTO,
     NutritionEstimationResponseDTO,
 )
+from app.services.ai.config import GEMINI_MODEL
 from app.services.ai.gemini_client import get_gemini_client
 from app.services.ai.parse_utils import parse_nutrition_dict
 from app.services.ai.response_utils import extract_text_from_response
@@ -15,7 +16,7 @@ from app.services.ai.response_utils import extract_text_from_response
 logger = logging.getLogger(__name__)
 
 # ── Model settings ───────────────────────────────────────────────────────
-MODEL_NAME = "gemini-2.0-flash"
+MODEL_NAME = GEMINI_MODEL
 TEMPERATURE = 0.3  # Low temperature for factual accuracy
 MAX_OUTPUT_TOKENS = 1024
 

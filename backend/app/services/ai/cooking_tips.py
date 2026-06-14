@@ -8,6 +8,7 @@ from collections import deque
 from typing import Optional
 
 from app.dtos.cooking_tip_dtos import CookingTipResponseDTO
+from app.services.ai.config import GEMINI_MODEL
 from app.services.ai.gemini_client import get_gemini_client
 from app.services.ai.response_utils import extract_text_from_response
 from app.services.ai.text_utils import clean_tip
@@ -15,7 +16,7 @@ from app.services.ai.text_utils import clean_tip
 logger = logging.getLogger(__name__)
 
 # ── Model settings ───────────────────────────────────────────────────────
-MODEL_NAME = "gemini-2.0-flash"
+MODEL_NAME = GEMINI_MODEL
 TEMPERATURE = 0.9  # High temperature for variety
 MAX_OUTPUT_TOKENS = 150  # Constrain output length
 

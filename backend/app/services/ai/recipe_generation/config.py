@@ -1,7 +1,9 @@
 """Configuration for the Recipe Generation AI service."""
 
+from app.services.ai.config import GEMINI_MODEL
+
 # Model settings
-MODEL_NAME = "gemini-2.0-flash"
+MODEL_NAME = GEMINI_MODEL
 TEMPERATURE = 0.7  # Balanced creativity + consistency
 MAX_OUTPUT_TOKENS = 4096  # Full recipe needs more tokens than nutrition
 

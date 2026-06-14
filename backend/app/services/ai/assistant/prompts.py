@@ -3,8 +3,10 @@
 Defines the AI assistant's voice, response philosophy, and formatting guidelines.
 """
 
+from app.services.ai.config import GEMINI_ASSISTANT_MODEL
+
 # Model settings
-MODEL_NAME = "gemini-3-flash-preview"
+MODEL_NAME = GEMINI_ASSISTANT_MODEL
 API_KEY_ENV_VAR = "GEMINI_ASSISTANT_API_KEY"
 
 # ============================================================================

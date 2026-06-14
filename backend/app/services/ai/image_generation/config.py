@@ -1,11 +1,16 @@
 """Configuration for the Image Generation AI service."""
 
+from app.services.ai.config import GEMINI_IMAGE_MODEL
+
 # Model settings
-MODEL_NAME = "gemini-2.5-flash-image"
+MODEL_NAME = GEMINI_IMAGE_MODEL
 
 # Aspect ratios
 ASPECT_RATIO = "1:1"  # Square format for reference/thumbnail images
 BANNER_ASPECT_RATIO = "21:9"  # Ultrawide format for banner images (Gemini's widest)
+
+# Output resolution (valid: "512", "1K", "2K", "4K")
+BANNER_IMAGE_SIZE = "2K"
 
 # Environment variable for API key
 API_KEY_ENV_VAR = "GEMINI_IMAGE_API_KEY"

@@ -13,6 +13,7 @@ from .config import (
     MODEL_NAME,
     ASPECT_RATIO,
     BANNER_ASPECT_RATIO,
+    BANNER_IMAGE_SIZE,
     API_KEY_ENV_VAR,
 )
 
@@ -26,7 +27,11 @@ class ImageGenerationService:
         get_gemini_client(API_KEY_ENV_VAR)
 
     def generate_recipe_image(
-        self, recipe_name: str, custom_prompt: str = None, aspect_ratio: str = "1:1"
+        self,
+        recipe_name: str,
+        custom_prompt: str = None,
+        aspect_ratio: str = "1:1",
+        image_size: str = None,
     ) -> dict:
         """Generate an AI image for a recipe.
 
@@ -34,6 +39,7 @@ class ImageGenerationService:
             recipe_name: The name of the recipe to generate an image for.
             custom_prompt: Optional custom prompt template (must include {recipe_name}).
             aspect_ratio: Image aspect ratio (default "1:1").
+            image_size: Output resolution (e.g. "1K", "2K", "4K"). None uses model default.
 
         Returns:
             dict with 'success', 'image_data' (base64), and optional 'error'.
@@ -58,15 +64,17 @@ class ImageGenerationService:
             )
             prompt = template.format(recipe_name=recipe_name.strip())
 
-            # Generate the image with specified aspect ratio
+            # Generate the image with specified aspect ratio and resolution
+            image_config_kwargs = {"aspect_ratio": aspect_ratio}
+            if image_size:
+                image_config_kwargs["image_size"] = image_size
+
             response = client.models.generate_content(
                 model=MODEL_NAME,
                 contents=[prompt],
                 config=types.GenerateContentConfig(
                     response_modalities=["IMAGE"],
-                    image_config=types.ImageConfig(
-                        aspect_ratio=aspect_ratio,
-                    ),
+                    image_config=types.ImageConfig(**image_config_kwargs),
                 ),
             )
 
@@ -129,6 +137,7 @@ class ImageGenerationService:
                     response_modalities=["IMAGE"],
                     image_config=types.ImageConfig(
                         aspect_ratio=BANNER_ASPECT_RATIO,
+                        image_size=BANNER_IMAGE_SIZE,
                     ),
                 ),
             )
@@ -201,6 +210,7 @@ class ImageGenerationService:
                 recipe_name,
                 custom_prompt=BANNER_PROMPT_TEMPLATE,
                 aspect_ratio=BANNER_ASPECT_RATIO,
+                image_size=BANNER_IMAGE_SIZE,
             )
 
         if banner_result["success"]:
