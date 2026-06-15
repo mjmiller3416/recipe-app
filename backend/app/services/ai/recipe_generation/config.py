@@ -5,7 +5,7 @@ from app.services.ai.config import GEMINI_MODEL
 # Model settings
 MODEL_NAME = GEMINI_MODEL
 TEMPERATURE = 0.7  # Balanced creativity + consistency
-MAX_OUTPUT_TOKENS = 4096  # Full recipe needs more tokens than nutrition
+MAX_OUTPUT_TOKENS = 8192  # Extra headroom for thinking tokens + full recipe JSON
 
 # Environment variable for API key (reuses the assistant key)
 API_KEY_ENV_VAR = "GEMINI_RECIPE_GENERATION_API_KEY"

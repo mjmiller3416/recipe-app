@@ -96,7 +96,7 @@ Be warm, enthusiastic, and use 2-4 emojis naturally placed."""
         gen_response = client.models.generate_content(
             model=MODEL_NAME,
             contents=contents + [{"role": "user", "parts": [{"text": prompt}]}],
-            config={"temperature": 0.8},
+            config={"temperature": 0.8, "thinking_config": {"thinking_budget": 0}},
         )
 
         # Extract the text
@@ -124,7 +124,7 @@ Use your friendly Meal Genie personality."""
         gen_response = client.models.generate_content(
             model=MODEL_NAME,
             contents=contents + [{"role": "user", "parts": [{"text": prompt}]}],
-            config={"temperature": 0.8},
+            config={"temperature": 0.8, "thinking_config": {"thinking_budget": 0}},
         )
 
         final_text = extract_text_from_response(gen_response) or "Let me help with that!"

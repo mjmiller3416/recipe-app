@@ -22,7 +22,7 @@ TEMPERATURE = 0.3  # Low temperature for factual accuracy
 MAX_OUTPUT_TOKENS = 1024
 
 # Environment variable for API key
-API_KEY_ENV_VAR = "GEMINI_NUTRITION_API_KEY"
+API_KEY_ENV_VAR = "GEMINI_RECIPE_GENERATION_API_KEY"
 
 # Prompt template for estimating nutrition facts
 PROMPT_TEMPLATE = """You are a professional nutritionist. Estimate the nutrition facts PER SERVING for this recipe.
@@ -122,6 +122,7 @@ class NutritionEstimationService:
                     "temperature": TEMPERATURE,
                     "max_output_tokens": MAX_OUTPUT_TOKENS,
                     "response_mime_type": "application/json",
+                    "thinking_config": {"thinking_budget": 0},
                 },
             )
 
@@ -131,6 +132,7 @@ class NutritionEstimationService:
                     success=False, error="No response from AI model"
                 )
 
+            logger.debug(f"[Nutrition] Raw response: {raw_text[:500]}")
             data = _extract_json(raw_text)
 
             nutrition = parse_nutrition_dict(data)

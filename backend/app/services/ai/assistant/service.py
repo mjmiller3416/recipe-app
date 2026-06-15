@@ -159,6 +159,9 @@ class AssistantServiceCore:
                 continue
 
             for part in candidate.content.parts:
+                if hasattr(part, "thought") and part.thought:
+                    continue
+
                 # Check for function call
                 if hasattr(part, "function_call") and part.function_call:
                     return self._handle_function_call(

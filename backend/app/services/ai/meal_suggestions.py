@@ -83,6 +83,7 @@ class MealSuggestionsService:
                 config={
                     "temperature": TEMPERATURE,
                     "max_output_tokens": MAX_OUTPUT_TOKENS,
+                    "thinking_config": {"thinking_budget": 0},
                 },
             )
 
