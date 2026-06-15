@@ -160,6 +160,7 @@ class AssistantServiceCore:
         # otherwise we'd return the preamble as a plain chat reply and never
         # execute the tool, dropping the suggestions/recipe entirely.
         function_call = None
+        model_turn = None
         text_response = None
 
         for candidate in response.candidates:
@@ -177,6 +178,11 @@ class AssistantServiceCore:
                     and part.function_call
                 ):
                     function_call = part.function_call
+                    # Preserve the model's turn verbatim — Gemini 3.x attaches a
+                    # thought_signature to the function_call part that MUST be
+                    # replayed when continuing the tool conversation, otherwise
+                    # the follow-up call fails with MALFORMED_FUNCTION_CALL.
+                    model_turn = candidate.content
                     continue
 
                 # Capture the first non-empty text part as a fallback.
@@ -195,6 +201,7 @@ class AssistantServiceCore:
                 dict(function_call.args) if function_call.args else {},
                 user_context_data,
                 contents,
+                model_turn,
             )
 
         # No tool call — this was a plain conversational reply.
@@ -212,6 +219,7 @@ class AssistantServiceCore:
         args: dict,
         context_data: Optional[dict],
         contents: list,
+        model_turn=None,
     ) -> dict:
         """Execute a function call and return appropriate response.
 

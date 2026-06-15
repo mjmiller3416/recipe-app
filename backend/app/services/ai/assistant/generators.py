@@ -17,6 +17,7 @@ from app.services.ai.recipe_generation import get_recipe_generation_service
 from app.services.ai.response_utils import extract_text_from_response
 
 from .prompts import MODEL_NAME, API_KEY_ENV_VAR
+from .tools import TOOL_DEFINITIONS
 
 logger = logging.getLogger(__name__)
 
@@ -30,13 +31,16 @@ class GeneratorsMixin:
         args: dict,
         context_data: Optional[dict],
         contents: list,
+        model_turn=None,
     ) -> dict:
         """Execute a function call and return appropriate response."""
 
         if tool_name == "suggest_recipes":
             # Immediate Generation Loop: The function call tells us the user wants
             # suggestions, but we need to generate the actual text response.
-            return self._generate_suggestions_response(args, context_data, contents)
+            return self._generate_suggestions_response(
+                args, context_data, contents, model_turn
+            )
 
         elif tool_name == "create_recipe":
             # Generate a full recipe with structured JSON
@@ -50,17 +54,90 @@ class GeneratorsMixin:
 
         elif tool_name == "answer_cooking_question":
             # For cooking questions, we use a follow-up call to get a proper response
-            return self._generate_cooking_answer(args, contents)
+            return self._generate_cooking_answer(args, contents, model_turn)
 
         # Fallback
         return {"type": "chat", "response": None}
 
-    def _generate_suggestions_response(
-        self, args: dict, context_data: Optional[dict], contents: list
-    ) -> dict:
-        """Generate recipe suggestions text based on tool arguments."""
+    def _finalize_after_tool_call(
+        self,
+        contents: list,
+        model_turn,
+        tool_name: str,
+        instruction: str,
+        fallback: str,
+    ) -> str:
+        """Continue a Gemini function-calling turn to produce the final text.
+
+        Gemini 3.x requires the model's original ``function_call`` part (which
+        carries a ``thought_signature``) to be replayed, immediately followed by
+        a matching ``function_response`` part, with the tool declarations still
+        present in the request. We then ask the model to finalize its answer with
+        ``mode: NONE`` so it returns natural-language text instead of attempting
+        another tool call.
+
+        The previous implementation appended a *fresh user text prompt* without
+        the function_call/function_response pair. Under Gemini 3.x that returns
+        ``finish_reason=MALFORMED_FUNCTION_CALL`` with no content, which silently
+        collapsed to the canned ``fallback`` string — the assistant appeared to
+        "do nothing" with no backend error.
+
+        Args:
+            contents: The conversation contents sent on the initial tool call.
+            model_turn: The model's response Content holding the function_call
+                part (with its thought_signature). May be ``None`` in tests.
+            tool_name: Name of the tool that was called.
+            instruction: Natural-language instruction describing the text to
+                generate (carried in the function_response payload).
+            fallback: Text to return if the model yields no usable text.
+
+        Returns:
+            The generated text, or ``fallback`` if none was produced.
+        """
         client = get_gemini_client(API_KEY_ENV_VAR)
 
+        follow_contents = list(contents)
+        if model_turn is not None:
+            follow_contents.append(model_turn)
+            follow_contents.append(
+                {
+                    "role": "user",
+                    "parts": [
+                        {
+                            "function_response": {
+                                "name": tool_name,
+                                "response": {"status": "ok", "instruction": instruction},
+                            }
+                        }
+                    ],
+                }
+            )
+        else:
+            # Defensive path (e.g. unit tests with no real model turn).
+            follow_contents.append(
+                {"role": "user", "parts": [{"text": instruction}]}
+            )
+
+        gen_response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=follow_contents,
+            config={
+                "tools": [{"function_declarations": TOOL_DEFINITIONS}],
+                "tool_config": {"function_calling_config": {"mode": "NONE"}},
+                "temperature": 0.8,
+            },
+        )
+
+        return extract_text_from_response(gen_response) or fallback
+
+    def _generate_suggestions_response(
+        self,
+        args: dict,
+        context_data: Optional[dict],
+        contents: list,
+        model_turn=None,
+    ) -> dict:
+        """Generate recipe suggestions text based on tool arguments."""
         # Build a prompt that includes context about what the user wants
         context_parts = []
         if args.get("main_ingredient"):
@@ -92,15 +169,14 @@ Follow the 'RECIPE SUGGESTIONS' format from your system instructions:
 
 Be warm, enthusiastic, and use 2-4 emojis naturally placed."""
 
-        # Make a follow-up call to generate the suggestions text
-        gen_response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=contents + [{"role": "user", "parts": [{"text": prompt}]}],
-            config={"temperature": 0.8, "thinking_config": {"thinking_budget": 0}},
+        # Continue the tool conversation to generate the suggestions text.
+        final_text = self._finalize_after_tool_call(
+            contents,
+            model_turn,
+            "suggest_recipes",
+            prompt,
+            "Here are some ideas! 🍳",
         )
-
-        # Extract the text
-        final_text = extract_text_from_response(gen_response) or "Here are some ideas! 🍳"
 
         return {
             "type": "suggestions",
@@ -108,10 +184,10 @@ Be warm, enthusiastic, and use 2-4 emojis naturally placed."""
             "tool_args": args,
         }
 
-    def _generate_cooking_answer(self, args: dict, contents: list) -> dict:
+    def _generate_cooking_answer(
+        self, args: dict, contents: list, model_turn=None
+    ) -> dict:
         """Generate a cooking question answer."""
-        client = get_gemini_client(API_KEY_ENV_VAR)
-
         question_type = args.get("question_type", "general")
         context = args.get("context", "")
 
@@ -121,13 +197,13 @@ Be warm and helpful. Start with the most direct answer, then add one pro tip.
 Keep it concise (2-4 sentences unless it needs more detail).
 Use your friendly Meal Genie personality."""
 
-        gen_response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=contents + [{"role": "user", "parts": [{"text": prompt}]}],
-            config={"temperature": 0.8, "thinking_config": {"thinking_budget": 0}},
+        final_text = self._finalize_after_tool_call(
+            contents,
+            model_turn,
+            "answer_cooking_question",
+            prompt,
+            "Let me help with that!",
         )
-
-        final_text = extract_text_from_response(gen_response) or "Let me help with that!"
 
         return {
             "type": "chat",
