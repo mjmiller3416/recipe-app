@@ -21,7 +21,7 @@ import {
 import { NumberStepper } from "@/components/ui/numeric-stepper";
 import { MEAL_TYPE_OPTIONS, DIETARY_PREFERENCES } from "@/lib/constants";
 import { useCategoryOptions } from "@/hooks/api";
-import { ImageUploadCard } from "@/app/recipes/_components/add-edit/ImageUploadCard";
+import { ImageUploadCard } from "@/app/recipes/_components/shared/ImageUploadCard";
 import type { WizardFormValues } from "../wizardSchema";
 
 // ============================================================================

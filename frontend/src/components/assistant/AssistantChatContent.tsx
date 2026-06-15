@@ -1,20 +1,17 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Sparkles, Send, X, Minimize2, Maximize2, Minus, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChatHistory } from "@/hooks/persistence";
 import { useAssistantChat } from "@/hooks/api/useAI";
 import { useChatScroll } from "@/hooks/ui";
+import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ChatMessageList } from "./ChatMessageList";
 import type { RecipeGeneratedDTO } from "@/types/ai";
-
-// Session storage key for AI-generated recipe (must match useRecipeForm.ts)
-const AI_RECIPE_STORAGE_KEY = "meal-genie-generated-recipe";
 
 interface AssistantChatContentProps {
   onClose: () => void;
@@ -35,7 +32,7 @@ export function AssistantChatContent({
   onCollapse,
   isMobile = false,
 }: AssistantChatContentProps) {
-  const router = useRouter();
+  const { openWizardWithRecipe } = useRecipeWizardDialog();
   const [input, setInput] = useState("");
   const { messages, addMessage, clearHistory } = useChatHistory();
   const chatMutation = useAssistantChat();
@@ -98,13 +95,17 @@ export function AssistantChatContent({
     }
   }, [input, chatMutation, messages, addMessage, isMinimized, onExpand]);
 
-  // Navigate to recipe form when user clicks "View Recipe Draft"
+  // Open the recipe wizard pre-filled with the generated draft for review/edit
   const handleViewRecipe = useCallback(() => {
     if (!pendingRecipe) return;
-    sessionStorage.setItem(AI_RECIPE_STORAGE_KEY, JSON.stringify(pendingRecipe));
-    router.push("/recipes/add?from=ai");
+    openWizardWithRecipe({
+      success: true,
+      recipe: pendingRecipe.recipe,
+      reference_image_data: pendingRecipe.referenceImageData ?? undefined,
+      banner_image_data: pendingRecipe.bannerImageData ?? undefined,
+    });
     setPendingRecipe(null);
-  }, [pendingRecipe, router]);
+  }, [pendingRecipe, openWizardWithRecipe]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {

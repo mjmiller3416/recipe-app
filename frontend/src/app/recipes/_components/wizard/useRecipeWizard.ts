@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,6 +12,8 @@ import { recipeApi, ingredientApi, uploadApi, recipeGenerationApi, ApiError } fr
 import { base64ToFile } from "@/lib/utils";
 import type {
   RecipeCreateDTO,
+  RecipeUpdateDTO,
+  RecipeResponseDTO,
   RecipeIngredientDTO,
   NutritionFactsCreateDTO,
   WizardCreationMethod,
@@ -41,11 +43,23 @@ const LAST_STEP: WizardStep = 5;
 
 interface UseRecipeWizardOptions {
   onSave?: () => void;
+  /** "create" (default) builds a new recipe; "edit" loads and updates an existing one. */
+  mode?: "create" | "edit";
+  /** Recipe to load when mode is "edit". */
+  recipeId?: number | null;
+  /** Generated recipe used to pre-fill a create-mode wizard (e.g. from Meal Genie). */
+  initialGenerated?: RecipeGenerationResponseDTO | null;
 }
 
-export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
+export function useRecipeWizard({
+  onSave,
+  mode = "create",
+  recipeId = null,
+  initialGenerated = null,
+}: UseRecipeWizardOptions = {}) {
   const router = useRouter();
   const { getToken } = useAuth();
+  const isEditMode = mode === "edit";
 
   // ---------------------------------------------------------------------------
   // React Hook Form (replaces individual useState for recipe fields)
@@ -112,6 +126,20 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
   // Submission
   // ---------------------------------------------------------------------------
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ---------------------------------------------------------------------------
+  // Edit mode (non-form) — existing image paths and load/init tracking
+  // ---------------------------------------------------------------------------
+  const [originalImagePath, setOriginalImagePath] = useState<string | null>(null);
+  const [originalBannerPath, setOriginalBannerPath] = useState<string | null>(null);
+  const [isLoadingRecipe, setIsLoadingRecipe] = useState(isEditMode);
+  const [isInitialized, setIsInitialized] = useState(!isEditMode);
+  // Tracks whether the user changed non-form state (images / nutrition) so the
+  // close prompt fires in edit mode even when the form itself is pristine.
+  const [extrasDirty, setExtrasDirty] = useState(false);
+
+  // form.formState.isDirty (subscribed) — basis for the edit-mode dirty check.
+  const { isDirty: formIsDirty } = form.formState;
 
   // ---------------------------------------------------------------------------
   // Fetch available ingredients on mount
@@ -254,6 +282,7 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
       const file = e.target.files?.[0];
       if (!file) return;
 
+      setExtrasDirty(true);
       setImageFile(file);
       setBannerFile(null);
       setIsAiGenerated(false);
@@ -271,6 +300,7 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
 
   const handleGeneratedImageAccept = useCallback(
     (refBase64: string, refDataUrl: string, bannerBase64?: string): void => {
+      setExtrasDirty(true);
       setImagePreview(refDataUrl);
       setGeneratedRefData(refBase64);
       setIsAiGenerated(true);
@@ -288,6 +318,7 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
   );
 
   const handleBannerOnlyAccept = useCallback((bannerBase64: string): void => {
+    setExtrasDirty(true);
     setGeneratedBannerData(bannerBase64);
     const banner = base64ToFile(bannerBase64, "recipe-ai-banner.png");
     setBannerFile(banner);
@@ -369,6 +400,129 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
   );
 
   // ---------------------------------------------------------------------------
+  // Edit mode: populate wizard form from an existing recipe
+  // ---------------------------------------------------------------------------
+  const populateFromRecipe = useCallback(
+    (recipe: RecipeResponseDTO): void => {
+      const ingredients: WizardIngredient[] =
+        recipe.ingredients.length > 0
+          ? recipe.ingredients.map((ing) => ({
+              id: uuidv4(),
+              ingredientName: ing.ingredient_name,
+              ingredientCategory: ing.ingredient_category || "",
+              quantity: ing.quantity != null ? String(ing.quantity) : "",
+              unit: ing.unit || "",
+              existingIngredientId: null,
+            }))
+          : [createEmptyIngredient()];
+
+      const directionLines = (recipe.directions || "")
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
+      const directions: WizardDirection[] =
+        directionLines.length > 0
+          ? directionLines.map((text) => ({ id: uuidv4(), text }))
+          : [createEmptyDirection()];
+
+      // form.reset (not setValue) so the populated values become the new
+      // baseline — form.formState.isDirty then reflects real user edits.
+      form.reset({
+        recipeName: recipe.recipe_name || "",
+        description: recipe.description || "",
+        prepTime: recipe.prep_time ?? 0,
+        cookTime: recipe.cook_time ?? 0,
+        servings: recipe.servings ?? 4,
+        difficulty: recipe.difficulty || "",
+        mealType: recipe.meal_type || "",
+        category: recipe.recipe_category || "",
+        dietaryPreference: recipe.diet_pref || "none",
+        ingredients,
+        directions,
+        notes: recipe.notes || "",
+      });
+
+      // Existing images (non-form). Keep paths so we only re-upload on change.
+      setImagePreview(recipe.reference_image_path);
+      setOriginalImagePath(recipe.reference_image_path);
+      setOriginalBannerPath(recipe.banner_image_path);
+      setIsAiGenerated(recipe.is_ai_generated);
+
+      // Existing nutrition (non-form)
+      if (recipe.nutrition_facts) {
+        const nf = recipe.nutrition_facts;
+        setNutritionFacts({
+          calories: nf.calories,
+          protein_g: nf.protein_g,
+          total_fat_g: nf.total_fat_g,
+          saturated_fat_g: nf.saturated_fat_g,
+          trans_fat_g: nf.trans_fat_g,
+          cholesterol_mg: nf.cholesterol_mg,
+          sodium_mg: nf.sodium_mg,
+          total_carbs_g: nf.total_carbs_g,
+          dietary_fiber_g: nf.dietary_fiber_g,
+          total_sugars_g: nf.total_sugars_g,
+          is_ai_estimated: nf.is_ai_estimated,
+        });
+      }
+    },
+    [form]
+  );
+
+  // Wrapped nutrition setter — marks non-form state dirty for the close prompt.
+  const handleNutritionChange = useCallback(
+    (facts: NutritionFactsDTO | null): void => {
+      setExtrasDirty(true);
+      setNutritionFacts(facts);
+    },
+    []
+  );
+
+  // ---------------------------------------------------------------------------
+  // Edit mode: fetch the recipe once and seed the wizard at the basics step
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!isEditMode || isInitialized || !recipeId) return;
+
+    let cancelled = false;
+    const loadRecipe = async (): Promise<void> => {
+      try {
+        const token = await getToken();
+        const recipe = await recipeApi.get(recipeId, token);
+        if (cancelled) return;
+        populateFromRecipe(recipe);
+        setCreationMethod("manual");
+        setCurrentStep(2);
+        setIsInitialized(true);
+      } catch (error) {
+        console.error("Failed to load recipe for editing:", error);
+        toast.error("Failed to load recipe.");
+      } finally {
+        if (!cancelled) setIsLoadingRecipe(false);
+      }
+    };
+    loadRecipe();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditMode, isInitialized, recipeId, getToken, populateFromRecipe]);
+
+  // ---------------------------------------------------------------------------
+  // Create mode: seed from a pre-generated recipe (e.g. handed off by Meal Genie)
+  // ---------------------------------------------------------------------------
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (isEditMode || !initialGenerated || seededRef.current) return;
+    seededRef.current = true;
+    populateFromGeneration(initialGenerated);
+    setIsAiGenerated(true);
+    setExtrasDirty(true);
+    setCreationMethod("manual");
+    setCurrentStep(2);
+  }, [isEditMode, initialGenerated, populateFromGeneration]);
+
+  // ---------------------------------------------------------------------------
   // AI generation: call API
   // ---------------------------------------------------------------------------
   const handleWizardGenerate = useCallback(async (): Promise<void> => {
@@ -430,6 +584,11 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
   // Computed: has the user entered any meaningful data?
   // ---------------------------------------------------------------------------
   const hasUnsavedData = useMemo(() => {
+    // Edit mode pre-fills the form, so "any data present" is always true.
+    // Prompt only when the user has actually changed something.
+    if (isEditMode) {
+      return formIsDirty || extrasDirty;
+    }
     return !!(
       watchedValues.recipeName.trim() ||
       watchedValues.description.trim() ||
@@ -440,7 +599,7 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
       aiPrompt.trim() ||
       generatedRecipe
     );
-  }, [watchedValues, imagePreview, nutritionFacts, aiPrompt, generatedRecipe]);
+  }, [isEditMode, formIsDirty, extrasDirty, watchedValues, imagePreview, nutritionFacts, aiPrompt, generatedRecipe]);
 
   // ---------------------------------------------------------------------------
   // Reset wizard to initial state
@@ -463,6 +622,9 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
     setGenerationResponse(null);
     setIsGenerating(false);
     setAiError(null);
+    setOriginalImagePath(null);
+    setOriginalBannerPath(null);
+    setExtrasDirty(false);
   }, [form]);
 
   // ---------------------------------------------------------------------------
@@ -536,6 +698,77 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
           total_sugars_g: nutritionFacts.total_sugars_g,
           is_ai_estimated: nutritionFacts.is_ai_estimated,
         };
+      }
+
+      // ===================================================================
+      // EDIT MODE — update existing recipe, then redirect to its page
+      // ===================================================================
+      if (isEditMode) {
+        if (!recipeId) {
+          throw new Error("Recipe ID is required for edit mode");
+        }
+
+        // Reference image: re-upload only if the user changed it, else keep.
+        let refPath: string | null = originalImagePath;
+        if (imageFile) {
+          try {
+            const result = await uploadApi.uploadRecipeImage(imageFile, recipeId, "reference", token);
+            refPath = result.path;
+          } catch (uploadError) {
+            console.error("Failed to upload reference image:", uploadError);
+          }
+        } else if (generatedRefData) {
+          try {
+            const result = await uploadApi.uploadBase64Image(generatedRefData, recipeId, "reference", token);
+            refPath = result.path;
+          } catch (uploadError) {
+            console.error("Failed to upload AI reference image:", uploadError);
+          }
+        }
+
+        // Banner image: same approach.
+        let bannerPath: string | null = originalBannerPath;
+        if (bannerFile) {
+          try {
+            const result = await uploadApi.uploadRecipeImage(bannerFile, recipeId, "banner", token);
+            bannerPath = result.path;
+          } catch (uploadError) {
+            console.error("Failed to upload banner image:", uploadError);
+          }
+        } else if (generatedBannerData) {
+          try {
+            const result = await uploadApi.uploadBase64Image(generatedBannerData, recipeId, "banner", token);
+            bannerPath = result.path;
+          } catch (uploadError) {
+            console.error("Failed to upload AI banner image:", uploadError);
+          }
+        }
+
+        const updatePayload: RecipeUpdateDTO = {
+          recipe_name: values.recipeName.trim(),
+          recipe_category: values.category.trim(),
+          meal_type: values.mealType.trim(),
+          diet_pref: values.dietaryPreference === "none" ? null : values.dietaryPreference,
+          description: values.description.trim() || null,
+          total_time: totalTime,
+          prep_time: prep,
+          cook_time: cook,
+          servings: values.servings || null,
+          difficulty: values.difficulty || null,
+          directions: directionsText || null,
+          notes: values.notes.trim() || null,
+          ingredients: apiIngredients,
+          reference_image_path: refPath,
+          banner_image_path: bannerPath,
+          nutrition_facts: nutritionPayload,
+        };
+
+        await recipeApi.update(recipeId, updatePayload, token);
+
+        toast.success("Recipe updated successfully!");
+        onSave?.();
+        router.push(`/recipes/${recipeId}`);
+        return;
       }
 
       const payload: RecipeCreateDTO = {
@@ -643,16 +876,17 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
       onSave?.();
       router.push(`/recipes/${createdRecipe.id}`);
     } catch (error) {
-      console.error("Failed to create recipe:", error);
+      const verb = isEditMode ? "update" : "create";
+      console.error(`Failed to ${verb} recipe:`, error);
       if (error instanceof ApiError) {
         if (error.status === 409) {
           setCurrentStep(2);
           toast.error(error.message);
         } else {
-          toast.error(error.message || "Failed to create recipe.");
+          toast.error(error.message || `Failed to ${verb} recipe.`);
         }
       } else {
-        toast.error("Failed to create recipe. Please try again.");
+        toast.error(`Failed to ${verb} recipe. Please try again.`);
       }
     } finally {
       setIsSubmitting(false);
@@ -670,6 +904,10 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
     router,
     onSave,
     resetWizard,
+    isEditMode,
+    recipeId,
+    originalImagePath,
+    originalBannerPath,
   ]);
 
   // ---------------------------------------------------------------------------
@@ -722,6 +960,10 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
     // Form (react-hook-form — used by FormProvider and step components)
     form,
 
+    // Mode
+    isEditMode,
+    isLoadingRecipe,
+
     // Step navigation
     currentStep,
     goToStep,
@@ -742,7 +984,7 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
 
     // Nutrition
     nutritionFacts,
-    setNutritionFacts,
+    setNutritionFacts: handleNutritionChange,
 
     // AI generation
     aiPrompt,

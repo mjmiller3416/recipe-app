@@ -13,7 +13,7 @@ import { RecipeWizardView } from "@/app/recipes/_components/wizard/RecipeWizardV
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const [isAssistantOpen, setIsAssistantOpen] = useState(true);
-  const { isOpen, setOpen } = useRecipeWizardDialog();
+  const { isOpen, setOpen, mode, editRecipeId, generatedSeed, seedKey } = useRecipeWizardDialog();
 
   return (
     <div className="flex flex-col min-h-screen print:block print:min-h-0">
@@ -23,7 +23,20 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <AssistantPopup open={isAssistantOpen} onOpenChange={setIsAssistantOpen} />
-      <RecipeWizardView open={isOpen} onOpenChange={setOpen} />
+      <RecipeWizardView
+        key={
+          mode === "edit"
+            ? `edit-${editRecipeId}`
+            : generatedSeed
+              ? `gen-${seedKey}`
+              : "create"
+        }
+        open={isOpen}
+        onOpenChange={setOpen}
+        mode={mode}
+        recipeId={editRecipeId}
+        initialGenerated={generatedSeed}
+      />
     </div>
   );
 }

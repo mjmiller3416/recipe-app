@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Loader2, Save, Sparkles, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, RotateCcw, Save, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Form } from "@/components/ui/form";
 import { useCategories } from "@/hooks/api/useCategories";
+import type { RecipeGenerationResponseDTO } from "@/types/ai";
 import { useRecipeWizard } from "./useRecipeWizard";
 import {
   MethodSelectionStep,
@@ -54,23 +55,39 @@ const TOTAL_STEPS = 5;
 interface RecipeWizardViewProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** "create" (default) or "edit" an existing recipe. */
+  mode?: "create" | "edit";
+  /** Recipe to load when mode is "edit". */
+  recipeId?: number | null;
+  /** Generated recipe to pre-fill a create-mode wizard (e.g. from Meal Genie). */
+  initialGenerated?: RecipeGenerationResponseDTO | null;
 }
 
 // ============================================================================
 // RecipeWizardView
 // ============================================================================
 
-export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) {
+export function RecipeWizardView({
+  open,
+  onOpenChange,
+  mode = "create",
+  recipeId = null,
+  initialGenerated = null,
+}: RecipeWizardViewProps) {
   const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useCategories();
 
   const handleSave = useCallback(() => {
     onOpenChange(false);
   }, [onOpenChange]);
 
-  const wizard = useRecipeWizard({ onSave: handleSave });
-  const { currentStep, resetWizard } = wizard;
+  const wizard = useRecipeWizard({ onSave: handleSave, mode, recipeId, initialGenerated });
+  const { currentStep, resetWizard, isEditMode, isLoadingRecipe } = wizard;
 
-  const progressPercent = ((currentStep - 1) / (TOTAL_STEPS - 1)) * 100;
+  // In edit mode the method-selection step (1) is skipped, so the visible
+  // steps are 2–5 — re-base the counter/progress to that range.
+  const totalVisibleSteps = isEditMode ? TOTAL_STEPS - 1 : TOTAL_STEPS;
+  const displayStep = isEditMode ? currentStep - 1 : currentStep;
+  const progressPercent = ((displayStep - 1) / (totalVisibleSteps - 1)) * 100;
 
   // Suppress transition-all on form inputs during step changes so
   // elements don't animate from their initial state on mount.
@@ -92,27 +109,57 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
   }, [currentStep]);
 
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  // Whether confirming the prompt should also close the wizard ("close",
+  // from the X / Escape / backdrop / Cancel) or just return to step 1 and
+  // stay open ("reset", from the footer "Start over" button).
+  const [discardIntent, setDiscardIntent] = useState<"close" | "reset">("reset");
 
-  const handleCancel = useCallback(() => {
+  // Request to close the wizard (X / Escape / backdrop / step-1 Cancel).
+  // Only prompt when there's actually unsaved data to lose; otherwise reset
+  // and close so reopening starts fresh at the feature-select step.
+  const handleRequestClose = useCallback(() => {
+    if (wizard.hasUnsavedData) {
+      setDiscardIntent("close");
+      setShowDiscardConfirm(true);
+      return;
+    }
+    resetWizard();
     onOpenChange(false);
-  }, [onOpenChange]);
+  }, [wizard.hasUnsavedData, resetWizard, onOpenChange]);
 
-  const handleDiscardClick = useCallback(() => {
+  // Radix fires onOpenChange(false) for the X button, Escape, and backdrop.
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (nextOpen) {
+        onOpenChange(true);
+        return;
+      }
+      handleRequestClose();
+    },
+    [onOpenChange, handleRequestClose]
+  );
+
+  // Footer "Start over" (steps 2+): wipe inputs, stay open at step 1.
+  const handleStartOverClick = useCallback(() => {
     if (!wizard.hasUnsavedData) {
       resetWizard();
       return;
     }
+    setDiscardIntent("reset");
     setShowDiscardConfirm(true);
   }, [wizard.hasUnsavedData, resetWizard]);
 
   const handleDiscardConfirm = useCallback(() => {
     setShowDiscardConfirm(false);
     resetWizard();
-  }, [resetWizard]);
+    if (discardIntent === "close") {
+      onOpenChange(false);
+    }
+  }, [discardIntent, resetWizard, onOpenChange]);
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       {/*
         Layout: fixed-height flex column with 3 zones.
         ─────────────────────────────────────
@@ -138,7 +185,7 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
         <div className="shrink-0 px-6 pt-5 pb-4 space-y-3">
           <DialogHeader className="text-center sm:text-center">
             <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-              Create New Recipe
+              {isEditMode ? "Edit Recipe" : "Create New Recipe"}
             </p>
             <DialogTitle className="text-2xl font-bold">
               {wizard.currentStep === 2 && wizard.creationMethod === "ai-generate"
@@ -146,7 +193,7 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
                 : STEP_TITLES[wizard.currentStep - 1]}
             </DialogTitle>
             <DialogDescription>
-              Step {wizard.currentStep} of {TOTAL_STEPS}
+              Step {displayStep} of {totalVisibleSteps}
             </DialogDescription>
           </DialogHeader>
 
@@ -173,7 +220,13 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
           ref={contentRef}
           className="flex-1 min-h-0 overflow-y-auto border-t border-border px-6 py-6"
         >
-          {wizard.currentStep === 1 && (
+          {isLoadingRecipe && (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="size-6 animate-spin text-muted-foreground" strokeWidth={1.5} />
+            </div>
+          )}
+
+          {!isLoadingRecipe && wizard.currentStep === 1 && (
             <MethodSelectionStep
               selectedMethod={wizard.creationMethod}
               onSelect={(method) => {
@@ -232,19 +285,19 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
 
           {/* ── Footer navigation ───────────────────────────────────── */}
           <div className="flex w-full items-center justify-between px-6 py-4 border-t border-border-subtle bg-background/50">
-            {/* Left side — Discard (steps 2+) */}
+            {/* Left side — Discard (steps 2+, create mode only) */}
             <div className="flex items-center min-h-10">
-              {currentStep > 1 && (
+              {!isEditMode && currentStep > 1 && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={handleDiscardClick}
+                  onClick={handleStartOverClick}
                   disabled={wizard.isSubmitting}
-                  className="text-destructive hover:text-destructive"
+                  className="text-muted-foreground hover:text-foreground"
                 >
-                  <X className="size-3.5 mr-1.5" strokeWidth={1.5} />
-                  Discard
+                  <RotateCcw className="size-3.5 mr-1.5" strokeWidth={1.5} />
+                  Start over
                 </Button>
               )}
             </div>
@@ -257,7 +310,7 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
                   type="button"
                   variant="ghost"
                   className="px-8 font-normal"
-                  onClick={handleCancel}
+                  onClick={handleRequestClose}
                 >
                   Cancel
                 </Button>
@@ -309,17 +362,23 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
                 </Button>
               )}
 
-              {/* Step 5: Save Recipe */}
+              {/* Step 5: Save */}
               {currentStep === TOTAL_STEPS && (
                 <Button
                   type="button"
                   onClick={wizard.handleSubmit}
                   disabled={wizard.isSubmitting}
                   aria-busy={wizard.isSubmitting}
-                  aria-label={wizard.isSubmitting ? "Saving recipe..." : "Save Recipe"}
+                  aria-label={
+                    wizard.isSubmitting
+                      ? "Saving recipe..."
+                      : isEditMode
+                        ? "Save Changes"
+                        : "Save Recipe"
+                  }
                 >
                   {wizard.isSubmitting ? <Loader2 className="size-4 mr-2 animate-spin" strokeWidth={1.5} /> : <Save className="size-4 mr-2" strokeWidth={1.5} />}
-                  {wizard.isSubmitting ? "Saving..." : "Save Recipe"}
+                  {wizard.isSubmitting ? "Saving..." : isEditMode ? "Save Changes" : "Save Recipe"}
                 </Button>
               )}
             </div>
@@ -330,9 +389,13 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
     <AlertDialog open={showDiscardConfirm} onOpenChange={setShowDiscardConfirm}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Discard this recipe?</AlertDialogTitle>
+          <AlertDialogTitle>
+            {isEditMode ? "Discard changes?" : "Discard this recipe?"}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            All progress will be lost. This can&apos;t be undone.
+            {isEditMode
+              ? "Your unsaved changes will be lost. This can't be undone."
+              : "All progress will be lost. This can't be undone."}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

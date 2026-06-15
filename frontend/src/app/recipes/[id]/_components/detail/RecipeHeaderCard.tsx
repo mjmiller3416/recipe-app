@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   Clock,
   Users,
@@ -35,6 +34,7 @@ import { RecipeBadge, RecipeBadgeGroup } from "@/components/recipe/RecipeBadge";
 import type { RecipeResponseDTO } from "@/types/recipe";
 import { formatTime } from "../recipe-utils";
 import { useRecipeGroupsForRecipe } from "@/hooks/api/useRecipeGroups";
+import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
 
 interface RecipeHeaderCardProps {
   recipe: RecipeResponseDTO;
@@ -61,6 +61,7 @@ export function RecipeHeaderCard({
 }: RecipeHeaderCardProps) {
   // Fetch recipe groups
   const { data: recipeGroups = [] } = useRecipeGroupsForRecipe(recipeId);
+  const { openWizardForEdit } = useRecipeWizardDialog();
 
   return (
     <Card className="mb-8 shadow-xl">
@@ -170,16 +171,18 @@ export function RecipeHeaderCard({
             Manage Groups
           </Button>
 
-          <Link href={`/recipes/${recipeId}/edit`}>
-            <Button variant="outline" className="gap-2">
-              <Edit3 className="w-4 h-4" />
-              Edit Recipe
-            </Button>
-          </Link>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => openWizardForEdit(recipeId)}
+          >
+            <Edit3 className="w-4 h-4" />
+            Edit Recipe
+          </Button>
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={onPrintClick}>
+              <Button variant="outline" size="icon" aria-label="Print recipe" onClick={onPrintClick}>
                 <Printer className="w-4 h-4" />
               </Button>
             </TooltipTrigger>
@@ -188,7 +191,7 @@ export function RecipeHeaderCard({
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="outline" size="icon" onClick={onShare}>
+              <Button variant="outline" size="icon" aria-label="Share recipe" onClick={onShare}>
                 <Share2 className="w-4 h-4" />
               </Button>
             </TooltipTrigger>
@@ -197,7 +200,7 @@ export function RecipeHeaderCard({
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="icon" className="text-muted-foreground hover:text-error hover:border-error">
+              <Button variant="outline" size="icon" aria-label="Delete recipe" className="text-muted-foreground hover:text-error hover:border-error">
                 <Trash2 className="w-4 h-4" />
               </Button>
             </AlertDialogTrigger>
@@ -205,7 +208,7 @@ export function RecipeHeaderCard({
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Recipe</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete "{recipe.recipe_name}"? This action cannot be undone.
+                  Are you sure you want to delete &quot;{recipe.recipe_name}&quot;? This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import {
   IngredientRow,
   type Ingredient,
-} from "@/app/recipes/_components/add-edit/IngredientRow";
+} from "@/app/recipes/_components/shared/IngredientRow";
 import { useSortableDnd } from "@/hooks/ui/useSortableDnd";
 import { useUnits } from "@/hooks/api";
 import { useIngredientCategoryOptions } from "@/hooks/api/useIngredientCategories";

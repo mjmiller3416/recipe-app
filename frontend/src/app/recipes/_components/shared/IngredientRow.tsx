@@ -3,6 +3,7 @@
 import { memo, useCallback } from "react";
 import { GripVertical, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { QuantityInput } from "@/components/forms/QuantityInput";
 import {
   Select,
@@ -140,25 +141,29 @@ export const IngredientRow = memo(function IngredientRow({
       {/* ── Mobile layout ──────────────────────────────────────── */}
       <div className="md:hidden">
         <div className="flex items-center justify-between mb-2">
-          <button
+          <Button
             type="button"
-            className="p-1 text-muted-foreground hover:text-foreground transition-colors cursor-grab active:cursor-grabbing touch-none"
+            variant="ghost"
+            size="icon"
+            className="size-8 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing touch-none"
             aria-label="Drag to reorder"
             {...attributes}
             {...listeners}
             tabIndex={-1}
           >
             <GripVertical className="size-5" strokeWidth={1.5} />
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => onDelete(ingredient.id)}
-            className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+            className="size-8 text-muted-foreground hover:text-destructive"
             aria-label="Delete ingredient"
             tabIndex={-1}
           >
             <X className="size-5" strokeWidth={1.5} />
-          </button>
+          </Button>
         </div>
 
         <div className="grid grid-cols-2 gap-2 mb-2">
@@ -224,16 +229,18 @@ export const IngredientRow = memo(function IngredientRow({
 
       {/* ── Desktop layout ─────────────────────────────────────── */}
       <div className="hidden md:flex items-center gap-3">
-        <button
+        <Button
           type="button"
-          className="p-1 text-muted-foreground hover:text-foreground transition-colors cursor-grab active:cursor-grabbing shrink-0 touch-none"
+          variant="ghost"
+          size="icon"
+          className="size-8 shrink-0 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing touch-none"
           aria-label="Drag to reorder"
           {...attributes}
           {...listeners}
           tabIndex={-1}
         >
           <GripVertical className="size-5" strokeWidth={1.5} />
-        </button>
+        </Button>
 
         <div className="flex-1 flex items-start gap-2">
           <div className="shrink-0 w-24">
@@ -302,15 +309,17 @@ export const IngredientRow = memo(function IngredientRow({
           </div>
         </div>
 
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => onDelete(ingredient.id)}
-          className="p-1 text-muted-foreground hover:text-destructive transition-colors shrink-0"
+          className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
           aria-label="Delete ingredient"
           tabIndex={-1}
         >
           <X className="size-5" strokeWidth={1.5} />
-        </button>
+        </Button>
       </div>
     </div>
   );
