@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Loader2, Save, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, Save, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -61,7 +61,7 @@ interface RecipeWizardViewProps {
 // ============================================================================
 
 export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) {
-  const { data: categories = [] } = useCategories();
+  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useCategories();
 
   const handleSave = useCallback(() => {
     onOpenChange(false);
@@ -185,18 +185,21 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
 
           {wizard.currentStep === 2 && (
             wizard.creationMethod === "ai-generate" ? (
+              categoriesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="size-6 animate-spin text-muted-foreground" strokeWidth={1.5} />
+                </div>
+              ) : (
               <AIGenerateStep
                 prompt={wizard.aiPrompt}
                 setPrompt={wizard.setAiPrompt}
                 preferences={wizard.aiPreferences}
                 setPreferences={wizard.setAiPreferences}
-                generatedRecipe={wizard.generatedRecipe}
                 isGenerating={wizard.isGenerating}
                 error={wizard.aiError}
-                onGenerate={wizard.handleWizardGenerate}
-                onAcceptRecipe={wizard.handleAcceptGeneratedRecipe}
                 categories={categories}
               />
+              )
             ) : (
               <RecipeBasicsStep
                 imagePreview={wizard.imagePreview}
@@ -228,23 +231,25 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
         </Form>
 
           {/* ── Footer navigation ───────────────────────────────────── */}
-          <div className="relative flex w-full items-center justify-center px-6 py-4 border-t border-border-subtle bg-background/50">
-            {/* Discard — pinned far left (steps 2+) */}
-            {currentStep > 1 && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleDiscardClick}
-                disabled={wizard.isSubmitting}
-                className="absolute left-6 text-destructive hover:text-destructive"
-              >
-                <X className="size-3.5 mr-1.5" strokeWidth={1.5} />
-                Discard
-              </Button>
-            )}
+          <div className="flex w-full items-center justify-between px-6 py-4 border-t border-border-subtle bg-background/50">
+            {/* Left side — Discard (steps 2+) */}
+            <div className="flex items-center min-h-10">
+              {currentStep > 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleDiscardClick}
+                  disabled={wizard.isSubmitting}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <X className="size-3.5 mr-1.5" strokeWidth={1.5} />
+                  Discard
+                </Button>
+              )}
+            </div>
 
-            {/* Center group — navigation buttons */}
+            {/* Right side — navigation buttons */}
             <div className="flex items-center gap-3">
               {/* Step 1: Cancel */}
               {currentStep === 1 && (
@@ -271,7 +276,28 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
                 </Button>
               )}
 
-              {/* Steps 2-4: Next Step (hidden for AI generate on step 2) */}
+              {/* Step 2 AI: Generate Recipe */}
+              {currentStep === 2 && wizard.creationMethod === "ai-generate" && (
+                <Button
+                  type="button"
+                  onClick={wizard.handleWizardGenerate}
+                  disabled={!wizard.aiPrompt.trim() || wizard.isGenerating}
+                >
+                  {wizard.isGenerating ? (
+                    <>
+                      <Loader2 className="size-4 mr-2 animate-spin" strokeWidth={1.5} />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="size-4 mr-2" strokeWidth={1.5} />
+                      Generate Recipe
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {/* Steps 2-4: Next Step (not shown for AI generate step) */}
               {currentStep > 1 && currentStep < TOTAL_STEPS && !(currentStep === 2 && wizard.creationMethod === "ai-generate") && (
                 <Button
                   type="button"
@@ -292,7 +318,7 @@ export function RecipeWizardView({ open, onOpenChange }: RecipeWizardViewProps) 
                   aria-busy={wizard.isSubmitting}
                   aria-label={wizard.isSubmitting ? "Saving recipe..." : "Save Recipe"}
                 >
-                  {wizard.isSubmitting ? <Loader2 className="animate-spin" /> : <Save className="size-4 mr-2" strokeWidth={1.5} />}
+                  {wizard.isSubmitting ? <Loader2 className="size-4 mr-2 animate-spin" strokeWidth={1.5} /> : <Save className="size-4 mr-2" strokeWidth={1.5} />}
                   {wizard.isSubmitting ? "Saving..." : "Save Recipe"}
                 </Button>
               )}

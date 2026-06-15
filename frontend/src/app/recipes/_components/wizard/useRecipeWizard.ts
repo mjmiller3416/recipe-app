@@ -398,14 +398,19 @@ export function useRecipeWizard({ onSave }: UseRecipeWizardOptions = {}) {
 
       setGeneratedRecipe(response.recipe);
       setGenerationResponse(response);
-      toast.success(`"${response.recipe.recipe_name}" is ready! Tap Accept & Edit to review it.`);
+
+      populateFromGeneration(response);
+      setIsAiGenerated(true);
+      setCreationMethod("manual");
+      setCurrentStep(2);
+      toast.success(`"${response.recipe.recipe_name}" generated — review and edit below.`);
     } catch (error) {
       console.error("AI generation failed:", error);
       setAiError("Something went wrong. Please try again.");
     } finally {
       setIsGenerating(false);
     }
-  }, [aiPrompt, aiPreferences, isGenerating, getToken]);
+  }, [aiPrompt, aiPreferences, isGenerating, getToken, populateFromGeneration]);
 
   // ---------------------------------------------------------------------------
   // AI generation: accept generated recipe and populate wizard fields

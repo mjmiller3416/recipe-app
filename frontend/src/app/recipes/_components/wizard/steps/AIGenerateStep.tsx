@@ -2,23 +2,14 @@
 
 import { useState } from "react";
 import {
-  Sparkles,
-  Loader2,
-  ChefHat,
-  Clock,
-  Users,
   ChevronDown,
   ChevronUp,
-  ListChecks,
-  Utensils,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -32,10 +23,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import type {
-  RecipeGenerationPreferencesDTO,
-  RecipeGeneratedDTO,
-} from "@/types/ai";
+import type { RecipeGenerationPreferencesDTO } from "@/types/ai";
 import type { UserCategoryDTO } from "@/types/category";
 
 // ============================================================================
@@ -47,11 +35,8 @@ interface AIGenerateStepProps {
   setPrompt: (value: string) => void;
   preferences: RecipeGenerationPreferencesDTO;
   setPreferences: (value: RecipeGenerationPreferencesDTO) => void;
-  generatedRecipe: RecipeGeneratedDTO | null;
   isGenerating: boolean;
   error: string | null;
-  onGenerate: () => void;
-  onAcceptRecipe: () => void;
   categories?: UserCategoryDTO[];
 }
 
@@ -77,11 +62,8 @@ export function AIGenerateStep({
   setPrompt,
   preferences,
   setPreferences,
-  generatedRecipe,
   isGenerating,
   error,
-  onGenerate,
-  onAcceptRecipe,
   categories = [],
 }: AIGenerateStepProps) {
   const [showOptions, setShowOptions] = useState(false);
@@ -269,28 +251,6 @@ export function AIGenerateStep({
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Generate Button */}
-      <Button
-        variant="outline"
-        className="w-full bg-primary-surface border-primary-muted hover:bg-primary-surface-hover"
-        size="lg"
-        onClick={onGenerate}
-        disabled={!prompt.trim() || isGenerating}
-      >
-        {isGenerating ? (
-          <>
-            <Loader2 className="size-4 mr-2 animate-spin" strokeWidth={1.5} />
-            <span>Generating recipe...</span>
-            <span className="sr-only">Generating recipe, please wait</span>
-          </>
-        ) : (
-          <>
-            <Sparkles className="size-4 mr-2" strokeWidth={1.5} />
-            Generate Recipe
-          </>
-        )}
-      </Button>
-
       {/* Error */}
       {error && (
         <div role="alert" aria-live="assertive">
@@ -302,72 +262,6 @@ export function AIGenerateStep({
         </div>
       )}
 
-      {/* Generated Recipe Preview */}
-      {generatedRecipe && !isGenerating && (
-        <div className="space-y-4">
-          <Separator />
-
-          <Card className="border-primary/30 bg-primary-surface">
-            <CardContent className="space-y-4 pt-4">
-              {/* Recipe Header */}
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <ChefHat className="size-5 text-primary" strokeWidth={1.5} />
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {generatedRecipe.recipe_name}
-                  </h3>
-                </div>
-                {generatedRecipe.description && (
-                  <p className="text-sm text-muted-foreground">
-                    {generatedRecipe.description}
-                  </p>
-                )}
-              </div>
-
-              {/* Quick Stats */}
-              <div className="flex flex-wrap gap-3">
-                {generatedRecipe.total_time && (
-                  <Badge variant="secondary" className="gap-1">
-                    <Clock className="size-3" strokeWidth={1.5} />
-                    {generatedRecipe.total_time} min
-                  </Badge>
-                )}
-                {generatedRecipe.servings && (
-                  <Badge variant="secondary" className="gap-1">
-                    <Users className="size-3" strokeWidth={1.5} />
-                    {generatedRecipe.servings} servings
-                  </Badge>
-                )}
-                {generatedRecipe.difficulty && (
-                  <Badge variant="secondary">
-                    {generatedRecipe.difficulty}
-                  </Badge>
-                )}
-                {generatedRecipe.ingredients.length > 0 && (
-                  <Badge variant="outline" className="gap-1">
-                    <ListChecks className="size-3" strokeWidth={1.5} />
-                    {generatedRecipe.ingredients.length} ingredients
-                  </Badge>
-                )}
-                {generatedRecipe.directions && (
-                  <Badge variant="outline" className="gap-1">
-                    <Utensils className="size-3" strokeWidth={1.5} />
-                    {generatedRecipe.directions.split("\n").filter(Boolean).length} steps
-                  </Badge>
-                )}
-              </div>
-
-              <Separator />
-
-              {/* Accept Button */}
-              <Button className="w-full" onClick={onAcceptRecipe}>
-                <Sparkles className="size-4 mr-2" strokeWidth={1.5} />
-                Accept & Edit
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

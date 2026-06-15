@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 from typing import Optional
 
 from app.dtos.nutrition_dtos import (
@@ -49,6 +50,30 @@ Return ONLY valid JSON with these exact fields (all numeric values, no units in 
 Be realistic and base estimates on standard USDA nutrition data. Round to 1 decimal place for grams, whole numbers for mg and calories. Return ONLY the JSON object, no other text."""
 
 
+def _extract_json(text: str) -> dict:
+    """Parse JSON from model output, handling markdown fences and surrounding text."""
+    # Try direct parse first
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Strip markdown code fences
+    cleaned = re.sub(r"```(?:json)?\s*", "", text)
+    cleaned = re.sub(r"```\s*$", "", cleaned).strip()
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    # Find the first {...} block
+    match = re.search(r"\{[^{}]*\}", text, re.DOTALL)
+    if match:
+        return json.loads(match.group())
+
+    raise json.JSONDecodeError("No valid JSON object found in response", text, 0)
+
+
 class NutritionEstimationService:
     """Service for estimating nutrition facts using Gemini AI."""
 
@@ -92,7 +117,7 @@ class NutritionEstimationService:
 
             response = client.models.generate_content(
                 model=MODEL_NAME,
-                contents=[prompt],
+                contents=[{"role": "user", "parts": [{"text": prompt}]}],
                 config={
                     "temperature": TEMPERATURE,
                     "max_output_tokens": MAX_OUTPUT_TOKENS,
@@ -106,7 +131,7 @@ class NutritionEstimationService:
                     success=False, error="No response from AI model"
                 )
 
-            data = json.loads(raw_text)
+            data = _extract_json(raw_text)
 
             nutrition = parse_nutrition_dict(data)
 
