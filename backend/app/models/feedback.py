@@ -46,6 +46,12 @@ class Feedback(Base):
     message: Mapped[str] = mapped_column(Text, nullable=False)
     metadata_json: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
+    # Admin review
+    status: Mapped[str] = mapped_column(
+        String(20), default="new", server_default="new", nullable=False
+    )
+    admin_notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, nullable=False

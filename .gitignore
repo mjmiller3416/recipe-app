@@ -70,6 +70,7 @@ codebase-map.html
 frontend/lint-report.md
 
 # Playwright
+/.playwright-mcp/
 /test-results/
 /playwright-report/
 /blob-report/

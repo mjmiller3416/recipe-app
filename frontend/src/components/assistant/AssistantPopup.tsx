@@ -65,7 +65,7 @@ export function AssistantPopup({ open, onOpenChange }: AssistantPopupProps) {
         <Sheet open={open} onOpenChange={handleOpenChange}>
           <SheetContent
             side="bottom"
-            className="h-[calc(100dvh-env(safe-area-inset-top,0px)-2rem)] p-0 rounded-t-2xl"
+            className="h-[calc(100dvh-env(safe-area-inset-top,0px)-2rem)] p-0 rounded-t-2xl [&>button[data-slot=sheet-close]]:hidden"
           >
             <SheetTitle className="sr-only">AI Assistant</SheetTitle>
             {/* Noise texture background */}

@@ -214,3 +214,31 @@ def require_pro(
             detail="Pro subscription required for this feature",
         )
     return user
+
+
+def require_admin(
+    user: User = Depends(get_current_user),
+) -> User:
+    """
+    Dependency that requires admin-level access.
+
+    Checks the user's is_admin flag for permanent admin access.
+
+    Usage:
+        @router.get("/admin/users")
+        def list_users(current_admin: User = Depends(require_admin)):
+            # Only admins can access this
+            ...
+
+    Returns:
+        User: The authenticated admin user.
+
+    Raises:
+        HTTPException 403: User is not an admin.
+    """
+    if not user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required for this feature",
+        )
+    return user

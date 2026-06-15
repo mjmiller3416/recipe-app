@@ -50,5 +50,16 @@ export const categoryQueryKeys = {
   detail: (id: number) => [...categoryQueryKeys.details(), id] as const,
 };
 
+export const adminQueryKeys = {
+  all: ["admin"] as const,
+  users: () => [...adminQueryKeys.all, "users"] as const,
+  feedback: () => [...adminQueryKeys.all, "feedback"] as const,
+  feedbackDetail: (id: number) => [...adminQueryKeys.feedback(), id] as const,
+};
+
+export const currentUserQueryKeys = {
+  all: ["currentUser"] as const,
+};
+
 // Re-export shopping keys for consistency
 export { shoppingQueryKeys } from "./useShopping";
