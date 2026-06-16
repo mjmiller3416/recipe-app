@@ -13,6 +13,7 @@ export function usePrintRecipe() {
     showImage: true,
     showNotes: true,
     showMeta: true,
+    showNutrition: true,
   });
 
   /**

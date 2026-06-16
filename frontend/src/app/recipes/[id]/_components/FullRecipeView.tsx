@@ -27,17 +27,16 @@ const NUTRITION_ROWS: {
   key: keyof NutritionFactsResponseDTO;
   label: string;
   unit: string;
-  indent?: boolean;
 }[] = [
   { key: "calories", label: "Calories", unit: "kcal" },
   { key: "total_fat_g", label: "Total Fat", unit: "g" },
-  { key: "saturated_fat_g", label: "Saturated Fat", unit: "g", indent: true },
-  { key: "trans_fat_g", label: "Trans Fat", unit: "g", indent: true },
+  { key: "saturated_fat_g", label: "Saturated Fat", unit: "g" },
+  { key: "trans_fat_g", label: "Trans Fat", unit: "g" },
   { key: "cholesterol_mg", label: "Cholesterol", unit: "mg" },
   { key: "sodium_mg", label: "Sodium", unit: "mg" },
   { key: "total_carbs_g", label: "Total Carbohydrates", unit: "g" },
-  { key: "dietary_fiber_g", label: "Dietary Fiber", unit: "g", indent: true },
-  { key: "total_sugars_g", label: "Total Sugars", unit: "g", indent: true },
+  { key: "dietary_fiber_g", label: "Dietary Fiber", unit: "g" },
+  { key: "total_sugars_g", label: "Total Sugars", unit: "g" },
   { key: "protein_g", label: "Protein", unit: "g" },
 ];
 
@@ -48,9 +47,9 @@ function NutritionFactsCard({ nutritionFacts }: { nutritionFacts: NutritionFacts
   };
 
   return (
-    <Card className="mt-6 print:mt-4 print:static print:shadow-none print:border print:border-gray-200">
+    <Card className="mt-8 print:mt-4 print:static print:shadow-none print:border print:border-gray-200">
       <CardContent className="p-6 print:p-4">
-        <div className="flex items-center justify-between mb-4 print:mb-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4 print:mb-2">
           <div className="flex items-center gap-3 print:gap-0">
             <div className="p-2 rounded-lg bg-primary/10 print:hidden">
               <Beaker className="size-5 text-primary" strokeWidth={1.5} />
@@ -58,30 +57,32 @@ function NutritionFactsCard({ nutritionFacts }: { nutritionFacts: NutritionFacts
             <h2 className="text-xl font-bold text-foreground print:text-lg print:text-black">
               Nutrition Facts
             </h2>
+            <span className="text-sm text-muted-foreground print:text-xs print:text-gray-500">
+              Per serving
+            </span>
           </div>
           {nutritionFacts.is_ai_estimated && (
             <Badge variant="secondary" className="print:hidden">AI Estimated</Badge>
           )}
         </div>
-        <p className="text-sm text-muted-foreground mb-3 print:text-xs print:text-gray-500">
-          Per serving
-        </p>
-        <Separator className="mb-2" />
-        <div className="space-y-1">
+        <Separator className="mb-4" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 print:grid-cols-5">
           {NUTRITION_ROWS.map((row) => {
             const value = nutritionFacts[row.key];
             return (
               <div
                 key={row.key}
-                className={`flex items-center justify-between py-1 text-sm ${
-                  row.indent ? "pl-4" : ""
-                } ${!row.indent ? "font-medium" : "text-muted-foreground"}`}
+                className="flex flex-col items-center justify-center rounded-lg bg-muted/50 p-3 text-center print:border print:border-gray-200 print:bg-white"
               >
-                <span>{row.label}</span>
-                <span>
+                <span className="text-lg font-bold text-foreground print:text-base">
                   {formatValue(value)}
-                  {value !== null && typeof value !== "boolean" && ` ${row.unit}`}
+                  {value !== null && typeof value !== "boolean" && (
+                    <span className="ml-0.5 text-sm font-medium text-muted-foreground">
+                      {row.unit}
+                    </span>
+                  )}
                 </span>
+                <span className="mt-1 text-xs text-muted-foreground">{row.label}</span>
               </div>
             );
           })}
@@ -202,7 +203,7 @@ export function FullRecipeView() {
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 print:block print:space-y-6">
             {/* Ingredients Column */}
             <div className="lg:col-span-4 print:w-full">
-              <Card className="sticky top-6 print:static print:shadow-none print:border print:border-gray-200">
+              <Card className="print:shadow-none print:border print:border-gray-200">
                 <CardContent className="p-6 print:p-4">
                   {/* Section Header */}
                   <div className="flex items-center justify-between mb-4 print:mb-2">
@@ -259,11 +260,6 @@ export function FullRecipeView() {
                   )}
                 </CardContent>
               </Card>
-
-              {/* Nutrition Facts Card */}
-              {recipe.nutrition_facts && (
-                <NutritionFactsCard nutritionFacts={recipe.nutrition_facts} />
-              )}
             </div>
 
             {/* Directions Column */}
@@ -338,6 +334,11 @@ export function FullRecipeView() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Nutrition Facts - full-width horizontal strip */}
+              {recipe.nutrition_facts && (
+                <NutritionFactsCard nutritionFacts={recipe.nutrition_facts} />
+              )}
             </div>
           </div>
         </div>
@@ -367,6 +368,7 @@ export function FullRecipeView() {
         onPrint={handlePrint}
         hasImage={!!recipe.reference_image_path}
         hasNotes={!!recipe.notes}
+        hasNutrition={!!recipe.nutrition_facts}
       />
     </>
   );

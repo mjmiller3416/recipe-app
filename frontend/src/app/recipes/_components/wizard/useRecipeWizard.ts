@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@clerk/nextjs";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 
 import { recipeApi, ingredientApi, uploadApi, recipeGenerationApi, ApiError } from "@/lib/api";
+import { recipeQueryKeys } from "@/hooks/api/queryKeys";
 import { base64ToFile } from "@/lib/utils";
 import type {
   RecipeCreateDTO,
@@ -59,6 +61,7 @@ export function useRecipeWizard({
 }: UseRecipeWizardOptions = {}) {
   const router = useRouter();
   const { getToken } = useAuth();
+  const queryClient = useQueryClient();
   const isEditMode = mode === "edit";
 
   // ---------------------------------------------------------------------------
@@ -765,6 +768,12 @@ export function useRecipeWizard({
 
         await recipeApi.update(recipeId, updatePayload, token);
 
+        // Invalidate caches so the detail page reflects edits (e.g. newly
+        // added nutrition facts) immediately, without a manual refresh.
+        await queryClient.invalidateQueries({ queryKey: recipeQueryKeys.detail(recipeId) });
+        queryClient.invalidateQueries({ queryKey: recipeQueryKeys.list() });
+        queryClient.invalidateQueries({ queryKey: recipeQueryKeys.cards() });
+
         toast.success("Recipe updated successfully!");
         onSave?.();
         router.push(`/recipes/${recipeId}`);
@@ -871,6 +880,10 @@ export function useRecipeWizard({
         );
       }
 
+      // Invalidate lists so the new recipe appears without a manual refresh.
+      queryClient.invalidateQueries({ queryKey: recipeQueryKeys.list() });
+      queryClient.invalidateQueries({ queryKey: recipeQueryKeys.cards() });
+
       toast.success("Recipe created successfully!");
       resetWizard();
       onSave?.();
@@ -894,6 +907,7 @@ export function useRecipeWizard({
   }, [
     validateStep,
     getToken,
+    queryClient,
     form,
     isAiGenerated,
     imageFile,
