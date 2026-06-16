@@ -101,9 +101,6 @@ export interface RecipeGeneratedDTO {
   ingredients: GeneratedIngredientDTO[];
 }
 
-/** @deprecated Use RecipeGeneratedDTO instead */
-export type GeneratedRecipeDTO = RecipeGeneratedDTO;
-
 export interface AssistantRecipeRequestDTO {
   message: string;
   conversation_history?: AssistantMessage[];
@@ -194,12 +191,3 @@ export interface RecipeGenerationResponseDTO {
   banner_image_data?: string;
   error?: string;
 }
-
-/** @deprecated Use RecipeGenerationPreferencesDTO instead */
-export type WizardGenerationPreferencesDTO = RecipeGenerationPreferencesDTO;
-/** @deprecated Use RecipeGenerationRequestDTO instead */
-export type WizardGenerationRequestDTO = RecipeGenerationRequestDTO;
-/** @deprecated Use RecipeGeneratedDTO instead */
-export type WizardGeneratedRecipeDTO = RecipeGeneratedDTO;
-/** @deprecated Use RecipeGenerationResponseDTO instead */
-export type WizardGenerationResponseDTO = RecipeGenerationResponseDTO;
