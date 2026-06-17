@@ -2,6 +2,16 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-06-17 - New Features
+- Recipe Wizard — create and edit recipes with a new step-by-step guided workflow featuring method selection, ingredient management, directions, and nutrition facts
+- AI Recipe Generation — ask Meal Genie to generate a complete recipe draft that auto-populates the Recipe Wizard, tailored to your existing recipes and preferences
+- Nutrition Facts — recipes now display detailed nutrition information with an option to include it in printed recipes
+- Quick Meal Creation — create meals from anywhere in the app using the new global creation overlay
+
+## 2026-06-17 - Bug Fixes
+- Fixed Meal Genie responses occasionally failing after AI service updates
+- Improved recipe form accessibility and design consistency
+
 ## 2026-03-24 - Improvements
 - Meal Genie Assistant Visibility — the assistant now intelligently manages its visibility based on screen size and user interaction for a cleaner browsing experience
 
