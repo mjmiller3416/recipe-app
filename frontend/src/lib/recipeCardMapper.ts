@@ -4,6 +4,7 @@
 import type {
   RecipeResponseDTO,
   RecipeIngredientResponseDTO,
+  RecipeCardDTO,
   RecipeCardData,
   RecipeIngredient
 } from "@/types/recipe";
@@ -54,4 +55,23 @@ export function mapRecipeForCard(dto: RecipeResponseDTO): RecipeCardData {
  */
 export function mapRecipesForCards(dtos: RecipeResponseDTO[]): RecipeCardData[] {
   return dtos.map(mapRecipeForCard);
+}
+
+/**
+ * Map a lightweight RecipeCardDTO (from meal/planner responses) to RecipeCardData
+ */
+export function mapCardDtoToCardData(dto: RecipeCardDTO): RecipeCardData {
+  return {
+    id: dto.id,
+    name: dto.recipe_name,
+    servings: dto.servings ?? 0,
+    totalTime: dto.total_time ?? 0,
+    imageUrl: getRecipeImageUrl(dto.reference_image_path),
+    category: dto.recipe_category ?? undefined,
+    mealType: dto.meal_type ?? undefined,
+    dietaryPreference: dto.diet_pref ?? undefined,
+    isFavorite: dto.is_favorite ?? false,
+    isAiGenerated: dto.is_ai_generated ?? false,
+    createdAt: dto.created_at ?? undefined,
+  };
 }

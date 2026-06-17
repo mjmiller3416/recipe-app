@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -46,12 +45,10 @@ import { useUnsavedChanges, setNavigationBypass } from "@/hooks/ui/useUnsavedCha
 // ============================================================================
 
 export function MealPlannerView() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { getToken } = useAuth();
 
   // Fetch planner entries via React Query
-  const { data: entries = [], isLoading } = usePlannerEntries();
+  const { data: entries = [] } = usePlannerEntries();
 
   // Mutation hooks
   const createMealMutation = useCreateMeal();
@@ -148,17 +145,6 @@ export function MealPlannerView() {
     window.addEventListener("popstate", handlePopState, true);
     return () => window.removeEventListener("popstate", handlePopState, true);
   }, [showRecipePicker]);
-
-  // Open meal creation dialog when navigated with ?action=create
-  const hasTriggeredCreateRef = useRef(false);
-  useEffect(() => {
-    if (isLoading) return;
-    if (searchParams.get("action") === "create" && !hasTriggeredCreateRef.current) {
-      hasTriggeredCreateRef.current = true;
-      router.replace("/meal-planner", { scroll: false });
-      openMealCreation();
-    }
-  }, [searchParams, router, isLoading, openMealCreation]);
 
   // Auto-select first uncompleted entry when entries load
   const hasAutoSelected = useRef(false);
@@ -660,7 +646,7 @@ export function MealPlannerView() {
           />
         ) : (
           /* Empty state when no meals in planner */
-          <div className="flex flex-col items-center justify-center text-center min-h-[60vh] px-8">
+          <div className="flex flex-col items-center justify-center text-center min-h-96 px-8">
             <div className="text-muted-foreground mb-6">
               <p className="text-lg font-medium mb-2">No meals planned yet</p>
               <p className="text-sm">

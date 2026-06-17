@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
 import Link from "next/link";
@@ -54,6 +54,7 @@ import { cn } from "@/lib/utils";
 import { useShoppingList, useRefreshShoppingList } from "@/hooks/api";
 import { useNavActions } from "@/lib/providers/NavActionsProvider";
 import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
+import { useMealCreationDialog } from "@/lib/providers/MealCreationProvider";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TopNavLink — Inline navigation link for the top nav bar
@@ -198,128 +199,38 @@ function NavButton({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function TopNavAddMenu() {
-  const router = useRouter();
   const { openWizard, isOpen: wizardOpen } = useRecipeWizardDialog();
-  const [open, setOpen] = useState(false);
-  const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleAddRecipe = () => {
-    setOpen(false);
-    openWizard();
-  };
-
-  const handleAddMeal = () => {
-    setOpen(false);
-    router.push("/meal-planner?action=create");
-  };
-
-  const cancelClose = useCallback(() => {
-    if (closeTimeout.current) {
-      clearTimeout(closeTimeout.current);
-      closeTimeout.current = null;
-    }
-  }, []);
-
-  const scheduleClose = useCallback(() => {
-    cancelClose();
-    closeTimeout.current = setTimeout(() => setOpen(false), 150);
-  }, [cancelClose]);
-
-  const handleMouseEnter = useCallback(() => {
-    cancelClose();
-    setOpen(true);
-  }, [cancelClose]);
-
-  // Close on Escape key
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
-
-  // Close on click outside
-  useEffect(() => {
-    if (!open) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+  const { openMealCreation } = useMealCreationDialog();
 
   return (
-    <div
-      ref={containerRef}
-      className="relative"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={scheduleClose}
-    >
-      <button
-        className={cn(
-          "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium",
-          "transition-colors duration-200",
-          wizardOpen
-            ? "text-primary bg-primary/10"
-            : "text-muted-foreground hover:text-foreground hover:bg-hover/50"
-        )}
-        aria-expanded={open}
-        aria-haspopup="true"
-      >
-        <Plus className="h-4 w-4" strokeWidth={wizardOpen ? 2 : 1.5} />
-        <span>Add</span>
-        <ChevronDown
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
           className={cn(
-            "h-3.5 w-3.5 transition-transform duration-200",
-            open && "rotate-180"
+            "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium",
+            "transition-colors duration-200",
+            wizardOpen
+              ? "text-primary bg-primary/10"
+              : "text-muted-foreground hover:text-foreground hover:bg-hover/50"
           )}
-          strokeWidth={1.5}
-        />
-      </button>
-
-      {open && (
-        <div
-          className={cn(
-            "absolute top-full left-0 mt-1 z-50",
-            "min-w-[8rem] rounded-lg p-1",
-            "bg-card text-popover-foreground shadow-floating",
-            "animate-in fade-in-0 zoom-in-95 slide-in-from-top-2"
-          )}
-          role="menu"
         >
-          <button
-            className={cn(
-              "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm",
-              "cursor-pointer select-none transition-colors duration-150 ease-out",
-              "hover:bg-accent hover:text-accent-foreground active:bg-accent/80"
-            )}
-            role="menuitem"
-            onClick={handleAddRecipe}
-          >
-            <BookOpen className="h-4 w-4" strokeWidth={1.5} />
-            Add Recipe
-          </button>
-          <button
-            className={cn(
-              "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm",
-              "cursor-pointer select-none transition-colors duration-150 ease-out",
-              "hover:bg-accent hover:text-accent-foreground active:bg-accent/80",
-              "[&_svg:not([class*='text-'])]:text-muted-foreground"
-            )}
-            role="menuitem"
-            onClick={handleAddMeal}
-          >
-            <UtensilsCrossed className="h-4 w-4" strokeWidth={1.5} />
-            Add Meal
-          </button>
-        </div>
-      )}
-    </div>
+          <Plus className="h-4 w-4" strokeWidth={wizardOpen ? 2 : 1.5} />
+          <span>Add</span>
+          <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.5} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-32">
+        <DropdownMenuItem onClick={() => openWizard()} className="gap-2">
+          <BookOpen className="h-4 w-4" strokeWidth={1.5} />
+          Add Recipe
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => openMealCreation()} className="gap-2">
+          <UtensilsCrossed className="h-4 w-4" strokeWidth={1.5} />
+          Add Meal
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -476,6 +387,7 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
   const pathname = usePathname();
   const { actions: navActions, isPinned } = useNavActions();
   const { openWizard } = useRecipeWizardDialog();
+  const { openMealCreation } = useMealCreationDialog();
 
   // Sheet state (hamburger menu for md-to-lg)
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -634,8 +546,23 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
           </div>
         )}
 
-        {/* Right section: Theme toggle, Changelog, Avatar */}
+        {/* Right section: Assistant, Theme toggle, Changelog, Avatar */}
         <div className="flex items-center gap-2.5 border-l border-border pl-3">
+          {/* Meal Genie assistant trigger */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Open Meal Genie"
+                onClick={onOpenAssistant}
+              >
+                <Sparkles className="size-5" strokeWidth={1.5} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Meal Genie</TooltipContent>
+          </Tooltip>
+
           {/* Theme toggle — single icon */}
           {mounted && (
             <Tooltip>
@@ -709,13 +636,14 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
 
             {/* Add actions */}
             <div className="h-px bg-border my-2" />
-            <button
+            <Button
+              variant="ghost"
               onClick={() => {
                 setSheetOpen(false);
                 openWizard();
               }}
               className={cn(
-                "flex items-center gap-3 px-3 py-3 rounded-xl w-full",
+                "flex items-center justify-start gap-3 px-3 py-3 h-auto rounded-xl w-full",
                 "transition-all duration-200 ease-physical",
                 "text-muted-foreground hover:text-foreground",
                 "hover:bg-hover/70",
@@ -727,14 +655,27 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
                 <Plus className="h-5 w-5" strokeWidth={1.5} />
               </div>
               <span className="text-sm font-medium">Add Recipe</span>
-            </button>
-            <NavButton
-              icon={UtensilsCrossed}
-              label="Add Meal"
-              href="/meal-planner?action=create"
-              isActive={false}
-              onClick={handleSheetNavigate}
-            />
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setSheetOpen(false);
+                openMealCreation();
+              }}
+              className={cn(
+                "flex items-center justify-start gap-3 px-3 py-3 h-auto rounded-xl w-full",
+                "transition-all duration-200 ease-physical",
+                "text-muted-foreground hover:text-foreground",
+                "hover:bg-hover/70",
+                "hover:translate-x-1",
+                "active:scale-[0.98]"
+              )}
+            >
+              <div className="relative p-2 rounded-lg transition-colors duration-200 group-hover:bg-hover/50">
+                <UtensilsCrossed className="h-5 w-5" strokeWidth={1.5} />
+              </div>
+              <span className="text-sm font-medium">Add Meal</span>
+            </Button>
           </nav>
         </SheetContent>
       </Sheet>

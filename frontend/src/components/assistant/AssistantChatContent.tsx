@@ -15,7 +15,6 @@ import type { RecipeGeneratedDTO } from "@/types/ai";
 
 interface AssistantChatContentProps {
   onClose: () => void;
-  isMinimized?: boolean;
   isExpanded?: boolean;
   onMinimize?: () => void;
   onExpand?: () => void;
@@ -25,7 +24,6 @@ interface AssistantChatContentProps {
 
 export function AssistantChatContent({
   onClose,
-  isMinimized = false,
   isExpanded = false,
   onMinimize,
   onExpand,
@@ -46,21 +44,16 @@ export function AssistantChatContent({
     bannerImageData: string | null;
   } | null>(null);
 
-  // Focus input when expanded (desktop only — mobile auto-focus opens the keyboard)
+  // Focus input when opened (desktop only — mobile auto-focus opens the keyboard)
   useEffect(() => {
-    if (!isMinimized && !isMobile && inputRef.current) {
+    if (!isMobile && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [isMinimized, isMobile]);
+  }, [isMobile]);
 
   const handleSubmit = useCallback(async (messageText?: string) => {
     const textToSend = messageText || input.trim();
     if (!textToSend || chatMutation.isPending) return;
-
-    // Expand if minimized when submitting
-    if (isMinimized && onExpand) {
-      onExpand();
-    }
 
     setInput("");
     addMessage({ role: "user", content: textToSend });
@@ -93,7 +86,7 @@ export function AssistantChatContent({
       console.error("Failed to get response:", error);
       addMessage({ role: "assistant", content: "Sorry, something went wrong. Please try again." });
     }
-  }, [input, chatMutation, messages, addMessage, isMinimized, onExpand]);
+  }, [input, chatMutation, messages, addMessage]);
 
   // Open the recipe wizard pre-filled with the generated draft for review/edit
   const handleViewRecipe = useCallback(() => {
@@ -115,20 +108,6 @@ export function AssistantChatContent({
   };
 
   const hasMessages = messages.length > 0;
-
-  // Minimized state - just show header bar (desktop only)
-  if (isMinimized && !isMobile) {
-    return (
-      <Button
-        variant="ghost"
-        onClick={onExpand}
-        className="w-full h-full rounded-full"
-        aria-label="Expand Meal Genie"
-      >
-        <Sparkles className="size-7 text-primary" />
-      </Button>
-    );
-  }
 
   return (
     <div className="flex flex-col h-full">

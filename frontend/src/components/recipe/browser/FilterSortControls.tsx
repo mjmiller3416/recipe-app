@@ -91,6 +91,7 @@ export interface RecipeSortControlsProps {
   onClearAllFilters: () => void;
   onBack?: () => void;
   actionButton?: React.ReactNode;
+  filterSlot?: React.ReactNode;
 }
 
 export function RecipeSortControls({
@@ -104,6 +105,7 @@ export function RecipeSortControls({
   onClearAllFilters,
   onBack,
   actionButton,
+  filterSlot,
 }: RecipeSortControlsProps) {
   const filterCount = activeFilters.length;
 
@@ -122,24 +124,26 @@ export function RecipeSortControls({
           </Button>
         )}
 
-        <Button
-          variant="outline"
-          size="default"
-          onClick={onOpenFilters}
-          data-filter-toggle
-          className={cn(
-            "gap-2",
-            filterCount > 0 && "border-primary/50 bg-primary/5"
-          )}
-        >
-          <SlidersHorizontal className="size-4" strokeWidth={1.5} />
-          Filters
-          {filterCount > 0 && (
-            <span className="min-w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-semibold inline-flex items-center justify-center px-1.5">
-              {filterCount}
-            </span>
-          )}
-        </Button>
+        {filterSlot ?? (
+          <Button
+            variant="outline"
+            size="default"
+            onClick={onOpenFilters}
+            data-filter-toggle
+            className={cn(
+              "gap-2",
+              filterCount > 0 && "border-primary/50 bg-primary/5"
+            )}
+          >
+            <SlidersHorizontal className="size-4" strokeWidth={1.5} />
+            Filters
+            {filterCount > 0 && (
+              <span className="min-w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-semibold inline-flex items-center justify-center px-1.5">
+                {filterCount}
+              </span>
+            )}
+          </Button>
+        )}
 
         {/* Active filter chips */}
         {activeFilters.map((filter, index) => (
