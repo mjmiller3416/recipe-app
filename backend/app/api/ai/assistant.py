@@ -8,8 +8,8 @@ from app.database.db import get_session
 from app.dtos.assistant_dtos import (
     AssistantRequestDTO,
     AssistantResponseDTO,
-    RecipeGenerationRequestDTO,
-    RecipeGenerationResponseDTO,
+    AssistantRecipeRequestDTO,
+    AssistantRecipeResponseDTO,
 )
 from app.services.ai.assistant import get_assistant_service
 from app.services.ai.assistant.context import (
@@ -130,12 +130,12 @@ async def ask_assistant(
     return await chat_with_assistant(request, session, current_user)
 
 
-@router.post("/generate-recipe", response_model=RecipeGenerationResponseDTO)
+@router.post("/generate-recipe", response_model=AssistantRecipeResponseDTO)
 async def generate_recipe(
-    request: RecipeGenerationRequestDTO,
+    request: AssistantRecipeRequestDTO,
     session: Session = Depends(get_session),
     current_user: User = Depends(require_pro),
-) -> RecipeGenerationResponseDTO:
+) -> AssistantRecipeResponseDTO:
     """Generate a complete recipe with optional AI image.
 
     This endpoint is kept for backwards compatibility.
@@ -170,7 +170,7 @@ async def generate_recipe(
         )
 
         if result.get("type") == "error":
-            return RecipeGenerationResponseDTO(
+            return AssistantRecipeResponseDTO(
                 success=False,
                 error=result.get("error", "Failed to generate recipe"),
             )
@@ -179,7 +179,7 @@ async def generate_recipe(
         recipe = result.get("recipe")
         if not recipe:
             # No recipe generated - AI is probably asking for more info
-            return RecipeGenerationResponseDTO(
+            return AssistantRecipeResponseDTO(
                 success=True,
                 ai_message=result.get("response"),
                 needs_more_info=True,
@@ -217,7 +217,7 @@ async def generate_recipe(
         except Exception:
             pass
 
-        return RecipeGenerationResponseDTO(
+        return AssistantRecipeResponseDTO(
             success=True,
             recipe=recipe,
             reference_image_data=reference_image_data,

@@ -5,7 +5,6 @@ import { useAuth } from "@clerk/nextjs";
 import { recipeGroupApi } from "@/lib/api";
 import { recipeQueryKeys } from "./queryKeys";
 import type {
-  RecipeGroupResponseDTO,
   RecipeGroupCreateDTO,
   RecipeGroupUpdateDTO,
   RecipeGroupAssignmentDTO,

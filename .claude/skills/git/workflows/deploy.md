@@ -130,7 +130,7 @@ Even solo, a PR for production deploys gives you:
    git add frontend/src/data/changelog.ts
    git commit -m "docs: update changelog for YYYY-MM-DD release
 
-   Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
+   Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
    git push origin staging
    ```
 

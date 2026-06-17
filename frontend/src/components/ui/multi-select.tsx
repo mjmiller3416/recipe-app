@@ -28,7 +28,7 @@ import {
   type ReactNode,
 } from "react"
 import { Badge } from "@/components/ui/badge"
-import { cva, type VariantProps } from "class-variance-authority"
+import { cva } from "class-variance-authority"
 
 /* ============================================
    CVA VARIANTS - Trigger Sizes
@@ -282,7 +282,7 @@ export function MultiSelectValue({
             data-selected-item
             className={cn(
               "group flex items-center gap-1",
-              "bg-primary/10 text-primary border-primary/20",
+              "bg-primary/10 text-foreground border-primary/20",
               "transition-all duration-150 ease-physical",
               clickToRemove && [
                 "cursor-pointer",

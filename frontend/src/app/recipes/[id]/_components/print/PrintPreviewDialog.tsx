@@ -17,6 +17,7 @@ export interface PrintOptions {
   showImage: boolean;
   showNotes: boolean;
   showMeta: boolean;
+  showNutrition: boolean;
 }
 
 interface PrintPreviewDialogProps {
@@ -25,6 +26,7 @@ interface PrintPreviewDialogProps {
   onPrint: (options: PrintOptions) => void;
   hasImage: boolean;
   hasNotes: boolean;
+  hasNutrition: boolean;
 }
 
 export function PrintPreviewDialog({
@@ -33,11 +35,13 @@ export function PrintPreviewDialog({
   onPrint,
   hasImage,
   hasNotes,
+  hasNutrition,
 }: PrintPreviewDialogProps) {
   const [options, setOptions] = useState<PrintOptions>({
     showImage: true,
     showNotes: true,
     showMeta: true,
+    showNutrition: true,
   });
 
   const handlePrint = () => {
@@ -103,6 +107,21 @@ export function PrintPreviewDialog({
                 Servings & Cook Time
               </Label>
             </div>
+
+            {hasNutrition && (
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  id="print-nutrition"
+                  checked={options.showNutrition}
+                  onCheckedChange={(checked) =>
+                    setOptions((prev) => ({ ...prev, showNutrition: !!checked }))
+                  }
+                />
+                <Label htmlFor="print-nutrition" className="cursor-pointer">
+                  Nutrition Facts
+                </Label>
+              </div>
+            )}
           </div>
         </div>
 

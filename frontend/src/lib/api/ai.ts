@@ -5,9 +5,13 @@ import type {
   CookingTipResponseDTO,
   AssistantMessage,
   AssistantResponseDTO,
-  RecipeGenerationResponseDTO,
+  AssistantRecipeResponseDTO,
   MealSuggestionsRequestDTO,
   MealSuggestionsResponseDTO,
+  NutritionEstimationRequestDTO,
+  NutritionEstimationResponseDTO,
+  RecipeGenerationRequestDTO,
+  RecipeGenerationResponseDTO,
 } from "@/types/ai";
 import { fetchApi } from "./base";
 
@@ -94,6 +98,45 @@ export const mealSuggestionsApi = {
     ),
 };
 
+export const nutritionEstimationApi = {
+  estimate: (
+    request: NutritionEstimationRequestDTO,
+    token?: string | null
+  ): Promise<NutritionEstimationResponseDTO> =>
+    fetchApi<NutritionEstimationResponseDTO>(
+      "/api/ai/nutrition-estimation",
+      {
+        method: "POST",
+        body: JSON.stringify(request),
+      },
+      token
+    ),
+};
+
+export const recipeGenerationApi = {
+  /**
+   * Generate a complete recipe from a text prompt using AI.
+   * @param request - Prompt, optional preferences, and feature flags.
+   * @param token - Optional auth token for authenticated requests.
+   * @returns Response with generated recipe, optional nutrition and images.
+   */
+  generate: (
+    request: RecipeGenerationRequestDTO,
+    token?: string | null
+  ): Promise<RecipeGenerationResponseDTO> =>
+    fetchApi<RecipeGenerationResponseDTO>(
+      "/api/ai/wizard-generation",
+      {
+        method: "POST",
+        body: JSON.stringify(request),
+      },
+      token
+    ),
+};
+
+/** @deprecated Use recipeGenerationApi instead */
+export const wizardGenerationApi = recipeGenerationApi;
+
 export const AssistantApi = {
   /**
    * Send a message to Meal Genie
@@ -158,8 +201,8 @@ export const AssistantApi = {
     conversationHistory?: AssistantMessage[],
     generateImage = true,
     token?: string | null
-  ): Promise<RecipeGenerationResponseDTO> =>
-    fetchApi<RecipeGenerationResponseDTO>(
+  ): Promise<AssistantRecipeResponseDTO> =>
+    fetchApi<AssistantRecipeResponseDTO>(
       "/api/ai/meal-genie/generate-recipe",
       {
         method: "POST",

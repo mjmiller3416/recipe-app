@@ -69,7 +69,7 @@ export interface AssistantResponseDTO {
   response?: string;
   error?: string;
   // Optional recipe data (if AI generated one)
-  recipe?: GeneratedRecipeDTO;
+  recipe?: RecipeGeneratedDTO;
   reference_image_data?: string;
   banner_image_data?: string;
 }
@@ -85,27 +85,31 @@ export interface GeneratedIngredientDTO {
   unit?: string;
 }
 
-export interface GeneratedRecipeDTO {
+export interface RecipeGeneratedDTO {
   recipe_name: string;
   recipe_category: string;
   meal_type: string;
   diet_pref?: string;
+  description?: string;
+  prep_time?: number;
+  cook_time?: number;
   total_time?: number;
+  difficulty?: string;
   servings?: number;
   directions?: string;
   notes?: string;
   ingredients: GeneratedIngredientDTO[];
 }
 
-export interface RecipeGenerationRequestDTO {
+export interface AssistantRecipeRequestDTO {
   message: string;
   conversation_history?: AssistantMessage[];
   generate_image?: boolean;
 }
 
-export interface RecipeGenerationResponseDTO {
+export interface AssistantRecipeResponseDTO {
   success: boolean;
-  recipe?: GeneratedRecipeDTO;
+  recipe?: RecipeGeneratedDTO;
   reference_image_data?: string; // Base64 encoded (1:1 square)
   banner_image_data?: string; // Base64 encoded (21:9 ultrawide)
   ai_message?: string;
@@ -115,6 +119,75 @@ export interface RecipeGenerationResponseDTO {
 
 // Extended message type for chat with recipe data
 export interface AssistantChatMessage extends AssistantMessage {
-  recipe?: GeneratedRecipeDTO;
+  recipe?: RecipeGeneratedDTO;
   imageData?: string;
+}
+
+// ============================================================================
+// Nutrition Estimation Types
+// ============================================================================
+
+export interface NutritionIngredientDTO {
+  ingredient_name: string;
+  quantity: number | null;
+  unit: string | null;
+}
+
+export interface NutritionEstimationRequestDTO {
+  recipe_name: string;
+  ingredients: NutritionIngredientDTO[];
+  servings?: number | null;
+}
+
+export interface NutritionEstimationResponseDTO {
+  success: boolean;
+  nutrition_facts?: NutritionFactsDTO;
+  error?: string;
+}
+
+export interface NutritionFactsDTO {
+  calories: number | null;
+  protein_g: number | null;
+  total_fat_g: number | null;
+  saturated_fat_g: number | null;
+  trans_fat_g: number | null;
+  cholesterol_mg: number | null;
+  sodium_mg: number | null;
+  total_carbs_g: number | null;
+  dietary_fiber_g: number | null;
+  total_sugars_g: number | null;
+  is_ai_estimated: boolean;
+}
+
+export interface NutritionFactsResponseDTO extends NutritionFactsDTO {
+  id: number;
+  recipe_id: number;
+}
+
+// ============================================================================
+// Recipe Generation Types (prompt-based wizard flow)
+// ============================================================================
+
+export interface RecipeGenerationPreferencesDTO {
+  category?: string;
+  dietary?: string;
+  difficulty?: string;
+  servings?: number;
+  meal_type?: string;
+}
+
+export interface RecipeGenerationRequestDTO {
+  prompt: string;
+  preferences?: RecipeGenerationPreferencesDTO;
+  generate_image?: boolean;
+  estimate_nutrition?: boolean;
+}
+
+export interface RecipeGenerationResponseDTO {
+  success: boolean;
+  recipe?: RecipeGeneratedDTO;
+  nutrition_facts?: NutritionFactsDTO;
+  reference_image_data?: string;
+  banner_image_data?: string;
+  error?: string;
 }

@@ -24,6 +24,7 @@ from .recipe_ingredient import RecipeIngredient
 
 if TYPE_CHECKING:
     from .meal import Meal
+    from .nutrition_facts import NutritionFacts
     from .recipe_group import RecipeGroup
     from .user import User
 
@@ -37,8 +38,12 @@ class Recipe(Base):
     recipe_category: Mapped[str] = mapped_column(String, nullable=False, index=True)
     meal_type: Mapped[str] = mapped_column(String, default="Dinner", nullable=False, index=True)
     diet_pref: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     total_time: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    prep_time: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    cook_time: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     servings: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    difficulty: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     directions: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     reference_image_path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
@@ -76,6 +81,13 @@ class Recipe(Base):
         "RecipeGroup",
         secondary="recipe_group_association",
         back_populates="recipes"
+    )
+
+    nutrition_facts: Mapped[Optional["NutritionFacts"]] = relationship(
+        "NutritionFacts",
+        back_populates="recipe",
+        cascade="all, delete-orphan",
+        uselist=False,
     )
 
     # ── String Representation ───────────────────────────────────────────────────────────────────────────────

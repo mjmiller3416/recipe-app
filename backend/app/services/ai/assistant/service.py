@@ -154,26 +154,62 @@ class AssistantServiceCore:
         if not response or not response.candidates:
             return {"type": "error", "response": None, "error": "No response from AI"}
 
+        # Gemini 3.x may emit a conversational preamble text part *before* the
+        # function_call part (e.g. "Here are some ideas! 🔍"). We must scan all
+        # parts and prioritize the function call over any preamble text —
+        # otherwise we'd return the preamble as a plain chat reply and never
+        # execute the tool, dropping the suggestions/recipe entirely.
+        function_call = None
+        model_turn = None
+        text_response = None
+
         for candidate in response.candidates:
             if not candidate.content or not candidate.content.parts:
                 continue
 
             for part in candidate.content.parts:
-                # Check for function call
-                if hasattr(part, "function_call") and part.function_call:
-                    return self._handle_function_call(
-                        part.function_call.name,
-                        dict(part.function_call.args) if part.function_call.args else {},
-                        user_context_data,
-                        contents,
-                    )
+                if hasattr(part, "thought") and part.thought:
+                    continue
 
-                # Regular text response
-                if hasattr(part, "text") and part.text:
-                    return {
-                        "type": "chat",
-                        "response": part.text.strip(),
-                    }
+                # Capture the first function call we encounter.
+                if (
+                    function_call is None
+                    and hasattr(part, "function_call")
+                    and part.function_call
+                ):
+                    function_call = part.function_call
+                    # Preserve the model's turn verbatim — Gemini 3.x attaches a
+                    # thought_signature to the function_call part that MUST be
+                    # replayed when continuing the tool conversation, otherwise
+                    # the follow-up call fails with MALFORMED_FUNCTION_CALL.
+                    model_turn = candidate.content
+                    continue
+
+                # Capture the first non-empty text part as a fallback.
+                if (
+                    text_response is None
+                    and hasattr(part, "text")
+                    and part.text
+                    and part.text.strip()
+                ):
+                    text_response = part.text.strip()
+
+        # A tool call always takes precedence over preamble text.
+        if function_call is not None:
+            return self._handle_function_call(
+                function_call.name,
+                dict(function_call.args) if function_call.args else {},
+                user_context_data,
+                contents,
+                model_turn,
+            )
+
+        # No tool call — this was a plain conversational reply.
+        if text_response is not None:
+            return {
+                "type": "chat",
+                "response": text_response,
+            }
 
         return {"type": "error", "response": None, "error": "Could not parse response"}
 
@@ -183,6 +219,7 @@ class AssistantServiceCore:
         args: dict,
         context_data: Optional[dict],
         contents: list,
+        model_turn=None,
     ) -> dict:
         """Execute a function call and return appropriate response.
 

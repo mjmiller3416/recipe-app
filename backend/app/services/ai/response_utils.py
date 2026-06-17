@@ -22,6 +22,8 @@ def extract_text_from_response(response) -> Optional[str]:
         if not candidate.content or not candidate.content.parts:
             continue
         for part in candidate.content.parts:
+            if hasattr(part, "thought") and part.thought:
+                continue
             if hasattr(part, "text") and part.text:
                 return part.text.strip()
 

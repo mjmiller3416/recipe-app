@@ -1,24 +1,20 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Sparkles, Send, X, Minimize2, Maximize2, Minus, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useChatHistory } from "@/hooks/persistence";
 import { useAssistantChat } from "@/hooks/api/useAI";
 import { useChatScroll } from "@/hooks/ui";
+import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ChatMessageList } from "./ChatMessageList";
-import type { GeneratedRecipeDTO } from "@/types/ai";
-
-// Session storage key for AI-generated recipe (must match useRecipeForm.ts)
-const AI_RECIPE_STORAGE_KEY = "meal-genie-generated-recipe";
+import type { RecipeGeneratedDTO } from "@/types/ai";
 
 interface AssistantChatContentProps {
   onClose: () => void;
-  isMinimized?: boolean;
   isExpanded?: boolean;
   onMinimize?: () => void;
   onExpand?: () => void;
@@ -28,14 +24,13 @@ interface AssistantChatContentProps {
 
 export function AssistantChatContent({
   onClose,
-  isMinimized = false,
   isExpanded = false,
   onMinimize,
   onExpand,
   onCollapse,
   isMobile = false,
 }: AssistantChatContentProps) {
-  const router = useRouter();
+  const { openWizardWithRecipe } = useRecipeWizardDialog();
   const [input, setInput] = useState("");
   const { messages, addMessage, clearHistory } = useChatHistory();
   const chatMutation = useAssistantChat();
@@ -44,26 +39,21 @@ export function AssistantChatContent({
 
   // Track pending recipe for "View Recipe Draft" button
   const [pendingRecipe, setPendingRecipe] = useState<{
-    recipe: GeneratedRecipeDTO;
+    recipe: RecipeGeneratedDTO;
     referenceImageData: string | null;
     bannerImageData: string | null;
   } | null>(null);
 
-  // Focus input when expanded (desktop only — mobile auto-focus opens the keyboard)
+  // Focus input when opened (desktop only — mobile auto-focus opens the keyboard)
   useEffect(() => {
-    if (!isMinimized && !isMobile && inputRef.current) {
+    if (!isMobile && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [isMinimized, isMobile]);
+  }, [isMobile]);
 
   const handleSubmit = useCallback(async (messageText?: string) => {
     const textToSend = messageText || input.trim();
     if (!textToSend || chatMutation.isPending) return;
-
-    // Expand if minimized when submitting
-    if (isMinimized && onExpand) {
-      onExpand();
-    }
 
     setInput("");
     addMessage({ role: "user", content: textToSend });
@@ -96,23 +86,19 @@ export function AssistantChatContent({
       console.error("Failed to get response:", error);
       addMessage({ role: "assistant", content: "Sorry, something went wrong. Please try again." });
     }
-  }, [input, chatMutation, messages, addMessage, isMinimized, onExpand]);
+  }, [input, chatMutation, messages, addMessage]);
 
-  // Navigate to recipe form when user clicks "View Recipe Draft"
+  // Open the recipe wizard pre-filled with the generated draft for review/edit
   const handleViewRecipe = useCallback(() => {
     if (!pendingRecipe) return;
-    try {
-      sessionStorage.setItem(AI_RECIPE_STORAGE_KEY, JSON.stringify(pendingRecipe));
-    } catch {
-      // Base64 images can exceed sessionStorage quota — store without images
-      sessionStorage.setItem(
-        AI_RECIPE_STORAGE_KEY,
-        JSON.stringify({ ...pendingRecipe, referenceImageData: null, bannerImageData: null })
-      );
-    }
-    router.push("/recipes/add?from=ai");
+    openWizardWithRecipe({
+      success: true,
+      recipe: pendingRecipe.recipe,
+      reference_image_data: pendingRecipe.referenceImageData ?? undefined,
+      banner_image_data: pendingRecipe.bannerImageData ?? undefined,
+    });
     setPendingRecipe(null);
-  }, [pendingRecipe, router]);
+  }, [pendingRecipe, openWizardWithRecipe]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -122,20 +108,6 @@ export function AssistantChatContent({
   };
 
   const hasMessages = messages.length > 0;
-
-  // Minimized state - just show header bar (desktop only)
-  if (isMinimized && !isMobile) {
-    return (
-      <Button
-        variant="ghost"
-        onClick={onExpand}
-        className="w-full h-full rounded-full"
-        aria-label="Expand Meal Genie"
-      >
-        <Sparkles className="size-7 text-primary" />
-      </Button>
-    );
-  }
 
   return (
     <div className="flex flex-col h-full">
@@ -184,9 +156,9 @@ export function AssistantChatContent({
               aria-label={isExpanded ? "Collapse chat" : "Expand chat"}
             >
               {isExpanded ? (
-                <Minimize2 className="h-4 w-4" />
+                <Minimize2 className="h-4 w-4" strokeWidth={1.5} />
               ) : (
-                <Maximize2 className="h-4 w-4" />
+                <Maximize2 className="h-4 w-4" strokeWidth={1.5} />
               )}
             </Button>
           )}
@@ -199,7 +171,7 @@ export function AssistantChatContent({
               className="h-7 w-7 text-muted-foreground hover:text-foreground"
               aria-label="Minimize to icon"
             >
-              <Minus className="h-4 w-4" />
+              <Minus className="h-4 w-4" strokeWidth={1.5} />
             </Button>
           )}
           <Button
@@ -209,7 +181,7 @@ export function AssistantChatContent({
             className="h-7 w-7 text-muted-foreground hover:text-foreground"
             aria-label="Close chat"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" strokeWidth={1.5} />
           </Button>
         </div>
       </div>
@@ -270,7 +242,7 @@ export function AssistantChatContent({
             aria-label="Send message"
             className="bg-primary hover:bg-primary-hover text-primary-foreground shadow-sm disabled:bg-muted disabled:text-muted-foreground"
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-4 w-4" strokeWidth={1.5} />
           </Button>
         </div>
       </div>

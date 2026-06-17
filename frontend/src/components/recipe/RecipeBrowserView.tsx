@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, type RefObject } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
@@ -40,6 +41,7 @@ import { useNavActions } from "@/lib/providers/NavActionsProvider";
 import { cn } from "@/lib/utils";
 import { RecipeGrid } from "./browser/RecipeGrid";
 import { RecipeFilterSidebar } from "./browser/RecipeFilterSidebar";
+import { RecipeFilters } from "./RecipeFilters";
 
 // ============================================================================
 // Constants
@@ -152,6 +154,75 @@ function HeroSection({
 }
 
 // ============================================================================
+// Compact Search Header (select / dialog mode — no hero image)
+// ============================================================================
+
+interface CompactSearchHeaderProps {
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+  activeQuickFilters: Set<string>;
+  onQuickFilterToggle: (filterId: string) => void;
+  quickFilterOptions: QuickFilter[];
+  title?: string;
+  description?: string;
+}
+
+function CompactSearchHeader({
+  searchTerm,
+  onSearchChange,
+  activeQuickFilters,
+  onQuickFilterToggle,
+  quickFilterOptions,
+  title,
+  description,
+}: CompactSearchHeaderProps) {
+  return (
+    <div className="px-6 pt-5 pb-4 space-y-3">
+      {title && (
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+          {description && (
+            <p className="text-sm text-muted-foreground mt-1">{description}</p>
+          )}
+        </div>
+      )}
+
+      <div className="relative max-w-xl mx-auto">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search recipes..."
+          value={searchTerm}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-10 pr-10 text-sm bg-elevated border-border text-foreground placeholder:text-muted-foreground"
+        />
+        {searchTerm.length > 0 && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground"
+            onClick={() => onSearchChange("")}
+            aria-label="Clear search"
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        )}
+      </div>
+
+      {quickFilterOptions.length > 0 && (
+        <div className="max-w-xl mx-auto">
+          <FilterBar
+            options={quickFilterOptions}
+            activeIds={activeQuickFilters}
+            onToggle={onQuickFilterToggle}
+            align="center"
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
 // Props Interface
 // ============================================================================
 
@@ -166,6 +237,7 @@ export interface RecipeBrowserViewProps {
   heroDescription?: string;
   onBack?: () => void;
   actionButton?: React.ReactNode;
+  filterPortalTarget?: RefObject<HTMLDivElement | null>;
 }
 
 // ============================================================================
@@ -181,6 +253,7 @@ export function RecipeBrowserView({
   heroDescription,
   onBack,
   actionButton,
+  filterPortalTarget,
 }: RecipeBrowserViewProps = {}) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -204,7 +277,7 @@ export function RecipeBrowserView({
 
   const initialFavoritesOnly = searchParams.get("favoritesOnly") === "true";
 
-  const { data: recipesData, isLoading, error: queryError } = useRecipes();
+  const { data: recipesData, isLoading, error: queryError, refetch } = useRecipes();
   const { data: recipeGroups = [] } = useRecipeGroups();
   const { filterOptions: categoryOptions } = useCategoryOptions();
 
@@ -555,28 +628,96 @@ export function RecipeBrowserView({
           </div>
           <h2 className="text-lg font-semibold text-foreground">Failed to Load Recipes</h2>
           <p className="text-muted-foreground">{error}</p>
-          <Button onClick={() => window.location.reload()}>Try Again</Button>
+          <Button onClick={() => refetch()}>Try Again</Button>
         </div>
       </div>
     );
   }
 
+  const isSelectMode = mode === "select";
+
+  const heroElement = isSelectMode ? (
+    <CompactSearchHeader
+      searchTerm={filters.searchTerm}
+      onSearchChange={setSearchTerm}
+      activeQuickFilters={activeQuickFilters}
+      onQuickFilterToggle={handleQuickFilterToggle}
+      quickFilterOptions={visibleQuickFilters}
+      title={heroTitle}
+      description={heroDescription}
+    />
+  ) : (
+    <HeroSection
+      recipeCount={recipes.length}
+      searchTerm={filters.searchTerm}
+      onSearchChange={setSearchTerm}
+      onSearch={() => {}}
+      activeQuickFilters={activeQuickFilters}
+      onQuickFilterToggle={handleQuickFilterToggle}
+      quickFilterOptions={visibleQuickFilters}
+      title={heroTitle}
+      description={heroDescription}
+    />
+  );
+
+  const filterSlidePanel =
+    isSelectMode && filterPortalTarget?.current
+      ? createPortal(
+          <div
+            className={cn(
+              "absolute inset-y-0 left-0 w-80 z-20 bg-background border-r border-border flex flex-col transition-transform duration-300 ease-in-out",
+              filtersOpen ? "translate-x-0" : "-translate-x-full"
+            )}
+          >
+            <div className="flex items-center justify-between px-5 pt-5 pb-3">
+              <div className="flex items-center gap-2">
+                <SlidersHorizontal className="size-4 text-primary" strokeWidth={1.5} />
+                <span className="font-semibold">Filters</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setFiltersOpen(false)}
+                aria-label="Close filters"
+              >
+                <X className="size-4" strokeWidth={1.5} />
+              </Button>
+            </div>
+            <div className="border-t border-border" />
+            <div className="flex-1 overflow-y-auto px-4">
+              <RecipeFilters
+                filters={filters}
+                showHeader={false}
+                onCategoryChange={(value) => toggleCategory(value)}
+                onMealTypeChange={(value) => toggleMealType(value)}
+                onDietaryChange={(value) => toggleDietary(value)}
+                onGroupChange={(value) => toggleGroup(value)}
+                onFavoritesChange={handleFavoritesFilterChange}
+                onClearAll={clearAll}
+                categoryOptions={categoryOptions}
+                mealTypeOptions={mealTypeOptions}
+                dietaryOptions={dietaryOptions}
+                groupOptions={groupOptions}
+                showGroups={groupOptions.length > 0}
+              />
+            </div>
+            <div className="border-t border-border p-4 flex gap-3">
+              <Button variant="outline" onClick={clearAll}>
+                Reset
+              </Button>
+              <Button className="flex-1" onClick={() => setFiltersOpen(false)}>
+                Apply
+              </Button>
+            </div>
+          </div>,
+          filterPortalTarget.current
+        )
+      : null;
+
   return (
-    <PageLayout
-      hero={
-        <HeroSection
-          recipeCount={recipes.length}
-          searchTerm={filters.searchTerm}
-          onSearchChange={setSearchTerm}
-          onSearch={() => {}}
-          activeQuickFilters={activeQuickFilters}
-          onQuickFilterToggle={handleQuickFilterToggle}
-          quickFilterOptions={visibleQuickFilters}
-          title={heroTitle}
-          description={heroDescription}
-        />
-      }
-    >
+    <PageLayout hero={heroElement}>
+      {filterSlidePanel}
+
       {/* Static filter/sort row (scrolls with page, observed for nav pinning) */}
       <div ref={mode === "browse" ? sortControlsRef : undefined} className="mb-6 scroll-mt-20">
         <RecipeSortControls
@@ -593,28 +734,30 @@ export function RecipeBrowserView({
         />
       </div>
 
-      <RecipeFilterSidebar
-        filters={filters}
-        filtersOpen={filtersOpen}
-        onFiltersOpenChange={setFiltersOpen}
-        onCategoryChange={(value) => toggleCategory(value)}
-        onMealTypeChange={(value) => toggleMealType(value)}
-        onDietaryChange={(value) => toggleDietary(value)}
-        onGroupChange={(value) => toggleGroup(value)}
-        onFavoritesChange={handleFavoritesFilterChange}
-        onClearAll={clearAll}
-        categoryOptions={categoryOptions}
-        mealTypeOptions={mealTypeOptions}
-        dietaryOptions={dietaryOptions}
-        groupOptions={groupOptions}
-      />
+      {!isSelectMode && (
+        <RecipeFilterSidebar
+          filters={filters}
+          filtersOpen={filtersOpen}
+          onFiltersOpenChange={setFiltersOpen}
+          onCategoryChange={(value) => toggleCategory(value)}
+          onMealTypeChange={(value) => toggleMealType(value)}
+          onDietaryChange={(value) => toggleDietary(value)}
+          onGroupChange={(value) => toggleGroup(value)}
+          onFavoritesChange={handleFavoritesFilterChange}
+          onClearAll={clearAll}
+          categoryOptions={categoryOptions}
+          mealTypeOptions={mealTypeOptions}
+          dietaryOptions={dietaryOptions}
+          groupOptions={groupOptions}
+        />
+      )}
       <RecipeGrid
         recipes={filteredRecipes}
         hasActiveFilters={hasActiveFilters}
         onRecipeClick={handleRecipeClick}
         onFavoriteToggle={handleFavoriteToggle}
         onClearFilters={clearAll}
-        selectionMode={mode === "select"}
+        selectionMode={isSelectMode}
         selectedIds={selectedIds}
       />
     </PageLayout>

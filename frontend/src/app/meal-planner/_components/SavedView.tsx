@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Bookmark } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollableCardList } from "@/components/common/ScrollableCardList";
 import { SavedMealCard } from "./SavedMealCard";
@@ -14,8 +15,10 @@ import type { PlannerEntryResponseDTO } from "@/types/planner";
 // ============================================================================
 
 interface SavedViewProps {
-  /** Called when a meal is added to planner */
-  onEntryCreated: (entry: PlannerEntryResponseDTO) => void;
+  /** Called when a meal is added to planner (direct-add mode) */
+  onEntryCreated?: (entry: PlannerEntryResponseDTO) => void;
+  /** Called when a meal is selected for preview (preview mode) */
+  onMealSelected?: (meal: MealSelectionResponseDTO) => void;
 }
 
 // ============================================================================
@@ -24,14 +27,14 @@ interface SavedViewProps {
 
 function MealCardSkeleton() {
   return (
-    <div className="flex bg-elevated rounded-2xl border border-border overflow-hidden">
+    <Card className="flex-row overflow-hidden p-0 gap-0">
       <Skeleton className="h-28 w-28 flex-shrink-0" />
       <div className="flex-1 p-4 space-y-2">
         <Skeleton className="h-5 w-3/4" />
         <Skeleton className="h-4 w-1/2" />
         <Skeleton className="h-4 w-1/4" />
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -77,9 +80,9 @@ function EmptyNoMeals() {
  *
  * Click a saved meal to instantly add it to your planner.
  */
-export function SavedView({ onEntryCreated }: SavedViewProps) {
+export function SavedView({ onEntryCreated, onMealSelected }: SavedViewProps) {
   // Data fetching with React Query
-  const { data: meals = [], isLoading } = useSavedMeals();
+  const { data: meals = [], isLoading, isError } = useSavedMeals();
   const addToPlanner = useAddToPlanner();
 
   // Track which meal is being added (for loading state)
@@ -90,12 +93,17 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
   // --------------------------------------------------------------------------
 
   const handleMealClick = async (meal: MealSelectionResponseDTO) => {
-    if (addingMealId !== null) return; // Prevent double-clicks
+    if (onMealSelected) {
+      onMealSelected(meal);
+      return;
+    }
+
+    if (addingMealId !== null) return;
 
     setAddingMealId(meal.id);
     addToPlanner.mutate(meal.id, {
       onSuccess: (entry) => {
-        onEntryCreated(entry);
+        onEntryCreated?.(entry);
       },
       onError: (error) => {
         console.error("Failed to add meal to planner:", error);
@@ -111,6 +119,15 @@ export function SavedView({ onEntryCreated }: SavedViewProps) {
   // Loading state
   if (isLoading) {
     return <SavedViewSkeleton />;
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <p className="text-muted-foreground">Failed to load saved meals. Please try again.</p>
+      </div>
+    );
   }
 
   // Empty state - no meals at all

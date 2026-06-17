@@ -1,41 +1,25 @@
-import { Suspense } from "react";
-import { AddEditRecipeView } from "../_components";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
+"use client";
 
-function AddRecipeLoading() {
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="px-6 py-4 mx-auto max-w-7xl">
-          <Skeleton className="w-48 h-8" />
-        </div>
-      </div>
-      <div className="px-6 py-8 mx-auto max-w-7xl">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="space-y-6 lg:col-span-2">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <Skeleton className="w-full h-10" />
-                  <div className="grid grid-cols-2 gap-4">
-                    <Skeleton className="w-full h-10" />
-                    <Skeleton className="w-full h-10" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
 
+/**
+ * Redirect page for /recipes/add.
+ *
+ * The recipe wizard is now a global dialog mounted in AppLayout.
+ * When users navigate to this URL (e.g. via AI assistant or bookmark),
+ * we open the wizard dialog and redirect to /recipes so they aren't
+ * left on a blank page.
+ */
 export default function AddRecipePage() {
-  return (
-    <Suspense fallback={<AddRecipeLoading />}>
-      <AddEditRecipeView mode="add" />
-    </Suspense>
-  );
+  const router = useRouter();
+  const { openWizard } = useRecipeWizardDialog();
+
+  useEffect(() => {
+    openWizard();
+    router.replace("/recipes");
+  }, [openWizard, router]);
+
+  return null;
 }

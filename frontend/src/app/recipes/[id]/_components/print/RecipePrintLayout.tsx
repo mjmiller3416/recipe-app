@@ -2,7 +2,7 @@ import "./print-styles.css";
 import { formatQuantity } from "@/lib/utils";
 import { formatTime, sortCategoryEntries } from "../recipe-utils";
 import type { PrintOptions } from "./PrintPreviewDialog";
-import type { RecipeResponseDTO } from "@/types/recipe";
+import type { RecipeResponseDTO, NutritionFactsResponseDTO } from "@/types/recipe";
 
 interface RecipePrintLayoutProps {
   recipe: RecipeResponseDTO;
@@ -10,6 +10,28 @@ interface RecipePrintLayoutProps {
   groupedIngredients: Map<string, RecipeResponseDTO["ingredients"]>;
   printOptions: PrintOptions;
 }
+
+const NUTRITION_PRINT_ROWS: {
+  key: keyof NutritionFactsResponseDTO;
+  label: string;
+  unit: string;
+}[] = [
+  { key: "calories", label: "Calories", unit: "kcal" },
+  { key: "total_fat_g", label: "Total Fat", unit: "g" },
+  { key: "saturated_fat_g", label: "Saturated Fat", unit: "g" },
+  { key: "trans_fat_g", label: "Trans Fat", unit: "g" },
+  { key: "cholesterol_mg", label: "Cholesterol", unit: "mg" },
+  { key: "sodium_mg", label: "Sodium", unit: "mg" },
+  { key: "total_carbs_g", label: "Total Carbohydrates", unit: "g" },
+  { key: "dietary_fiber_g", label: "Dietary Fiber", unit: "g" },
+  { key: "total_sugars_g", label: "Total Sugars", unit: "g" },
+  { key: "protein_g", label: "Protein", unit: "g" },
+];
+
+const formatNutritionValue = (value: number | null | boolean): string => {
+  if (value === null || typeof value === "boolean") return "—";
+  return Number.isInteger(value) ? value.toString() : value.toFixed(1);
+};
 
 /**
  * Print-only layout component for recipes.
@@ -106,6 +128,37 @@ export function RecipePrintLayout({
           <div className="p-3 mt-3 border border-gray-200 rounded-lg bg-gray-50">
             <h3 className="mb-1 text-sm font-bold text-black">Chef's Notes</h3>
             <p className="text-xs text-gray-800">{recipe.notes}</p>
+          </div>
+        )}
+
+        {/* Nutrition Facts */}
+        {printOptions.showNutrition && recipe.nutrition_facts && (
+          <div className="p-3 mt-3 border border-gray-200 rounded-lg bg-gray-50">
+            <h3 className="mb-2 text-sm font-bold text-black">
+              Nutrition Facts{" "}
+              <span className="font-normal text-gray-600">(per serving)</span>
+            </h3>
+            <div className="grid grid-cols-5 gap-2">
+              {NUTRITION_PRINT_ROWS.map((row) => {
+                const value = recipe.nutrition_facts![row.key];
+                return (
+                  <div
+                    key={row.key}
+                    className="px-2 py-1 text-center border border-gray-200 rounded bg-white"
+                  >
+                    <p className="text-sm font-bold text-black">
+                      {formatNutritionValue(value)}
+                      {value !== null && typeof value !== "boolean" && (
+                        <span className="ml-0.5 text-xs font-medium text-gray-600">
+                          {row.unit}
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-gray-600">{row.label}</p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

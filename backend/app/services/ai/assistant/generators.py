@@ -4,14 +4,22 @@ AI content generation methods for the assistant.
 Handles recipe suggestions, full recipe generation, and cooking question answers.
 """
 
-import json
+import logging
 from typing import Optional
 
-from app.dtos.assistant_dtos import GeneratedRecipeDTO, GeneratedIngredientDTO
+from app.dtos.recipe_generation_dtos import (
+    RecipeGeneratedDTO,
+    RecipeGenerationPreferencesDTO,
+    RecipeGenerationRequestDTO,
+)
 from app.services.ai.gemini_client import get_gemini_client
+from app.services.ai.recipe_generation import get_recipe_generation_service
 from app.services.ai.response_utils import extract_text_from_response
 
 from .prompts import MODEL_NAME, API_KEY_ENV_VAR
+from .tools import TOOL_DEFINITIONS
+
+logger = logging.getLogger(__name__)
 
 
 class GeneratorsMixin:
@@ -23,17 +31,20 @@ class GeneratorsMixin:
         args: dict,
         context_data: Optional[dict],
         contents: list,
+        model_turn=None,
     ) -> dict:
         """Execute a function call and return appropriate response."""
 
         if tool_name == "suggest_recipes":
             # Immediate Generation Loop: The function call tells us the user wants
             # suggestions, but we need to generate the actual text response.
-            return self._generate_suggestions_response(args, context_data, contents)
+            return self._generate_suggestions_response(
+                args, context_data, contents, model_turn
+            )
 
         elif tool_name == "create_recipe":
             # Generate a full recipe with structured JSON
-            recipe = self._generate_recipe_from_args(args)
+            recipe = self._generate_recipe_from_args(args, context_data)
             return {
                 "type": "recipe",
                 "response": f"Here's your {args.get('recipe_name', 'recipe')}! 🎉",
@@ -43,17 +54,90 @@ class GeneratorsMixin:
 
         elif tool_name == "answer_cooking_question":
             # For cooking questions, we use a follow-up call to get a proper response
-            return self._generate_cooking_answer(args, contents)
+            return self._generate_cooking_answer(args, contents, model_turn)
 
         # Fallback
         return {"type": "chat", "response": None}
 
-    def _generate_suggestions_response(
-        self, args: dict, context_data: Optional[dict], contents: list
-    ) -> dict:
-        """Generate recipe suggestions text based on tool arguments."""
+    def _finalize_after_tool_call(
+        self,
+        contents: list,
+        model_turn,
+        tool_name: str,
+        instruction: str,
+        fallback: str,
+    ) -> str:
+        """Continue a Gemini function-calling turn to produce the final text.
+
+        Gemini 3.x requires the model's original ``function_call`` part (which
+        carries a ``thought_signature``) to be replayed, immediately followed by
+        a matching ``function_response`` part, with the tool declarations still
+        present in the request. We then ask the model to finalize its answer with
+        ``mode: NONE`` so it returns natural-language text instead of attempting
+        another tool call.
+
+        The previous implementation appended a *fresh user text prompt* without
+        the function_call/function_response pair. Under Gemini 3.x that returns
+        ``finish_reason=MALFORMED_FUNCTION_CALL`` with no content, which silently
+        collapsed to the canned ``fallback`` string — the assistant appeared to
+        "do nothing" with no backend error.
+
+        Args:
+            contents: The conversation contents sent on the initial tool call.
+            model_turn: The model's response Content holding the function_call
+                part (with its thought_signature). May be ``None`` in tests.
+            tool_name: Name of the tool that was called.
+            instruction: Natural-language instruction describing the text to
+                generate (carried in the function_response payload).
+            fallback: Text to return if the model yields no usable text.
+
+        Returns:
+            The generated text, or ``fallback`` if none was produced.
+        """
         client = get_gemini_client(API_KEY_ENV_VAR)
 
+        follow_contents = list(contents)
+        if model_turn is not None:
+            follow_contents.append(model_turn)
+            follow_contents.append(
+                {
+                    "role": "user",
+                    "parts": [
+                        {
+                            "function_response": {
+                                "name": tool_name,
+                                "response": {"status": "ok", "instruction": instruction},
+                            }
+                        }
+                    ],
+                }
+            )
+        else:
+            # Defensive path (e.g. unit tests with no real model turn).
+            follow_contents.append(
+                {"role": "user", "parts": [{"text": instruction}]}
+            )
+
+        gen_response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=follow_contents,
+            config={
+                "tools": [{"function_declarations": TOOL_DEFINITIONS}],
+                "tool_config": {"function_calling_config": {"mode": "NONE"}},
+                "temperature": 0.8,
+            },
+        )
+
+        return extract_text_from_response(gen_response) or fallback
+
+    def _generate_suggestions_response(
+        self,
+        args: dict,
+        context_data: Optional[dict],
+        contents: list,
+        model_turn=None,
+    ) -> dict:
+        """Generate recipe suggestions text based on tool arguments."""
         # Build a prompt that includes context about what the user wants
         context_parts = []
         if args.get("main_ingredient"):
@@ -85,15 +169,14 @@ Follow the 'RECIPE SUGGESTIONS' format from your system instructions:
 
 Be warm, enthusiastic, and use 2-4 emojis naturally placed."""
 
-        # Make a follow-up call to generate the suggestions text
-        gen_response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=contents + [{"role": "user", "parts": [{"text": prompt}]}],
-            config={"temperature": 0.8},
+        # Continue the tool conversation to generate the suggestions text.
+        final_text = self._finalize_after_tool_call(
+            contents,
+            model_turn,
+            "suggest_recipes",
+            prompt,
+            "Here are some ideas! 🍳",
         )
-
-        # Extract the text
-        final_text = extract_text_from_response(gen_response) or "Here are some ideas! 🍳"
 
         return {
             "type": "suggestions",
@@ -101,10 +184,10 @@ Be warm, enthusiastic, and use 2-4 emojis naturally placed."""
             "tool_args": args,
         }
 
-    def _generate_cooking_answer(self, args: dict, contents: list) -> dict:
+    def _generate_cooking_answer(
+        self, args: dict, contents: list, model_turn=None
+    ) -> dict:
         """Generate a cooking question answer."""
-        client = get_gemini_client(API_KEY_ENV_VAR)
-
         question_type = args.get("question_type", "general")
         context = args.get("context", "")
 
@@ -114,13 +197,13 @@ Be warm and helpful. Start with the most direct answer, then add one pro tip.
 Keep it concise (2-4 sentences unless it needs more detail).
 Use your friendly Meal Genie personality."""
 
-        gen_response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=contents + [{"role": "user", "parts": [{"text": prompt}]}],
-            config={"temperature": 0.8},
+        final_text = self._finalize_after_tool_call(
+            contents,
+            model_turn,
+            "answer_cooking_question",
+            prompt,
+            "Let me help with that!",
         )
-
-        final_text = extract_text_from_response(gen_response) or "Let me help with that!"
 
         return {
             "type": "chat",
@@ -128,74 +211,55 @@ Use your friendly Meal Genie personality."""
             "tool_args": args,
         }
 
-    def _generate_recipe_from_args(self, args: dict) -> Optional[GeneratedRecipeDTO]:
-        """Generate a structured recipe from tool arguments."""
-        client = get_gemini_client(API_KEY_ENV_VAR)
+    def _generate_recipe_from_args(
+        self, args: dict, context_data: Optional[dict] = None
+    ) -> Optional[RecipeGeneratedDTO]:
+        """Generate a structured recipe by delegating to the recipe generation service.
 
+        Bridges the assistant's tool-call arguments to the shared recipe
+        generation service, which uses the same prompt template and parsing
+        logic as the prompt-based generation flow.
+        """
         recipe_name = args.get("recipe_name", "Untitled Recipe")
         style_notes = args.get("style_notes", "")
-        dietary = args.get("dietary_restrictions", "none")
+        dietary = args.get("dietary_restrictions", "")
         servings = args.get("servings", 4)
 
-        generation_prompt = f"""Generate a complete recipe for: {recipe_name}
-Style notes: {style_notes}
-Dietary restrictions: {dietary}
-Servings: {servings}
+        # Build a natural-language prompt from the tool arguments
+        prompt_parts = [f"Generate a complete recipe for: {recipe_name}"]
+        if style_notes:
+            prompt_parts.append(f"Style notes: {style_notes}")
+        if dietary and dietary != "none":
+            prompt_parts.append(f"Dietary restrictions: {dietary}")
 
-Return ONLY valid JSON (no markdown, no code blocks) with this exact structure:
-{{
-  "recipe_name": "{recipe_name}",
-  "recipe_category": "beef|chicken|pork|seafood|vegetarian|other",
-  "meal_type": "appetizer|breakfast|lunch|dinner|dessert|side|snack|sauce|other",
-  "diet_pref": "{dietary if dietary else 'none'}",
-  "total_time": <integer minutes>,
-  "servings": {servings},
-  "directions": "Step one.\\nStep two.\\nStep three...",
-  "notes": "Optional tips or serving suggestions",
-  "ingredients": [
-    {{"ingredient_name": "Ingredient Name", "ingredient_category": "produce|dairy|meat|pantry|spices|etc", "quantity": 1.0, "unit": "cup|tbs|oz|lbs|etc"}}
-  ]
-}}
-
-Rules:
-- 6-15 ingredients, names in Title Case
-- 5-10 direction steps, separated by \\n (no numbers)
-- ingredient_category: produce|dairy|deli|meat|condiments|oils-and-vinegars|seafood|pantry|spices|frozen|bakery|baking|beverages|other
-- unit: tbs|tsp|cup|oz|lbs|stick|bag|box|can|jar|package|piece|slice|whole|pinch|dash|to-taste
-- diet_pref: always use "none" unless specified (never null)"""
-
-        # Use JSON response mode for guaranteed JSON output
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=[{"role": "user", "parts": [{"text": generation_prompt}]}],
-            config={
-                "temperature": 0.7,
-                "response_mime_type": "application/json",
-            },
+        # Use user's enabled categories from context, falling back to service defaults
+        allowed_categories = (
+            context_data.get("allowed_categories", []) if context_data else []
         )
 
-        # Parse JSON from response
-        raw_text = extract_text_from_response(response)
-        if raw_text:
-            try:
-                data = json.loads(raw_text)
-                ingredients = [
-                    GeneratedIngredientDTO(**ing)
-                    for ing in data.get("ingredients", [])
-                ]
-                return GeneratedRecipeDTO(
-                    recipe_name=data.get("recipe_name", recipe_name),
-                    recipe_category=data.get("recipe_category", "other"),
-                    meal_type=data.get("meal_type", "dinner"),
-                    diet_pref=data.get("diet_pref", "none"),
-                    total_time=data.get("total_time"),
-                    servings=data.get("servings", servings),
-                    directions=data.get("directions"),
-                    notes=data.get("notes"),
-                    ingredients=ingredients,
-                )
-            except json.JSONDecodeError:
-                pass
+        request = RecipeGenerationRequestDTO(
+            prompt="\n".join(prompt_parts),
+            allowed_categories=allowed_categories,
+            preferences=None,
+            generate_image=False,
+            estimate_nutrition=False,
+        )
+        # Override servings in the prompt via preferences if non-default
+        if servings and servings != 4:
+            request.preferences = RecipeGenerationPreferencesDTO(servings=servings)
 
-        # Fallback: return empty recipe with just the name
-        return GeneratedRecipeDTO(recipe_name=recipe_name, ingredients=[])
+        try:
+            service = get_recipe_generation_service()
+            result = service.generate(request)
+            if result.success and result.recipe:
+                return result.recipe
+        except Exception as e:
+            logger.warning(f"[Assistant] Recipe generation via service failed: {e}")
+
+        # Fallback: return minimal recipe with just the name
+        return RecipeGeneratedDTO(
+            recipe_name=recipe_name,
+            recipe_category="other",
+            meal_type="dinner",
+            ingredients=[],
+        )
