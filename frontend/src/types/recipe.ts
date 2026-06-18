@@ -54,7 +54,6 @@ export interface RecipeBaseDTO {
   meal_type: string;
   diet_pref: string | null;
   description: string | null;
-  total_time: number | null;
   prep_time: number | null;
   cook_time: number | null;
   servings: number | null;
@@ -67,6 +66,7 @@ export interface RecipeBaseDTO {
 
 export interface RecipeResponseDTO extends RecipeBaseDTO {
   id: number;
+  total_time: number | null;
   is_favorite: boolean;
   is_ai_generated: boolean;
   created_at: string | null;
@@ -99,6 +99,8 @@ export interface RecipeCardDTO {
   reference_image_path: string | null;
   banner_image_path: string | null;
   servings: number | null;
+  prep_time: number | null;
+  cook_time: number | null;
   total_time: number | null;
   // Optional metadata for badge display
   recipe_category?: string | null;
@@ -143,7 +145,6 @@ export interface RecipeCreateDTO {
   meal_type?: string;
   diet_pref?: string | null;
   description?: string | null;
-  total_time?: number | null;
   prep_time?: number | null;
   cook_time?: number | null;
   servings?: number | null;
@@ -163,7 +164,6 @@ export interface RecipeUpdateDTO {
   meal_type?: string;
   diet_pref?: string | null;
   description?: string | null;
-  total_time?: number | null;
   prep_time?: number | null;
   cook_time?: number | null;
   servings?: number | null;

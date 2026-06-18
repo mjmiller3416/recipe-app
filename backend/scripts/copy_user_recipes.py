@@ -58,7 +58,7 @@ def copy_recipes(session, from_user_id: int, to_user_id: int, dry_run: bool = Fa
     recipes = session.execute(
         text("""
             SELECT id, recipe_name, recipe_category, meal_type, diet_pref,
-                   total_time, servings, directions, notes,
+                   prep_time, cook_time, servings, directions, notes,
                    reference_image_path, banner_image_path,
                    is_favorite, is_ai_generated
             FROM recipe
@@ -113,12 +113,12 @@ def copy_recipes(session, from_user_id: int, to_user_id: int, dry_run: bool = Fa
             text("""
                 INSERT INTO recipe (
                     recipe_name, recipe_category, meal_type, diet_pref,
-                    total_time, servings, directions, notes,
+                    prep_time, cook_time, servings, directions, notes,
                     reference_image_path, banner_image_path,
                     is_favorite, is_ai_generated, user_id, created_at
                 ) VALUES (
                     :recipe_name, :recipe_category, :meal_type, :diet_pref,
-                    :total_time, :servings, :directions, :notes,
+                    :prep_time, :cook_time, :servings, :directions, :notes,
                     :reference_image_path, :banner_image_path,
                     :is_favorite, :is_ai_generated, :user_id, NOW()
                 ) RETURNING id
@@ -128,14 +128,15 @@ def copy_recipes(session, from_user_id: int, to_user_id: int, dry_run: bool = Fa
                 "recipe_category": r[2],
                 "meal_type": r[3],
                 "diet_pref": r[4],
-                "total_time": r[5],
-                "servings": r[6],
-                "directions": r[7],
-                "notes": r[8],
-                "reference_image_path": r[9],
-                "banner_image_path": r[10],
-                "is_favorite": r[11],
-                "is_ai_generated": r[12],
+                "prep_time": r[5],
+                "cook_time": r[6],
+                "servings": r[7],
+                "directions": r[8],
+                "notes": r[9],
+                "reference_image_path": r[10],
+                "banner_image_path": r[11],
+                "is_favorite": r[12],
+                "is_ai_generated": r[13],
                 "user_id": to_user_id,
             },
         )

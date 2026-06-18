@@ -93,6 +93,8 @@ class ImportOperationsMixin:
                     recipe_category=recipe_data["recipe_category"],
                     meal_type=recipe_data.get("meal_type") or "Dinner",
                     diet_pref=recipe_data.get("diet_pref"),
+                    prep_time=recipe_data.get("prep_time"),
+                    cook_time=recipe_data.get("cook_time"),
                     total_time=recipe_data.get("total_time"),
                     servings=recipe_data.get("servings"),
                     directions=recipe_data.get("directions"),
@@ -179,6 +181,12 @@ class ImportOperationsMixin:
                 "recipe_category": str(recipe_category).strip().lower(),
                 "meal_type": str(meal_type_raw).strip().lower() if meal_type_raw else None,
                 "diet_pref": str(diet_pref_raw).strip().lower() if diet_pref_raw else None,
+                "prep_time": self._parse_int(
+                    self._get_cell_value(cells, col_map, "prep_time")
+                ),
+                "cook_time": self._parse_int(
+                    self._get_cell_value(cells, col_map, "cook_time")
+                ),
                 "total_time": self._parse_int(
                     self._get_cell_value(cells, col_map, "total_time")
                 ),
@@ -409,12 +417,16 @@ class ImportOperationsMixin:
         self, recipe: RecipeImportRowDTO, new_name: Optional[str] = None
     ) -> Recipe:
         """Create a new recipe from import data."""
+        cook_time = recipe.cook_time
+        if cook_time is None and recipe.total_time is not None:
+            cook_time = recipe.total_time
         create_dto = RecipeCreateDTO(
             recipe_name=new_name or recipe.recipe_name,
             recipe_category=recipe.recipe_category,
             meal_type=recipe.meal_type,
             diet_pref=recipe.diet_pref,
-            total_time=recipe.total_time,
+            prep_time=recipe.prep_time,
+            cook_time=cook_time,
             servings=recipe.servings,
             directions=recipe.directions,
             notes=recipe.notes,
@@ -426,10 +438,14 @@ class ImportOperationsMixin:
         self, existing: Recipe, recipe: RecipeImportRowDTO
     ) -> Recipe:
         """Update an existing recipe with import data."""
+        cook_time = recipe.cook_time
+        if cook_time is None and recipe.total_time is not None:
+            cook_time = recipe.total_time
         update_dto = RecipeUpdateDTO(
             meal_type=recipe.meal_type,
             diet_pref=recipe.diet_pref,
-            total_time=recipe.total_time,
+            prep_time=recipe.prep_time,
+            cook_time=cook_time,
             servings=recipe.servings,
             directions=recipe.directions,
             notes=recipe.notes,

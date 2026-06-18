@@ -2,6 +2,8 @@
 
 import {
   Clock,
+  Timer,
+  Flame,
   Users,
   Edit3,
   Trash2,
@@ -67,9 +69,16 @@ export function RecipeHeaderCard({
     <Card className="mb-8 shadow-xl">
       <CardContent className="p-6 md:p-8">
         {/* Recipe Name */}
-        <h1 className="mb-4 text-3xl font-bold leading-tight md:text-4xl text-foreground">
+        <h1 className="mb-2 text-3xl font-bold leading-tight md:text-4xl text-foreground">
           {recipe.recipe_name}
         </h1>
+
+        {/* Description */}
+        {recipe.description && (
+          <p className="mb-4 text-muted-foreground leading-relaxed">
+            {recipe.description}
+          </p>
+        )}
 
         {/* Badges */}
         <RecipeBadgeGroup className="mb-6">
@@ -94,6 +103,13 @@ export function RecipeHeaderCard({
               size="md"
             />
           )}
+          {recipe.difficulty && (
+            <RecipeBadge
+              label={recipe.difficulty}
+              type="difficulty"
+              size="md"
+            />
+          )}
           {recipeGroups.length > 0 && (
             <RecipeBadge
               label={recipeGroups[0].name}
@@ -115,7 +131,31 @@ export function RecipeHeaderCard({
         <div className="flex flex-wrap items-center gap-6 text-muted-foreground">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-primary/10">
-              <Clock className="w-5 h-5 text-primary" />
+              <Timer className="w-5 h-5 text-primary" strokeWidth={1.5} />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Prep Time</p>
+              <p className="font-semibold text-foreground">
+                {formatTime(recipe.prep_time)}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Flame className="w-5 h-5 text-primary" strokeWidth={1.5} />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Cook Time</p>
+              <p className="font-semibold text-foreground">
+                {formatTime(recipe.cook_time)}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Clock className="w-5 h-5 text-primary" strokeWidth={1.5} />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Total Time</p>
@@ -127,7 +167,7 @@ export function RecipeHeaderCard({
 
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-primary/10">
-              <Users className="w-5 h-5 text-primary" />
+              <Users className="w-5 h-5 text-primary" strokeWidth={1.5} />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Servings</p>
@@ -139,7 +179,7 @@ export function RecipeHeaderCard({
 
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-primary/10">
-              <UtensilsCrossed className="w-5 h-5 text-primary" />
+              <UtensilsCrossed className="w-5 h-5 text-primary" strokeWidth={1.5} />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Ingredients</p>

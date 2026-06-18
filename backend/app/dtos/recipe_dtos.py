@@ -47,7 +47,6 @@ class RecipeBaseDTO(BaseModel):
     meal_type: str = Field(default="Dinner", min_length=1)
     diet_pref: Optional[str] = None  # match the model field name
     description: Optional[str] = None
-    total_time: Optional[int] = Field(None, ge=0)
     prep_time: Optional[int] = Field(None, ge=0)
     cook_time: Optional[int] = Field(None, ge=0)
     servings: Optional[int] = Field(None, ge=1)
@@ -84,6 +83,8 @@ class RecipeCardDTO(BaseModel):
     reference_image_path: Optional[str] = None
     banner_image_path: Optional[str] = None
     servings: Optional[int] = None
+    prep_time: Optional[int] = None
+    cook_time: Optional[int] = None
     total_time: Optional[int] = None
     # Optional metadata for badge display
     recipe_category: Optional[str] = None
@@ -113,6 +114,8 @@ class RecipeCardDTO(BaseModel):
             reference_image_path=recipe.reference_image_path,
             banner_image_path=recipe.banner_image_path,
             servings=recipe.servings,
+            prep_time=recipe.prep_time,
+            cook_time=recipe.cook_time,
             total_time=recipe.total_time,
             recipe_category=recipe.recipe_category,
             meal_type=recipe.meal_type,
@@ -141,7 +144,6 @@ class RecipeUpdateDTO(BaseModel):
     meal_type: Optional[str] = Field(None, min_length=1)
     diet_pref: Optional[str] = None
     description: Optional[str] = None
-    total_time: Optional[int] = Field(None, ge=0)
     prep_time: Optional[int] = Field(None, ge=0)
     cook_time: Optional[int] = Field(None, ge=0)
     servings: Optional[int] = Field(None, ge=1)
@@ -183,6 +185,7 @@ class RecipeResponseDTO(RecipeBaseDTO):
     """DTO for recipe responses with full ingredient information."""
 
     id: int
+    total_time: Optional[int] = None
     is_favorite: bool = False
     is_ai_generated: bool = False
     created_at: Optional[str] = None  # ISO format datetime string

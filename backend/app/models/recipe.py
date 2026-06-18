@@ -9,7 +9,8 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, case, func
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
@@ -39,7 +40,6 @@ class Recipe(Base):
     meal_type: Mapped[str] = mapped_column(String, default="Dinner", nullable=False, index=True)
     diet_pref: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    total_time: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     prep_time: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     cook_time: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     servings: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
@@ -89,6 +89,21 @@ class Recipe(Base):
         cascade="all, delete-orphan",
         uselist=False,
     )
+
+    # ── Computed Properties ────────────────────────────────────────────────────────────────────────────────
+    @hybrid_property
+    def total_time(self) -> Optional[int]:
+        if self.prep_time is None and self.cook_time is None:
+            return None
+        return (self.prep_time or 0) + (self.cook_time or 0)
+
+    @total_time.inplace.expression
+    @classmethod
+    def _total_time_expr(cls):
+        return case(
+            (cls.prep_time.is_(None) & cls.cook_time.is_(None), None),
+            else_=func.coalesce(cls.prep_time, 0) + func.coalesce(cls.cook_time, 0),
+        )
 
     # ── String Representation ───────────────────────────────────────────────────────────────────────────────
     def __repr__(self) -> str:

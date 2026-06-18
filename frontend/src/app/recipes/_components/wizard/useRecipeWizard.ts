@@ -673,17 +673,8 @@ export function useRecipeWizard({
         .map((dir) => dir.text.trim())
         .join("\n");
 
-      // Calculate total_time (now numbers, not strings)
       const prep = values.prepTime || null;
       const cook = values.cookTime || null;
-      let totalTime: number | null = null;
-      if (prep !== null && cook !== null) {
-        totalTime = prep + cook;
-      } else if (prep !== null) {
-        totalTime = prep;
-      } else if (cook !== null) {
-        totalTime = cook;
-      }
 
       // Build nutrition facts DTO if available
       let nutritionPayload: NutritionFactsCreateDTO | null = null;
@@ -753,7 +744,6 @@ export function useRecipeWizard({
           meal_type: values.mealType.trim(),
           diet_pref: values.dietaryPreference === "none" ? null : values.dietaryPreference,
           description: values.description.trim() || null,
-          total_time: totalTime,
           prep_time: prep,
           cook_time: cook,
           servings: values.servings || null,
@@ -786,7 +776,6 @@ export function useRecipeWizard({
         meal_type: values.mealType.trim(),
         diet_pref: values.dietaryPreference === "none" ? null : values.dietaryPreference,
         description: values.description.trim() || null,
-        total_time: totalTime,
         prep_time: prep,
         cook_time: cook,
         servings: values.servings || null,

@@ -1,4 +1,5 @@
 import "./print-styles.css";
+import Image from "next/image";
 import { formatQuantity } from "@/lib/utils";
 import { formatTime, sortCategoryEntries } from "../recipe-utils";
 import type { PrintOptions } from "./PrintPreviewDialog";
@@ -55,16 +56,22 @@ export function RecipePrintLayout({
               {recipe.recipe_name}
             </h1>
             <p className="mt-1 text-sm text-gray-600">
-              {[recipe.meal_type, recipe.recipe_category, recipe.diet_pref].filter(Boolean).join(" • ")}
+              {[recipe.meal_type, recipe.recipe_category, recipe.diet_pref, recipe.difficulty].filter(Boolean).join(" • ")}
             </p>
+            {recipe.description && (
+              <p className="mt-1 text-sm text-gray-700 italic">{recipe.description}</p>
+            )}
           </div>
           {printOptions.showMeta && (
             <div className="text-sm text-right text-gray-700">
               <div className="flex items-center justify-end gap-1 mb-1">
                 <span>{recipe.servings || "—"} servings</span>
               </div>
+              <div className="flex items-center justify-end gap-1 mb-1">
+                <span>Prep: {formatTime(recipe.prep_time)} · Cook: {formatTime(recipe.cook_time)}</span>
+              </div>
               <div className="flex items-center justify-end gap-1">
-                <span>{formatTime(recipe.total_time)}</span>
+                <span>Total: {formatTime(recipe.total_time)}</span>
               </div>
             </div>
           )}
@@ -73,10 +80,13 @@ export function RecipePrintLayout({
         {/* Recipe Image */}
         {printOptions.showImage && recipe.reference_image_path && (
           <div className="mb-4">
-            <img
+            <Image
               src={recipe.reference_image_path}
               alt={recipe.recipe_name}
+              width={800}
+              height={192}
               className="object-cover w-full rounded-lg max-h-48"
+              unoptimized
             />
           </div>
         )}
@@ -126,7 +136,7 @@ export function RecipePrintLayout({
         {/* Chef's Notes */}
         {printOptions.showNotes && recipe.notes && (
           <div className="p-3 mt-3 border border-gray-200 rounded-lg bg-gray-50">
-            <h3 className="mb-1 text-sm font-bold text-black">Chef's Notes</h3>
+            <h3 className="mb-1 text-sm font-bold text-black">Chef&apos;s Notes</h3>
             <p className="text-xs text-gray-800">{recipe.notes}</p>
           </div>
         )}

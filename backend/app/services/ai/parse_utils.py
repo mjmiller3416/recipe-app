@@ -86,7 +86,6 @@ def parse_recipe_dict(data: dict) -> RecipeGeneratedDTO:
         description=data.get("description"),
         prep_time=safe_int(data.get("prep_time")),
         cook_time=safe_int(data.get("cook_time")),
-        total_time=safe_int(data.get("total_time")),
         difficulty=data.get("difficulty"),
         servings=safe_int(data.get("servings")),
         directions=data.get("directions"),

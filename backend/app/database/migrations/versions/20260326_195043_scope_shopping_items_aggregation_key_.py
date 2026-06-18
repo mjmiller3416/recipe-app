@@ -21,11 +21,13 @@ def upgrade() -> None:
     """Replace global unique on aggregation_key with per-user unique."""
     op.drop_index('ix_shopping_items_aggregation_key', table_name='shopping_items')
     op.create_index('ix_shopping_items_aggregation_key', 'shopping_items', ['aggregation_key'], unique=False)
-    op.create_unique_constraint('uq_shopping_item_aggregation_user', 'shopping_items', ['aggregation_key', 'user_id'])
+    with op.batch_alter_table('shopping_items') as batch_op:
+        batch_op.create_unique_constraint('uq_shopping_item_aggregation_user', ['aggregation_key', 'user_id'])
 
 
 def downgrade() -> None:
     """Restore global unique on aggregation_key."""
-    op.drop_constraint('uq_shopping_item_aggregation_user', 'shopping_items', type_='unique')
+    with op.batch_alter_table('shopping_items') as batch_op:
+        batch_op.drop_constraint('uq_shopping_item_aggregation_user', type_='unique')
     op.drop_index('ix_shopping_items_aggregation_key', table_name='shopping_items')
     op.create_index('ix_shopping_items_aggregation_key', 'shopping_items', ['aggregation_key'], unique=True)

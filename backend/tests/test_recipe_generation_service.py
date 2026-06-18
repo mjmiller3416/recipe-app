@@ -64,7 +64,6 @@ def _full_recipe_json(**overrides) -> str:
         "diet_pref": "vegetarian",
         "prep_time": 15,
         "cook_time": 25,
-        "total_time": 40,
         "difficulty": "Medium",
         "servings": 4,
         "ingredients": [
@@ -167,7 +166,6 @@ class TestRecipeGenerationSuccess:
         assert result.recipe.diet_pref == "vegetarian"
         assert result.recipe.prep_time == 15
         assert result.recipe.cook_time == 25
-        assert result.recipe.total_time == 40
         assert result.recipe.difficulty == "Medium"
         assert result.recipe.servings == 4
         assert len(result.recipe.ingredients) == 2
@@ -468,12 +466,10 @@ class TestParseRecipeDict:
             "recipe_name": "Test",
             "prep_time": "15",
             "cook_time": "30.5",
-            "total_time": "45",
         }
         recipe = parse_recipe_dict(data)
         assert recipe.prep_time == 15
         assert recipe.cook_time == 30
-        assert recipe.total_time == 45
 
     def test_parse_recipe_servings_as_string(self):
         """Servings provided as string is safely converted to int."""
