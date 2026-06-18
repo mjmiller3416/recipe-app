@@ -116,12 +116,16 @@ class RestoreOperationsMixin:
 
             # 2. Restore recipes
             for recipe_dto in backup.data.recipes:
+                cook_time = recipe_dto.cook_time
+                if cook_time is None and recipe_dto.total_time is not None:
+                    cook_time = recipe_dto.total_time
                 new_recipe = Recipe(
                     recipe_name=recipe_dto.recipe_name,
                     recipe_category=recipe_dto.recipe_category,
                     meal_type=recipe_dto.meal_type,
                     diet_pref=recipe_dto.diet_pref,
-                    total_time=recipe_dto.total_time,
+                    prep_time=recipe_dto.prep_time,
+                    cook_time=cook_time,
                     servings=recipe_dto.servings,
                     directions=recipe_dto.directions,
                     notes=recipe_dto.notes,

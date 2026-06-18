@@ -119,7 +119,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   },
   aiFeatures: {
     imageGenerationPrompt:
-      "A professional food photograph of {recipe_name} captured at a 45-degree angle. The dish is placed on a rustic wooden table with cutting board, shallow depth of field, steam rising, scattered herbs and seasonings, complementary ingredients as props in soft-focus background, cozy home kitchen atmosphere, appetizing, high detail, no people, no hands, square format",
+      "A professional cookbook-quality food photograph of {recipe_name}. Style the scene — surface, props, lighting, and camera angle — to match the character of this specific dish. Vary the composition naturally: choose whichever angle, surface, and props a professional food stylist would select for this recipe. Shallow depth of field, natural light, appetizing presentation, high detail, no people, no hands, no text, square format.",
   },
 };
 

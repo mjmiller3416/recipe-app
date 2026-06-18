@@ -93,7 +93,6 @@ export interface RecipeGeneratedDTO {
   description?: string;
   prep_time?: number;
   cook_time?: number;
-  total_time?: number;
   difficulty?: string;
   servings?: number;
   directions?: string;

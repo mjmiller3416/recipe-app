@@ -138,7 +138,7 @@ RECIPES_DATA: List[Dict] = [
         "recipe_category": "Italian",
         "meal_type": "Dinner",
         "diet_pref": None,
-        "total_time": 75,
+        "cook_time": 75,
         "servings": 6,
         "directions": """Heat olive oil in a large Dutch oven over medium-high heat.
 Add the ground beef and Italian sausage, breaking up with a wooden spoon.
@@ -178,7 +178,7 @@ Serve sauce over hot spaghetti and garnish with fresh parsley and Parmesan chees
         "recipe_category": "Indian",
         "meal_type": "Dinner",
         "diet_pref": "Gluten-Free",
-        "total_time": 60,
+        "cook_time": 60,
         "servings": 4,
         "directions": """Cut chicken into 1.5-inch cubes and place in a large bowl.
 Mix yogurt, lemon juice, cumin, garam masala, turmeric, and salt for the marinade.
@@ -219,7 +219,7 @@ Garnish with fresh cilantro and serve over basmati rice or with naan bread.""",
         "recipe_category": "Mexican",
         "meal_type": "Dinner",
         "diet_pref": None,
-        "total_time": 35,
+        "cook_time": 35,
         "servings": 4,
         "directions": """Start by making the fresh salsa: dice tomatoes, onion, and jalapeño.
 Combine with chopped cilantro, lime juice, and salt. Set aside.
@@ -255,7 +255,7 @@ Serve immediately with lime wedges on the side.""",
         "recipe_category": "Asian",
         "meal_type": "Dinner",
         "diet_pref": "Vegan",
-        "total_time": 30,
+        "cook_time": 30,
         "servings": 4,
         "directions": """Press tofu for 15 minutes to remove excess moisture.
 Cut tofu into 1-inch cubes and season with salt.
@@ -295,7 +295,7 @@ Serve over steamed rice or noodles.""",
         "recipe_category": "Mediterranean",
         "meal_type": "Lunch",
         "diet_pref": "Gluten-Free",
-        "total_time": 25,
+        "cook_time": 25,
         "servings": 4,
         "directions": """Season chicken breasts with olive oil, oregano, garlic powder, salt, and pepper.
 Preheat grill or grill pan to medium-high heat.
@@ -329,7 +329,7 @@ Garnish with fresh oregano and serve immediately.""",
         "recipe_category": "Italian",
         "meal_type": "Dinner",
         "diet_pref": "Vegetarian",
-        "total_time": 45,
+        "cook_time": 45,
         "servings": 4,
         "directions": """Keep vegetable broth warm in a saucepan over low heat.
 Heat olive oil in a large heavy-bottomed pan over medium heat.
@@ -367,7 +367,7 @@ Serve immediately while hot and creamy.""",
         "recipe_category": "American",
         "meal_type": "Dinner",
         "diet_pref": None,
-        "total_time": 480,
+        "cook_time": 480,
         "servings": 10,
         "directions": """Combine brown sugar, paprika, garlic powder, onion powder, cumin, salt, and pepper for the rub.
 Pat pork shoulder dry and coat generously with the spice rub on all sides.
@@ -406,7 +406,7 @@ Serve with extra BBQ sauce on the side.""",
         "recipe_category": "Asian",
         "meal_type": "Dinner",
         "diet_pref": "Gluten-Free",
-        "total_time": 35,
+        "cook_time": 35,
         "servings": 4,
         "directions": """Slice chicken into thin strips.
 Heat coconut oil in a large wok or deep pan over medium-high heat.
@@ -443,7 +443,7 @@ Serve over jasmine rice with lime wedges and fresh Thai basil.""",
         "recipe_category": "American",
         "meal_type": "Lunch",
         "diet_pref": None,
-        "total_time": 20,
+        "cook_time": 20,
         "servings": 4,
         "directions": """For homemade croutons: cube bread, toss with olive oil, garlic, and salt.
 Bake at 375°F for 10-12 minutes until golden and crispy.
@@ -479,7 +479,7 @@ Serve immediately as a side or add grilled chicken for a main course.""",
         "recipe_category": "Italian",
         "meal_type": "Dinner",
         "diet_pref": "Vegetarian",
-        "total_time": 90,
+        "cook_time": 90,
         "servings": 4,
         "directions": """For the dough: combine warm water, yeast, and sugar. Let stand for 5 minutes until foamy.
 Add flour, olive oil, and salt. Knead for 8-10 minutes until smooth and elastic.
@@ -515,7 +515,7 @@ Let cool slightly, slice, and serve.""",
         "recipe_category": "Comfort Food",
         "meal_type": "Dinner",
         "diet_pref": None,
-        "total_time": 40,
+        "cook_time": 40,
         "servings": 6,
         "directions": """Slice beef sirloin into thin strips against the grain.
 Season beef with salt and pepper.
@@ -557,7 +557,7 @@ Serve over egg noodles or mashed potatoes, garnished with fresh parsley.""",
         "recipe_category": "Italian",
         "meal_type": "Dinner",
         "diet_pref": None,
-        "total_time": 25,
+        "cook_time": 25,
         "servings": 4,
         "directions": """Cook linguine according to package directions until al dente. Reserve 1 cup pasta water.
 Meanwhile, season shrimp with salt and pepper.
@@ -593,7 +593,7 @@ Serve immediately with crusty bread to soak up the sauce.""",
         "recipe_category": "Comfort Food",
         "meal_type": "Dinner",
         "diet_pref": "Vegan",
-        "total_time": 50,
+        "cook_time": 50,
         "servings": 8,
         "directions": """Heat oil in a large Dutch oven over medium heat.
 Add diced onion, bell peppers, and jalapeño. Sauté until softened, about 5-7 minutes.
@@ -634,7 +634,7 @@ Enjoy with cornbread on the side.""",
         "recipe_category": "Comfort Food",
         "meal_type": "Dinner",
         "diet_pref": "Gluten-Free",
-        "total_time": 90,
+        "cook_time": 90,
         "servings": 6,
         "directions": """Remove chicken from refrigerator 30 minutes before cooking.
 Preheat oven to 425°F.
@@ -670,7 +670,7 @@ Serve with pan drippings as a simple sauce.""",
         "recipe_category": "Mexican",
         "meal_type": "Dinner",
         "diet_pref": None,
-        "total_time": 30,
+        "cook_time": 30,
         "servings": 4,
         "directions": """Prepare mango salsa: dice mango, red onion, jalapeño, and cilantro.
 Combine with lime juice and salt. Refrigerate while preparing fish.
@@ -708,7 +708,7 @@ Serve immediately.""",
         "recipe_category": "Comfort Food",
         "meal_type": "Lunch",
         "diet_pref": "Vegetarian",
-        "total_time": 45,
+        "cook_time": 45,
         "servings": 6,
         "directions": """Preheat oven to 400°F.
 Cut Roma tomatoes in half and place on a baking sheet.
@@ -749,7 +749,7 @@ Pair with grilled cheese sandwiches for a classic combo.""",
         "recipe_category": "Asian",
         "meal_type": "Dinner",
         "diet_pref": None,
-        "total_time": 35,
+        "cook_time": 35,
         "servings": 4,
         "directions": """Soak rice noodles in warm water for 30 minutes until pliable but not soft. Drain.
 Mix the sauce: combine tamarind paste, fish sauce, brown sugar, and rice vinegar.
@@ -789,7 +789,7 @@ Offer extra fish sauce and chili flakes on the side.""",
         "recipe_category": "Comfort Food",
         "meal_type": "Dinner",
         "diet_pref": None,
-        "total_time": 75,
+        "cook_time": 75,
         "servings": 8,
         "directions": """Peel and cube potatoes. Boil in salted water until tender, about 15-20 minutes.
 Drain and mash with butter, milk, and salt until smooth. Set aside.
@@ -832,7 +832,7 @@ Let rest 10 minutes before serving.""",
         "recipe_category": "Italian",
         "meal_type": "Side Dish",
         "diet_pref": "Vegetarian",
-        "total_time": 10,
+        "cook_time": 10,
         "servings": 4,
         "directions": """Select ripe, flavorful tomatoes - heirloom varieties work beautifully.
 Slice tomatoes into 1/4-inch thick rounds.
@@ -862,7 +862,7 @@ Serve at room temperature for best flavor.""",
         "recipe_category": "Healthy",
         "meal_type": "Dinner",
         "diet_pref": "Gluten-Free",
-        "total_time": 25,
+        "cook_time": 25,
         "servings": 4,
         "directions": """Pat salmon fillets dry and season with salt and pepper.
 In a small bowl, whisk together honey, soy sauce, minced garlic, and lemon juice.
@@ -896,7 +896,7 @@ Serve immediately over rice or with steamed vegetables.""",
         "recipe_category": "American",
         "meal_type": "Breakfast",
         "diet_pref": None,
-        "total_time": 25,
+        "cook_time": 25,
         "servings": 4,
         "directions": """Cook bacon in a large skillet until crispy. Remove and crumble. Keep 1 tbsp drippings.
 Add diced potatoes to the skillet and cook until golden and crispy, about 10-12 minutes.
@@ -933,7 +933,7 @@ Cut in half on the diagonal and serve with extra salsa and sour cream.""",
         "recipe_category": "French",
         "meal_type": "Dinner",
         "diet_pref": None,
-        "total_time": 90,
+        "cook_time": 90,
         "servings": 6,
         "directions": """Slice onions into thin half-moons.
 Melt butter in a large Dutch oven over medium heat.
@@ -973,7 +973,7 @@ Serve immediately - bowls will be very hot!""",
         "recipe_category": "Italian",
         "meal_type": "Dinner",
         "diet_pref": None,
-        "total_time": 45,
+        "cook_time": 45,
         "servings": 4,
         "directions": """Pound chicken breasts to even 1/2-inch thickness between plastic wrap.
 Set up breading station: flour in one dish, beaten eggs in another, breadcrumb mixture in third.
@@ -1012,7 +1012,7 @@ Garnish with fresh basil.""",
         "recipe_category": "Italian",
         "meal_type": "Dinner",
         "diet_pref": "Vegetarian",
-        "total_time": 90,
+        "cook_time": 90,
         "servings": 8,
         "directions": """Preheat oven to 375°F.
 Slice zucchini and eggplant into 1/4-inch rounds. Salt and let drain for 15 minutes.
@@ -1052,7 +1052,7 @@ Garnish with fresh basil before serving.""",
         "recipe_category": "Comfort Food",
         "meal_type": "Dessert",
         "diet_pref": "Vegetarian",
-        "total_time": 30,
+        "cook_time": 30,
         "servings": 4,
         "directions": """Preheat oven to 425°F.
 Generously butter four 6-ounce ramekins and dust with cocoa powder.
@@ -1088,7 +1088,7 @@ Dust with powdered sugar and serve immediately with vanilla ice cream or whipped
         "recipe_category": "Asian",
         "meal_type": "Lunch",
         "diet_pref": None,
-        "total_time": 25,
+        "cook_time": 25,
         "servings": 4,
         "directions": """Season chicken breasts with salt, pepper, and five-spice powder.
 Grill or pan-sear chicken until cooked through, about 6-7 minutes per side.
@@ -1125,7 +1125,7 @@ Serve immediately.""",
         "recipe_category": "Healthy",
         "meal_type": "Lunch",
         "diet_pref": "Vegan",
-        "total_time": 50,
+        "cook_time": 50,
         "servings": 6,
         "directions": """Preheat oven to 400°F.
 Cut butternut squash in half, remove seeds, and brush with olive oil.
@@ -1163,7 +1163,7 @@ Serve topped with pepitas, a drizzle of coconut cream, and fresh sage leaves."""
         "recipe_category": "American",
         "meal_type": "Dinner",
         "diet_pref": "Gluten-Free",
-        "total_time": 30,
+        "cook_time": 30,
         "servings": 4,
         "directions": """Make chimichurri: finely chop parsley, cilantro, and oregano.
 Mix herbs with minced garlic, red pepper flakes, red wine vinegar, and olive oil.
@@ -1198,7 +1198,7 @@ Pair with roasted potatoes or a simple green salad.""",
         "recipe_category": "American",
         "meal_type": "Breakfast",
         "diet_pref": "Vegetarian",
-        "total_time": 25,
+        "cook_time": 25,
         "servings": 4,
         "directions": """In a large bowl, whisk together flour, sugar, baking powder, baking soda, and salt.
 In another bowl, whisk buttermilk, milk, egg, melted butter, and vanilla.
@@ -1234,7 +1234,7 @@ Dust with powdered sugar if desired.""",
         "recipe_category": "Mediterranean",
         "meal_type": "Dinner",
         "diet_pref": "Gluten-Free",
-        "total_time": 40,
+        "cook_time": 40,
         "servings": 4,
         "directions": """Preheat oven to 400°F.
 Sauté spinach in a little olive oil until wilted. Let cool and squeeze out excess moisture.
@@ -1421,7 +1421,7 @@ def seed_recipes(
             recipe_category=recipe_data["recipe_category"],
             meal_type=recipe_data["meal_type"],
             diet_pref=recipe_data.get("diet_pref"),
-            total_time=recipe_data["total_time"],
+            cook_time=recipe_data.get("cook_time"),
             servings=recipe_data["servings"],
             directions=recipe_data["directions"],
             notes=recipe_data.get("notes"),

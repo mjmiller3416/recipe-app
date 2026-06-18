@@ -2,11 +2,6 @@
 // Utility functions for handling recipe images
 
 /**
- * Default placeholder image path for recipes without images
- */
-export const DEFAULT_RECIPE_PLACEHOLDER = "/images/recipes/placeholder.svg";
-
-/**
  * Check if a path is a valid web-accessible URL or relative path
  */
 function isValidWebPath(path: string | null | undefined): boolean {
@@ -73,33 +68,6 @@ export function getRecipeImageUrl(path: string | null | undefined): string | und
   // Unknown format - treat as missing
   console.warn(`[imageUtils] Unknown image path format: ${path}`);
   return undefined;
-}
-
-/**
- * Get the image URL with fallback to placeholder
- * Use this when you always want an image URL (never undefined)
- */
-export function getRecipeImageUrlWithFallback(path: string | null | undefined): string {
-  return getRecipeImageUrl(path) ?? DEFAULT_RECIPE_PLACEHOLDER;
-}
-
-/**
- * Generate the expected image path for a recipe
- * Use this when saving new recipes to generate consistent paths
- * 
- * @param recipeId - The recipe ID
- * @param extension - File extension (default: jpg)
- * @returns The relative path to store in the database
- */
-export function generateRecipeImagePath(recipeId: number | string, extension = "jpg"): string {
-  return `/images/recipes/${recipeId}.${extension}`;
-}
-
-/**
- * Generate a banner image path for a recipe
- */
-export function generateRecipeBannerPath(recipeId: number | string, extension = "jpg"): string {
-  return `/images/recipes/${recipeId}-banner.${extension}`;
 }
 
 // ============================================================================

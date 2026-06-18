@@ -178,8 +178,7 @@ export function useRecipeGenerate() {
   });
 }
 
-/** @deprecated Use useRecipeGenerate instead */
-export const useWizardGenerate = useRecipeGenerate;
+
 
 // ============================================================================
 // UTILITY HOOKS

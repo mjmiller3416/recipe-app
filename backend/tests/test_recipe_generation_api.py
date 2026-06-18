@@ -72,7 +72,6 @@ def _make_success_response() -> RecipeGenerationResponseDTO:
             description="A fragrant Thai green curry.",
             prep_time=15,
             cook_time=25,
-            total_time=40,
             difficulty="Medium",
             servings=4,
             ingredients=[

@@ -78,7 +78,7 @@ async def chat_with_assistant(
         if recipe:
             try:
                 image_service = get_image_generation_service()
-                image_result = image_service.generate_dual_recipe_images(
+                image_result = await image_service.generate_dual_recipe_images(
                     recipe.recipe_name
                 )
                 if image_result.get("success"):
@@ -192,7 +192,7 @@ async def generate_recipe(
         if request.generate_image and recipe:
             try:
                 image_service = get_image_generation_service()
-                image_result = image_service.generate_dual_recipe_images(
+                image_result = await image_service.generate_dual_recipe_images(
                     recipe.recipe_name
                 )
                 if image_result.get("success"):

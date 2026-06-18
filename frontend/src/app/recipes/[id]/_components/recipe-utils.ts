@@ -5,7 +5,7 @@ import type { RecipeResponseDTO } from "@/types/recipe";
  * Verbose time format for recipe detail and print pages (e.g., "45 min", "1h 30m").
  */
 export function formatTime(minutes: number | null): string {
-  if (!minutes) return "\u2014";
+  if (minutes == null) return "\u2014";
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   if (hours === 0) return `${mins} min`;

@@ -2,6 +2,10 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-06-18 - Improvements
+- Recipe total time is now automatically calculated from prep and cook times
+- Improved AI image generation with enhanced prompts for more accurate recipe photos
+
 ## 2026-06-17 - New Features
 - Recipe Wizard — create and edit recipes with a new step-by-step guided workflow featuring method selection, ingredient management, directions, and nutrition facts
 - AI Recipe Generation — ask Meal Genie to generate a complete recipe draft that auto-populates the Recipe Wizard, tailored to your existing recipes and preferences

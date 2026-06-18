@@ -61,7 +61,6 @@ class RecipeGeneratedDTO(BaseModel):
     description: Optional[str] = None
     prep_time: Optional[int] = None
     cook_time: Optional[int] = None
-    total_time: Optional[int] = None
     difficulty: Optional[str] = None
     servings: Optional[int] = None
     directions: Optional[str] = None

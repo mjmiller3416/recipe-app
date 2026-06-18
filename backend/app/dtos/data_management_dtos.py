@@ -33,6 +33,8 @@ class RecipeImportRowDTO(BaseModel):
     recipe_category: str = Field(..., min_length=1)
     meal_type: str = Field(default="Dinner", min_length=1)
     diet_pref: Optional[str] = None
+    prep_time: Optional[int] = Field(None, ge=0)
+    cook_time: Optional[int] = Field(None, ge=0)
     total_time: Optional[int] = Field(None, ge=0)
     servings: Optional[int] = Field(None, ge=1)
     directions: Optional[str] = None
@@ -149,6 +151,8 @@ class RecipeBackupDTO(BaseModel):
     recipe_category: str
     meal_type: str
     diet_pref: Optional[str] = None
+    prep_time: Optional[int] = None
+    cook_time: Optional[int] = None
     total_time: Optional[int] = None
     servings: Optional[int] = None
     directions: Optional[str] = None
