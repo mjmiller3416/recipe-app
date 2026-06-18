@@ -52,7 +52,7 @@ class RecipeGenerationService:
         """Initialize the recipe generation service."""
         get_gemini_client(API_KEY_ENV_VAR)
 
-    def generate(
+    async def generate(
         self, request: RecipeGenerationRequestDTO
     ) -> RecipeGenerationResponseDTO:
         """Generate a complete recipe from a user prompt and optional preferences.
@@ -121,7 +121,7 @@ class RecipeGenerationService:
             banner_image_data: Optional[str] = None
             if request.generate_image:
                 reference_image_data, banner_image_data = (
-                    self._generate_images(recipe.recipe_name)
+                    await self._generate_images(recipe.recipe_name)
                 )
 
             return RecipeGenerationResponseDTO(
@@ -175,7 +175,7 @@ class RecipeGenerationService:
         return "\nPreferences:\n" + "\n".join(f"- {line}" for line in lines)
 
     @staticmethod
-    def _generate_images(
+    async def _generate_images(
         recipe_name: str,
     ) -> tuple[Optional[str], Optional[str]]:
         """Optionally generate recipe images. Failure is non-fatal."""
@@ -185,7 +185,7 @@ class RecipeGenerationService:
             )
 
             image_service = get_image_generation_service()
-            result = image_service.generate_dual_recipe_images(recipe_name)
+            result = await image_service.generate_dual_recipe_images(recipe_name)
 
             reference = result.get("reference_image_data") if result.get("success") else None
             banner = result.get("banner_image_data") if result.get("success") else None

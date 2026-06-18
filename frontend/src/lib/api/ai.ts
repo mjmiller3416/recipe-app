@@ -5,7 +5,6 @@ import type {
   CookingTipResponseDTO,
   AssistantMessage,
   AssistantResponseDTO,
-  AssistantRecipeResponseDTO,
   MealSuggestionsRequestDTO,
   MealSuggestionsResponseDTO,
   NutritionEstimationRequestDTO,
@@ -134,9 +133,6 @@ export const recipeGenerationApi = {
     ),
 };
 
-/** @deprecated Use recipeGenerationApi instead */
-export const wizardGenerationApi = recipeGenerationApi;
-
 export const AssistantApi = {
   /**
    * Send a message to Meal Genie
@@ -187,31 +183,4 @@ export const AssistantApi = {
       token
     ),
 
-  /**
-   * Generate a recipe with optional AI image
-   * @deprecated Use chat() instead - it handles recipe generation automatically
-   * @param message The user's message/request
-   * @param conversationHistory Optional previous messages for context
-   * @param generateImage Whether to generate an AI image (default: true)
-   * @param token - Optional auth token for authenticated requests
-   * @returns Response with generated recipe and optional image
-   */
-  generateRecipe: (
-    message: string,
-    conversationHistory?: AssistantMessage[],
-    generateImage = true,
-    token?: string | null
-  ): Promise<AssistantRecipeResponseDTO> =>
-    fetchApi<AssistantRecipeResponseDTO>(
-      "/api/ai/meal-genie/generate-recipe",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          message,
-          conversation_history: conversationHistory,
-          generate_image: generateImage,
-        }),
-      },
-      token
-    ),
 };

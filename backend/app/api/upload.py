@@ -64,10 +64,6 @@ async def upload_recipe_image(
             public_id=f"{imageType}_{recipeId}",
             overwrite=True,
             resource_type="image",
-            transformation=[
-                {"quality": "auto:good"},
-                {"fetch_format": "auto"}
-            ]
         )
 
         return {
@@ -135,10 +131,6 @@ async def upload_base64_image(
             public_id=f"{imageType}_{recipeId}",
             overwrite=True,
             resource_type="image",
-            transformation=[
-                {"quality": "auto:good"},
-                {"fetch_format": "auto"}
-            ]
         )
 
         return {

@@ -12,6 +12,14 @@ from app.dtos.image_generation_dtos import (
     BannerGenerationResponseDTO,
 )
 from app.services.ai.image_generation import get_image_generation_service
+from app.services.ai.image_generation.config import (
+    PROMPT_TEMPLATE,
+    BANNER_PROMPT_TEMPLATE,
+    ASPECT_RATIO,
+    BANNER_ASPECT_RATIO,
+    REFERENCE_IMAGE_SIZE,
+    BANNER_IMAGE_SIZE,
+)
 from app.api.auth import require_pro
 from app.database.db import get_session
 from app.models.user import User
@@ -44,7 +52,10 @@ async def generate_recipe_image(
         service = get_image_generation_service()
 
         if request.image_type == "both":
-            result = service.generate_dual_recipe_images(request.recipe_name)
+            result = await service.generate_dual_recipe_images(
+                request.recipe_name,
+                custom_prompt=request.custom_prompt,
+            )
             if not result["success"]:
                 errors = result.get("errors", [])
                 raise HTTPException(
@@ -55,12 +66,11 @@ async def generate_recipe_image(
             banner_data = result.get("banner_image_data")
 
         elif request.image_type == "reference":
-            from app.services.ai.image_generation.config import PROMPT_TEMPLATE, ASPECT_RATIO
-
-            ref_result = service.generate_recipe_image(
+            ref_result = await service.generate_recipe_image(
                 request.recipe_name,
-                custom_prompt=PROMPT_TEMPLATE,
+                custom_prompt=request.custom_prompt or PROMPT_TEMPLATE,
                 aspect_ratio=ASPECT_RATIO,
+                image_size=REFERENCE_IMAGE_SIZE,
             )
             if not ref_result["success"]:
                 raise HTTPException(
@@ -71,15 +81,11 @@ async def generate_recipe_image(
             banner_data = None
 
         else:  # banner
-            from app.services.ai.image_generation.config import (
-                BANNER_PROMPT_TEMPLATE,
-                BANNER_ASPECT_RATIO,
-            )
-
-            banner_result = service.generate_recipe_image(
+            banner_result = await service.generate_recipe_image(
                 request.recipe_name,
-                custom_prompt=BANNER_PROMPT_TEMPLATE,
+                custom_prompt=request.custom_prompt or BANNER_PROMPT_TEMPLATE,
                 aspect_ratio=BANNER_ASPECT_RATIO,
+                image_size=BANNER_IMAGE_SIZE,
             )
             if not banner_result["success"]:
                 raise HTTPException(
@@ -141,7 +147,7 @@ async def generate_banner_image(
         # Decode base64 reference image to bytes
         reference_bytes = base64.b64decode(request.reference_image_data)
 
-        result = service.generate_banner_from_reference(
+        result = await service.generate_banner_from_reference(
             request.recipe_name, reference_bytes
         )
 

@@ -46,7 +46,7 @@ async def generate_recipe(
             request.allowed_categories = [cat.value for cat in user_categories]
 
         service = get_recipe_generation_service()
-        result = service.generate(request)
+        result = await service.generate(request)
 
         if not result.success:
             raise HTTPException(
