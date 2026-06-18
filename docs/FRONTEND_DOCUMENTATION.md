@@ -8,39 +8,71 @@ Architecture decisions and patterns for the Next.js frontend. For component APIs
 - **React 19** with React Query 5 for server state
 - **TypeScript 5** for type safety
 - **Tailwind CSS 4** with CSS variables for theming
-- **shadcn/ui** (New York style) built on Radix UI
+- **shadcn/ui** (New York style) built on Radix UI (32 components)
+- **React Hook Form 7** + **Zod 4** for form state & validation
 - **dnd-kit** for drag-and-drop
 - **Framer Motion** for animations
+- **Clerk** for authentication
+- **Lucide React** for icons (strokeWidth={1.5})
+- **Sonner** for toast notifications
+- **react-markdown** for markdown rendering
 
 ## Directory Structure
 
 ```
 src/
 ├── app/                      # Next.js App Router pages
-│   ├── [page]/
-│   │   ├── page.tsx          # Page component
-│   │   └── _components/      # Page-specific components
-│   ├── layout.tsx            # Root layout
-│   └── globals.css           # Design tokens & global styles
+│   ├── dashboard/            # Desktop dashboard (widgets, stats)
+│   ├── recipes/              # Recipe browser, detail, add (wizard)
+│   ├── meal-planner/         # Meal planner + create meal
+│   ├── shopping-list/        # Shopping list with categories
+│   ├── settings/             # User settings (appearance, data, AI, etc.)
+│   ├── admin/                # Admin dashboard (users, feedback)
+│   ├── sign-in/              # Clerk sign-in
+│   ├── sign-up/              # Clerk sign-up
+│   ├── sso-callback/         # OAuth callback handler
+│   ├── api/upload/           # File upload API route
+│   ├── layout.tsx            # Root layout (ClerkProvider, QueryProvider, Toaster)
+│   └── globals.css           # Design tokens & global styles (dark theme)
 ├── components/
-│   ├── ui/                   # shadcn/ui primitives (don't modify)
-│   ├── common/               # Shared across pages
-│   ├── forms/                # Form inputs (QuantityInput, etc.)
-│   ├── recipe/               # Recipe-specific (RecipeCard, etc.)
-│   ├── layout/               # App structure (Sidebar, AppLayout)
-│   ├── meal-genie/           # AI assistant components
-│   └── settings/             # Settings-specific
+│   ├── ui/                   # shadcn/ui primitives (32 components — don't modify)
+│   ├── common/               # Shared across pages (StatCard, FavoriteButton, FilterBar, ChangelogDialog, etc.)
+│   ├── layout/               # App structure (AppLayout, TopNav, MobileBottomNav, PageLayout, PageHeader)
+│   ├── recipe/               # Recipe domain (RecipeCard, RecipeImage, RecipeBadge, browser/)
+│   ├── assistant/            # AI assistant chat (Assistant, AssistantPopup, ChatMessageList)
+│   ├── auth/                 # Authentication (SignInForm, SignUpForm, UserMenu)
+│   └── forms/                # Form inputs (IngredientAutocomplete, QuantityInput, QuickAddForm)
 ├── hooks/
-│   └── api/                  # React Query hooks wrapping API client
+│   ├── api/                  # React Query hooks (14 files + queryKeys factory)
+│   ├── persistence/          # localStorage hooks (settings, chat history, recent recipes, filters, units)
+│   ├── forms/                # Form hooks (filters, autocomplete, feedback)
+│   └── ui/                   # UI behavior hooks (drag-and-drop, chat scroll, unsaved changes)
 ├── lib/
-│   ├── api.ts                # API client (all backend calls)
-│   ├── api-server.ts         # Server-side API client
+│   ├── api/                  # Domain-split API modules (18 modules with barrel re-export)
+│   ├── providers/            # React Context (QueryProvider, NavActionsProvider, RecipeWizardProvider, MealCreationProvider)
+│   ├── api-client.ts         # Client-side authenticated fetch (Clerk token injection)
+│   ├── api-server.ts         # Server-side authenticated fetch (RSC)
+│   ├── config.ts             # App configuration
 │   ├── constants.ts          # Dropdowns, categories, static data
 │   ├── filterUtils.ts        # Recipe filtering logic
-│   ├── formValidation.ts     # Validation helpers
+│   ├── formValidation.ts     # Zod validation schemas
+│   ├── imageUtils.ts         # Image processing utilities
+│   ├── quantityUtils.ts      # Quantity conversion utilities
+│   ├── recipeCardMapper.ts   # DTO → UI model mapping
 │   └── utils.ts              # cn() and other utilities
-└── types/
-    └── index.ts              # All TypeScript interfaces
+├── types/                    # TypeScript types split by domain
+│   ├── recipe.ts             # Recipe DTOs & filters
+│   ├── meal.ts               # Meal types
+│   ├── planner.ts            # Planner types
+│   ├── shopping.ts           # Shopping list types
+│   ├── ai.ts                 # AI feature types (assistant, generation, tips)
+│   ├── common.ts             # Shared types (import/export, backup)
+│   ├── category.ts           # Category types
+│   ├── ingredient-settings.ts # Ingredient settings types
+│   └── admin.ts              # Admin types
+├── data/
+│   └── changelog.ts          # Version history data
+└── proxy.ts                  # Clerk auth middleware
 ```
 
 ## Key Patterns
@@ -63,24 +95,33 @@ export default function RecipesPage() {
 
 | Directory | Purpose | Examples |
 |-----------|---------|----------|
-| `ui/` | shadcn primitives — don't edit | Button, Card, Dialog |
-| `common/` | Reusable across pages | FavoriteButton, StatsCard, FilterBar |
-| `recipe/` | Recipe domain components | RecipeCard, RecipeBadge, RecipeImage |
-| `layout/` | App structure | Sidebar, AppLayout, PageHeader |
-| `forms/` | Specialized inputs | QuantityInput, SmartIngredientInput |
+| `ui/` | shadcn primitives — don't edit | Button, Card, Dialog, Sheet, Tabs |
+| `common/` | Reusable across pages | StatCard, FavoriteButton, FilterBar, ChangelogDialog |
+| `recipe/` | Recipe domain components | RecipeCard, RecipeBadge, RecipeImage, RecipeBannerImage |
+| `layout/` | App structure | AppLayout, TopNav, MobileBottomNav, PageHeader, PageLayout |
+| `assistant/` | AI chat interface | Assistant, AssistantPopup, ChatMessageList |
+| `auth/` | Authentication UI | SignInForm, SignUpForm, UserMenu |
+| `forms/` | Specialized inputs | IngredientAutocomplete, QuantityInput, QuickAddForm |
 
 ### API Layer
 
-All backend calls go through `lib/api.ts`. Never call fetch directly in components.
+All backend calls go through `lib/api/` modules. Never call fetch directly in components.
 
 ```typescript
-// lib/api.ts - API client with typed methods
+// lib/api/ - Domain-split API modules with barrel re-export
+import { recipeApi, plannerApi, shoppingApi } from "@/lib/api";
+
+// Each module exports an object with typed CRUD methods:
 export const recipeApi = {
-  list: () => fetchApi<RecipeCardDTO[]>("/api/recipes/cards"),
+  listCards: (filters?) => fetchApi<RecipeCardDTO[]>("/api/recipes/cards", ...),
   get: (id: number) => fetchApi<RecipeResponseDTO>(`/api/recipes/${id}`),
   create: (data: RecipeCreateDTO) => fetchApi("/api/recipes", { method: "POST", body: data }),
   // ...
 };
+
+// 18 modules: base, recipe, planner, shopping, ai, ingredients, upload,
+// dashboard, data-management, feedback, units, settings, recipe-groups,
+// categories, ingredient-categories, ingredient-units, admin
 ```
 
 ### React Query Hooks
@@ -107,7 +148,7 @@ const { data: recipes, isLoading } = useRecipeCards(filters);
 
 ### Types
 
-All types in `types/index.ts`. Types mirror backend DTOs with some frontend-specific mappings.
+Types are split across 9 domain files in `types/` (recipe.ts, meal.ts, planner.ts, shopping.ts, ai.ts, common.ts, category.ts, ingredient-settings.ts, admin.ts). Types mirror backend DTOs with some frontend-specific mappings.
 
 ```typescript
 // Backend DTO format (snake_case)
@@ -177,10 +218,12 @@ Components install to `components/ui/`. Don't modify these directly — extend w
 |------------|------------|
 | Add a page | `src/app/` |
 | Add shared component | `src/components/common/` |
-| Add API method | `src/lib/api.ts` |
+| Add API method | `src/lib/api/` (domain-split module) |
 | Add React Query hook | `src/hooks/api/` |
-| Add TypeScript type | `src/types/index.ts` |
+| Add TypeScript type | `src/types/` (domain-split file) |
 | Add constant/dropdown | `src/lib/constants.ts` |
+| Add form validation | `src/lib/formValidation.ts` (Zod schemas) |
+| Add Context provider | `src/lib/providers/` |
 | Modify design tokens | `src/app/globals.css` |
 
 ## Reference Files
@@ -190,11 +233,14 @@ For code patterns, look at existing implementations:
 | Pattern | Reference |
 |---------|-----------|
 | Page with filters | `app/recipes/page.tsx` |
-| Complex component | `app/recipes/_components/RecipeBrowser.tsx` |
+| Recipe browser | `app/recipes/_components/browser/RecipeBrowserView.tsx` |
+| Multi-step wizard | `app/recipes/_components/wizard/RecipeWizardView.tsx` |
 | API hooks | `hooks/api/useRecipes.ts` |
-| Form with validation | `app/recipes/add/page.tsx` |
+| Form with validation | `app/recipes/_components/wizard/wizardSchema.ts` |
 | Drag-and-drop | `app/meal-planner/_components/` |
-| AI integration | `components/meal-genie/` |
+| AI integration | `components/assistant/` |
+| Admin panel | `app/admin/_components/AdminView.tsx` |
+| Print layout | `app/recipes/[id]/_components/print/` |
 
 ## Gotchas
 
@@ -202,8 +248,12 @@ For code patterns, look at existing implementations:
 
 **Image optimization:** Use `RecipeImage` component which handles fallbacks. For static images, use Next.js `Image` from `next/image`.
 
-**Form state:** We use controlled components with `useState`, not form libraries. Validation in `lib/formValidation.ts`.
+**Form state:** Complex forms use React Hook Form + Zod schemas (see recipe wizard). Simple forms may use controlled `useState`. Validation schemas in `lib/formValidation.ts`.
 
-**Clerk auth:** Middleware in `src/proxy.ts`. API calls automatically include auth token via `apiClientFetch`.
+**Clerk auth:** Middleware in `src/proxy.ts`. API calls automatically include auth token via the authenticated fetch wrapper in `lib/api-client.ts`.
 
-**React Query keys:** Always include filter params in query keys for proper cache invalidation.
+**React Query keys:** Use the `queryKeys` factory in `hooks/api/queryKeys.ts`. Always include filter params for proper cache invalidation.
+
+**Mobile vs Desktop:** Root page redirects to `/meal-planner` on mobile, `/dashboard` on desktop. Layout uses `ConditionalAppLayout` to adapt.
+
+**Card component:** The `<Card>` component has `flex-col` as a base style. When you need horizontal layout inside a Card, explicitly add `flex-row`.

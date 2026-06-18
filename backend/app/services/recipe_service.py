@@ -283,7 +283,7 @@ class RecipeService:
             meal_name=meal.meal_name,
             main_recipe_id=meal.main_recipe_id,
             side_recipe_ids=meal.side_recipe_ids,
-            is_favorite=meal.is_favorite,
+            is_saved=meal.is_saved,
             tags=meal.tags,
             created_at=meal.created_at.isoformat() if meal.created_at else None,
             main_recipe=RecipeCardDTO.from_recipe(meal.main_recipe),

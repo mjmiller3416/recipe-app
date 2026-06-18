@@ -79,7 +79,7 @@ alembic upgrade head
 alembic downgrade -1
 
 # Seed sample data
-python app/scripts/seed_database.py --mode replace
+python scripts/seed_database.py --mode replace
 
 # Run tests
 pytest
@@ -88,12 +88,23 @@ pytest tests/test_file.py -v
 
 ### Environment Variables
 
+**Frontend:**
 - `NEXT_PUBLIC_API_URL` - Frontend API URL (default: `http://localhost:8000`)
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk auth (frontend)
+- `CLERK_SECRET_KEY` - Clerk auth (frontend middleware)
+
+**Backend:**
 - `SQLALCHEMY_DATABASE_URL` - Backend DB URL (default: SQLite)
+- `AUTH_DISABLED` - Bypass JWT for local dev (`true`/`false`)
+- `DEV_USER_ID` - User ID when auth disabled (default: 1)
+- `CLERK_PUBLISHABLE_KEY` - Used to derive JWKS URL
 - `GEMINI_ASSISTANT_API_KEY` - For Meal Genie chat
 - `GEMINI_TIP_API_KEY` - For cooking tips
 - `GEMINI_IMAGE_API_KEY` - For image generation
-- `CLOUDINARY_*` - For image uploads
+- `GEMINI_RECIPE_GENERATION_API_KEY` - For AI recipe generation
+- `GEMINI_NUTRITION_API_KEY` - For AI nutrition estimation
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` - Image uploads
+- `GITHUB_TOKEN`, `GITHUB_REPO` - Issue tracking integration
 
 ## Architecture
 
@@ -109,34 +120,50 @@ Repositories (app/repositories/)    # Data access
 Models (app/models/)    # SQLAlchemy ORM
 ```
 
-- **DTOs** (`app/dtos/`): Pydantic models for request/response validation
-- **AI Module** (`app/ai/`): Separate directory with configs, DTOs, and services for all AI features
-- **Database** (`app/database/`): Connection setup and Alembic migrations
+- **DTOs** (`app/dtos/`): Pydantic models for request/response validation (21 files including AI DTOs)
+- **AI Module** (`app/services/ai/`): Sub-package within services containing Gemini client, assistant (multi-turn chat with function calling), recipe generation, image generation, cooking tips, meal suggestions, and nutrition estimation
+- **Core** (`app/core/`): Auth configuration (Clerk JWKS settings)
+- **Utils** (`app/utils/`): Unit conversion and dimension detection
+- **Database** (`app/database/`): Connection setup and Alembic migrations (32+ migration files)
+- **Router** (`app/router.py`): Centralized route registration (28 routers across 14 tags)
 - **Services** use two patterns: flat files for simple services, modular packages (Core + Mixins) for complex ones (`meal/`, `planner/`, `shopping/`, `data_management/`)
 
 ### Frontend Structure
 
-- `app/` - Next.js App Router (dashboard, recipes, meal-planner, shopping-list, settings, auth)
-- `components/` - UI components organized by domain (ui/, auth/, common/, forms/, layout/, meal-genie/, recipe/, settings/)
+- `app/` - Next.js App Router (dashboard, recipes, meal-planner, shopping-list, settings, admin, auth)
+- `components/` - UI components organized by domain:
+  - `ui/` - 32 shadcn/ui primitives (Radix-based)
+  - `common/` - Shared components (StatCard, FavoriteButton, FilterBar, ChangelogDialog, etc.)
+  - `layout/` - App structure (AppLayout, ConditionalAppLayout, TopNav, MobileBottomNav, PageLayout, PageHeader)
+  - `recipe/` - Recipe domain (RecipeCard, RecipeImage, RecipeBannerImage, RecipeBadge, browser/)
+  - `assistant/` - AI assistant chat (Assistant, AssistantPopup, ChatMessageList)
+  - `auth/` - Authentication (SignInForm, SignUpForm, UserMenu)
+  - `forms/` - Form inputs (IngredientAutocomplete, QuantityInput, QuickAddForm)
 - `hooks/` - Custom React hooks organized by domain:
-  - `hooks/api/` - React Query hooks for all API calls
+  - `hooks/api/` - React Query hooks for all API calls (14 files + queryKeys factory)
   - `hooks/forms/` - Form-specific hooks (filters, autocomplete, feedback)
-  - `hooks/persistence/` - localStorage hooks (settings, chat history, recent recipes)
-  - `hooks/ui/` - UI behavior hooks (drag-and-drop, unsaved changes)
-- `lib/` - API client, utilities, constants, providers
-- `types/` - TypeScript types (domain-split: recipe.ts, meal.ts, planner.ts, shopping.ts, ai.ts, common.ts)
+  - `hooks/persistence/` - localStorage hooks (settings, chat history, recent recipes, filter state, unit conversion)
+  - `hooks/ui/` - UI behavior hooks (drag-and-drop, chat scroll, unsaved changes)
+- `lib/` - API client, utilities, constants, providers:
+  - `lib/api/` - Domain-split API modules with barrel re-export (18 modules)
+  - `lib/providers/` - React Context providers (QueryProvider, NavActionsProvider, RecipeWizardProvider, MealCreationProvider)
+  - `lib/api-client.ts` / `lib/api-server.ts` - Authenticated fetch wrappers
+  - Utilities: filterUtils, formValidation, imageUtils, quantityUtils, recipeCardMapper, config, constants
+- `types/` - TypeScript types split by domain (recipe.ts, meal.ts, planner.ts, shopping.ts, ai.ts, common.ts, category.ts, ingredient-settings.ts, admin.ts)
+- `data/` - Static data (changelog entries)
 - `proxy.ts` - Clerk auth middleware
 
 ### Key Patterns
 
 **API Client** (`lib/api/`): Domain-split API modules with barrel re-export:
 ```typescript
-// All imports go through the barrel index — same import path as before
+// All imports go through the barrel index
 import { recipeApi, plannerApi, shoppingApi, AssistantApi, ... } from "@/lib/api";
 
-// Modules: base.ts, recipe.ts, planner.ts, shopping.ts, ai.ts,
+// 18 modules: base.ts, recipe.ts, planner.ts, shopping.ts, ai.ts,
 // ingredients.ts, upload.ts, dashboard.ts, data-management.ts,
-// feedback.ts, units.ts, settings.ts, recipe-groups.ts
+// feedback.ts, units.ts, settings.ts, recipe-groups.ts, categories.ts,
+// ingredient-categories.ts, ingredient-units.ts, admin.ts
 ```
 
 **API Authentication Layer**:
@@ -146,9 +173,11 @@ import { recipeApi, plannerApi, shoppingApi, AssistantApi, ... } from "@/lib/api
 **State Management**:
 - Server state: React Query (hooks in `hooks/api/`)
 - Local state: React useState
-- Persisted state: Custom hooks with localStorage (in `hooks/persistence/`: `useSettings`, `useChatHistory`, `useRecentRecipes`)
+- Form state: React Hook Form + Zod validation schemas
+- Context state: React Context providers (RecipeWizardProvider, MealCreationProvider, NavActionsProvider)
+- Persisted state: Custom hooks with localStorage (in `hooks/persistence/`: `useSettings`, `useChatHistory`, `useRecentRecipes`, `useRecipeFilterPersistence`, `useUnitConversionRules`)
 
-**Form Components**: Use shadcn/ui components with the design system tokens. Never hardcode colors.
+**Form Components**: Use React Hook Form with Zod schemas and shadcn/ui components. Never hardcode colors.
 
 ## Design System (CRITICAL)
 
@@ -178,17 +207,31 @@ This project has an extensive design system. **Always follow these rules**:
 
 ## Key Domain Models
 
-### Backend Models
-- **Recipe** - Full recipe with ingredients, directions, images (reference + banner)
-- **Meal** - Composition of main recipe + up to 3 side recipes
-- **PlannerEntry** - Meal in the weekly planner (max 15 entries)
-- **ShoppingItem** - Shopping list item with recipe source tracking
+### Backend Models (19 model files)
+- **User** - Clerk-integrated user with subscription management (`has_pro_access` property), admin flag, cascade relationships to all data
+- **Recipe** - Full recipe with ingredients, directions, dual images (reference + banner), `total_time` hybrid property (prep + cook)
+- **RecipeIngredient** - Junction table (recipe <-> ingredient)
+- **Ingredient** - Global ingredient master (user_id nullable for system ingredients)
+- **NutritionFacts** - Per-recipe nutrition data (calories, macros, vitamins)
+- **RecipeHistory** - Cooking history tracking (recipe_id, cooked_at, notes)
+- **RecipeGroup** - Recipe collections/folders
+- **Meal** - Composition of main recipe + up to 3 side recipes (transient meals auto-deleted with planner entries)
+- **PlannerEntry** - Meal in the weekly planner (max 15 entries, soft-delete via `is_cleared` for streak tracking)
+- **ShoppingItem** - Shopping list item with aggregation_key for diff-based sync
+- **ShoppingItemContribution** - Source tracking (which recipes contribute to each shopping item)
+- **UnitConversionRule** - Conversion rules (from_unit, to_unit, factor)
+- **Feedback** - User feedback (status: open/reviewed/closed)
+- **UserSettings**, **UserCategory**, **UserIngredientCategory**, **UserIngredientUnit** - User customization models
+- **UserUsage** - AI feature usage tracking per user
 
-### Frontend Types
+### Frontend Types (9 type files)
 - **RecipeCardDTO** / **RecipeCardData** - Lightweight recipe for lists
 - **MealSelectionResponseDTO** - Meal with hydrated recipes
 - **PlannerEntryResponseDTO** - Planner entry with meal data
 - **ShoppingMode** - "all" | "produce_only" | "none"
+- **AssistantMessage** / **AssistantRequestDTO** / **AssistantResponseDTO** - AI chat types
+- **RecipeGeneratedDTO** - AI-generated recipe output
+- **ImageGenerationRequestDTO** / **ImageGenerationResponseDTO** - Image generation types
 
 ## Constraints & Limits
 
@@ -233,8 +276,8 @@ The project uses **command-based hooks** (fast shell scripts, not agents) to loa
 4. **Stop** → Verify work completion
 
 **Context Modules** (`.claude/context/`):
-- **Frontend**: frontend-core, design-tokens, shadcn-patterns, component-patterns, form-patterns, layout-patterns, accessibility, file-organization
-- **Backend**: backend-core, architecture, models, repositories, services, dtos, routes, migrations, exceptions
+- **Frontend** (9): frontend-core, design-tokens, shadcn-patterns, component-patterns, component-inventory, form-patterns, layout-patterns, accessibility, data-fetching, structure
+- **Backend** (9): backend-core, architecture, models, repositories, services, dtos, routes, migrations, exceptions
 
 **Performance**: 1 shell script per edit (~<1s) vs 3 agent spawns (~90s)
 

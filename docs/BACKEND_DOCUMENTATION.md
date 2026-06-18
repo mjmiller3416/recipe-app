@@ -25,19 +25,24 @@ def list_things(
 
 ```
 backend/app/
-├── api/                    # Route handlers (including api/ai/ for AI endpoints)
-│   └── dependencies.py     # Auth: get_current_user, require_pro
-├── ai/                     # AI feature implementations
-│   ├── config/             # Prompts and AI settings
-│   ├── dtos/               # AI-specific request/response models
-│   └── services/           # AI service logic
-├── models/                 # SQLAlchemy ORM models
-├── repositories/           # Data access layer
+├── main.py                 # FastAPI app initialization, CORS, health endpoints
+├── router.py               # Centralized route registration (28 routers, 14 tags)
+├── api/                    # Route handlers (28 endpoint files)
+│   ├── ai/                 # AI endpoints (assistant, recipe gen, image gen, tips, suggestions, nutrition)
+│   └── auth/               # Auth dependencies (get_current_user, require_pro, require_admin) + JWKS
 ├── services/               # Business logic layer
-├── dtos/                   # Pydantic validation models
-├── core/auth_config.py     # Clerk auth settings
-├── database/db.py          # DB connection and session
-└── main.py                 # FastAPI app entry point
+│   ├── ai/                 # AI services (Gemini client, assistant/, recipe_generation/, image_generation/, etc.)
+│   ├── meal/               # Modular: Core + SideRecipeMixin + QueryMixin
+│   ├── planner/            # Modular: Core + EntryMgmt + StatusMgmt + BatchOps
+│   ├── shopping/           # Modular: Core + ItemMgmt + Aggregation + Sync
+│   ├── data_management/    # Modular: Core + Import + Export + Backup + Restore
+│   └── *.py                # Flat services (recipe, ingredient, user, admin, feedback, etc.)
+├── repositories/           # Data access layer (21 files, including planner/ and shopping/ sub-packages)
+├── models/                 # SQLAlchemy ORM models (19 files)
+├── dtos/                   # Pydantic validation models (21 files, including AI DTOs)
+├── core/auth_config.py     # Clerk auth settings (JWKS URL derivation, dev mode bypass)
+├── utils/                  # Unit conversion, dimension detection
+└── database/               # DB connection, session management, Alembic migrations (32+ revisions)
 ```
 
 ## Authentication & Multi-Tenancy
@@ -84,9 +89,9 @@ Why: If you check off "chicken" and then add another meal with chicken, the chec
 ### Shopping Modes
 
 Planner entries have a `shopping_mode` enum:
-- `normal` — contributes to shopping list
-- `excluded` — doesn't contribute (eating out, leftovers)
-- `manual` — user manually manages ingredients
+- `all` — all ingredients contribute to shopping list
+- `produce_only` — only produce ingredients contribute
+- `none` — excluded from shopping list (eating out, leftovers)
 
 ### Unit Conversion
 
@@ -98,16 +103,34 @@ Planner entries have a `shopping_mode` enum:
 
 ## AI Features
 
-All AI features use Google Gemini. Configuration lives in `app/ai/config/`, services in `app/ai/services/`.
+All AI features use Google Gemini (`google-genai>=1.0.0`). Services live in `app/services/ai/`, endpoints in `app/api/ai/`. Each AI feature uses a separate Gemini API key for independent rate limiting.
 
-**Meal Genie Assistant** (`assistant_service.py`):
-- Conversational AI with function calling
-- Uses `user_context_builder.py` to inject user's recipes, meals, planner state
-- Personality tuned for encouraging, friendly tone
+**Meal Genie Assistant** (`services/ai/assistant/`):
+- Multi-turn conversational AI with function calling
+- Sub-package: `service.py`, `prompts.py`, `tools.py`, `context.py`, `generators.py`
+- Uses `user_context_builder.py` to inject user's recipes, meals, planner state, shopping list
+- Returns type-tagged responses: `{"type": "chat|suggestions|recipe|error", "response": ...}`
 
-**Recipe Generation**: Creates full recipe with dual images (reference square + banner).
+**Recipe Generation** (`services/ai/recipe_generation/`):
+- Async operation with schema-driven JSON validation
+- Input: prompt, preferences (diet, servings, cook_time), feature flags (estimate_nutrition, generate_images)
+- Pro-only feature (`@require_pro` decorator)
 
-**Usage Tracking**: `UsageService` tracks monthly AI calls per user in `UserUsage` model.
+**Image Generation** (`services/ai/image_generation/`):
+- Generates dual images (reference square + ultrawide banner) via Gemini Vision
+
+**Cooking Tips** (`services/ai/cooking_tips.py`): Context-aware cooking advice.
+
+**Meal Suggestions** (`services/ai/meal_suggestions.py`): AI meal recommendations based on user data.
+
+**Nutrition Estimation** (`services/ai/nutrition_estimation.py`): AI-inferred nutrition facts for recipes.
+
+**Shared AI Utilities:**
+- `gemini_client.py` - Lazy-initialized client factory with API key caching
+- `config.py` - Model names and environment variable defaults
+- `parse_utils.py`, `response_utils.py`, `text_utils.py` - Response processing
+
+**Usage Tracking**: `UsageService` tracks AI calls per user in `UserUsage` model.
 
 ## Adding a New Feature
 
@@ -128,7 +151,7 @@ All AI features use Google Gemini. Configuration lives in `app/ai/config/`, serv
 
 5. **Routes** (`app/api/new_feature.py`) — uses `Depends(get_current_user)`
 
-6. **Register** in `main.py`: `app.include_router(new_feature_router, prefix="/api/new-features")`
+6. **Register** in `app/router.py`: add router to the centralized `register_routes(app)` function
 
 7. **Migration**: `alembic revision --autogenerate -m "add new_features table"`
 
@@ -160,6 +183,29 @@ See `.env.example` for full list. Key ones:
 - `CLERK_PUBLISHABLE_KEY` — used to derive JWKS URL
 - `GEMINI_*_API_KEY` — separate keys for different AI features (rate limiting)
 
+## Models Overview (19 files)
+
+| Model | Purpose | Key Fields |
+|-------|---------|------------|
+| User | Clerk-integrated user | clerk_id, email, is_admin, subscription_tier, `has_pro_access` property |
+| Recipe | Full recipe | name, category, meal_type, prep_time, cook_time, `total_time` (hybrid property), images |
+| RecipeIngredient | Recipe ↔ Ingredient junction | recipe_id, ingredient_id, quantity, unit |
+| Ingredient | Global ingredient master | name, category, user_id (nullable for system) |
+| NutritionFacts | Per-recipe nutrition | calories, protein_g, total_fat_g, carbs, fiber, etc. |
+| RecipeHistory | Cooking history | recipe_id, cooked_at, notes |
+| RecipeGroup | Recipe collections | name, user_id |
+| Meal | Main + up to 3 sides | main_recipe_id, side1/2/3_id, is_saved |
+| PlannerEntry | Meal in planner | meal_id, position, is_completed, is_cleared, shopping_mode |
+| ShoppingItem | Shopping list item | ingredient_name, quantity, unit, aggregation_key, have, flagged |
+| ShoppingItemContribution | Source tracking | shopping_item_id, planner_entry_id |
+| UnitConversionRule | Unit conversion | from_unit, to_unit, conversion_factor |
+| Feedback | User feedback | message, status (open/reviewed/closed), admin_notes |
+| UserSettings | User preferences | Various preference fields |
+| UserCategory | Custom recipe categories | name, user_id |
+| UserIngredientCategory | Custom ingredient categories | name, user_id |
+| UserIngredientUnit | Custom units | name, abbreviation, user_id |
+| UserUsage | AI feature usage | feature, count, period |
+
 ## Gotchas
 
 **SQLite foreign keys**: Enabled via `PRAGMA foreign_keys=ON` listener in `db.py`. If you're seeing FK violations not caught, check this is running.
@@ -170,4 +216,6 @@ See `.env.example` for full list. Key ones:
 
 **Timezone handling**: Streak calculation (`/api/planner/streak`) requires `tz` query param from client. Server stores UTC, client converts.
 
-**AI API keys**: Using separate Gemini keys per feature allows independent rate limiting. All defined in env vars.
+**AI API keys**: Using separate Gemini keys per feature allows independent rate limiting. All defined in env vars: `GEMINI_ASSISTANT_API_KEY`, `GEMINI_TIP_API_KEY`, `GEMINI_IMAGE_API_KEY`, `GEMINI_RECIPE_GENERATION_API_KEY`, `GEMINI_NUTRITION_API_KEY`.
+
+**Recipe total_time**: Computed as a SQLAlchemy hybrid property (prep_time + cook_time), not stored in the database. Dropped the column in migration `20260617_drop_total_time_column`.
