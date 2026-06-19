@@ -8,6 +8,7 @@ import type {
   AdminGrantProRequest,
   AdminToggleAdminRequest,
   AdminFeedbackUpdateRequest,
+  AdminQueryResponse,
   FeedbackStatus,
 } from "@/types/admin";
 
@@ -185,6 +186,28 @@ export function useAdminFeedbackDetail(feedbackId: number | null) {
     staleTime: 60000,
   });
 }
+
+// ============================================================================
+// ADMIN DATABASE QUERY HOOKS
+// ============================================================================
+
+/**
+ * Execute a read-only SQL query against the database.
+ */
+export function useExecuteQuery() {
+  const { getToken } = useAuth();
+
+  return useMutation<AdminQueryResponse, Error, string>({
+    mutationFn: async (query: string) => {
+      const token = await getToken();
+      return adminApi.executeQuery({ query }, token);
+    },
+  });
+}
+
+// ============================================================================
+// ADMIN FEEDBACK HOOKS (continued)
+// ============================================================================
 
 /**
  * Update feedback status and/or admin notes.

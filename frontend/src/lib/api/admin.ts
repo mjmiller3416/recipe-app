@@ -7,6 +7,8 @@ import type {
   AdminFeedbackListResponse,
   AdminFeedbackDetail,
   AdminFeedbackUpdateRequest,
+  AdminQueryRequest,
+  AdminQueryResponse,
 } from "@/types/admin";
 import { fetchApi, buildQueryString } from "./base";
 
@@ -102,6 +104,18 @@ export const adminApi = {
     fetchApi<AdminFeedbackDetail>(
       `/api/admin/feedback/${feedbackId}`,
       { method: "PATCH", body: JSON.stringify(data) },
+      token,
+    ),
+
+  // ── Database Query ─────────────────────────────────────────────────────
+
+  executeQuery: (
+    data: AdminQueryRequest,
+    token?: string | null,
+  ): Promise<AdminQueryResponse> =>
+    fetchApi<AdminQueryResponse>(
+      "/api/admin/query",
+      { method: "POST", body: JSON.stringify(data) },
       token,
     ),
 };

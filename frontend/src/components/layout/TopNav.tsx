@@ -19,6 +19,7 @@ import {
   ChevronDown,
   MessageSquarePlus,
   Sparkles,
+  Shield,
   LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,7 +52,7 @@ import { ChangelogPopover } from "@/components/common/ChangelogPopover";
 import { CHANGELOG_TOTAL_ITEMS } from "@/data/changelog";
 import { appConfig } from "@/lib/config";
 import { cn } from "@/lib/utils";
-import { useShoppingList, useRefreshShoppingList } from "@/hooks/api";
+import { useShoppingList, useRefreshShoppingList, useCurrentUser } from "@/hooks/api";
 import { useNavActions } from "@/lib/providers/NavActionsProvider";
 import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
 import { useMealCreationDialog } from "@/lib/providers/MealCreationProvider";
@@ -247,6 +248,7 @@ function TopNavUserMenu({ onOpenAssistant, onOpenFeedback }: TopNavUserMenuProps
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
+  const { isAdmin } = useCurrentUser();
 
   const handleSignOut = async () => {
     await signOut();
@@ -337,6 +339,18 @@ function TopNavUserMenu({ onOpenAssistant, onOpenFeedback }: TopNavUserMenuProps
             Settings
           </Link>
         </DropdownMenuItem>
+
+        {isAdmin && (
+          <DropdownMenuItem asChild>
+            <Link
+              href="/admin"
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <Shield className="h-4 w-4" />
+              Admin Panel
+            </Link>
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuItem
           onClick={onOpenFeedback}

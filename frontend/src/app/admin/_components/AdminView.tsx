@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Shield, MessageSquareMore } from "lucide-react";
+import { Shield, MessageSquareMore, Database } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -9,8 +9,9 @@ import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/api";
 import { AdminUsersSection } from "./AdminUsersSection";
 import { AdminFeedbackSection } from "./AdminFeedbackSection";
+import { AdminDatabaseSection } from "./AdminDatabaseSection";
 
-type AdminTab = "users" | "feedback";
+type AdminTab = "users" | "feedback" | "database";
 
 interface TabConfig {
   id: AdminTab;
@@ -31,6 +32,12 @@ const TABS: TabConfig[] = [
     label: "Feedback Dashboard",
     icon: MessageSquareMore,
     description: "Review user feedback and reports",
+  },
+  {
+    id: "database",
+    label: "Database Query",
+    icon: Database,
+    description: "Run read-only SQL queries",
   },
 ];
 
@@ -71,6 +78,8 @@ export function AdminView() {
         return <AdminUsersSection />;
       case "feedback":
         return <AdminFeedbackSection />;
+      case "database":
+        return <AdminDatabaseSection />;
       default:
         return null;
     }
