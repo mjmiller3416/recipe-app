@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@clerk/nextjs";
 import { useQueryClient } from "@tanstack/react-query";
@@ -86,8 +86,17 @@ export function useRecipeWizard({
     mode: "onTouched",
   });
 
-  // Subscribe to all form changes for reactive computed values
-  const watchedValues = form.watch();
+  // Scoped form subscriptions for the reactive computed values below
+  // (canProceed / hasUnsavedData). Narrow useWatch calls avoid the whole-form
+  // deep clone + full-dialog re-render that `form.watch()` incurs on EVERY
+  // keystroke — a cost that scales with the loaded recipe size and caused
+  // severe input lag when editing existing recipes with many ingredients.
+  const watchedRecipeName = useWatch({ control: form.control, name: "recipeName" });
+  const watchedDescription = useWatch({ control: form.control, name: "description" });
+  const watchedCategory = useWatch({ control: form.control, name: "category" });
+  const watchedMealType = useWatch({ control: form.control, name: "mealType" });
+  const watchedIngredients = useWatch({ control: form.control, name: "ingredients" });
+  const watchedDirections = useWatch({ control: form.control, name: "directions" });
 
   // ---------------------------------------------------------------------------
   // Step navigation (non-form state)
@@ -232,16 +241,16 @@ export function useRecipeWizard({
           return generatedRecipe !== null;
         }
         return (
-          watchedValues.recipeName.trim().length > 0 &&
-          watchedValues.category.trim().length > 0 &&
-          watchedValues.mealType.trim().length > 0
+          watchedRecipeName.trim().length > 0 &&
+          watchedCategory.trim().length > 0 &&
+          watchedMealType.trim().length > 0
         );
       case 3:
-        return watchedValues.ingredients.some(
+        return watchedIngredients.some(
           (ing) => ing.ingredientName.trim().length > 0
         );
       case 4:
-        return watchedValues.directions.some(
+        return watchedDirections.some(
           (dir) => dir.text.trim().length > 0
         );
       case 5:
@@ -593,16 +602,16 @@ export function useRecipeWizard({
       return formIsDirty || extrasDirty;
     }
     return !!(
-      watchedValues.recipeName.trim() ||
-      watchedValues.description.trim() ||
-      watchedValues.ingredients.some((ing) => ing.ingredientName.trim()) ||
-      watchedValues.directions.some((d) => d.text.trim()) ||
+      watchedRecipeName.trim() ||
+      watchedDescription.trim() ||
+      watchedIngredients.some((ing) => ing.ingredientName.trim()) ||
+      watchedDirections.some((d) => d.text.trim()) ||
       imagePreview ||
       nutritionFacts ||
       aiPrompt.trim() ||
       generatedRecipe
     );
-  }, [isEditMode, formIsDirty, extrasDirty, watchedValues, imagePreview, nutritionFacts, aiPrompt, generatedRecipe]);
+  }, [isEditMode, formIsDirty, extrasDirty, watchedRecipeName, watchedDescription, watchedIngredients, watchedDirections, imagePreview, nutritionFacts, aiPrompt, generatedRecipe]);
 
   // ---------------------------------------------------------------------------
   // Reset wizard to initial state
