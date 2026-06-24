@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
 import { ingredientCategoryApi } from "@/lib/api";
@@ -62,10 +63,14 @@ export function useIngredientCategories(includeDisabled = false) {
 export function useIngredientCategoryOptions() {
   const { data: categories = [], isLoading, error } = useIngredientCategories(false);
 
-  const options: IngredientCategoryOption[] = categories.map((c) => ({
-    value: c.value,
-    label: c.label,
-  }));
+  // Memoize so the options reference stays stable across renders when the
+  // underlying category data is unchanged. Consumers (e.g. IngredientRow) keep
+  // this array in useCallback/memo deps, so an unstable reference would defeat
+  // their React.memo and re-render every ingredient row on each keystroke.
+  const options = useMemo<IngredientCategoryOption[]>(
+    () => categories.map((c) => ({ value: c.value, label: c.label })),
+    [categories]
+  );
 
   return {
     options,

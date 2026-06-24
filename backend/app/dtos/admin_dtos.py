@@ -180,3 +180,21 @@ class AdminFeedbackUpdateDTO(BaseModel):
         max_length=5000,
         description="Internal admin notes",
     )
+
+
+# ── Database Query DTOs ─────────────────────────────────────────────────────
+
+
+class AdminQueryRequestDTO(BaseModel):
+    """Request DTO for executing a read-only SQL query."""
+
+    query: str = Field(..., min_length=1, max_length=10000)
+
+
+class AdminQueryResponseDTO(BaseModel):
+    """Response DTO for SQL query results."""
+
+    columns: List[str]
+    rows: List[List[Any]]
+    row_count: int
+    execution_time_ms: float

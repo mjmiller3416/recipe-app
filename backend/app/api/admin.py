@@ -17,6 +17,8 @@ from app.dtos.admin_dtos import (
     AdminFeedbackListResponseDTO,
     AdminFeedbackUpdateDTO,
     AdminGrantProDTO,
+    AdminQueryRequestDTO,
+    AdminQueryResponseDTO,
     AdminToggleAdminDTO,
     AdminUserListDTO,
     AdminUserListResponseDTO,
@@ -24,6 +26,8 @@ from app.dtos.admin_dtos import (
 from app.models.user import User
 from app.services.admin_service import (
     AdminFeedbackNotFoundError,
+    AdminQueryExecutionError,
+    AdminQueryForbiddenError,
     AdminSaveError,
     AdminUserNotFoundError,
     CannotDeleteSelfError,
@@ -183,3 +187,22 @@ def update_feedback(
         raise HTTPException(status_code=404, detail="Feedback not found")
     except AdminSaveError:
         raise HTTPException(status_code=500, detail="Failed to update feedback")
+
+
+# ── Database Query ──────────────────────────────────────────────────────────
+
+
+@router.post("/query", response_model=AdminQueryResponseDTO)
+def execute_query(
+    dto: AdminQueryRequestDTO,
+    session: Session = Depends(get_session),
+    current_admin: User = Depends(require_admin),
+) -> AdminQueryResponseDTO:
+    """Execute a read-only SQL query against the database."""
+    service = AdminService(session, current_admin.id)
+    try:
+        return service.execute_query(dto.query)
+    except AdminQueryForbiddenError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except AdminQueryExecutionError as e:
+        raise HTTPException(status_code=400, detail=f"Query error: {e}")

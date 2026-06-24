@@ -2,6 +2,11 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-06-23 - Improvements
+- Faster AI features — AI recipe generation and nutrition estimation now respond more quickly
+- Meal Genie chat is now more responsive while generating replies
+- Recipe Wizard — reduced input lag for a snappier typing experience when adding ingredients
+
 ## 2026-06-18 - Improvements
 - Recipe total time is now automatically calculated from prep and cook times
 - Improved AI image generation with enhanced prompts for more accurate recipe photos

@@ -176,4 +176,6 @@ export {
   useAdminFeedback,
   useAdminFeedbackDetail,
   useUpdateFeedback,
+  // Database Query
+  useExecuteQuery,
 } from "./useAdmin";

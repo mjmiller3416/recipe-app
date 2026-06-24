@@ -61,7 +61,7 @@ async def chat_with_assistant(
 
         # Call the service
         service = get_assistant_service()
-        result = service.chat(
+        result = await service.chat(
             message=request.message,
             conversation_history=request.conversation_history,
             user_context_data=context_data,
@@ -163,7 +163,7 @@ async def generate_recipe(
 
         # Call service
         service = get_assistant_service()
-        result = service.chat(
+        result = await service.chat(
             message=request.message,
             conversation_history=request.conversation_history,
             user_context_data=context_data,

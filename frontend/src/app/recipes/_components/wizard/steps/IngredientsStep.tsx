@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useCallback } from "react";
-import { useFormContext, useFieldArray } from "react-hook-form";
+import { useMemo, useCallback, memo } from "react";
+import { useFormContext, useFieldArray, useWatch, useFormState } from "react-hook-form";
 import {
   DndContext,
   closestCenter,
@@ -21,8 +21,66 @@ import { useSortableDnd } from "@/hooks/ui/useSortableDnd";
 import { useUnits } from "@/hooks/api";
 import { useIngredientCategoryOptions } from "@/hooks/api/useIngredientCategories";
 import type { AutocompleteIngredient } from "@/hooks/forms/useIngredientAutocomplete";
+import type { UnitOptionDTO } from "@/types/common";
 import { createEmptyIngredient } from "../useRecipeWizard";
 import type { WizardFormValues } from "../wizardSchema";
+
+// ============================================================================
+// Per-row wrapper — isolates watch + error subscriptions per row
+// ============================================================================
+
+interface WatchedRowProps {
+  index: number;
+  fieldId: string;
+  availableIngredients: AutocompleteIngredient[];
+  units: UnitOptionDTO[];
+  ingredientCategories: { value: string; label: string }[];
+  onUpdate: (id: string, field: keyof Ingredient, value: string | number | null) => void;
+  onDelete: (id: string) => void;
+}
+
+const WatchedIngredientRow = memo(function WatchedIngredientRow({
+  index,
+  fieldId,
+  availableIngredients,
+  units,
+  ingredientCategories,
+  onUpdate,
+  onDelete,
+}: WatchedRowProps) {
+  const { control, formState } = useFormContext<WizardFormValues>();
+  const watched = useWatch({ control, name: `ingredients.${index}` });
+
+  const ingredient: Ingredient = {
+    id: fieldId,
+    quantity: watched?.quantity ? parseFloat(watched.quantity) : null,
+    unit: watched?.unit ?? "",
+    name: watched?.ingredientName ?? "",
+    category: watched?.ingredientCategory ?? "",
+  };
+
+  const getIngredientError = useCallback(
+    (_ingredientId: string, field: "name" | "quantity") => {
+      const wizardField = field === "name" ? "ingredientName" : "quantity";
+      const errors = formState.errors.ingredients;
+      const rowErrors = errors?.[index] as Record<string, { message?: string }> | undefined;
+      return rowErrors?.[wizardField]?.message;
+    },
+    [formState.errors.ingredients, index]
+  );
+
+  return (
+    <IngredientRow
+      ingredient={ingredient}
+      availableIngredients={availableIngredients}
+      units={units}
+      ingredientCategories={ingredientCategories}
+      onUpdate={onUpdate}
+      onDelete={onDelete}
+      getIngredientError={getIngredientError}
+    />
+  );
+});
 
 // ============================================================================
 // Props (only external data — form data via useFormContext)
@@ -36,7 +94,7 @@ interface IngredientsStepProps {
 // Component
 // ============================================================================
 
-export function IngredientsStep({
+export const IngredientsStep = memo(function IngredientsStep({
   availableIngredients,
 }: IngredientsStepProps) {
   const form = useFormContext<WizardFormValues>();
@@ -50,21 +108,6 @@ export function IngredientsStep({
   // ── Lift data-fetching hooks to the parent ──────────────────
   const { data: units = [] } = useUnits();
   const { options: ingredientCategories } = useIngredientCategoryOptions();
-
-  // ── Memoize the WizardIngredient → Ingredient adaptation ────
-  const rowIngredients = useMemo(
-    () =>
-      fields.map(
-        (f): Ingredient => ({
-          id: f.id,
-          quantity: f.quantity ? parseFloat(f.quantity) : null,
-          unit: f.unit,
-          name: f.ingredientName,
-          category: f.ingredientCategory,
-        })
-      ),
-    [fields]
-  );
 
   const sortableIds = useMemo(
     () => fields.map((f) => f.id),
@@ -85,11 +128,6 @@ export function IngredientsStep({
     [fields, move]
   );
 
-  /**
-   * Adapts IngredientRow's onUpdate callback to the wizard's field naming.
-   * IngredientRow calls with Ingredient field keys (name, category, …),
-   * but the wizard uses WizardIngredient keys (ingredientName, …).
-   */
   const handleRowUpdate = useCallback(
     (id: string, field: keyof Ingredient, value: string | number | null) => {
       const fieldMap: Record<string, string> = {
@@ -123,30 +161,13 @@ export function IngredientsStep({
     form.setValue("ingredients", [createEmptyIngredient()]);
   }, [form]);
 
-  /**
-   * Adapts the wizard's per-row errors to the IngredientRow's
-   * expected field names ('name' | 'quantity').
-   */
-  const handleGetIngredientError = useCallback(
-    (ingredientId: string, field: "name" | "quantity") => {
-      const fieldMap: Record<string, string> = {
-        name: "ingredientName",
-        quantity: "quantity",
-      };
-      const wizardField = fieldMap[field] || field;
-      const index = fields.findIndex((f) => f.id === ingredientId);
-      if (index === -1) return undefined;
-
-      const errors = form.formState.errors.ingredients;
-      const rowErrors = errors?.[index] as Record<string, { message?: string }> | undefined;
-      return rowErrors?.[wizardField]?.message;
-    },
-    [fields, form.formState.errors.ingredients]
-  );
-
-  // Root-level error (e.g. "At least one ingredient is required")
-  const rootError = (form.formState.errors.ingredients as { root?: { message?: string } } | undefined)?.root?.message
-    ?? form.formState.errors.ingredients?.message;
+  // Root-level error only (per-row errors handled inside WatchedIngredientRow).
+  // useFormState subscribes to the `ingredients` errors slice WITHOUT subscribing
+  // to value changes, so this no longer re-renders on every keystroke.
+  const { errors } = useFormState({ control: form.control, name: "ingredients" });
+  const rootError =
+    (errors.ingredients as { root?: { message?: string } } | undefined)?.root?.message ??
+    errors.ingredients?.message;
 
   return (
     <div className="space-y-6">
@@ -210,16 +231,16 @@ export function IngredientsStep({
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-2">
-            {rowIngredients.map((ingredient) => (
-              <IngredientRow
-                key={ingredient.id}
-                ingredient={ingredient}
+            {fields.map((field, index) => (
+              <WatchedIngredientRow
+                key={field.id}
+                index={index}
+                fieldId={field.id}
                 availableIngredients={availableIngredients}
                 units={units}
                 ingredientCategories={ingredientCategories}
                 onUpdate={handleRowUpdate}
                 onDelete={handleDelete}
-                getIngredientError={handleGetIngredientError}
               />
             ))}
           </div>
@@ -245,4 +266,4 @@ export function IngredientsStep({
       </Button>
     </div>
   );
-}
+});

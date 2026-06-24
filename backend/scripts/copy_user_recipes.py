@@ -14,13 +14,57 @@ Usage:
 """
 
 import argparse
+import os
 import sys
+import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+
+
+def _copy_cloudinary_asset(source_url: str | None, image_key: str, image_type: str) -> str | None:
+    """Copy a Cloudinary image to a new public_id keyed by image_key.
+
+    A copied recipe is a NEW, independent recipe and must own its own image
+    asset; sharing the source's id/key-based asset would let either recipe's
+    edits or deletion clobber the other. This duplicates the asset to the new
+    key and returns the new secure_url.
+
+    Best-effort: if Cloudinary is not configured or the copy fails, the original
+    URL is returned unchanged (the duplicate then references the source asset
+    read-only until its image is regenerated).
+    """
+    if not source_url:
+        return source_url
+
+    cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME")
+    if not cloud_name:
+        return source_url
+
+    try:
+        import cloudinary
+        import cloudinary.uploader
+
+        cloudinary.config(
+            cloud_name=cloud_name,
+            api_key=os.getenv("CLOUDINARY_API_KEY"),
+            api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+            secure=True,
+        )
+        result = cloudinary.uploader.upload(
+            source_url,
+            folder=f"meal-genie/recipes/{image_key}",
+            public_id=f"{image_type}_{image_key}",
+            overwrite=True,
+            resource_type="image",
+        )
+        return result["secure_url"]
+    except Exception as e:
+        print(f"   ⚠ Could not copy Cloudinary {image_type} asset: {e}; keeping source URL")
+        return source_url
 
 
 def create_db_session(database_url: str | None = None):
@@ -108,18 +152,24 @@ def copy_recipes(session, from_user_id: int, to_user_id: int, dry_run: bool = Fa
             skipped += 1
             continue
 
+        # Give the copy its own stable image_key and duplicate the Cloudinary
+        # asset so the new recipe does not share the source's image.
+        new_image_key = uuid.uuid4().hex
+        new_reference_path = _copy_cloudinary_asset(r[10], new_image_key, "reference")
+        new_banner_path = _copy_cloudinary_asset(r[11], new_image_key, "banner")
+
         # Insert recipe for target user
         result = session.execute(
             text("""
                 INSERT INTO recipe (
                     recipe_name, recipe_category, meal_type, diet_pref,
                     prep_time, cook_time, servings, directions, notes,
-                    reference_image_path, banner_image_path,
+                    reference_image_path, banner_image_path, image_key,
                     is_favorite, is_ai_generated, user_id, created_at
                 ) VALUES (
                     :recipe_name, :recipe_category, :meal_type, :diet_pref,
                     :prep_time, :cook_time, :servings, :directions, :notes,
-                    :reference_image_path, :banner_image_path,
+                    :reference_image_path, :banner_image_path, :image_key,
                     :is_favorite, :is_ai_generated, :user_id, NOW()
                 ) RETURNING id
             """),
@@ -133,8 +183,9 @@ def copy_recipes(session, from_user_id: int, to_user_id: int, dry_run: bool = Fa
                 "servings": r[7],
                 "directions": r[8],
                 "notes": r[9],
-                "reference_image_path": r[10],
-                "banner_image_path": r[11],
+                "reference_image_path": new_reference_path,
+                "banner_image_path": new_banner_path,
+                "image_key": new_image_key,
                 "is_favorite": r[12],
                 "is_ai_generated": r[13],
                 "user_id": to_user_id,

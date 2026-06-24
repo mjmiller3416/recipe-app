@@ -122,6 +122,7 @@ class NutritionEstimationService:
                     "temperature": TEMPERATURE,
                     "max_output_tokens": MAX_OUTPUT_TOKENS,
                     "response_mime_type": "application/json",
+                    "thinking_config": {"thinking_budget": 0},
                 },
             )
 

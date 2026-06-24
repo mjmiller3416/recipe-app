@@ -4,9 +4,12 @@ Service layer for admin operations. Handles user management
 and feedback review business logic.
 """
 
+import re
+import time
 from datetime import datetime
-from typing import Optional
+from typing import Any, List, Optional
 
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -16,6 +19,7 @@ from ..dtos.admin_dtos import (
     AdminFeedbackListResponseDTO,
     AdminFeedbackUpdateDTO,
     AdminGrantProDTO,
+    AdminQueryResponseDTO,
     AdminUserListDTO,
     AdminUserListResponseDTO,
 )
@@ -50,7 +54,24 @@ class AdminSaveError(Exception):
     pass
 
 
+class AdminQueryForbiddenError(Exception):
+    """Raised when a query contains non-SELECT statements."""
+    pass
+
+
+class AdminQueryExecutionError(Exception):
+    """Raised when a SQL query fails to execute."""
+    pass
+
+
 VALID_FEEDBACK_STATUSES = {"new", "read", "in_progress", "resolved"}
+
+_FORBIDDEN_PATTERN = re.compile(
+    r"\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|GRANT|REVOKE|EXEC|EXECUTE)\b",
+    re.IGNORECASE,
+)
+
+MAX_QUERY_ROWS = 500
 
 
 # ── Admin Service ────────────────────────────────────────────────────────────
@@ -138,6 +159,50 @@ class AdminService:
         except SQLAlchemyError as e:
             self.session.rollback()
             raise AdminSaveError(f"Failed to delete user: {e}") from e
+
+    # ── Database Query ───────────────────────────────────────────────────────
+
+    def execute_query(self, query: str) -> AdminQueryResponseDTO:
+        """Execute a read-only SQL query and return results."""
+        stripped = query.strip().rstrip(";").strip()
+        if not stripped:
+            raise AdminQueryForbiddenError("Query cannot be empty")
+
+        if _FORBIDDEN_PATTERN.search(stripped):
+            raise AdminQueryForbiddenError(
+                "Only SELECT queries are allowed. "
+                "INSERT, UPDATE, DELETE, DROP, and other write operations are forbidden."
+            )
+
+        try:
+            start = time.perf_counter()
+            result = self.session.execute(text(stripped))
+            columns = list(result.keys())
+            rows: List[List[Any]] = [
+                [self._serialize_value(v) for v in row] for row in result.fetchmany(MAX_QUERY_ROWS)
+            ]
+            elapsed_ms = round((time.perf_counter() - start) * 1000, 2)
+
+            return AdminQueryResponseDTO(
+                columns=columns,
+                rows=rows,
+                row_count=len(rows),
+                execution_time_ms=elapsed_ms,
+            )
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise AdminQueryExecutionError(str(e)) from e
+
+    @staticmethod
+    def _serialize_value(value: Any) -> Any:
+        """Convert non-JSON-serializable values to strings."""
+        if value is None:
+            return None
+        if isinstance(value, (int, float, bool)):
+            return value
+        if isinstance(value, datetime):
+            return value.isoformat()
+        return str(value)
 
     # ── Feedback Management ──────────────────────────────────────────────────
 

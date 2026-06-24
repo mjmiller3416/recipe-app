@@ -6,6 +6,7 @@ SQLAlchemy model for recipes.
 # ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, List, Optional
 
@@ -48,6 +49,13 @@ class Recipe(Base):
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     reference_image_path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     banner_image_path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    # Stable, environment-independent key for addressing this recipe's Cloudinary
+    # image assets. Generated once at creation and preserved across backup/restore
+    # and cross-database copies, so image URLs never collide with a different
+    # recipe's auto-increment id in another environment (SQLite local vs Postgres prod).
+    image_key: Mapped[str] = mapped_column(
+        String(32), unique=True, index=True, nullable=False, default=lambda: uuid.uuid4().hex
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     is_ai_generated: Mapped[bool] = mapped_column(Boolean, default=False, index=True)

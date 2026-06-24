@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
 import { categoryApi } from "@/lib/api";
@@ -64,17 +65,23 @@ export function useCategories(includeDisabled = false) {
 export function useCategoryOptions() {
   const { data: categories = [], isLoading, error } = useCategories(false);
 
-  // Filter options include "All" at the start for filter UIs
-  const filterOptions: CategoryOption[] = [
-    { value: "all", label: "All" },
-    ...categories.map((c) => ({ value: c.value, label: c.label })),
-  ];
+  // Memoize so option references stay stable across renders when the
+  // underlying category data is unchanged — an unstable reference can defeat
+  // React.memo / useCallback deps in consuming form components.
+  // Filter options include "All" at the start for filter UIs.
+  const filterOptions = useMemo<CategoryOption[]>(
+    () => [
+      { value: "all", label: "All" },
+      ...categories.map((c) => ({ value: c.value, label: c.label })),
+    ],
+    [categories]
+  );
 
-  // Form options exclude "All" for form dropdowns
-  const formOptions: CategoryOption[] = categories.map((c) => ({
-    value: c.value,
-    label: c.label,
-  }));
+  // Form options exclude "All" for form dropdowns.
+  const formOptions = useMemo<CategoryOption[]>(
+    () => categories.map((c) => ({ value: c.value, label: c.label })),
+    [categories]
+  );
 
   return {
     filterOptions,

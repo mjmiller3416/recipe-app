@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class GeneratorsMixin:
     """Mixin providing AI generation methods for the assistant."""
 
-    def _handle_function_call(
+    async def _handle_function_call(
         self,
         tool_name: str,
         args: dict,
@@ -44,7 +44,7 @@ class GeneratorsMixin:
 
         elif tool_name == "create_recipe":
             # Generate a full recipe with structured JSON
-            recipe = self._generate_recipe_from_args(args, context_data)
+            recipe = await self._generate_recipe_from_args(args, context_data)
             return {
                 "type": "recipe",
                 "response": f"Here's your {args.get('recipe_name', 'recipe')}! 🎉",
@@ -211,7 +211,7 @@ Use your friendly Meal Genie personality."""
             "tool_args": args,
         }
 
-    def _generate_recipe_from_args(
+    async def _generate_recipe_from_args(
         self, args: dict, context_data: Optional[dict] = None
     ) -> Optional[RecipeGeneratedDTO]:
         """Generate a structured recipe by delegating to the recipe generation service.
@@ -250,7 +250,7 @@ Use your friendly Meal Genie personality."""
 
         try:
             service = get_recipe_generation_service()
-            result = service.generate(request)
+            result = await service.generate(request)
             if result.success and result.recipe:
                 return result.recipe
         except Exception as e:

@@ -76,3 +76,16 @@ export interface AdminFeedbackUpdateRequest {
   status?: FeedbackStatus;
   admin_notes?: string;
 }
+
+// Database query types
+
+export interface AdminQueryRequest {
+  query: string;
+}
+
+export interface AdminQueryResponse {
+  columns: string[];
+  rows: (string | number | boolean | null)[][];
+  row_count: number;
+  execution_time_ms: number;
+}

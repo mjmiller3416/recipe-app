@@ -139,6 +139,7 @@ export function DirectionsNotesStep() {
 
   const { sensors, modifiers } = useSortableDnd();
   const notes = form.watch("notes");
+  const watchedDirections = form.watch("directions");
 
   const sortableIds = useMemo(
     () => fields.map((d) => d.id),
@@ -161,7 +162,7 @@ export function DirectionsNotesStep() {
 
   const handleUpdateDirection = useCallback(
     (index: number, text: string) => {
-      form.setValue(`directions.${index}.text`, text);
+      form.setValue(`directions.${index}.text`, text, { shouldDirty: true });
     },
     [form]
   );
@@ -203,7 +204,7 @@ export function DirectionsNotesStep() {
                 <SortableDirectionRow
                   key={field.id}
                   id={field.id}
-                  text={field.text}
+                  text={watchedDirections?.[index]?.text ?? field.text}
                   index={index}
                   onUpdate={handleUpdateDirection}
                   onDelete={handleDeleteDirection}
