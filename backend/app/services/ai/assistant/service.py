@@ -26,7 +26,7 @@ class AssistantServiceCore:
         # Validate eagerly so we fail fast if misconfigured
         get_gemini_client(API_KEY_ENV_VAR)
 
-    def chat(
+    async def chat(
         self,
         message: str,
         conversation_history: Optional[List[AssistantMessageDTO]] = None,
@@ -72,7 +72,7 @@ class AssistantServiceCore:
             )
 
             # Process the response
-            return self._process_response(response, user_context_data, contents)
+            return await self._process_response(response, user_context_data, contents)
 
         except Exception as e:
             return {
@@ -147,7 +147,7 @@ class AssistantServiceCore:
 
         return contents
 
-    def _process_response(
+    async def _process_response(
         self, response, user_context_data: Optional[dict], contents: list
     ) -> dict:
         """Process Gemini response, handling function calls."""
@@ -196,7 +196,7 @@ class AssistantServiceCore:
 
         # A tool call always takes precedence over preamble text.
         if function_call is not None:
-            return self._handle_function_call(
+            return await self._handle_function_call(
                 function_call.name,
                 dict(function_call.args) if function_call.args else {},
                 user_context_data,
@@ -213,7 +213,7 @@ class AssistantServiceCore:
 
         return {"type": "error", "response": None, "error": "Could not parse response"}
 
-    def _handle_function_call(
+    async def _handle_function_call(
         self,
         tool_name: str,
         args: dict,
