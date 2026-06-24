@@ -159,6 +159,9 @@ class RecipeBackupDTO(BaseModel):
     notes: Optional[str] = None
     reference_image_path: Optional[str] = None
     banner_image_path: Optional[str] = None
+    # Stable Cloudinary key; preserved on restore so image URLs keep resolving.
+    # Optional for backwards compatibility with backups taken before this field.
+    image_key: Optional[str] = None
     created_at: datetime
     is_favorite: bool = False
 

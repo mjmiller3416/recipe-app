@@ -179,6 +179,7 @@ class BackupOperationsMixin:
                         notes=r.notes,
                         reference_image_path=r.reference_image_path,
                         banner_image_path=r.banner_image_path,
+                        image_key=r.image_key,
                         created_at=r.created_at,
                         is_favorite=r.is_favorite,
                     )

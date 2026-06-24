@@ -134,6 +134,11 @@ class RestoreOperationsMixin:
                     created_at=recipe_dto.created_at,
                     is_favorite=recipe_dto.is_favorite,
                 )
+                # Preserve the stable image_key so restored recipes keep pointing
+                # at their own Cloudinary assets. Older backups without an
+                # image_key fall back to the model-generated default.
+                if recipe_dto.image_key:
+                    new_recipe.image_key = recipe_dto.image_key
                 self.session.add(new_recipe)
                 self.session.flush()
                 recipe_id_map[recipe_dto.id] = new_recipe.id

@@ -17,6 +17,7 @@ IMPORTANT: Production database is READ-ONLY. No changes will be made to producti
 
 import os
 import sys
+import uuid
 from datetime import datetime
 
 # Add the backend directory to the path for imports
@@ -189,6 +190,10 @@ def copy_recipes(prod_session, local_session):
         row_dict = dict(row)
         old_id = row_dict.pop("id")
         row_dict["user_id"] = TARGET_USER_ID
+        # Give the local copy a fresh image_key so local image edits can never
+        # overwrite the shared production Cloudinary asset. The verbatim image
+        # URLs still render prod's images read-only until regenerated locally.
+        row_dict["image_key"] = uuid.uuid4().hex
 
         cols = ", ".join(row_dict.keys())
         placeholders = ", ".join([f":{k}" for k in row_dict.keys()])
