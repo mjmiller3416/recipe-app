@@ -1,0 +1,36 @@
+/* design-sync Tailwind input — wraps the app's real stylesheet.
+   In the app, next/font injects --font-geist-sans/--font-geist-mono at runtime
+   via a class on <body>; the static equivalents here point at the Geist
+   @font-face rules shipped in .design-sync/fonts/geist.css. */
+@import "../frontend/src/app/globals.css";
+
+/* Authored preview cells live outside frontend/ — scan them for utilities too. */
+@source "./previews";
+
+/* Safelist the design system's own named vocabulary (globals.css @utility and
+   @theme tokens). Tailwind only emits used classes; these are the DS's public
+   API and must resolve in designs even where the app doesn't use them yet. */
+@source inline("surface-{base,raised,elevated,floating}");
+@source inline("{pressable,liftable,interactive,interactive-subtle,bouncy}");
+@source inline("button-{weighted,bouncy,modal-cancel}");
+@source inline("text-{page-title,section-header,card-title,body,meta,ui}");
+@source inline("shadow-{raised,elevated,floating,inset-sm,inset-md,glow-primary,glow-secondary}");
+@source inline("ease-{physical,bounce,snap}");
+@source inline("{widget-column,image-zoom-wrapper,selection-indicator}");
+@source inline("animate-{fade-in,fade-out,slide-up,slide-down,scale-in,pulse-soft,bounce-subtle,glow}");
+@source inline("bg-{background,background-subtle,background-intense,sidebar,elevated,hover,card,popover,muted,accent,input}");
+@source inline("bg-{primary,primary-dark,primary-light,primary-hover,primary-active,primary-surface,primary-surface-hover,primary-muted}");
+@source inline("bg-{secondary,secondary-hover,secondary-active,secondary-surface,secondary-surface-hover,secondary-muted}");
+@source inline("bg-{success,warning,error,destructive,info,neutral,success-surface,secondary-surface-alpha}");
+@source inline("bg-chart-{1,2,3,4,5,6}");
+@source inline("text-chart-{1,2,3,4,5,6}");
+@source inline("text-{foreground,foreground-subtle,foreground-disabled,muted-foreground,card-foreground,popover-foreground,accent-foreground}");
+@source inline("text-{primary,primary-foreground,primary-on-surface,secondary,secondary-foreground,secondary-on-surface}");
+@source inline("text-{success,warning,error,destructive,destructive-foreground,info,neutral-foreground}");
+@source inline("border-{border,border-subtle,border-strong,primary,secondary,primary-muted,secondary-muted,success-surface-border,secondary-border-alpha}");
+@source inline("ring-ring");
+
+:root {
+  --font-geist-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-geist-mono: "Geist Mono", ui-monospace, monospace;
+}
