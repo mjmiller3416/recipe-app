@@ -117,3 +117,11 @@ backend/tests/test_wizard_generation_service.py
 chat_example.md
 sarah.md
 nora.md
+
+# design-sync (regenerated build state; durable inputs in .design-sync/ ARE committed)
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
+frontend/.ds-tailwind.css
