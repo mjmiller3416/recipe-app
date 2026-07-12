@@ -399,11 +399,16 @@ class RecipeImportService:
 
         try:
             data = json.loads(raw_text)
-        except json.JSONDecodeError as e:
-            logger.error(f"[RecipeImport] JSON parse error: {e}")
-            raise RecipeImportParseError(
-                "Failed to parse recipe data from AI response"
-            ) from e
+        except json.JSONDecodeError:
+            # Gemini occasionally appends extra content after the JSON object;
+            # fall back to decoding just the first object.
+            try:
+                data, _ = json.JSONDecoder().raw_decode(raw_text.strip())
+            except json.JSONDecodeError as e:
+                logger.error(f"[RecipeImport] JSON parse error: {e}")
+                raise RecipeImportParseError(
+                    "Failed to parse recipe data from AI response"
+                ) from e
 
         if data.get("no_recipe_found"):
             raise RecipeImportNotFoundError(

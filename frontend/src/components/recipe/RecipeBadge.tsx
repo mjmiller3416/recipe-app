@@ -2,6 +2,7 @@
 
 import { Globe, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -25,12 +26,17 @@ interface RecipeBadgeProps {
 /**
  * RecipeBadge - Reusable badge component for recipe metadata
  *
+ * Renders on the shadcn Badge primitive (variant="plain") with type-specific
+ * colors from semantic theme tokens.
+ *
  * @param label - Text to display in badge
  * @param type - Badge type determines color scheme
  *   - "category": Teal/primary color (e.g., "Pasta", "Seafood")
  *   - "mealType": Purple/secondary color (e.g., "Dinner", "Lunch")
  *   - "dietary": Gray/accent color (e.g., "Vegetarian", "Pescatarian")
  *   - "group": Muted color for recipe groups
+ *   - "ai": Chart-6 for AI-generated recipes
+ *   - "imported": Chart-5 for recipes imported from a website
  * @param size - Badge size: sm, md, lg
  * @param variant - "overlay" for floating on images, "inline" for content areas, "outline" for bordered style
  * @param className - Additional classes
@@ -44,26 +50,26 @@ export function RecipeBadge({
   className,
   groups = [],
 }: RecipeBadgeProps) {
-  // Type-specific color schemes (using CSS variables)
+  // Type-specific color schemes (semantic theme tokens)
   const typeColors = {
-    category: "bg-[var(--primary)] text-[var(--primary-foreground)]",
-    mealType: "bg-[var(--secondary)]/90 text-[var(--secondary-foreground)]",
-    dietary: "bg-[var(--accent)] text-[var(--accent-foreground)]",
-    group: "bg-[var(--accent)] text-[var(--accent-foreground)]",
-    ai: "bg-[var(--chart-6)] text-[var(--chart-6-foreground,var(--primary-foreground))]",
-    difficulty: "bg-[var(--chart-4)] text-[var(--chart-4-foreground,var(--primary-foreground))]",
-    imported: "bg-[var(--chart-5)] text-[var(--chart-5-foreground,var(--primary-foreground))]",
+    category: "bg-primary text-primary-foreground",
+    mealType: "bg-secondary/90 text-secondary-foreground",
+    dietary: "bg-accent text-accent-foreground",
+    group: "bg-accent text-accent-foreground",
+    ai: "bg-chart-6 text-primary-foreground",
+    difficulty: "bg-chart-4 text-primary-foreground",
+    imported: "bg-chart-5 text-primary-foreground",
   };
 
   // Outline variant uses border + text color instead of filled background
   const outlineTypeColors = {
-    category: "bg-transparent border-2 border-[var(--primary)] text-[var(--primary)]",
-    mealType: "bg-transparent border-2 border-[var(--secondary)] text-[var(--secondary)]",
-    dietary: "bg-transparent border-2 border-[var(--accent)] text-[var(--accent-foreground)]",
-    group: "bg-transparent border-2 border-[var(--accent)] text-[var(--accent)]",
-    ai: "bg-transparent border-2 border-[var(--chart-6)] text-[var(--chart-6)]",
-    difficulty: "bg-transparent border-2 border-[var(--chart-4)] text-[var(--chart-4)]",
-    imported: "bg-transparent border-2 border-[var(--chart-5)] text-[var(--chart-5)]",
+    category: "bg-transparent border-2 border-primary text-primary",
+    mealType: "bg-transparent border-2 border-secondary text-secondary",
+    dietary: "bg-transparent border-2 border-accent text-accent-foreground",
+    group: "bg-transparent border-2 border-accent text-accent",
+    ai: "bg-transparent border-2 border-chart-6 text-chart-6",
+    difficulty: "bg-transparent border-2 border-chart-4 text-chart-4",
+    imported: "bg-transparent border-2 border-chart-5 text-chart-5",
   };
 
   // Size variants
@@ -80,48 +86,53 @@ export function RecipeBadge({
     outline: "",
   };
 
+  const badgeClasses = cn(
+    "rounded-full",
+
+    // Type colors (outline variant uses border instead of background)
+    variant === "outline" ? outlineTypeColors[type] : typeColors[type],
+
+    // Size
+    sizeClasses[size],
+
+    // Variant
+    variantClasses[variant],
+
+    // Custom classes
+    className
+  );
+
   // For group badges with multiple groups, show count with tooltip
   if (type === "group" && groups.length > 0) {
     const primaryGroupName = groups[0].name;
     const additionalCount = groups.length - 1;
 
     const badgeContent = (
-      <span
+      <Badge
+        variant="plain"
+        size={null}
         className={cn(
-          // Base styles
-          "rounded-full font-medium inline-flex items-center relative",
-          "transition-colors duration-200",
-
-          // Type colors
-          variant === "outline" ? outlineTypeColors[type] : typeColors[type],
-
-          // Size
-          sizeClasses[size],
-
-          // Variant
-          variantClasses[variant],
-
+          badgeClasses,
+          "relative",
           // Add right margin when count badge is present to prevent overlap
-          additionalCount > 0 && "mr-3",
-
-          // Custom classes
-          className
+          additionalCount > 0 && "mr-3"
         )}
       >
         {primaryGroupName.toLowerCase()}
         {additionalCount > 0 && (
-          <span
+          <Badge
+            variant="plain"
+            size={null}
             className={cn(
-              "absolute -top-2 -right-2",
-              "inline-flex items-center justify-center rounded-full font-medium",
+              "absolute -top-2 -right-2 rounded-full p-0",
               "bg-primary text-primary-foreground border-2 border-card",
-              size === "sm" ? "size-5 text-[10px]" : "size-6 text-xs"
+              size === "sm" ? "size-5 text-xs" : "size-6 text-xs"
             )}
           >
             +{additionalCount}
-          </span>
+          </Badge>
         )}
-      </span>
+      </Badge>
     );
 
     // If multiple groups, wrap in tooltip
@@ -147,29 +158,11 @@ export function RecipeBadge({
 
   // Standard badge rendering for non-group types
   return (
-    <span
-      className={cn(
-        // Base styles
-        "rounded-full font-medium inline-flex items-center gap-1",
-        "transition-colors duration-200",
-
-        // Type colors (outline variant uses border instead of background)
-        variant === "outline" ? outlineTypeColors[type] : typeColors[type],
-
-        // Size
-        sizeClasses[size],
-
-        // Variant
-        variantClasses[variant],
-
-        // Custom classes
-        className
-      )}
-    >
-      {type === "ai" && <Sparkles className="h-3 w-3" strokeWidth={1.5} />}
-      {type === "imported" && <Globe className="h-3 w-3" strokeWidth={1.5} />}
+    <Badge variant="plain" size={null} className={badgeClasses}>
+      {type === "ai" && <Sparkles strokeWidth={1.5} />}
+      {type === "imported" && <Globe strokeWidth={1.5} />}
       {type === "group" ? label.toLowerCase() : label}
-    </span>
+    </Badge>
   );
 }
 

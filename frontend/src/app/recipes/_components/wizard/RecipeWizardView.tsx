@@ -267,7 +267,7 @@ export function RecipeWizardView({
             ) : (
               <RecipeBasicsStep
                 imagePreview={wizard.imagePreview}
-                isAiGenerated={wizard.isAiGenerated}
+                isAiGenerated={wizard.imageIsAiGenerated}
                 onImageUpload={wizard.handleImageUpload}
                 onGeneratedImageAccept={wizard.handleGeneratedImageAccept}
                 onBannerOnlyAccept={wizard.handleBannerOnlyAccept}

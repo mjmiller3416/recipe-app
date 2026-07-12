@@ -56,6 +56,9 @@ const badgeVariants = cva(
           "border-transparent bg-muted text-muted-foreground",
           "hover:bg-muted/80 active:bg-muted/70",
         ],
+        // Colorless variant for static display badges whose colors come from
+        // the caller (e.g. RecipeBadge) — no hover/active states to fight.
+        plain: "border-transparent",
       },
       size: {
         sm: "h-5 px-2 text-xs",        // 20px height, 12px text

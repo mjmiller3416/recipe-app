@@ -13,6 +13,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { getErrorMessage } from "@/lib/utils";
@@ -253,7 +254,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
           "flex items-center justify-center rounded-lg bg-primary-surface",
           compact ? "size-7" : "size-9"
         )}>
-          <ImageIcon className={cn(compact ? "size-3.5" : "size-5", "text-primary")} />
+          <ImageIcon className={cn(compact ? "size-3.5" : "size-5", "text-primary")} strokeWidth={1.5} />
         </div>
         <div>
           <h2 className={cn(compact ? "text-sm" : "text-lg", "font-semibold text-foreground leading-tight")}>
@@ -281,7 +282,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
             className="flex flex-col items-center justify-center size-full text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           >
             <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-              <ImageIcon className="size-6 text-muted-foreground" />
+              <ImageIcon className="size-6 text-muted-foreground" strokeWidth={1.5} />
             </div>
             <p className="text-sm font-medium">No image uploaded</p>
             <p className="text-xs mt-0.5 text-muted-foreground">Click or drag to upload</p>
@@ -292,7 +293,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
         {imageState === "generating" && (
           <div className="flex flex-col items-center justify-center size-full text-muted-foreground px-6">
             <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-              <Sparkles className="size-6 text-primary animate-pulse" />
+              <Sparkles className="size-6 text-primary animate-pulse" strokeWidth={1.5} />
             </div>
             <p className="text-sm font-medium text-primary">
               {isEditMode && getImageType() === "reference"
@@ -305,12 +306,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
             </p>
             {/* Progress Bar */}
             <div className="w-full max-w-40 mt-4">
-              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary rounded-full transition-all duration-200 ease-out"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
+              <Progress value={progress} className="h-1.5" />
               <p className="text-xs mt-1.5 text-center text-muted-foreground">
                 {Math.round(progress)}%
               </p>
@@ -322,7 +318,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
         {imageState === "error" && (
           <div className="flex flex-col items-center justify-center size-full text-muted-foreground p-4">
             <div className="size-12 rounded-xl bg-destructive/10 flex items-center justify-center mb-3">
-              <AlertCircle className="size-6 text-destructive" />
+              <AlertCircle className="size-6 text-destructive" strokeWidth={1.5} />
             </div>
             <p className="text-sm font-medium text-destructive text-center">
               {generatingError || "Something went wrong"}
@@ -333,7 +329,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
               onClick={handleGenerate}
               className="mt-3"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="size-4 mr-2" strokeWidth={1.5} />
               Try Again
             </Button>
           </div>
@@ -354,7 +350,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
                 <Badge
                   className="absolute top-2.5 left-2.5 bg-primary hover:bg-primary-hover text-primary-foreground gap-1"
                 >
-                  <Sparkles className="h-3 w-3" />
+                  <Sparkles className="size-3" strokeWidth={1.5} />
                   AI Generated
                 </Badge>
               )}
@@ -410,7 +406,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
               className="flex-1 gap-2"
               onClick={handleUploadClick}
             >
-              <Upload className="h-4 w-4" />
+              <Upload className="size-4" strokeWidth={1.5} />
               Upload
             </Button>
             <Button
@@ -420,7 +416,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
               onClick={handleGenerate}
               disabled={noneSelected}
             >
-              <Sparkles className="h-4 w-4" />
+              <Sparkles className="size-4" strokeWidth={1.5} />
               Generate
             </Button>
           </div>
@@ -436,7 +432,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
               className="flex-1 gap-2"
               onClick={handleUploadClick}
             >
-              <Upload className="h-4 w-4" />
+              <Upload className="size-4" strokeWidth={1.5} />
               Upload
             </Button>
             <Button
@@ -445,7 +441,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
               className="flex-1 gap-2"
               disabled
             >
-              <Sparkles className="h-4 w-4 animate-pulse" />
+              <Sparkles className="size-4 animate-pulse" strokeWidth={1.5} />
               Generate
             </Button>
           </div>
@@ -462,7 +458,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
                 className="flex-1 gap-2"
                 onClick={handleAcceptGenerated}
               >
-                <Check className="h-4 w-4" />
+                <Check className="size-4" strokeWidth={1.5} />
                 Use This Image
               </Button>
               <Button
@@ -473,7 +469,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
                 disabled={noneSelected}
                 aria-label="Generate a new image"
               >
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw className="size-4" strokeWidth={1.5} />
               </Button>
             </div>
             <Button
@@ -483,7 +479,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
               className="w-full gap-2"
               onClick={handleUploadClick}
             >
-              <Upload className="h-4 w-4" />
+              <Upload className="size-4" strokeWidth={1.5} />
               Upload Different Image
             </Button>
           </>
@@ -500,7 +496,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
                 className="flex-1 gap-2"
                 onClick={handleUploadClick}
               >
-                <Upload className="h-4 w-4" />
+                <Upload className="size-4" strokeWidth={1.5} />
                 Replace
               </Button>
               <Button
@@ -510,7 +506,7 @@ export const ImageUploadCard = memo(function ImageUploadCard({
                 onClick={handleGenerate}
                 disabled={noneSelected}
               >
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="size-4" strokeWidth={1.5} />
                 Regenerate
               </Button>
             </div>

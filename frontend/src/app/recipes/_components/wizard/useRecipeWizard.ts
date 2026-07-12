@@ -110,7 +110,11 @@ export function useRecipeWizard({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
-  const [isAiGenerated, setIsAiGenerated] = useState(false);
+  // Recipe CONTENT provenance — saved as is_ai_generated; set only when the
+  // recipe itself came from AI generation, never by image generation alone.
+  const [recipeIsAiGenerated, setRecipeIsAiGenerated] = useState(false);
+  // Whether the CURRENT IMAGE came from AI — drives the image card badge only.
+  const [imageIsAiGenerated, setImageIsAiGenerated] = useState(false);
   const [generatedRefData, setGeneratedRefData] = useState<string | null>(null);
   const [generatedBannerData, setGeneratedBannerData] = useState<string | null>(null);
 
@@ -311,7 +315,7 @@ export function useRecipeWizard({
       setExtrasDirty(true);
       setImageFile(file);
       setBannerFile(null);
-      setIsAiGenerated(false);
+      setImageIsAiGenerated(false);
       setGeneratedRefData(null);
       setGeneratedBannerData(null);
 
@@ -329,7 +333,7 @@ export function useRecipeWizard({
       setExtrasDirty(true);
       setImagePreview(refDataUrl);
       setGeneratedRefData(refBase64);
-      setIsAiGenerated(true);
+      setImageIsAiGenerated(true);
 
       const refFile = base64ToFile(refBase64, "recipe-ai-reference.png");
       setImageFile(refFile);
@@ -418,7 +422,7 @@ export function useRecipeWizard({
         const refDataUrl = `data:image/png;base64,${response.reference_image_data}`;
         setImagePreview(refDataUrl);
         setGeneratedRefData(response.reference_image_data);
-        setIsAiGenerated(imagesAreAiGenerated);
+        setImageIsAiGenerated(imagesAreAiGenerated);
         const refFile = base64ToFile(response.reference_image_data, "recipe-ai-reference.png");
         setImageFile(refFile);
       }
@@ -478,7 +482,10 @@ export function useRecipeWizard({
       setImagePreview(recipe.reference_image_path);
       setOriginalImagePath(recipe.reference_image_path);
       setOriginalBannerPath(recipe.banner_image_path);
-      setIsAiGenerated(recipe.is_ai_generated);
+      setRecipeIsAiGenerated(recipe.is_ai_generated);
+      // Image provenance isn't stored separately; the recipe flag is the best
+      // available approximation for the image badge in edit mode.
+      setImageIsAiGenerated(recipe.is_ai_generated);
 
       // Existing nutrition (non-form)
       if (recipe.nutrition_facts) {
@@ -548,7 +555,7 @@ export function useRecipeWizard({
     if (isEditMode || !initialGenerated || seededRef.current) return;
     seededRef.current = true;
     populateFromGeneration(initialGenerated);
-    setIsAiGenerated(true);
+    setRecipeIsAiGenerated(true);
     setExtrasDirty(true);
     setCreationMethod("manual");
     setCurrentStep(2);
@@ -586,7 +593,7 @@ export function useRecipeWizard({
       setGenerationResponse(response);
 
       populateFromGeneration(response);
-      setIsAiGenerated(true);
+      setRecipeIsAiGenerated(true);
       setCreationMethod("manual");
       setCurrentStep(2);
       toast.success(`"${response.recipe.recipe_name}" generated — review and edit below.`);
@@ -646,7 +653,7 @@ export function useRecipeWizard({
     if (!generationResponse) return;
 
     populateFromGeneration(generationResponse);
-    setIsAiGenerated(true);
+    setRecipeIsAiGenerated(true);
 
     // Switch to manual method so step 2 shows the Recipe Basics form
     setCreationMethod("manual");
@@ -687,7 +694,8 @@ export function useRecipeWizard({
     setImagePreview(null);
     setImageFile(null);
     setBannerFile(null);
-    setIsAiGenerated(false);
+    setRecipeIsAiGenerated(false);
+    setImageIsAiGenerated(false);
     setGeneratedRefData(null);
     setGeneratedBannerData(null);
     setNutritionFacts(null);
@@ -859,7 +867,7 @@ export function useRecipeWizard({
         directions: directionsText || null,
         notes: values.notes.trim() || null,
         ingredients: apiIngredients,
-        is_ai_generated: isAiGenerated,
+        is_ai_generated: recipeIsAiGenerated,
         source_url: importedSourceUrl,
         nutrition_facts: nutritionPayload,
       };
@@ -975,7 +983,7 @@ export function useRecipeWizard({
     getToken,
     queryClient,
     form,
-    isAiGenerated,
+    recipeIsAiGenerated,
     importedSourceUrl,
     imageFile,
     bannerFile,
@@ -1058,7 +1066,7 @@ export function useRecipeWizard({
 
     // Image
     imagePreview,
-    isAiGenerated,
+    imageIsAiGenerated,
     handleImageUpload,
     handleGeneratedImageAccept,
     handleBannerOnlyAccept,

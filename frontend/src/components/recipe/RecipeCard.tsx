@@ -167,12 +167,12 @@ function RecipeCardSmall({
 
           <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
-              <Users className="h-3 w-3" />
+              <Users className="size-3" strokeWidth={1.5} />
               <span>{recipe.servings}</span>
             </div>
             <div className="h-3 w-px bg-border" />
             <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
+              <Clock className="size-3" strokeWidth={1.5} />
               <span>{formatTime(recipe.totalTime)}</span>
             </div>
           </div>
@@ -234,9 +234,7 @@ function RecipeCardMedium({
 
         {/* Hover Overlay */}
         {recipe.imageUrl && (
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out group-hover:scale-105"
-               style={{ transformOrigin: 'center center' }}
-          />
+          <div className="absolute inset-0 origin-center bg-gradient-to-t from-background via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out group-hover:scale-105" />
         )}
 
         {/* Selection checkmark indicator - top left, overlays meal type badge when selected */}
@@ -297,7 +295,7 @@ function RecipeCardMedium({
         <div className="flex items-center gap-6 text-base text-muted-foreground">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-primary/10 rounded-lg">
-              <Users className="h-5 w-5 text-primary flex-shrink-0" />
+              <Users className="size-5 text-primary flex-shrink-0" strokeWidth={1.5} />
             </div>
             <div>
               <span className="font-semibold text-foreground">{recipe.servings}</span>
@@ -309,7 +307,7 @@ function RecipeCardMedium({
 
           <div className="flex items-center gap-2">
             <div className="p-2 bg-primary/10 rounded-lg">
-              <Clock className="h-5 w-5 text-primary flex-shrink-0" />
+              <Clock className="size-5 text-primary flex-shrink-0" strokeWidth={1.5} />
             </div>
             <div>
               <span className="font-semibold text-foreground">{formatTime(recipe.totalTime)}</span>
@@ -468,7 +466,7 @@ function RecipeCardLarge({
           <div className="flex items-center gap-6 pt-4 border-t border-border">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
-                <Clock className="h-5 w-5 text-primary" />
+                <Clock className="size-5 text-primary" strokeWidth={1.5} />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Total Time</p>
@@ -480,7 +478,7 @@ function RecipeCardLarge({
 
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
-                <Users className="h-5 w-5 text-primary" />
+                <Users className="size-5 text-primary" strokeWidth={1.5} />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Servings</p>
