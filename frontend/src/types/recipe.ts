@@ -31,6 +31,7 @@ export interface RecipeCardData {
   dietaryPreference?: string;
   isFavorite?: boolean;
   isAiGenerated?: boolean;
+  sourceUrl?: string; // Original page when imported from a website
   ingredients?: RecipeIngredient[]; // For large card display
   createdAt?: string; // ISO date string for "new recipes" filter
   groupIds?: number[]; // IDs of groups this recipe belongs to
@@ -62,6 +63,7 @@ export interface RecipeBaseDTO {
   notes: string | null;
   reference_image_path: string | null;
   banner_image_path: string | null;
+  source_url?: string | null;
 }
 
 export interface RecipeResponseDTO extends RecipeBaseDTO {
@@ -96,6 +98,7 @@ export interface RecipeCardDTO {
   recipe_name: string;
   is_favorite: boolean;
   is_ai_generated?: boolean;
+  source_url?: string | null;
   reference_image_path: string | null;
   banner_image_path: string | null;
   servings: number | null;
@@ -155,6 +158,7 @@ export interface RecipeCreateDTO {
   banner_image_path?: string | null;
   ingredients?: RecipeIngredientDTO[];
   is_ai_generated?: boolean;
+  source_url?: string | null;
   nutrition_facts?: NutritionFactsCreateDTO | null;
 }
 

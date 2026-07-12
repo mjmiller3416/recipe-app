@@ -9,7 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from "uuid";
 
-import { recipeApi, ingredientApi, uploadApi, recipeGenerationApi, ApiError } from "@/lib/api";
+import { recipeApi, ingredientApi, uploadApi, recipeGenerationApi, recipeImportApi, ApiError } from "@/lib/api";
 import { recipeQueryKeys } from "@/hooks/api/queryKeys";
 import { base64ToFile } from "@/lib/utils";
 import type {
@@ -130,6 +130,15 @@ export function useRecipeWizard({
   const [aiError, setAiError] = useState<string | null>(null);
 
   // ---------------------------------------------------------------------------
+  // URL import state (non-form)
+  // ---------------------------------------------------------------------------
+  const [importUrl, setImportUrl] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  // Source page of a successful import — saved on the recipe as source_url.
+  const [importedSourceUrl, setImportedSourceUrl] = useState<string | null>(null);
+
+  // ---------------------------------------------------------------------------
   // Available ingredients (autocomplete)
   // ---------------------------------------------------------------------------
   const [availableIngredients, setAvailableIngredients] = useState<AutocompleteIngredient[]>([]);
@@ -185,8 +194,8 @@ export function useRecipeWizard({
         return creationMethod !== null;
       }
 
-      // Step 2 AI mode: no form validation
-      if (step === 2 && creationMethod === "ai-generate") {
+      // Step 2 AI/import modes: no form validation
+      if (step === 2 && (creationMethod === "ai-generate" || creationMethod === "url-import")) {
         return true;
       }
 
@@ -239,6 +248,11 @@ export function useRecipeWizard({
       case 2:
         if (creationMethod === "ai-generate") {
           return generatedRecipe !== null;
+        }
+        // Import replaces "Next" with its own footer button until it succeeds
+        // (success flips the method to "manual", showing the basics form).
+        if (creationMethod === "url-import") {
+          return false;
         }
         return (
           watchedRecipeName.trim().length > 0 &&
@@ -340,7 +354,13 @@ export function useRecipeWizard({
   // AI generation: populate wizard from generated recipe
   // ---------------------------------------------------------------------------
   const populateFromGeneration = useCallback(
-    (response: RecipeGenerationResponseDTO): void => {
+    (
+      response: RecipeGenerationResponseDTO,
+      opts: { imagesAreAiGenerated?: boolean } = {}
+    ): void => {
+      // Imported source photos ride the same base64 path as AI images but
+      // must not get the "AI Generated" treatment.
+      const { imagesAreAiGenerated = true } = opts;
       const recipe = response.recipe;
       if (!recipe) return;
 
@@ -398,7 +418,7 @@ export function useRecipeWizard({
         const refDataUrl = `data:image/png;base64,${response.reference_image_data}`;
         setImagePreview(refDataUrl);
         setGeneratedRefData(response.reference_image_data);
-        setIsAiGenerated(true);
+        setIsAiGenerated(imagesAreAiGenerated);
         const refFile = base64ToFile(response.reference_image_data, "recipe-ai-reference.png");
         setImageFile(refFile);
       }
@@ -579,6 +599,47 @@ export function useRecipeWizard({
   }, [aiPrompt, aiPreferences, isGenerating, getToken, populateFromGeneration]);
 
   // ---------------------------------------------------------------------------
+  // URL import: call API and prefill the wizard from the imported recipe
+  // ---------------------------------------------------------------------------
+  const handleWizardImport = useCallback(async (): Promise<void> => {
+    if (!importUrl.trim() || isImporting) return;
+
+    setIsImporting(true);
+    setImportError(null);
+
+    try {
+      const token = await getToken();
+      const response = await recipeImportApi.importFromUrl(
+        { url: importUrl.trim(), include_source_image: true },
+        token
+      );
+
+      if (!response.success || !response.recipe) {
+        setImportError(response.error || "Failed to import recipe. Please try again.");
+        return;
+      }
+
+      populateFromGeneration(response, { imagesAreAiGenerated: false });
+      setImportedSourceUrl(response.source_url ?? importUrl.trim());
+      setExtrasDirty(true);
+
+      // Switch to manual method so step 2 shows the Recipe Basics form
+      setCreationMethod("manual");
+      setCurrentStep(2);
+      toast.success(`"${response.recipe.recipe_name}" imported — review and edit below.`);
+    } catch (error) {
+      console.error("Recipe import failed:", error);
+      if (error instanceof ApiError) {
+        setImportError(error.message || "Failed to import recipe. Please try again.");
+      } else {
+        setImportError("Something went wrong. Please try again.");
+      }
+    } finally {
+      setIsImporting(false);
+    }
+  }, [importUrl, isImporting, getToken, populateFromGeneration]);
+
+  // ---------------------------------------------------------------------------
   // AI generation: accept generated recipe and populate wizard fields
   // ---------------------------------------------------------------------------
   const handleAcceptGeneratedRecipe = useCallback((): void => {
@@ -609,9 +670,11 @@ export function useRecipeWizard({
       imagePreview ||
       nutritionFacts ||
       aiPrompt.trim() ||
-      generatedRecipe
+      generatedRecipe ||
+      importUrl.trim() ||
+      importedSourceUrl
     );
-  }, [isEditMode, formIsDirty, extrasDirty, watchedRecipeName, watchedDescription, watchedIngredients, watchedDirections, imagePreview, nutritionFacts, aiPrompt, generatedRecipe]);
+  }, [isEditMode, formIsDirty, extrasDirty, watchedRecipeName, watchedDescription, watchedIngredients, watchedDirections, imagePreview, nutritionFacts, aiPrompt, generatedRecipe, importUrl, importedSourceUrl]);
 
   // ---------------------------------------------------------------------------
   // Reset wizard to initial state
@@ -634,6 +697,10 @@ export function useRecipeWizard({
     setGenerationResponse(null);
     setIsGenerating(false);
     setAiError(null);
+    setImportUrl("");
+    setIsImporting(false);
+    setImportError(null);
+    setImportedSourceUrl(null);
     setOriginalImagePath(null);
     setOriginalBannerPath(null);
     setExtrasDirty(false);
@@ -793,6 +860,7 @@ export function useRecipeWizard({
         notes: values.notes.trim() || null,
         ingredients: apiIngredients,
         is_ai_generated: isAiGenerated,
+        source_url: importedSourceUrl,
         nutrition_facts: nutritionPayload,
       };
 
@@ -908,6 +976,7 @@ export function useRecipeWizard({
     queryClient,
     form,
     isAiGenerated,
+    importedSourceUrl,
     imageFile,
     bannerFile,
     generatedRefData,
@@ -1008,6 +1077,13 @@ export function useRecipeWizard({
     aiError,
     handleWizardGenerate,
     handleAcceptGeneratedRecipe,
+
+    // URL import
+    importUrl,
+    setImportUrl,
+    isImporting,
+    importError,
+    handleWizardImport,
 
     // Autocomplete data
     availableIngredients,

@@ -31,6 +31,7 @@ from app.api.ai import (
     meal_suggestions_router,
     nutrition_estimation_router,
     recipe_generation_router,
+    recipe_import_router,
 )
 
 api_router = APIRouter()
@@ -67,3 +68,4 @@ api_router.include_router(meal_suggestions_router, prefix="/api/ai/meal-suggesti
 api_router.include_router(nutrition_estimation_router, prefix="/api/ai/nutrition-estimation", tags=["ai", "nutrition-estimation"])
 # TODO: rename URL prefix to /api/ai/recipe-generation (requires frontend changes)
 api_router.include_router(recipe_generation_router, prefix="/api/ai/wizard-generation", tags=["ai", "recipe-generation"])
+api_router.include_router(recipe_import_router, prefix="/api/ai/recipe-import", tags=["ai", "recipe-import"])

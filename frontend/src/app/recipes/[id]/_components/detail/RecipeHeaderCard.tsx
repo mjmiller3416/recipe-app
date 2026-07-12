@@ -125,6 +125,25 @@ export function RecipeHeaderCard({
               size="md"
             />
           )}
+          {recipe.source_url && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a
+                  href={recipe.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="View original recipe"
+                >
+                  <RecipeBadge
+                    label="Imported"
+                    type="imported"
+                    size="md"
+                  />
+                </a>
+              </TooltipTrigger>
+              <TooltipContent>View original recipe</TooltipContent>
+            </Tooltip>
+          )}
         </RecipeBadgeGroup>
 
         {/* Quick Stats */}

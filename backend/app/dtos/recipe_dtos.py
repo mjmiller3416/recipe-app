@@ -55,6 +55,7 @@ class RecipeBaseDTO(BaseModel):
     notes: Optional[str] = None
     reference_image_path: Optional[str] = None
     banner_image_path: Optional[str] = None
+    source_url: Optional[str] = Field(None, max_length=2048)
 
     @field_validator("recipe_name", "recipe_category", "meal_type", mode="before")
     @classmethod
@@ -80,6 +81,7 @@ class RecipeCardDTO(BaseModel):
     recipe_name: str
     is_favorite: bool = False
     is_ai_generated: bool = False
+    source_url: Optional[str] = None
     reference_image_path: Optional[str] = None
     banner_image_path: Optional[str] = None
     servings: Optional[int] = None
@@ -111,6 +113,7 @@ class RecipeCardDTO(BaseModel):
             recipe_name=recipe.recipe_name,
             is_favorite=recipe.is_favorite,
             is_ai_generated=recipe.is_ai_generated,
+            source_url=recipe.source_url,
             reference_image_path=recipe.reference_image_path,
             banner_image_path=recipe.banner_image_path,
             servings=recipe.servings,
@@ -228,6 +231,7 @@ class RecipeResponseDTO(RecipeBaseDTO):
             notes=recipe.notes,
             reference_image_path=recipe.reference_image_path,
             banner_image_path=recipe.banner_image_path,
+            source_url=recipe.source_url,
             is_favorite=recipe.is_favorite,
             is_ai_generated=recipe.is_ai_generated,
             created_at=recipe.created_at.isoformat() if recipe.created_at else None,

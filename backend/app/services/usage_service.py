@@ -65,6 +65,7 @@ class UsageService:
                 - 'ai_suggestions_requested'
                 - 'ai_assistant_messages'
                 - 'recipes_created'
+                - 'recipes_imported'
             amount: Amount to increment by (default 1)
 
         Returns:

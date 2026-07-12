@@ -40,7 +40,8 @@ const METHOD_OPTIONS: MethodOption[] = [
     icon: <Link className="size-6" strokeWidth={1.5} />,
     title: "Link URL",
     description: "Paste a URL and we will extract the recipe for you.",
-    isAvailable: false,
+    isAvailable: true,
+    isNew: true,
   },
   {
     method: "ai-generate",
@@ -48,7 +49,6 @@ const METHOD_OPTIONS: MethodOption[] = [
     title: "AI Generate",
     description: "Describe what you want and AI will create a full recipe.",
     isAvailable: true,
-    isNew: true,
   },
 ];
 

@@ -256,8 +256,8 @@ function RecipeCardMedium({
           />
         </div>
 
-        {/* Meal Type / AI Badge - top left, hidden when selected (checkmark takes its place) */}
-        {showCategory && !isSelected && (recipe.mealType || recipe.isAiGenerated) && (
+        {/* Meal Type / AI / Imported Badge - top left, hidden when selected (checkmark takes its place) */}
+        {showCategory && !isSelected && (recipe.mealType || recipe.isAiGenerated || recipe.sourceUrl) && (
           <div className="absolute top-4 left-4 flex items-center gap-2">
             {recipe.mealType && (
               <RecipeBadge
@@ -271,6 +271,14 @@ function RecipeCardMedium({
               <RecipeBadge
                 label="AI"
                 type="ai"
+                size="md"
+                variant="overlay"
+              />
+            )}
+            {recipe.sourceUrl && (
+              <RecipeBadge
+                label="Imported"
+                type="imported"
                 size="md"
                 variant="overlay"
               />
@@ -404,6 +412,13 @@ function RecipeCardLarge({
                   <RecipeBadge
                     label="AI Generated"
                     type="ai"
+                    size="md"
+                  />
+                )}
+                {recipe.sourceUrl && (
+                  <RecipeBadge
+                    label="Imported"
+                    type="imported"
                     size="md"
                   />
                 )}

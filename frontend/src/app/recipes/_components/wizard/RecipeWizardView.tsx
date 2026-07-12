@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Loader2, RotateCcw, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Link, Loader2, RotateCcw, Save, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,6 +32,7 @@ import {
   DirectionsNotesStep,
   NutritionStep,
   AIGenerateStep,
+  UrlImportStep,
 } from "./steps";
 
 // ============================================================================
@@ -190,7 +191,9 @@ export function RecipeWizardView({
             <DialogTitle className="text-2xl font-bold">
               {wizard.currentStep === 2 && wizard.creationMethod === "ai-generate"
                 ? "AI Recipe Generator"
-                : STEP_TITLES[wizard.currentStep - 1]}
+                : wizard.currentStep === 2 && wizard.creationMethod === "url-import"
+                  ? "Import from URL"
+                  : STEP_TITLES[wizard.currentStep - 1]}
             </DialogTitle>
             <DialogDescription>
               Step {displayStep} of {totalVisibleSteps}
@@ -253,6 +256,14 @@ export function RecipeWizardView({
                 categories={categories}
               />
               )
+            ) : wizard.creationMethod === "url-import" ? (
+              <UrlImportStep
+                url={wizard.importUrl}
+                setUrl={wizard.setImportUrl}
+                isImporting={wizard.isImporting}
+                error={wizard.importError}
+                onSubmit={wizard.handleWizardImport}
+              />
             ) : (
               <RecipeBasicsStep
                 imagePreview={wizard.imagePreview}
@@ -350,8 +361,29 @@ export function RecipeWizardView({
                 </Button>
               )}
 
-              {/* Steps 2-4: Next Step (not shown for AI generate step) */}
-              {currentStep > 1 && currentStep < TOTAL_STEPS && !(currentStep === 2 && wizard.creationMethod === "ai-generate") && (
+              {/* Step 2 URL import: Import Recipe */}
+              {currentStep === 2 && wizard.creationMethod === "url-import" && (
+                <Button
+                  type="button"
+                  onClick={wizard.handleWizardImport}
+                  disabled={!wizard.importUrl.trim() || wizard.isImporting}
+                >
+                  {wizard.isImporting ? (
+                    <>
+                      <Loader2 className="size-4 mr-2 animate-spin" strokeWidth={1.5} />
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <Link className="size-4 mr-2" strokeWidth={1.5} />
+                      Import Recipe
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {/* Steps 2-4: Next Step (not shown for AI generate / URL import steps) */}
+              {currentStep > 1 && currentStep < TOTAL_STEPS && !(currentStep === 2 && (wizard.creationMethod === "ai-generate" || wizard.creationMethod === "url-import")) && (
                 <Button
                   type="button"
                   onClick={wizard.nextStep}
