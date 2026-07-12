@@ -2,6 +2,9 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-07-12 - Bug Fixes
+- Printed recipes now reliably include the recipe photo — previously the photo could be missing from printouts, especially after regenerating a recipe image
+
 ## 2026-06-23 - Improvements
 - Faster AI features — AI recipe generation and nutrition estimation now respond more quickly
 - Meal Genie chat is now more responsive while generating replies
