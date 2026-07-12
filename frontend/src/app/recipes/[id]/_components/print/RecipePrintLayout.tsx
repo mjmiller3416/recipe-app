@@ -1,5 +1,6 @@
 import "./print-styles.css";
 import Image from "next/image";
+import { getRecipeCardUrl } from "@/lib/imageUtils";
 import { formatQuantity } from "@/lib/utils";
 import { formatTime, sortCategoryEntries } from "../recipe-utils";
 import type { PrintOptions } from "./PrintPreviewDialog";
@@ -78,14 +79,18 @@ export function RecipePrintLayout({
         </div>
 
         {/* Recipe Image */}
+        {/* priority: the print layout is display:none on screen, so a lazy image
+            never loads during browsing and races the print snapshot at print time.
+            The Cloudinary resize keeps the fetch small (~150KB) vs multi-MB originals. */}
         {printOptions.showImage && recipe.reference_image_path && (
           <div className="mb-4">
             <Image
-              src={recipe.reference_image_path}
+              src={getRecipeCardUrl(recipe.reference_image_path, 1200, 600) ?? recipe.reference_image_path}
               alt={recipe.recipe_name}
               width={800}
               height={192}
               className="object-cover w-full rounded-lg max-h-48"
+              priority
               unoptimized
             />
           </div>
