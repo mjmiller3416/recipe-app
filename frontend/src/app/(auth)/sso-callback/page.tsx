@@ -47,16 +47,14 @@ export default function SSOCallbackPage() {
   }, [signIn, signUp, setSignInActive, setSignUpActive, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardContent className="flex flex-col items-center justify-center py-12 space-y-4">
-          <Logo className="h-12 w-12 text-primary" />
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">
-            Completing sign in...
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    <Card className="w-full max-w-md">
+      <CardContent className="flex flex-col items-center justify-center py-12 space-y-4">
+        <Logo className="h-12 w-12 text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">
+          Completing sign in...
+        </p>
+      </CardContent>
+    </Card>
   );
 }

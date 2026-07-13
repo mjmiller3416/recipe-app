@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
-import { ConditionalAppLayout } from "@/components/layout/ConditionalAppLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/lib/providers/QueryProvider";
 
@@ -19,14 +18,23 @@ const geistMono = Geist_Mono({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
-  title: "Meal Genie - Your Personal Recipe Manager",
-  description: "Plan meals, browse recipes, and manage your shopping list with ease",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  title: {
+    default: "Meal Genie — Recipes, meal planning, and smart shopping lists",
+    template: "%s · Meal Genie",
+  },
+  description:
+    "Save recipes, plan your week, and get an auto-built shopping list. AI-powered recipe import and generation.",
+  openGraph: {
+    siteName: "Meal Genie",
+    type: "website",
+    url: "/",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({
@@ -42,7 +50,7 @@ export default function RootLayout({
       >
         <ClerkProvider>
           <QueryProvider>
-            <ConditionalAppLayout>{children}</ConditionalAppLayout>
+            {children}
             <Toaster />
           </QueryProvider>
         </ClerkProvider>

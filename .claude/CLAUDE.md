@@ -90,6 +90,7 @@ pytest tests/test_file.py -v
 
 **Frontend:**
 - `NEXT_PUBLIC_API_URL` - Frontend API URL (default: `http://localhost:8000`)
+- `NEXT_PUBLIC_APP_URL` - Public site URL for `metadataBase`/OG tags (default: `http://localhost:3000`; set to prod URL on Railway)
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk auth (frontend)
 - `CLERK_SECRET_KEY` - Clerk auth (frontend middleware)
 

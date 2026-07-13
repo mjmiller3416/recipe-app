@@ -5,6 +5,9 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
  * All other routes will require a signed-in user.
  */
 const isPublicRoute = createRouteMatcher([
+  "/",                // landing
+  "/privacy(.*)",     // Phase 2 content, route reserved now
+  "/terms(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/sso-callback(.*)",

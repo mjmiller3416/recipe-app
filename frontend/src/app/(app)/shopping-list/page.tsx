@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
 import { ShoppingListView } from "./_components/ShoppingListView";
+
+export const metadata: Metadata = { title: "Shopping List" };
 
 /**
  * Shopping List Page

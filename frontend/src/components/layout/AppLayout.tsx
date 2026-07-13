@@ -13,8 +13,8 @@ import {
   MealCreationProvider,
   useMealCreationDialog,
 } from "@/lib/providers/MealCreationProvider";
-import { RecipeWizardView } from "@/app/recipes/_components/wizard/RecipeWizardView";
-import { MealCreationOverlay } from "@/app/meal-planner/_components/MealCreationOverlay";
+import { RecipeWizardView } from "@/app/(app)/recipes/_components/wizard/RecipeWizardView";
+import { MealCreationOverlay } from "@/app/(app)/meal-planner/_components/MealCreationOverlay";
 import { ScrollToTopButton } from "@/components/common/ScrollToTopButton";
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {

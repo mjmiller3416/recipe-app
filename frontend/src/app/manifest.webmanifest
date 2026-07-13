@@ -1,0 +1,21 @@
+{
+  "name": "Meal Genie",
+  "short_name": "Meal Genie",
+  "description": "Save recipes, plan your week, and get an auto-built shopping list.",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#8b5cf6",
+  "background_color": "#1a1a1a",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

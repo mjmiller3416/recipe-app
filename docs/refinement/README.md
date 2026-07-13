@@ -9,7 +9,7 @@ the findings it addresses, so it can be executed in a fresh session without this
 
 | Phase | Doc | Status | Summary |
 |-------|-----|--------|---------|
-| 1 | [phase-1-structure.md](phase-1-structure.md) | ☐ not started | Route groups `(marketing)/(auth)/(app)`, public `/` with server-side auth redirect, bare auth pages, 404/error boundaries, metadata/icons/viewport |
+| 1 | [phase-1-structure.md](phase-1-structure.md) | ✅ done 2026-07-13 (staging) | Route groups `(marketing)/(auth)/(app)`, public `/` with server-side auth redirect, bare auth pages, 404/error boundaries, metadata/icons/viewport |
 | 2 | [phase-2-landing-page.md](phase-2-landing-page.md) | ☐ not started | Real landing page from existing design tokens + screenshots, privacy/terms, OG image, sitemap/robots |
 | 3 | [phase-3-home-redesign.md](phase-3-home-redesign.md) | ☐ not started | Today-first Home (Tonight card), one Home for all devices, GetStarted first-run flow, delete stat-card row |
 | 4 | [phase-4-flow-consistency.md](phase-4-flow-consistency.md) | ☐ not started | Wire the save→plan→shop loop, one meal-creation flow, empty-state CTAs, header/container/loading normalization, delete stub routes |
