@@ -1,10 +1,10 @@
-import Image from "next/image";
 import { Wand2, Sparkles, Apple, Flame, type LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Reveal } from "./Reveal";
+import { PlannerVignette, ShoppingVignette } from "./demo/FeatureVignettes";
 
 interface Highlight {
-  image: string;
-  alt: string;
+  vignette: React.ReactNode;
   title: string;
   body: string;
 }
@@ -15,17 +15,16 @@ interface Feature {
   body: string;
 }
 
-// Screenshot-backed highlight cards (dark theme, captured from the real app)
+// Live component slices instead of screenshots — crisp, theme-aware, and
+// identical to what users see after signing up.
 const HIGHLIGHTS: Highlight[] = [
   {
-    image: "/images/landing/meal-planner.png",
-    alt: "Meal Genie weekly planner with a full week of planned meals",
+    vignette: <PlannerVignette />,
     title: "Weekly meal planner",
     body: "Line up the week's dinners in one board. Mains, sides, and servings — rearrange with a drag.",
   },
   {
-    image: "/images/landing/shopping-list.png",
-    alt: "Meal Genie shopping list with aggregated ingredients and check-off progress",
+    vignette: <ShoppingVignette />,
     title: "Auto-built shopping list",
     body: "Every planned meal feeds one list — quantities combined, sorted by aisle, checked off as you shop.",
   },
@@ -40,7 +39,7 @@ const FEATURES: Feature[] = [
   {
     icon: Sparkles,
     title: "Meal Genie assistant",
-    body: "A chat that drafts recipes, suggests meals, and answers cooking questions.",
+    body: "Ask for anything — “something cozy, no oven, 30 minutes” — and Meal Genie drafts the recipe.",
   },
   {
     icon: Apple,
@@ -71,37 +70,37 @@ export function FeatureGrid() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          {HIGHLIGHTS.map((highlight) => (
-            <Card key={highlight.title} className="overflow-hidden">
-              <div className="border-b border-border">
-                <Image
-                  src={highlight.image}
-                  alt={highlight.alt}
-                  width={1440}
-                  height={900}
-                  sizes="(max-width: 768px) 100vw, 552px"
-                  className="h-auto w-full"
-                />
-              </div>
-              <CardContent className="flex flex-col gap-2">
-                <h3 className="text-lg font-semibold text-foreground">{highlight.title}</h3>
-                <p className="text-sm text-muted-foreground">{highlight.body}</p>
-              </CardContent>
-            </Card>
+          {HIGHLIGHTS.map((highlight, index) => (
+            <Reveal key={highlight.title} delay={index * 150} className="h-full">
+              <Card className="h-full gap-0 overflow-hidden pt-0 pb-0">
+                <div
+                  aria-hidden
+                  className="flex flex-1 items-center border-b border-border bg-background-subtle p-6"
+                >
+                  <div className="w-full">{highlight.vignette}</div>
+                </div>
+                <CardContent className="flex flex-col gap-2">
+                  <h3 className="text-lg font-semibold text-foreground">{highlight.title}</h3>
+                  <p className="text-sm text-muted-foreground">{highlight.body}</p>
+                </CardContent>
+              </Card>
+            </Reveal>
           ))}
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map((feature) => (
-            <Card key={feature.title}>
-              <CardContent className="flex flex-col gap-3">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-primary-surface text-primary">
-                  <feature.icon className="size-5" strokeWidth={1.5} />
-                </div>
-                <h3 className="font-semibold text-foreground">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground">{feature.body}</p>
-              </CardContent>
-            </Card>
+          {FEATURES.map((feature, index) => (
+            <Reveal key={feature.title} delay={index * 100} className="h-full">
+              <Card className="h-full transition-transform hover:-translate-y-1">
+                <CardContent className="flex flex-col gap-3">
+                  <div className="flex size-10 items-center justify-center rounded-lg bg-primary-surface text-primary">
+                    <feature.icon className="size-5" strokeWidth={1.5} />
+                  </div>
+                  <h3 className="font-semibold text-foreground">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground">{feature.body}</p>
+                </CardContent>
+              </Card>
+            </Reveal>
           ))}
         </div>
       </div>
