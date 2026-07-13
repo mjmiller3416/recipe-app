@@ -6,11 +6,14 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
  */
 const isPublicRoute = createRouteMatcher([
   "/",                // landing
-  "/privacy(.*)",     // Phase 2 content, route reserved now
+  "/privacy(.*)",
   "/terms(.*)",
+  "/whats-new(.*)",   // public changelog (marketing footer)
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/sso-callback(.*)",
+  "/sitemap.xml",     // .xml/.txt aren't excluded by the matcher below
+  "/robots.txt",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
