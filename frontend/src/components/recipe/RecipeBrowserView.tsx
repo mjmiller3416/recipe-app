@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
   ArrowUp,
   ArrowDown,
+  Dices,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -606,6 +607,15 @@ export function RecipeBrowserView({
 
   const hasActiveFilters = hookHasActiveFilters || filters.searchTerm.length > 0;
 
+  // "Surprise me" (select mode) — random pick from the currently filtered
+  // list, selected exactly as a card tap would be. Already-selected recipes
+  // are excluded so it never toggles one off.
+  const handleSurpriseMe = () => {
+    const pool = filteredRecipes.filter((r) => !selectedIds.has(r.id));
+    if (pool.length === 0) return;
+    onSelect?.(pool[Math.floor(Math.random() * pool.length)]);
+  };
+
   // --------------------------------------------------------------------------
   // Render
   // --------------------------------------------------------------------------
@@ -630,6 +640,17 @@ export function RecipeBrowserView({
   }
 
   const isSelectMode = mode === "select";
+
+  const surpriseButton = isSelectMode ? (
+    <Button
+      variant="outline"
+      onClick={handleSurpriseMe}
+      disabled={filteredRecipes.length === 0}
+    >
+      <Dices className="size-4" strokeWidth={1.5} />
+      Surprise me
+    </Button>
+  ) : null;
 
   const heroElement = isSelectMode ? (
     <CompactSearchHeader
@@ -725,7 +746,7 @@ export function RecipeBrowserView({
           onRemoveFilter={handleRemoveFilter}
           onClearAllFilters={clearAll}
           onBack={onBack}
-          actionButton={actionButton}
+          actionButton={actionButton ?? surpriseButton}
         />
       </div>
 

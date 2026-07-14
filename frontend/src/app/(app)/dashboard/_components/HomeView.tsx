@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import Link from "next/link";
-import { BookOpen, Heart, UtensilsCrossed } from "lucide-react";
+import { UtensilsCrossed } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,9 +9,7 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { PageHeaderContent } from "@/components/layout/PageHeader";
 import { MealCarouselWidget } from "./carousel";
 import { ShoppingListWidget } from "./ShoppingListWidget";
-import { ChefTipWidget } from "./ChefTipWidget";
-import { CookingStreakWidget } from "./CookingStreakWidget";
-import { RecipeRouletteWidget } from "./RecipeRouletteWidget";
+import { StreakChip } from "./StreakChip";
 import { TonightCard } from "./TonightCard";
 import { GetStartedCard, GetStartedBanner } from "./GetStartedCard";
 import { useDashboardStats, usePlannerEntries, useShoppingList } from "@/hooks/api";
@@ -27,8 +24,8 @@ function getGreeting(): string {
 
 /**
  * HomeView — today-first Home for all devices.
- * Tonight hero → shopping status → This Week strip → secondary widgets,
- * with a guided GetStarted flow for brand-new users.
+ * Tonight hero → shopping status → This Week strip, with a cooking-streak
+ * chip in the header and a guided GetStarted flow for brand-new users.
  */
 export function HomeView() {
   const { user } = useUser();
@@ -67,7 +64,6 @@ export function HomeView() {
   const completedCount = entries.length - activeEntries.length;
 
   const totalRecipes = statsData?.total_recipes ?? 0;
-  const favorites = statsData?.favorites ?? 0;
 
   // Once the user has planned a meal, the first-run flow is done for good.
   useEffect(() => {
@@ -158,34 +154,8 @@ export function HomeView() {
             )}
           </div>
 
-          {/* Recipe / favorites chips */}
-          {statsLoading ? (
-            <div className="hidden items-center gap-2 sm:flex">
-              <Skeleton className="h-8 w-16 rounded-full" />
-              <Skeleton className="h-8 w-16 rounded-full" />
-            </div>
-          ) : totalRecipes > 0 ? (
-            <div className="hidden items-center gap-2 sm:flex">
-              <Button variant="outline" size="sm" shape="pill" asChild>
-                <Link
-                  href="/recipes"
-                  aria-label={`${totalRecipes} recipes`}
-                >
-                  <BookOpen className="size-4" strokeWidth={1.5} />
-                  {totalRecipes}
-                </Link>
-              </Button>
-              <Button variant="outline" size="sm" shape="pill" asChild>
-                <Link
-                  href="/recipes?favoritesOnly=true"
-                  aria-label={`${favorites} favorite recipes`}
-                >
-                  <Heart className="size-4" strokeWidth={1.5} />
-                  {favorites}
-                </Link>
-              </Button>
-            </div>
-          ) : null}
+          {/* Cooking streak — the header's motivational element, all viewports */}
+          <StreakChip />
         </PageHeaderContent>
       }
       contentClassName="flex flex-col"
@@ -223,15 +193,6 @@ export function HomeView() {
               />
             </div>
           )}
-
-          {/* Secondary row — garnish below the fold */}
-          <div className="mt-6 grid grid-cols-1 items-start gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-            <CookingStreakWidget />
-            <ChefTipWidget />
-            <div className="md:col-span-2 lg:col-span-1">
-              <RecipeRouletteWidget />
-            </div>
-          </div>
         </>
       )}
     </PageLayout>

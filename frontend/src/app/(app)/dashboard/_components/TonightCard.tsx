@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   CalendarDays,
   Check,
   Clock,
+  Dices,
   ExternalLink,
   Loader2,
   Users,
@@ -14,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RecipeBannerImage } from "@/components/recipe/RecipeBannerImage";
 import { formatTime } from "@/lib/quantityUtils";
-import { useMeal, useMarkComplete } from "@/hooks/api";
+import { useMeal, useMarkComplete, useRecipeCards } from "@/hooks/api";
 import type { PlannerEntryResponseDTO } from "@/types/planner";
 
 interface TonightCardProps {
@@ -133,6 +135,16 @@ export function TonightCard({ entry, isLoading = false }: TonightCardProps) {
 
 /** Prompt shown when recipes exist but nothing is planned. */
 function PlanWeekCard() {
+  const router = useRouter();
+  // This card only renders when the user has recipes, so the list is never empty
+  const { data: recipes = [] } = useRecipeCards();
+
+  const handleSurpriseMe = () => {
+    if (recipes.length === 0) return;
+    const random = recipes[Math.floor(Math.random() * recipes.length)];
+    router.push(`/recipes/${random.id}`);
+  };
+
   return (
     <Card className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center shadow-raised md:min-h-64">
       <div className="rounded-full bg-primary/10 p-4">
@@ -142,12 +154,19 @@ function PlanWeekCard() {
       <p className="max-w-sm text-sm text-muted-foreground">
         Pick meals from your recipes and your shopping list builds itself.
       </p>
-      <Button asChild className="mt-1">
-        <Link href="/meal-planner">Open the planner</Link>
-      </Button>
-      <p className="text-xs text-muted-foreground">
-        or spin the Recipe Roulette below for inspiration
-      </p>
+      <div className="mt-1 flex flex-col gap-2 sm:flex-row">
+        <Button asChild>
+          <Link href="/meal-planner">Open the planner</Link>
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleSurpriseMe}
+          disabled={recipes.length === 0}
+        >
+          <Dices className="size-4" strokeWidth={1.5} />
+          Surprise me
+        </Button>
+      </div>
     </Card>
   );
 }

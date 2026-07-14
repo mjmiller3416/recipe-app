@@ -36,11 +36,6 @@ export const dashboardQueryKeys = {
   stats: () => [...dashboardQueryKeys.all, "stats"] as const,
 };
 
-export const aiQueryKeys = {
-  all: ["ai"] as const,
-  cookingTip: () => [...aiQueryKeys.all, "cooking-tip"] as const,
-};
-
 export const categoryQueryKeys = {
   all: ["categories"] as const,
   lists: () => [...categoryQueryKeys.all, "list"] as const,
