@@ -150,6 +150,7 @@ export function AISuggestions({
             className="h-6 w-6 text-primary/70 hover:text-primary hover:bg-primary/10"
             onClick={handleRegenerate}
             title="Get new tip"
+            aria-label="Get new tip"
           >
             <RefreshCw className="h-3.5 w-3.5" />
           </Button>

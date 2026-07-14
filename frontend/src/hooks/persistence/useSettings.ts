@@ -23,18 +23,7 @@ export interface AppearanceSettings {
   // Future: accentColor, fontSize, etc.
 }
 
-export interface MealPlanningSettings {
-  defaultServings: number;
-  weekStartDay: "sunday" | "monday";
-  defaultMealTypes: string[];
-  // Future: showNutrition, etc.
-}
-
 export interface RecipePreferences {
-  measurementUnit: "imperial" | "metric";
-  dietaryRestrictions: string[];
-  allergenAlerts: string[];
-  defaultBrowserView: "grid" | "list";
   defaultSortOrder: "alphabetical" | "recent" | "cookTime";
   quickFilters: string[]; // IDs of quick filters to display (max 5)
 }
@@ -43,26 +32,20 @@ export interface ShoppingListSettings {
   categorySortOrder: "alphabetical" | "custom";
   customCategoryOrder: string[]; // User-defined order for shopping list categories
   autoClearChecked: "manual" | "onRefresh" | "daily";
-  combineDuplicates: boolean;
-}
-
-export interface DataManagementSettings {
-  // Placeholder for future settings
-  autoBackup: boolean;
-  backupFrequency: "daily" | "weekly" | "monthly";
+  hideCompleted: boolean;
 }
 
 export interface AIFeaturesSettings {
   imageGenerationPrompt: string;
+  /** Floating "Ask Meal Genie" button on mobile Recipes/Planner pages */
+  showAssistantFab: boolean;
 }
 
 export interface AppSettings {
   profile: UserProfile;
   appearance: AppearanceSettings;
-  mealPlanning: MealPlanningSettings;
   recipePreferences: RecipePreferences;
   shoppingList: ShoppingListSettings;
-  dataManagement: DataManagementSettings;
   aiFeatures: AIFeaturesSettings;
 }
 
@@ -77,18 +60,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
     avatar: "",
   },
   appearance: {
-    theme: "dark",
-  },
-  mealPlanning: {
-    defaultServings: 4,
-    weekStartDay: "sunday",
-    defaultMealTypes: ["Breakfast", "Lunch", "Dinner"],
+    theme: "system",
   },
   recipePreferences: {
-    measurementUnit: "imperial",
-    dietaryRestrictions: [],
-    allergenAlerts: [],
-    defaultBrowserView: "grid",
     defaultSortOrder: "alphabetical",
     quickFilters: ["breakfast", "lunch", "dinner", "sides", "new"],
   },
@@ -111,15 +85,12 @@ export const DEFAULT_SETTINGS: AppSettings = {
       "Other",
     ],
     autoClearChecked: "manual",
-    combineDuplicates: true,
-  },
-  dataManagement: {
-    autoBackup: false,
-    backupFrequency: "weekly",
+    hideCompleted: false,
   },
   aiFeatures: {
     imageGenerationPrompt:
       "A professional cookbook-quality food photograph of {recipe_name}. Style the scene — surface, props, lighting, and camera angle — to match the character of this specific dish. Vary the composition naturally: choose whichever angle, surface, and props a professional food stylist would select for this recipe. Shallow depth of field, natural light, appetizing presentation, high detail, no people, no hands, no text, square format.",
+    showAssistantFab: true,
   },
 };
 
@@ -128,7 +99,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
 // ============================================================================
 
 const SETTINGS_STORAGE_KEY = "meal-genie-settings";
-const THEME_STORAGE_KEY = "meal-genie-theme"; // Separate key for instant theme load
+export const THEME_STORAGE_KEY = "meal-genie-theme"; // Separate key for instant theme load (read by the blocking script in the root layout)
+export const LEGACY_THEME_STORAGE_KEY = "theme"; // Pre-unification key written by the old TopNav toggle
 
 // ============================================================================
 // HOOK
@@ -209,6 +181,13 @@ export function useSettings(): UseSettingsReturn {
             appearance: { ...DEFAULT_SETTINGS.appearance, theme },
           };
         }
+        const legacyTheme = localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
+        if (legacyTheme === "light" || legacyTheme === "dark") {
+          return {
+            ...DEFAULT_SETTINGS,
+            appearance: { ...DEFAULT_SETTINGS.appearance, theme: legacyTheme },
+          };
+        }
       } catch {
         // Ignore parse errors
       }
@@ -283,6 +262,19 @@ export function useSettings(): UseSettingsReturn {
     loadSettings();
   }, [isAuthLoaded, isSignedIn, getToken]);
 
+  // Keep every useSettings instance in sync: when any instance persists (or a
+  // backup restore dispatches "settings-updated"), adopt the new snapshot so a
+  // stale instance never clobbers another instance's changes on its next save.
+  useEffect(() => {
+    const handleSettingsUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<AppSettings>).detail;
+      if (!detail) return;
+      setSettings(deepMergeSettings(DEFAULT_SETTINGS, detail));
+    };
+    window.addEventListener("settings-updated", handleSettingsUpdated);
+    return () => window.removeEventListener("settings-updated", handleSettingsUpdated);
+  }, []);
+
   // Persist settings to localStorage and API
   const persistSettings = useCallback(
     async (settingsToSave: AppSettings) => {
@@ -343,17 +335,11 @@ export function useSettings(): UseSettingsReturn {
         if (updates.appearance) {
           newSettings.appearance = { ...prev.appearance, ...updates.appearance };
         }
-        if (updates.mealPlanning) {
-          newSettings.mealPlanning = { ...prev.mealPlanning, ...updates.mealPlanning };
-        }
         if (updates.recipePreferences) {
           newSettings.recipePreferences = { ...prev.recipePreferences, ...updates.recipePreferences };
         }
         if (updates.shoppingList) {
           newSettings.shoppingList = { ...prev.shoppingList, ...updates.shoppingList };
-        }
-        if (updates.dataManagement) {
-          newSettings.dataManagement = { ...prev.dataManagement, ...updates.dataManagement };
         }
         if (updates.aiFeatures) {
           newSettings.aiFeatures = { ...prev.aiFeatures, ...updates.aiFeatures };
@@ -434,10 +420,6 @@ function deepMergeSettings(defaults: AppSettings, source: Partial<AppSettings>):
       ...defaults.appearance,
       ...(source.appearance || {}),
     },
-    mealPlanning: {
-      ...defaults.mealPlanning,
-      ...(source.mealPlanning || {}),
-    },
     recipePreferences: {
       ...defaults.recipePreferences,
       ...(source.recipePreferences || {}),
@@ -445,10 +427,6 @@ function deepMergeSettings(defaults: AppSettings, source: Partial<AppSettings>):
     shoppingList: {
       ...defaults.shoppingList,
       ...(source.shoppingList || {}),
-    },
-    dataManagement: {
-      ...defaults.dataManagement,
-      ...(source.dataManagement || {}),
     },
     aiFeatures: {
       ...defaults.aiFeatures,

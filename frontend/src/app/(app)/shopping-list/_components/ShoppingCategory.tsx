@@ -153,9 +153,9 @@ export function ShoppingCategory({
         {/* Category name and count */}
         <div className="flex-1 text-left">
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold text-foreground capitalize">
+            <h2 className="text-base font-semibold text-foreground capitalize">
               {category || "Other"}
-            </h3>
+            </h2>
             {isComplete && (
               <Badge variant="success" size="sm" className="text-success font-semibold" >
                 Complete

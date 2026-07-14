@@ -1,8 +1,10 @@
 "use client";
 
+import { MotionConfig } from "framer-motion";
 import { TopNav } from "@/components/layout/TopNav";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { AssistantPopup } from "@/components/assistant/AssistantPopup";
+import { AssistantFab } from "@/components/assistant/AssistantFab";
 import { NavActionsProvider } from "@/lib/providers/NavActionsProvider";
 import {
   AssistantProvider,
@@ -31,6 +33,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
       <main className="flex-1 pb-20 md:pb-0 print:pb-0">
         {children}
       </main>
+      <AssistantFab />
       <AssistantPopup open={assistantOpen} onOpenChange={setAssistantOpen} />
       <RecipeWizardView
         key={
@@ -53,12 +56,14 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <NavActionsProvider>
-      <AssistantProvider>
-        <RecipeWizardProvider>
-          <AppLayoutInner>{children}</AppLayoutInner>
-        </RecipeWizardProvider>
-      </AssistantProvider>
-    </NavActionsProvider>
+    <MotionConfig reducedMotion="user">
+      <NavActionsProvider>
+        <AssistantProvider>
+          <RecipeWizardProvider>
+            <AppLayoutInner>{children}</AppLayoutInner>
+          </RecipeWizardProvider>
+        </AssistantProvider>
+      </NavActionsProvider>
+    </MotionConfig>
   );
 }

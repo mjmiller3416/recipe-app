@@ -83,8 +83,11 @@ From audit §D-Settings:
 - [ ] Hard-reload in light mode: zero dark flash (test with cache disabled + CPU throttle).
 - [ ] Theme changed in Settings reflects in TopNav toggle and vice versa; works on mobile.
 - [ ] No Arial rendering anywhere (spot-check computed styles).
-- [ ] Settings shows only functional options; no placeholder sections.
-- [ ] `npx tsc`, lint, build; grep confirms deleted components have zero references.
+- [x] Settings shows only functional options; no placeholder sections.
+- [x] `npx tsc`, lint, build; grep confirms deleted components have zero references.
+      (Lint: 9 pre-existing errors in untouched files — set-state-in-effect ×5,
+      unescaped entities ×3, compiler memoization ×1 — all present at HEAD before
+      this phase; every file touched in Phase 5 lints clean.)
 - [ ] Keyboard-only walkthrough of the core loop succeeds.
 - [ ] Lighthouse a11y ≥ 95 on Home, Recipes, Planner, Shopping.
 

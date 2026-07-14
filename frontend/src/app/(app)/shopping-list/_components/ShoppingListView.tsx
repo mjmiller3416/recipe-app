@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
@@ -44,9 +44,9 @@ import { useSettings } from "@/hooks/persistence/useSettings";
  * - Loading skeleton during fetch
  */
 export function ShoppingListView() {
-  // Settings for category ordering
-  const { settings } = useSettings();
-  const { categorySortOrder, customCategoryOrder } = settings.shoppingList;
+  // Settings for category ordering and hide-completed
+  const { settings, updateSettings, isLoaded: settingsLoaded } = useSettings();
+  const { categorySortOrder, customCategoryOrder, hideCompleted } = settings.shoppingList;
 
   // React Query hooks for data fetching and mutations
   const { data: shoppingData, isLoading, error, refetch } = useShoppingList();
@@ -60,11 +60,18 @@ export function ShoppingListView() {
   // UI state
   const [filterRecipeName, setFilterRecipeName] = useState<string | null>(null);
 
-  // Hide completed items state (persisted to localStorage)
-  const [hideCompleted, setHideCompleted] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("shopping-list-hide-completed") === "true";
-  });
+  // One-time migration of the old raw-localStorage hide-completed flag into
+  // the settings store (runs after load so the API snapshot can't clobber it)
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    const legacy = localStorage.getItem("shopping-list-hide-completed");
+    if (legacy === null) return;
+    localStorage.removeItem("shopping-list-hide-completed");
+    if (legacy === "true") {
+      updateSettings("shoppingList", { hideCompleted: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- migration runs once, when settings finish loading
+  }, [settingsLoaded]);
 
   // Clear manual items dialog state
   const [showClearManualDialog, setShowClearManualDialog] = useState(false);
@@ -80,11 +87,9 @@ export function ShoppingListView() {
     toggleFlagged.mutate(itemId);
   };
 
-  // Toggle hiding completed items (persisted to localStorage)
+  // Toggle hiding completed items (persists via the settings store)
   const handleToggleHideCompleted = () => {
-    const newValue = !hideCompleted;
-    setHideCompleted(newValue);
-    localStorage.setItem("shopping-list-hide-completed", String(newValue));
+    updateSettings("shoppingList", { hideCompleted: !hideCompleted });
   };
 
   // Handle clearing all manual items
@@ -340,9 +345,9 @@ export function ShoppingListView() {
           <div className="p-4 mb-4 rounded-full bg-destructive/10">
             <ShoppingCart className="w-12 h-12 text-destructive" />
           </div>
-          <h3 className="mb-2 text-lg font-semibold text-foreground">
+          <h2 className="mb-2 text-lg font-semibold text-foreground">
             Something went wrong
-          </h3>
+          </h2>
           <p className="max-w-sm mb-4 text-sm text-muted-foreground">
             {getErrorMessage(error, "Failed to load shopping list")}
           </p>
@@ -367,9 +372,9 @@ export function ShoppingListView() {
           <div className="p-4 mb-4 rounded-full bg-elevated">
             <ShoppingCart className="w-12 h-12 text-muted-foreground" />
           </div>
-          <h3 className="mb-2 text-lg font-semibold text-foreground">
+          <h2 className="mb-2 text-lg font-semibold text-foreground">
             Your shopping list is empty
-          </h3>
+          </h2>
           <p className="max-w-sm mb-4 text-sm text-muted-foreground">
             Add meals to your planner or use the form above to add items manually.
           </p>

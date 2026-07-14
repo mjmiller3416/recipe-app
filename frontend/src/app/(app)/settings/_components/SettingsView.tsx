@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,9 +9,10 @@ import { PageLayout } from "@/components/layout/PageLayout";
 import { SidebarPageSkeleton } from "@/components/layout/SidebarPageSkeleton";
 import { DataManagementSection } from "./sections/DataManagementSection";
 import { useSettings, DEFAULT_SETTINGS } from "@/hooks/persistence/useSettings";
+import { useTheme } from "@/hooks/ui";
+import packageJson from "../../../../../package.json";
 
 import { CategoryNav, CATEGORIES, type SettingsCategory } from "./CategoryNav";
-import { PlaceholderSection } from "./PlaceholderSection";
 import { ProfileSection } from "./sections/ProfileSection";
 import { AppearanceSection } from "./sections/AppearanceSection";
 import { FeedbackSection } from "./sections/FeedbackSection";
@@ -23,12 +24,13 @@ export function SettingsView() {
   const [activeCategory, setActiveCategory] =
     useState<SettingsCategory>("profile");
   const { settings, isLoaded, updateSettings, resetSection } = useSettings();
+  const { theme, setTheme } = useTheme();
 
   // Handle reset current section
   const handleResetSection = () => {
-    // Feedback section doesn't have persistent settings
-    if (activeCategory === "feedback") {
-      toast.info("Feedback form has no saved settings to reset");
+    // Feedback and Data Management are actions, not persistent settings
+    if (activeCategory === "feedback" || activeCategory === "dataManagement") {
+      toast.info("This section has no saved settings to reset");
       return;
     }
     // Reset the section - this auto-saves immediately
@@ -46,23 +48,7 @@ export function SettingsView() {
         return <ProfileSection />;
 
       case "appearance":
-        return (
-          <AppearanceSection
-            theme={settings.appearance.theme}
-            onThemeChange={(value) =>
-              updateSettings("appearance", { theme: value })
-            }
-          />
-        );
-
-      case "mealPlanning":
-        return (
-          <PlaceholderSection
-            icon={CalendarDays}
-            title="Meal Planning"
-            description="Configure default serving sizes, week start day, and meal types"
-          />
-        );
+        return <AppearanceSection theme={theme} onThemeChange={setTheme} />;
 
       case "recipePreferences":
         return (
@@ -107,6 +93,10 @@ export function SettingsView() {
                 imageGenerationPrompt:
                   DEFAULT_SETTINGS.aiFeatures.imageGenerationPrompt,
               })
+            }
+            showAssistantFab={settings.aiFeatures.showAssistantFab}
+            onShowAssistantFabChange={(value) =>
+              updateSettings("aiFeatures", { showAssistantFab: value })
             }
           />
         );
@@ -155,7 +145,9 @@ export function SettingsView() {
 
               {/* Version Info */}
               <div className="mt-4 px-4 py-3 text-center">
-                <p className="text-xs text-muted-foreground">Meal Genie v1.0.0</p>
+                <p className="text-xs text-muted-foreground">
+                  Meal Genie v{packageJson.version}
+                </p>
                 <p className="text-xs text-muted-foreground/70 mt-1">Made with ❤️</p>
               </div>
             </div>

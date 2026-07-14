@@ -101,12 +101,25 @@ export function MealGridCard({
 
   const shoppingMode = item.shoppingMode ?? "all";
 
+  // Keyboard: Enter opens the meal; Space (via the sensor's keyboardCodes)
+  // lifts it for reordering. While a keyboard drag is active the sensor owns
+  // all key handling at the document level, so we stay out of the way.
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (isDragging) return;
+    if (e.key === "Enter") {
+      e.preventDefault();
+      onClick?.();
+      return;
+    }
+    (listeners?.onKeyDown as ((e: React.KeyboardEvent) => void) | undefined)?.(e);
+  };
+
   return (
     <Card
       ref={setNodeRef}
       style={style}
       onClick={onClick}
-      aria-label={`${item.name} - click to view, hold to reorder`}
+      aria-label={`${item.name} — Enter or click to view, Space or hold to reorder`}
       className={cn(
         // Base styles
         "group cursor-pointer overflow-hidden touch-none",
@@ -123,6 +136,7 @@ export function MealGridCard({
       )}
       {...attributes}
       {...listeners}
+      onKeyDown={handleKeyDown}
     >
       {/* Image Section */}
       <div className="relative w-full overflow-hidden">

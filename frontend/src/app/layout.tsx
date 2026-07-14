@@ -37,6 +37,30 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image" },
 };
 
+// Runs synchronously before any content paints so a stored light preference
+// never flashes the default dark theme. Reads the same key useSettings writes
+// ("meal-genie-theme", JSON-encoded), falls back to the legacy "theme" key,
+// then to the OS preference. Keep in sync with hooks/ui/useTheme.ts.
+const themeInitScript = `(function () {
+  try {
+    var pref = null;
+    var raw = localStorage.getItem("meal-genie-theme");
+    if (raw) {
+      try { pref = JSON.parse(raw); } catch (e) { pref = raw; }
+    }
+    if (pref !== "light" && pref !== "dark" && pref !== "system") {
+      pref = localStorage.getItem("theme");
+    }
+    var resolved =
+      pref === "light" || pref === "dark"
+        ? pref
+        : window.matchMedia("(prefers-color-scheme: light)").matches
+          ? "light"
+          : "dark";
+    document.documentElement.classList.toggle("light", resolved === "light");
+  } catch (e) {}
+})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -48,6 +72,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
         suppressHydrationWarning
       >
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <ClerkProvider>
           <QueryProvider>
             {children}

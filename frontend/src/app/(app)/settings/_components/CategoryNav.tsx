@@ -4,7 +4,6 @@ import type React from "react";
 import {
   User,
   Palette,
-  CalendarDays,
   ChefHat,
   ShoppingCart,
   Database,
@@ -21,7 +20,6 @@ import { cn } from "@/lib/utils";
 export type SettingsCategory =
   | "profile"
   | "appearance"
-  | "mealPlanning"
   | "recipePreferences"
   | "shoppingList"
   | "dataManagement"
@@ -51,12 +49,6 @@ export const CATEGORIES: CategoryConfig[] = [
     label: "Appearance",
     icon: Palette,
     description: "Customize the look and feel",
-  },
-  {
-    id: "mealPlanning",
-    label: "Meal Planning",
-    icon: CalendarDays,
-    description: "Configure meal planning defaults",
   },
   {
     id: "recipePreferences",

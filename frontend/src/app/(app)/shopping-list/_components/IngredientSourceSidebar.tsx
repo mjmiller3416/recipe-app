@@ -60,9 +60,9 @@ export function IngredientSourceSidebar({
 
   return (
     <Card className="p-4 flex flex-col max-h-[calc(100vh-8rem)]">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex-shrink-0">
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 flex-shrink-0">
           Recipes in this list
-        </h3>
+        </h2>
 
         <div className="flex flex-col gap-2 overflow-y-auto overflow-x-hidden flex-1 px-1 -mx-1 pb-0.5">
           {recipes.map((recipe, index) => {

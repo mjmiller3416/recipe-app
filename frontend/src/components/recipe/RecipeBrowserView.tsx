@@ -11,6 +11,7 @@ import {
   ArrowUp,
   ArrowDown,
   Dices,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,6 +65,7 @@ interface HeroSectionProps {
   activeQuickFilters: Set<string>;
   onQuickFilterToggle: (filterId: string) => void;
   quickFilterOptions: QuickFilter[];
+  onGenerateRecipe?: () => void;
   title?: string;
   description?: string;
 }
@@ -76,6 +78,7 @@ function HeroSection({
   activeQuickFilters,
   onQuickFilterToggle,
   quickFilterOptions,
+  onGenerateRecipe,
   title = "Find your next meal",
   description,
 }: HeroSectionProps) {
@@ -145,14 +148,26 @@ function HeroSection({
           )}
         </div>
 
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto flex flex-wrap items-center gap-2">
           <FilterBar
             options={quickFilterOptions}
             activeIds={activeQuickFilters}
             onToggle={onQuickFilterToggle}
             variant="glass"
             align="start"
+            className="flex-1"
           />
+          {onGenerateRecipe && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onGenerateRecipe}
+              className="gap-1.5 font-medium rounded-xl bg-elevated/90 backdrop-blur-sm shadow-sm border border-primary/40 text-primary hover:text-primary hover:border-primary hover:bg-primary/10"
+            >
+              <Sparkles className="h-4 w-4" strokeWidth={1.5} />
+              Generate a recipe
+            </Button>
+          )}
         </div>
       </div>
     </div>
@@ -671,6 +686,7 @@ export function RecipeBrowserView({
       activeQuickFilters={activeQuickFilters}
       onQuickFilterToggle={handleQuickFilterToggle}
       quickFilterOptions={visibleQuickFilters}
+      onGenerateRecipe={openAssistant}
       title={heroTitle}
       description={heroDescription}
     />

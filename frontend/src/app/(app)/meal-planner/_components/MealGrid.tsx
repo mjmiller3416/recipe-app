@@ -108,6 +108,12 @@ export function MealGrid({
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
+      // Space lifts/drops so Enter stays free to open the card (see MealGridCard)
+      keyboardCodes: {
+        start: ["Space"],
+        cancel: ["Escape"],
+        end: ["Space", "Enter"],
+      },
     })
   );
 

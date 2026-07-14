@@ -4,7 +4,7 @@
 //
 // Deliberately excluded (they require the Next.js runtime and would crash in
 // the design tool): RecipeCard, RecipeBrowserView, TopNav, MobileBottomNav,
-// AppLayout, ConditionalAppLayout, SafeLink, FeedbackDialog, RecentRecipeChip,
+// AppLayout, ConditionalAppLayout, SafeLink, FeedbackDialog,
 // IngredientAutocomplete, QuickAddForm, and all assistant/ and auth/ components.
 
 // ── ui primitives ──────────────────────────────────────────────────────────
@@ -53,7 +53,6 @@ export * from "@/components/common/RecipeIcon";
 export * from "@/components/common/ScrollableCardList";
 export * from "@/components/common/ScrollToTopButton";
 export * from "@/components/common/StatCard";
-export * from "@/components/common/ThemeToggle";
 export * from "@/components/forms/QuantityInput";
 export * from "@/components/layout/Logo";
 export * from "@/components/layout/PageHeader";

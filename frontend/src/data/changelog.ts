@@ -7,6 +7,13 @@ const CHANGELOG_MD = `
 - Unified Meal Creation — one streamlined flow for building meals, now including recipe roulette for random picks, with a direct path from planning your week to generating your shopping list
 - Import Recipe from URL — paste a link to any online recipe in the Recipe Wizard and it fills in automatically
 - New Landing Page — a public landing page featuring live app previews instead of static screenshots
+- Theme Settings — choose Light, Dark, or System from Settings or the mobile menu, with no more dark-mode flash when the page loads
+- Meal Genie on Mobile — a floating assistant button keeps Meal Genie within reach on phones, plus a new "Generate a recipe" shortcut in the Recipe Browser
+
+## 2026-07-14 - Improvements
+- Settings cleanup — placeholder sections removed so Settings shows only working options, and the About section now shows the real app version
+- Accessibility — better keyboard support in the Meal Planner, reduced-motion support for animations, and improved screen-reader labels
+- Refreshed body font for a cleaner reading experience
 
 ## 2026-07-14 - Bug Fixes
 - AI badges now correctly distinguish AI-generated recipes from AI-generated photos — recipes with only an AI-generated image no longer show as fully AI-generated

@@ -11,7 +11,9 @@ import {
   Plus,
   Settings,
   MessageSquarePlus,
+  Moon,
   Sparkles,
+  Sun,
   LogOut,
   Shield,
   UtensilsCrossed,
@@ -29,6 +31,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useShoppingList, useRefreshShoppingList, useCurrentUser } from "@/hooks/api";
+import { useTheme } from "@/hooks/ui";
 import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
 
 interface NavItem {
@@ -56,6 +59,7 @@ export function MobileBottomNav({ onOpenAssistant }: MobileBottomNavProps) {
   const { signOut } = useClerk();
   const { isAdmin } = useCurrentUser();
   const { openWizard } = useRecipeWizardDialog();
+  const { resolvedTheme, toggleTheme } = useTheme();
 
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -261,6 +265,20 @@ export function MobileBottomNav({ onOpenAssistant }: MobileBottomNavProps) {
               <Settings className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
               Settings
             </SafeLink>
+
+            {/* Theme flips in place — sheet stays open so the change is visible */}
+            <Button
+              variant="ghost"
+              onClick={toggleTheme}
+              className="flex items-center justify-start gap-3 px-5 py-3 w-full h-auto rounded-none text-sm text-foreground"
+            >
+              {resolvedTheme === "dark" ? (
+                <Sun className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+              ) : (
+                <Moon className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+              )}
+              {resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
+            </Button>
 
             {isAdmin && (
               <SafeLink
