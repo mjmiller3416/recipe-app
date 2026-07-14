@@ -2,6 +2,15 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-07-14 - New Features
+- Redesigned Home — a new today-first view centered on today's planned meal, with your cooking streak now shown in the header and a guided setup flow for first-time users
+- Unified Meal Creation — one streamlined flow for building meals, now including recipe roulette for random picks, with a direct path from planning your week to generating your shopping list
+- Import Recipe from URL — paste a link to any online recipe in the Recipe Wizard and it fills in automatically
+- New Landing Page — a public landing page featuring live app previews instead of static screenshots
+
+## 2026-07-14 - Bug Fixes
+- AI badges now correctly distinguish AI-generated recipes from AI-generated photos — recipes with only an AI-generated image no longer show as fully AI-generated
+
 ## 2026-07-12 - Bug Fixes
 - Printed recipes now reliably include the recipe photo — previously the photo could be missing from printouts, especially after regenerating a recipe image
 
