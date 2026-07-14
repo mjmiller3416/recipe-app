@@ -8,12 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UtensilsCrossed, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { CarouselCardGrid } from "./CarouselCardGrid";
-import {
-  usePlannerEntries,
-  useMarkComplete,
-  useRefreshPlannerEntries,
-  PLANNER_EVENTS,
-} from "@/hooks/api";
+import { usePlannerEntries, useMarkComplete } from "@/hooks/api";
 import type { PlannerEntryResponseDTO } from "@/types/planner";
 
 // ============================================================================
@@ -31,6 +26,8 @@ const GAP_PX = 14;
 
 interface MealCarouselWidgetProps {
   entries?: PlannerEntryResponseDTO[];
+  /** Entry already shown elsewhere (e.g. the Tonight card) — hidden from the grid */
+  excludeEntryId?: number | null;
 }
 
 interface TransitionState {
@@ -67,6 +64,7 @@ function padPage(
  */
 export function MealCarouselWidget({
   entries: initialEntries,
+  excludeEntryId = null,
 }: MealCarouselWidgetProps) {
   const router = useRouter();
 
@@ -74,7 +72,6 @@ export function MealCarouselWidget({
   const { data: fetchedEntries, isLoading: queryLoading } =
     usePlannerEntries();
   const markComplete = useMarkComplete();
-  const refreshEntries = useRefreshPlannerEntries();
 
   const entries = useMemo(
     () => initialEntries ?? fetchedEntries ?? [],
@@ -86,7 +83,13 @@ export function MealCarouselWidget({
     () =>
       [...entries]
         .sort((a, b) => a.position - b.position)
-        .filter((e) => !e.is_completed),
+        .filter((e) => !e.is_completed && e.id !== excludeEntryId),
+    [entries, excludeEntryId]
+  );
+
+  // Remaining includes the excluded (Tonight) entry so the count stays honest
+  const remainingCount = useMemo(
+    () => entries.filter((e) => !e.is_completed).length,
     [entries]
   );
 
@@ -170,14 +173,6 @@ export function MealCarouselWidget({
     return () => animation.cancel();
   }, [transition]);
 
-  // ── Event Listeners ───────────────────────────────────────────────────
-  useEffect(() => {
-    const handleUpdate = () => refreshEntries();
-    window.addEventListener(PLANNER_EVENTS.UPDATED, handleUpdate);
-    return () =>
-      window.removeEventListener(PLANNER_EVENTS.UPDATED, handleUpdate);
-  }, [refreshEntries]);
-
   // ── Navigation ────────────────────────────────────────────────────────
   const navigate = useCallback(
     (dir: "next" | "prev") => {
@@ -254,7 +249,7 @@ export function MealCarouselWidget({
             Meals This Week
           </h2>
           <span className="text-xs text-muted-foreground">
-            {activeEntries.length} remaining &middot; {completedCount} cooked
+            {remainingCount} remaining &middot; {completedCount} cooked
           </span>
         </div>
         <Link
@@ -369,14 +364,19 @@ function CarouselSkeleton() {
 /** Empty state — no active meals in the planner. */
 function CarouselEmptyState() {
   return (
-    <div className="flex items-center justify-center flex-1 text-center text-muted-foreground">
-      <div>
+    <div className="flex items-center justify-center flex-1 py-8 text-center text-muted-foreground">
+      <div className="flex flex-col items-center gap-3">
         <UtensilsCrossed
-          className="size-10 mx-auto mb-2 text-muted-foreground"
+          className="size-10 text-muted-foreground"
           strokeWidth={1.5}
         />
-        <p>No meals planned</p>
-        <p className="mt-1 text-sm">Add some meals to get started!</p>
+        <div>
+          <p>No more meals planned</p>
+          <p className="mt-1 text-sm">Add meals to fill out your week.</p>
+        </div>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/meal-planner">Open planner</Link>
+        </Button>
       </div>
     </div>
   );

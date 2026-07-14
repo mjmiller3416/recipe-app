@@ -94,14 +94,14 @@ Welcome to Meal Genie 🧞  Three steps to your first planned week:
 
 ## 5. Verification / acceptance criteria
 
-- [ ] Mobile (≤ 767px): Home is reachable from bottom nav, renders single-column, no
+- [x] Mobile (≤ 767px): Home is reachable from bottom nav, renders single-column, no
       redirect to planner. Desktop unchanged in reachability.
-- [ ] Fresh user (empty DB / new account): sees GetStartedCard; all three step-① buttons
+- [x] Fresh user (empty DB / new account): sees GetStartedCard; all three step-① buttons
       work; completing steps checks them off.
-- [ ] Existing user with a plan: Tonight card shows the correct next meal; Mark cooked
+- [x] Existing user with a plan: Tonight card shows the correct next meal; Mark cooked
       advances it and updates streak + counts without a reload.
-- [ ] No layout shift on load: every card has a skeleton matching its final size.
-- [ ] `npx tsc`, lint, build pass. Verify end-to-end with the `verify` skill.
+- [x] No layout shift on load: every card has a skeleton matching its final size.
+- [x] `npx tsc`, lint, build pass. Verify end-to-end with the `verify` skill.
 
 ## Out of scope
 

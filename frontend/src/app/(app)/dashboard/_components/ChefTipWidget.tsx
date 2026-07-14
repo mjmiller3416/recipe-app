@@ -1,7 +1,9 @@
 "use client";
 
 import { Lightbulb, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { useCookingTip, useRefreshCookingTip } from "@/hooks/api";
 
 export function ChefTipWidget() {
@@ -25,16 +27,18 @@ export function ChefTipWidget() {
           <Lightbulb className="h-5 w-5 text-chart-3" />
           <h2 className="text-lg font-semibold text-foreground">Chef&apos;s Tip</h2>
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={handleManualRefresh}
           disabled={isRefreshing}
-          className="p-2 -m-2 text-muted-foreground hover:text-foreground transition-colors duration-150 disabled:opacity-50"
           aria-label="Refresh tip"
         >
           <RefreshCw
-            className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+            className={cn("size-4", isRefreshing && "animate-spin")}
+            strokeWidth={1.5}
           />
-        </button>
+        </Button>
       </div>
 
       {/* Tip Content */}
@@ -44,7 +48,10 @@ export function ChefTipWidget() {
           <Skeleton className="h-4 w-3/4" />
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground leading-relaxed">{tip}</p>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {tip ??
+            "Couldn't conjure a tip right now — give the refresh button a try."}
+        </p>
       )}
     </div>
   );

@@ -1,30 +1,16 @@
-"use client";
+import type { Metadata } from "next";
+import { HomeView } from "./_components";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { DashboardView } from "./_components";
+export const metadata: Metadata = { title: "Home" };
 
-const MOBILE_BREAKPOINT = 768; // Matches Tailwind's md: breakpoint
-
-export default function DashboardPage() {
-  const router = useRouter();
-  const [isMobile, setIsMobile] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const mobile = window.innerWidth < MOBILE_BREAKPOINT;
-    setIsMobile(mobile);
-
-    // Redirect mobile users to meal planner
-    if (mobile) {
-      router.replace("/meal-planner");
-    }
-  }, [router]);
-
-  // Don't render anything until we know if it's mobile
-  // This prevents flash of dashboard content on mobile
-  if (isMobile === null || isMobile) {
-    return null;
-  }
-
-  return <DashboardView />;
+/**
+ * Home Page
+ *
+ * Route: /dashboard
+ *
+ * One Home for all devices — no mobile redirect. Signed-in users land here
+ * from the root redirect in (marketing)/page.tsx.
+ */
+export default function HomePage() {
+  return <HomeView />;
 }

@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   CalendarDays,
   BookOpen,
-  Plus,
+  House,
   ShoppingCart,
   EllipsisVertical,
   Settings,
@@ -36,9 +36,9 @@ interface NavItem {
 }
 
 const navigation: NavItem[] = [
+  { name: "Home", href: "/dashboard", icon: House },
   { name: "Planner", href: "/meal-planner", icon: CalendarDays },
   { name: "Recipes", href: "/recipes", icon: BookOpen },
-  { name: "Add", href: "/recipes/add", icon: Plus },
   { name: "Shopping", href: "/shopping-list", icon: ShoppingCart, hasBadge: true },
 ];
 
@@ -113,12 +113,9 @@ export function MobileBottomNav({ onOpenAssistant }: MobileBottomNavProps) {
       >
         <div className="flex items-center justify-around h-16">
           {navigation.map((item) => {
-            // Special handling: /recipes active on detail pages but NOT on /recipes/add
+            // Sections highlight on their detail pages too (e.g. /recipes/42)
             const isActive =
-              pathname === item.href ||
-              (item.href === "/recipes" &&
-                pathname.startsWith("/recipes") &&
-                pathname !== "/recipes/add");
+              pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (
               <SafeLink

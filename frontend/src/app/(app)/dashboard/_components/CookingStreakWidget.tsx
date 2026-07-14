@@ -1,22 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
 import { Flame, Check } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCookingStreak, useRefreshCookingStreak, PLANNER_EVENTS } from "@/hooks/api";
+import { useCookingStreak } from "@/hooks/api";
 
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
 export function CookingStreakWidget() {
+  // Streak refreshes come from React Query invalidation in the planner
+  // mutation hooks (useMarkComplete etc.) — no window-event syncing needed.
   const { data: streakData, isLoading } = useCookingStreak();
-  const refreshStreak = useRefreshCookingStreak();
-
-  // Listen for planner updates (completions affect streak)
-  useEffect(() => {
-    const handlePlannerUpdate = () => refreshStreak();
-    window.addEventListener(PLANNER_EVENTS.UPDATED, handlePlannerUpdate);
-    return () => window.removeEventListener(PLANNER_EVENTS.UPDATED, handlePlannerUpdate);
-  }, [refreshStreak]);
 
   // Use server's today_index to ensure timezone consistency
   const todayIndex = streakData?.today_index ?? (new Date().getDay() + 6) % 7;

@@ -1,181 +1,93 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
 import Link from "next/link";
-import { ShoppingCart, ArrowRight, CheckCircle2, Circle } from "lucide-react";
+import { ShoppingCart, ArrowRight } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useShoppingList, useRefreshShoppingList } from "@/hooks/api";
-import { useIngredientCategories } from "@/hooks/api/useIngredientCategories";
 import type { ShoppingListResponseDTO } from "@/types/shopping";
 
-interface CategoryProgress {
-  name: string;
-  total: number;
-  checked: number;
-}
-
 interface ShoppingListWidgetProps {
-  shoppingData?: ShoppingListResponseDTO | null;
+  /** Shopping list data fetched by the parent (one fetch for the whole page) */
+  shoppingData?: ShoppingListResponseDTO;
+  isLoading?: boolean;
 }
 
-export function ShoppingListWidget({}: ShoppingListWidgetProps) {
-  // Use React Query hook with automatic token injection
-  const { data: shoppingData, isLoading } = useShoppingList();
-  const refreshShoppingList = useRefreshShoppingList();
-  const { data: ingredientCategories = [] } = useIngredientCategories();
-
-  // Listen for planner updates to refetch shopping list
-  useEffect(() => {
-    const handlePlannerUpdated = () => refreshShoppingList();
-    window.addEventListener("planner-updated", handlePlannerUpdated);
-    return () => window.removeEventListener("planner-updated", handlePlannerUpdated);
-  }, [refreshShoppingList]);
-
-  // Group items by category and calculate progress
-  const categoryProgress = useMemo((): CategoryProgress[] => {
-    if (!shoppingData?.items) return [];
-
-    // Group items by category
-    const groups: Record<string, { total: number; checked: number }> = {};
-
-    for (const item of shoppingData.items) {
-      const category = item.category || "Other";
-      if (!groups[category]) {
-        groups[category] = { total: 0, checked: 0 };
-      }
-      groups[category].total++;
-      if (item.have) {
-        groups[category].checked++;
-      }
-    }
-
-    // Convert to array and sort by user's ingredient category order
-    const categories = Object.entries(groups).map(([name, data]) => ({
-      name,
-      total: data.total,
-      checked: data.checked,
-    }));
-
-    // Build order from user's ingredient categories (position-based)
-    const categoryOrder = ingredientCategories.map((c) => c.value);
-
-    // Sort by the user's category order
-    categories.sort((a, b) => {
-      const aIndex = categoryOrder.indexOf(a.name.toLowerCase());
-      const bIndex = categoryOrder.indexOf(b.name.toLowerCase());
-
-      // Items not in the order go to the end
-      const aOrder = aIndex === -1 ? 999 : aIndex;
-      const bOrder = bIndex === -1 ? 999 : bIndex;
-
-      return aOrder - bOrder;
-    });
-
-    return categories;
-  }, [shoppingData, ingredientCategories]);
-
-  // Calculate overall progress
+/**
+ * ShoppingListWidget — compact shopping status card for Home.
+ * Shows items left to get plus overall progress; the full per-category
+ * breakdown lives on the Shopping List page.
+ */
+export function ShoppingListWidget({
+  shoppingData,
+  isLoading = false,
+}: ShoppingListWidgetProps) {
   const totalItems = shoppingData?.total_items ?? 0;
   const checkedItems = shoppingData?.checked_items ?? 0;
-  const progressPercent = totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
-
+  const remainingItems = totalItems - checkedItems;
+  const progressPercent =
+    totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
   const hasItems = totalItems > 0;
 
   return (
-    <div className="h-full flex flex-col bg-card rounded-xl border border-border shadow-raised p-5 overflow-hidden">
+    <Card className="h-full gap-0 p-5 shadow-raised">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <ShoppingCart className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-semibold text-foreground">Shopping List</h2>
+          <ShoppingCart className="size-5 text-primary" strokeWidth={1.5} />
+          <h2 className="text-lg font-semibold text-foreground">
+            Shopping List
+          </h2>
         </div>
         <Link
           href="/shopping-list"
-          className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors duration-150"
+          className="flex items-center gap-1 text-sm text-primary transition-colors duration-150 hover:text-primary/80"
         >
           Open
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className="size-4" strokeWidth={1.5} />
         </Link>
       </div>
 
       {/* Content */}
       {isLoading ? (
-        <div className="flex-1 flex flex-col space-y-4">
-          {/* Progress skeleton */}
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-10" />
-            </div>
-            <Skeleton className="h-2 w-full rounded-full" />
-          </div>
-          {/* Category skeletons */}
-          <div className="flex-1 divide-y divide-border">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex items-center justify-between py-3 first:pt-0">
-                <Skeleton className="h-4 w-20" />
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-4 w-8" />
-                  <Skeleton className="h-5 w-5 rounded-full" />
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="flex flex-1 flex-col justify-center gap-3">
+          <Skeleton className="h-9 w-24" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-2 w-full rounded-full" />
+          <Skeleton className="h-4 w-28" />
         </div>
       ) : !hasItems ? (
-        <div className="flex-1 flex items-center justify-center text-center text-muted-foreground">
-          <div>
-            <p>No items on your list</p>
-            <p className="text-sm mt-1">Add ingredients from recipes to get started!</p>
-          </div>
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            Nothing on your list yet.
+            <br />
+            Meals you plan add their ingredients automatically.
+          </p>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/meal-planner">Plan meals</Link>
+          </Button>
         </div>
       ) : (
-        <div className="flex-1 min-h-0 flex flex-col space-y-4">
-          {/* Progress Summary */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
-                {checkedItems} of {totalItems} items
-              </span>
-              <span className="text-sm font-medium text-amber">{progressPercent}%</span>
-            </div>
-            {/* Progress Bar */}
-            <div className="h-2 bg-border rounded-full overflow-hidden">
-              <div
-                className="h-full bg-secondary transition-all duration-300 ease-out rounded-full"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Category Breakdown */}
-          <div className="flex-1 min-h-0 overflow-auto divide-y divide-border pr-3">
-            {categoryProgress.map((category) => {
-              const isComplete = category.checked === category.total;
-              return (
-                <div
-                  key={category.name}
-                  className="flex items-center justify-between py-3 first:pt-0"
-                >
-                  <span className="text-sm text-foreground capitalize">
-                    {category.name}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
-                      {category.checked}/{category.total}
-                    </span>
-                    {isComplete ? (
-                      <CheckCircle2 className="h-5 w-5 text-secondary" />
-                    ) : (
-                      <Circle className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        <div className="flex flex-1 flex-col justify-center gap-3">
+          <p className="text-3xl font-semibold text-foreground">
+            {remainingItems === 0 ? (
+              "All set! 🎉"
+            ) : (
+              <>
+                {remainingItems}
+                <span className="ml-2 text-base font-normal text-muted-foreground">
+                  item{remainingItems === 1 ? "" : "s"} left to get
+                </span>
+              </>
+            )}
+          </p>
+          <Progress value={progressPercent} aria-label="Shopping progress" />
+          <p className="text-sm text-muted-foreground">
+            {checkedItems} of {totalItems} picked up
+          </p>
         </div>
       )}
-    </div>
+    </Card>
   );
 }
