@@ -5,14 +5,18 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   CalendarDays,
   BookOpen,
-  Plus,
+  House,
   ShoppingCart,
   EllipsisVertical,
+  Plus,
   Settings,
   MessageSquarePlus,
+  Moon,
   Sparkles,
+  Sun,
   LogOut,
   Shield,
+  UtensilsCrossed,
   LucideIcon,
 } from "lucide-react";
 import { useUser, useClerk } from "@clerk/nextjs";
@@ -27,6 +31,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useShoppingList, useRefreshShoppingList, useCurrentUser } from "@/hooks/api";
+import { useTheme } from "@/hooks/ui";
+import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
 
 interface NavItem {
   name: string;
@@ -36,9 +42,9 @@ interface NavItem {
 }
 
 const navigation: NavItem[] = [
+  { name: "Home", href: "/dashboard", icon: House },
   { name: "Planner", href: "/meal-planner", icon: CalendarDays },
   { name: "Recipes", href: "/recipes", icon: BookOpen },
-  { name: "Add", href: "/recipes/add", icon: Plus },
   { name: "Shopping", href: "/shopping-list", icon: ShoppingCart, hasBadge: true },
 ];
 
@@ -52,6 +58,8 @@ export function MobileBottomNav({ onOpenAssistant }: MobileBottomNavProps) {
   const { user } = useUser();
   const { signOut } = useClerk();
   const { isAdmin } = useCurrentUser();
+  const { openWizard } = useRecipeWizardDialog();
+  const { resolvedTheme, toggleTheme } = useTheme();
 
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -113,12 +121,9 @@ export function MobileBottomNav({ onOpenAssistant }: MobileBottomNavProps) {
       >
         <div className="flex items-center justify-around h-16">
           {navigation.map((item) => {
-            // Special handling: /recipes active on detail pages but NOT on /recipes/add
+            // Sections highlight on their detail pages too (e.g. /recipes/42)
             const isActive =
-              pathname === item.href ||
-              (item.href === "/recipes" &&
-                pathname.startsWith("/recipes") &&
-                pathname !== "/recipes/add");
+              pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (
               <SafeLink
@@ -230,6 +235,28 @@ export function MobileBottomNav({ onOpenAssistant }: MobileBottomNavProps) {
 
           {/* Menu items */}
           <div className="py-2 pb-[env(safe-area-inset-bottom,8px)]">
+            <Button
+              variant="ghost"
+              onClick={() => handleMenuAction(() => openWizard())}
+              className="flex items-center justify-start gap-3 px-5 py-3 w-full h-auto rounded-none text-sm text-foreground"
+            >
+              <Plus className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+              Add Recipe
+            </Button>
+
+            <Button
+              variant="ghost"
+              onClick={() =>
+                handleMenuAction(() => router.push("/meal-planner?addMeal=1"))
+              }
+              className="flex items-center justify-start gap-3 px-5 py-3 w-full h-auto rounded-none text-sm text-foreground"
+            >
+              <UtensilsCrossed className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+              Add Meal
+            </Button>
+
+            <div className="h-px bg-border mx-5 my-1" />
+
             <SafeLink
               href="/settings"
               onClick={() => setIsMoreOpen(false)}
@@ -238,6 +265,20 @@ export function MobileBottomNav({ onOpenAssistant }: MobileBottomNavProps) {
               <Settings className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
               Settings
             </SafeLink>
+
+            {/* Theme flips in place — sheet stays open so the change is visible */}
+            <Button
+              variant="ghost"
+              onClick={toggleTheme}
+              className="flex items-center justify-start gap-3 px-5 py-3 w-full h-auto rounded-none text-sm text-foreground"
+            >
+              {resolvedTheme === "dark" ? (
+                <Sun className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+              ) : (
+                <Moon className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+              )}
+              {resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
+            </Button>
 
             {isAdmin && (
               <SafeLink

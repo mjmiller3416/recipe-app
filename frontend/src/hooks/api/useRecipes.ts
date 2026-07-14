@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
 import { recipeApi } from "@/lib/api";
-import { recipeQueryKeys, plannerQueryKeys } from "./queryKeys";
+import { recipeQueryKeys, plannerQueryKeys, dashboardQueryKeys } from "./queryKeys";
 import { dispatchRecipeUpdate } from "./events";
 import type {
   RecipeResponseDTO,
@@ -129,6 +129,8 @@ export function useCreateRecipe() {
     onSuccess: () => {
       // Invalidate all recipe lists to include the new recipe
       queryClient.invalidateQueries({ queryKey: recipeQueryKeys.all });
+      // Recipe count feeds the Home header chips and first-run flow
+      queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.stats() });
       dispatchRecipeUpdate();
     },
   });
@@ -184,6 +186,7 @@ export function useDeleteRecipe() {
       queryClient.invalidateQueries({ queryKey: recipeQueryKeys.cards() });
       // Invalidate planner entries as meals may reference this recipe
       queryClient.invalidateQueries({ queryKey: plannerQueryKeys.entries() });
+      queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.stats() });
       dispatchRecipeUpdate();
     },
   });
@@ -269,6 +272,8 @@ export function useToggleFavorite() {
         recipeQueryKeys.detail(updatedRecipe.id),
         updatedRecipe
       );
+      // Favorites count feeds the Home header chips
+      queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.stats() });
     },
   });
 }

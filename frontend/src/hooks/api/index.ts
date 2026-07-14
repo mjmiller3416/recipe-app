@@ -61,15 +61,11 @@ export {
 
 // AI Hooks
 export {
-  // Queries
-  useCookingTip,
   // Mutations
   useMealSuggestions,
   useGenerateImage,
   useGenerateBanner,
   useAssistantChat,
-  // Utilities
-  useRefreshCookingTip,
 } from "./useAI";
 
 // Shopping Hooks

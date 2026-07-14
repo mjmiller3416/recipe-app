@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser, useClerk } from "@clerk/nextjs";
 import Link from "next/link";
@@ -53,9 +53,9 @@ import { CHANGELOG_TOTAL_ITEMS } from "@/data/changelog";
 import { appConfig } from "@/lib/config";
 import { cn } from "@/lib/utils";
 import { useShoppingList, useRefreshShoppingList, useCurrentUser } from "@/hooks/api";
+import { useTheme } from "@/hooks/ui";
 import { useNavActions } from "@/lib/providers/NavActionsProvider";
 import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
-import { useMealCreationDialog } from "@/lib/providers/MealCreationProvider";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TopNavLink — Inline navigation link for the top nav bar
@@ -200,8 +200,8 @@ function NavButton({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function TopNavAddMenu() {
+  const router = useRouter();
   const { openWizard, isOpen: wizardOpen } = useRecipeWizardDialog();
-  const { openMealCreation } = useMealCreationDialog();
 
   return (
     <DropdownMenu>
@@ -226,7 +226,10 @@ function TopNavAddMenu() {
           <BookOpen className="h-4 w-4" strokeWidth={1.5} />
           Add Recipe
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => openMealCreation()} className="gap-2">
+        <DropdownMenuItem
+          onClick={() => router.push("/meal-planner?addMeal=1")}
+          className="gap-2"
+        >
           <UtensilsCrossed className="h-4 w-4" strokeWidth={1.5} />
           Add Meal
         </DropdownMenuItem>
@@ -386,10 +389,16 @@ function TopNavUserMenu({ onOpenAssistant, onOpenFeedback }: TopNavUserMenuProps
 // TopNav — Main top navigation bar (visible on md+)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Hydration detector: false during SSR/hydration render, true after mount —
+// gates client-only UI (theme icon, changelog badge) without a setState effect
+const emptySubscribe = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 const navigation = [
   { name: "Home", href: "/dashboard", icon: LayoutDashboard },
   { name: "Meal Planner", href: "/meal-planner", icon: CalendarDays },
-  { name: "Recipe Browser", href: "/recipes", icon: BookOpen },
+  { name: "Recipes", href: "/recipes", icon: BookOpen },
   { name: "Shopping List", href: "/shopping-list", icon: ShoppingCart, hasBadge: true },
 ];
 
@@ -399,9 +408,9 @@ interface TopNavProps {
 
 export function TopNav({ onOpenAssistant }: TopNavProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { actions: navActions, isPinned } = useNavActions();
   const { openWizard } = useRecipeWizardDialog();
-  const { openMealCreation } = useMealCreationDialog();
 
   // Sheet state (hamburger menu for md-to-lg)
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -413,15 +422,10 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
   const [changelogCountReset, setChangelogCountReset] = useState(false);
   const [changelogScrollTo, setChangelogScrollTo] = useState<number | null>(null);
 
+  // Theme (shared model — persists via the settings store)
+  const { resolvedTheme, toggleTheme } = useTheme();
+
   // Client-side state (lazy initializers read localStorage without triggering cascading renders)
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    if (typeof window === "undefined") return "dark";
-    const stored = localStorage.getItem("theme") as "light" | "dark" | null;
-    const systemPreference = window.matchMedia("(prefers-color-scheme: light)").matches
-      ? "light"
-      : "dark";
-    return stored || systemPreference;
-  });
   const [changelogNewItems] = useState(() => {
     if (typeof window === "undefined") return 0;
     const lastSeenCount = parseInt(
@@ -430,7 +434,11 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
     );
     return Math.max(0, CHANGELOG_TOTAL_ITEMS - lastSeenCount);
   });
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    getClientSnapshot,
+    getServerSnapshot
+  );
 
   // Shopping list badge
   const { data: shoppingData } = useShoppingList();
@@ -449,13 +457,6 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
     }
   }, [refreshShoppingList]);
 
-  // Client-side initialization (DOM side effects only — state set via lazy initializers above)
-  useEffect(() => {
-    document.documentElement.classList.toggle("light", theme === "light");
-    setMounted(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount; theme is stable from lazy init
-  }, []);
-
   // Event listeners
   useEffect(() => {
     window.addEventListener("shopping-list-updated", refreshShoppingList);
@@ -469,17 +470,6 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
   // Derived values
   const hasNewUpdates = mounted && changelogNewItems > 0 && !changelogBadgeDismissed;
   const newItemCount = changelogCountReset ? 0 : changelogNewItems;
-
-  const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.classList.add("no-transition");
-    document.documentElement.classList.toggle("light", newTheme === "light");
-    requestAnimationFrame(() => {
-      document.documentElement.classList.remove("no-transition");
-    });
-  };
 
   const handleChangelogOpenChange = (open: boolean) => {
     if (open) {
@@ -584,10 +574,10 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                  aria-label={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
                   onClick={toggleTheme}
                 >
-                  {theme === "dark" ? (
+                  {resolvedTheme === "dark" ? (
                     <Sun className="size-5" strokeWidth={1.5} />
                   ) : (
                     <Moon className="size-5" strokeWidth={1.5} />
@@ -595,7 +585,7 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                {theme === "dark" ? "Light mode" : "Dark mode"}
+                {resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
               </TooltipContent>
             </Tooltip>
           )}
@@ -674,7 +664,7 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
               variant="ghost"
               onClick={() => {
                 setSheetOpen(false);
-                openMealCreation();
+                router.push("/meal-planner?addMeal=1");
               }}
               className={cn(
                 "flex items-center justify-start gap-3 px-3 py-3 h-auto rounded-xl w-full",

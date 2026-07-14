@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
-import { ConditionalAppLayout } from "@/components/layout/ConditionalAppLayout";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/lib/providers/QueryProvider";
 
@@ -19,15 +18,48 @@ const geistMono = Geist_Mono({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
-  title: "Meal Genie - Your Personal Recipe Manager",
-  description: "Plan meals, browse recipes, and manage your shopping list with ease",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
+  title: {
+    default: "Meal Genie — Recipes, meal planning, and smart shopping lists",
+    template: "%s · Meal Genie",
+  },
+  description:
+    "Save recipes, plan your week, and get an auto-built shopping list. AI-powered recipe import and generation.",
+  openGraph: {
+    siteName: "Meal Genie",
+    type: "website",
+    url: "/",
+  },
+  twitter: { card: "summary_large_image" },
 };
+
+// Runs synchronously before any content paints so a stored light preference
+// never flashes the default dark theme. Reads the same key useSettings writes
+// ("meal-genie-theme", JSON-encoded), falls back to the legacy "theme" key,
+// then to the OS preference. Keep in sync with hooks/ui/useTheme.ts.
+const themeInitScript = `(function () {
+  try {
+    var pref = null;
+    var raw = localStorage.getItem("meal-genie-theme");
+    if (raw) {
+      try { pref = JSON.parse(raw); } catch (e) { pref = raw; }
+    }
+    if (pref !== "light" && pref !== "dark" && pref !== "system") {
+      pref = localStorage.getItem("theme");
+    }
+    var resolved =
+      pref === "light" || pref === "dark"
+        ? pref
+        : window.matchMedia("(prefers-color-scheme: light)").matches
+          ? "light"
+          : "dark";
+    document.documentElement.classList.toggle("light", resolved === "light");
+  } catch (e) {}
+})();`;
 
 export default function RootLayout({
   children,
@@ -40,9 +72,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
         suppressHydrationWarning
       >
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <ClerkProvider>
           <QueryProvider>
-            <ConditionalAppLayout>{children}</ConditionalAppLayout>
+            {children}
             <Toaster />
           </QueryProvider>
         </ClerkProvider>

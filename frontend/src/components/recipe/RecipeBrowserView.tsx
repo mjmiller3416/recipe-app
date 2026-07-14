@@ -10,10 +10,11 @@ import {
   SlidersHorizontal,
   ArrowUp,
   ArrowDown,
+  Dices,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -38,8 +39,11 @@ import type { RecipeCardData } from "@/types/recipe";
 import type { ActiveFilter, FilterOption } from "@/lib/filterUtils";
 import { RecipeSortControls, SORT_OPTIONS, type SortOption, type SortDirection } from "./browser/FilterSortControls";
 import { useNavActions } from "@/lib/providers/NavActionsProvider";
+import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
+import { useAssistantDialog } from "@/lib/providers/AssistantProvider";
 import { cn } from "@/lib/utils";
 import { RecipeGrid } from "./browser/RecipeGrid";
+import { RecipeBrowserSkeleton } from "./browser/RecipeBrowserSkeleton";
 import { RecipeFilterSidebar } from "./browser/RecipeFilterSidebar";
 import { RecipeFilters } from "./RecipeFilters";
 
@@ -61,6 +65,7 @@ interface HeroSectionProps {
   activeQuickFilters: Set<string>;
   onQuickFilterToggle: (filterId: string) => void;
   quickFilterOptions: QuickFilter[];
+  onGenerateRecipe?: () => void;
   title?: string;
   description?: string;
 }
@@ -73,10 +78,14 @@ function HeroSection({
   activeQuickFilters,
   onQuickFilterToggle,
   quickFilterOptions,
+  onGenerateRecipe,
   title = "Find your next meal",
   description,
 }: HeroSectionProps) {
-  const defaultDescription = `Browse through your collection of ${recipeCount} saved recipes`;
+  const defaultDescription =
+    recipeCount === 0
+      ? "Build your personal cookbook — every recipe you save is ready to plan and shop from"
+      : `Browse through your collection of ${recipeCount} saved recipes`;
   const displayDescription = description ?? defaultDescription;
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -139,14 +148,26 @@ function HeroSection({
           )}
         </div>
 
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto flex flex-wrap items-center gap-2">
           <FilterBar
             options={quickFilterOptions}
             activeIds={activeQuickFilters}
             onToggle={onQuickFilterToggle}
             variant="glass"
             align="start"
+            className="flex-1"
           />
+          {onGenerateRecipe && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onGenerateRecipe}
+              className="gap-1.5 font-medium rounded-xl bg-elevated/90 backdrop-blur-sm shadow-sm border border-primary/40 text-primary hover:text-primary hover:border-primary hover:bg-primary/10"
+            >
+              <Sparkles className="h-4 w-4" strokeWidth={1.5} />
+              Generate a recipe
+            </Button>
+          )}
         </div>
       </div>
     </div>
@@ -258,6 +279,8 @@ export function RecipeBrowserView({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { settings } = useSettings();
+  const { openWizard } = useRecipeWizardDialog();
+  const { openAssistant } = useAssistantDialog();
   const toggleFavoriteMutation = useToggleFavorite();
   const { saveFilterState, loadFilterState, clearFilterState } = useRecipeFilterPersistence();
   const restoredRef = useRef(false);
@@ -599,24 +622,21 @@ export function RecipeBrowserView({
 
   const hasActiveFilters = hookHasActiveFilters || filters.searchTerm.length > 0;
 
+  // "Surprise me" (select mode) — random pick from the currently filtered
+  // list, selected exactly as a card tap would be. Already-selected recipes
+  // are excluded so it never toggles one off.
+  const handleSurpriseMe = () => {
+    const pool = filteredRecipes.filter((r) => !selectedIds.has(r.id));
+    if (pool.length === 0) return;
+    onSelect?.(pool[Math.floor(Math.random() * pool.length)]);
+  };
+
   // --------------------------------------------------------------------------
   // Render
   // --------------------------------------------------------------------------
 
   if (isLoading) {
-    return (
-      <PageLayout
-        hero={<Skeleton className="h-48 w-full" shape="none" />}
-      >
-        <div className="mb-6"><Skeleton className="h-12 w-full" /></div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} size="card" className="h-64" />
-          ))}
-        </div>
-        <span className="sr-only">Loading recipes...</span>
-      </PageLayout>
-    );
+    return <RecipeBrowserSkeleton />;
   }
 
   if (error) {
@@ -635,6 +655,17 @@ export function RecipeBrowserView({
   }
 
   const isSelectMode = mode === "select";
+
+  const surpriseButton = isSelectMode ? (
+    <Button
+      variant="outline"
+      onClick={handleSurpriseMe}
+      disabled={filteredRecipes.length === 0}
+    >
+      <Dices className="size-4" strokeWidth={1.5} />
+      Surprise me
+    </Button>
+  ) : null;
 
   const heroElement = isSelectMode ? (
     <CompactSearchHeader
@@ -655,6 +686,7 @@ export function RecipeBrowserView({
       activeQuickFilters={activeQuickFilters}
       onQuickFilterToggle={handleQuickFilterToggle}
       quickFilterOptions={visibleQuickFilters}
+      onGenerateRecipe={openAssistant}
       title={heroTitle}
       description={heroDescription}
     />
@@ -730,7 +762,7 @@ export function RecipeBrowserView({
           onRemoveFilter={handleRemoveFilter}
           onClearAllFilters={clearAll}
           onBack={onBack}
-          actionButton={actionButton}
+          actionButton={actionButton ?? surpriseButton}
         />
       </div>
 
@@ -757,6 +789,8 @@ export function RecipeBrowserView({
         onRecipeClick={handleRecipeClick}
         onFavoriteToggle={handleFavoriteToggle}
         onClearFilters={clearAll}
+        onAddRecipe={isSelectMode ? undefined : () => openWizard()}
+        onGenerateRecipe={isSelectMode ? undefined : openAssistant}
         selectionMode={isSelectMode}
         selectedIds={selectedIds}
       />

@@ -1,4 +1,4 @@
-import { ChefHat } from "lucide-react";
+import { ChefHat, Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RecipeCard, RecipeCardGrid } from "@/components/recipe/RecipeCard";
 import type { RecipeCardData } from "@/types/recipe";
@@ -9,6 +9,10 @@ export interface RecipeGridProps {
   onRecipeClick: (recipe: RecipeCardData) => void;
   onFavoriteToggle: (recipe: RecipeCardData) => void;
   onClearFilters: () => void;
+  /** Empty-collection CTA: opens the recipe wizard (browse mode only) */
+  onAddRecipe?: () => void;
+  /** Empty-collection CTA: opens the Meal Genie assistant (browse mode only) */
+  onGenerateRecipe?: () => void;
   /** Select mode configuration */
   selectionMode?: boolean;
   selectedIds?: Set<string | number>;
@@ -20,6 +24,8 @@ export function RecipeGrid({
   onRecipeClick,
   onFavoriteToggle,
   onClearFilters,
+  onAddRecipe,
+  onGenerateRecipe,
   selectionMode = false,
   selectedIds = new Set(),
 }: RecipeGridProps) {
@@ -29,16 +35,35 @@ export function RecipeGrid({
         <div className="p-4 bg-elevated rounded-full mb-4">
           <ChefHat className="h-12 w-12 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-semibold text-foreground mb-2">No Recipes Found</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-2">
+          {hasActiveFilters ? "No Recipes Found" : "Start your collection"}
+        </h3>
         <p className="text-sm text-muted-foreground max-w-sm mb-4">
           {hasActiveFilters
             ? "Try adjusting your filters or search term to find more recipes."
-            : "Your recipe collection is empty. Start by adding some recipes!"}
+            : "Save your first recipe and it'll be ready to plan and shop from."}
         </p>
-        {hasActiveFilters && (
+        {hasActiveFilters ? (
           <Button variant="outline" onClick={onClearFilters}>
             Clear All Filters
           </Button>
+        ) : (
+          (onAddRecipe || onGenerateRecipe) && (
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              {onAddRecipe && (
+                <Button onClick={onAddRecipe}>
+                  <Plus className="size-4" strokeWidth={1.5} />
+                  Add your first recipe
+                </Button>
+              )}
+              {onGenerateRecipe && (
+                <Button variant="outline" onClick={onGenerateRecipe}>
+                  <Sparkles className="size-4" strokeWidth={1.5} />
+                  Generate with Meal Genie
+                </Button>
+              )}
+            </div>
+          )
         )}
       </div>
     );

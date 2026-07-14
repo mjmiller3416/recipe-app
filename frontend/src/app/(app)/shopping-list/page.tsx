@@ -1,0 +1,16 @@
+import type { Metadata } from "next";
+import { ShoppingListView } from "./_components/ShoppingListView";
+
+export const metadata: Metadata = { title: "Shopping List" };
+
+/**
+ * Shopping List Page
+ *
+ * Route: /shopping-list
+ *
+ * Displays the user's shopping list with items grouped by category.
+ * Auto-syncs with active planner entries on load.
+ */
+export default function ShoppingListPage() {
+  return <ShoppingListView />;
+}

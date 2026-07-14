@@ -90,6 +90,7 @@ pytest tests/test_file.py -v
 
 **Frontend:**
 - `NEXT_PUBLIC_API_URL` - Frontend API URL (default: `http://localhost:8000`)
+- `NEXT_PUBLIC_APP_URL` - Public site URL for `metadataBase`/OG tags (default: `http://localhost:3000`; set to prod URL on Railway)
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` - Clerk auth (frontend)
 - `CLERK_SECRET_KEY` - Clerk auth (frontend middleware)
 
@@ -146,7 +147,7 @@ Models (app/models/)    # SQLAlchemy ORM
   - `hooks/ui/` - UI behavior hooks (drag-and-drop, chat scroll, unsaved changes)
 - `lib/` - API client, utilities, constants, providers:
   - `lib/api/` - Domain-split API modules with barrel re-export (18 modules)
-  - `lib/providers/` - React Context providers (QueryProvider, NavActionsProvider, RecipeWizardProvider, MealCreationProvider)
+  - `lib/providers/` - React Context providers (QueryProvider, NavActionsProvider, RecipeWizardProvider, AssistantProvider)
   - `lib/api-client.ts` / `lib/api-server.ts` - Authenticated fetch wrappers
   - Utilities: filterUtils, formValidation, imageUtils, quantityUtils, recipeCardMapper, config, constants
 - `types/` - TypeScript types split by domain (recipe.ts, meal.ts, planner.ts, shopping.ts, ai.ts, common.ts, category.ts, ingredient-settings.ts, admin.ts)
@@ -174,7 +175,7 @@ import { recipeApi, plannerApi, shoppingApi, AssistantApi, ... } from "@/lib/api
 - Server state: React Query (hooks in `hooks/api/`)
 - Local state: React useState
 - Form state: React Hook Form + Zod validation schemas
-- Context state: React Context providers (RecipeWizardProvider, MealCreationProvider, NavActionsProvider)
+- Context state: React Context providers (RecipeWizardProvider, AssistantProvider, NavActionsProvider)
 - Persisted state: Custom hooks with localStorage (in `hooks/persistence/`: `useSettings`, `useChatHistory`, `useRecentRecipes`, `useRecipeFilterPersistence`, `useUnitConversionRules`)
 
 **Form Components**: Use React Hook Form with Zod schemas and shadcn/ui components. Never hardcode colors.

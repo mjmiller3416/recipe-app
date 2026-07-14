@@ -1,36 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { MotionConfig } from "framer-motion";
 import { TopNav } from "@/components/layout/TopNav";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { AssistantPopup } from "@/components/assistant/AssistantPopup";
+import { AssistantFab } from "@/components/assistant/AssistantFab";
 import { NavActionsProvider } from "@/lib/providers/NavActionsProvider";
+import {
+  AssistantProvider,
+  useAssistantDialog,
+} from "@/lib/providers/AssistantProvider";
 import {
   RecipeWizardProvider,
   useRecipeWizardDialog,
 } from "@/lib/providers/RecipeWizardProvider";
-import {
-  MealCreationProvider,
-  useMealCreationDialog,
-} from "@/lib/providers/MealCreationProvider";
-import { RecipeWizardView } from "@/app/recipes/_components/wizard/RecipeWizardView";
-import { MealCreationOverlay } from "@/app/meal-planner/_components/MealCreationOverlay";
+import { RecipeWizardView } from "@/app/(app)/recipes/_components/wizard/RecipeWizardView";
 import { ScrollToTopButton } from "@/components/common/ScrollToTopButton";
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
-  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  const {
+    isOpen: assistantOpen,
+    setOpen: setAssistantOpen,
+    openAssistant,
+  } = useAssistantDialog();
 
   const { isOpen, setOpen, mode, editRecipeId, generatedSeed, seedKey } = useRecipeWizardDialog();
-  const { isOpen: mealCreationOpen, setOpen: setMealCreationOpen } = useMealCreationDialog();
 
   return (
     <div className="flex flex-col min-h-screen print:block print:min-h-0">
-      <TopNav onOpenAssistant={() => setIsAssistantOpen(true)} />
-      <MobileBottomNav onOpenAssistant={() => setIsAssistantOpen(true)} />
+      <TopNav onOpenAssistant={openAssistant} />
+      <MobileBottomNav onOpenAssistant={openAssistant} />
       <main className="flex-1 pb-20 md:pb-0 print:pb-0">
         {children}
       </main>
-      <AssistantPopup open={isAssistantOpen} onOpenChange={setIsAssistantOpen} />
+      <AssistantFab />
+      <AssistantPopup open={assistantOpen} onOpenChange={setAssistantOpen} />
       <RecipeWizardView
         key={
           mode === "edit"
@@ -45,7 +49,6 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
         recipeId={editRecipeId}
         initialGenerated={generatedSeed}
       />
-      <MealCreationOverlay open={mealCreationOpen} onOpenChange={setMealCreationOpen} />
       <ScrollToTopButton />
     </div>
   );
@@ -53,12 +56,14 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <NavActionsProvider>
-      <RecipeWizardProvider>
-        <MealCreationProvider>
-          <AppLayoutInner>{children}</AppLayoutInner>
-        </MealCreationProvider>
-      </RecipeWizardProvider>
-    </NavActionsProvider>
+    <MotionConfig reducedMotion="user">
+      <NavActionsProvider>
+        <AssistantProvider>
+          <RecipeWizardProvider>
+            <AppLayoutInner>{children}</AppLayoutInner>
+          </RecipeWizardProvider>
+        </AssistantProvider>
+      </NavActionsProvider>
+    </MotionConfig>
   );
 }

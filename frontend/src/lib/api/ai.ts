@@ -11,6 +11,8 @@ import type {
   NutritionEstimationResponseDTO,
   RecipeGenerationRequestDTO,
   RecipeGenerationResponseDTO,
+  RecipeImportRequestDTO,
+  RecipeImportResponseDTO,
 } from "@/types/ai";
 import { fetchApi } from "./base";
 
@@ -125,6 +127,27 @@ export const recipeGenerationApi = {
   ): Promise<RecipeGenerationResponseDTO> =>
     fetchApi<RecipeGenerationResponseDTO>(
       "/api/ai/wizard-generation",
+      {
+        method: "POST",
+        body: JSON.stringify(request),
+      },
+      token
+    ),
+};
+
+export const recipeImportApi = {
+  /**
+   * Import a recipe from a website URL.
+   * @param request - The URL to import and whether to include the source photo.
+   * @param token - Optional auth token for authenticated requests.
+   * @returns Response with normalized recipe, site nutrition, and source image.
+   */
+  importFromUrl: (
+    request: RecipeImportRequestDTO,
+    token?: string | null
+  ): Promise<RecipeImportResponseDTO> =>
+    fetchApi<RecipeImportResponseDTO>(
+      "/api/ai/recipe-import",
       {
         method: "POST",
         body: JSON.stringify(request),

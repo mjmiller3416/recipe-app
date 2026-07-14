@@ -59,6 +59,8 @@ class Recipe(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     is_ai_generated: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    # Original URL when the recipe was imported from a website (None otherwise)
+    source_url: Mapped[Optional[str]] = mapped_column(String(2048), nullable=True)
 
     # User ownership
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)

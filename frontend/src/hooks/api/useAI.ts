@@ -1,16 +1,14 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
 import {
-  cookingTipApi,
   mealSuggestionsApi,
   imageGenerationApi,
   nutritionEstimationApi,
   recipeGenerationApi,
   AssistantApi,
 } from "@/lib/api";
-import { aiQueryKeys } from "./queryKeys";
 import type {
   ImageGenerationType,
   MealSuggestionsRequestDTO,
@@ -18,28 +16,6 @@ import type {
   RecipeGenerationRequestDTO,
   AssistantMessage,
 } from "@/types/ai";
-
-// ============================================================================
-// QUERY HOOKS
-// ============================================================================
-
-/**
- * Fetch a random cooking tip from AI.
- * Cached for the session - use refetch to get a new tip.
- */
-export function useCookingTip() {
-  const { getToken } = useAuth();
-
-  return useQuery({
-    queryKey: aiQueryKeys.cookingTip(),
-    queryFn: async () => {
-      const token = await getToken();
-      return cookingTipApi.getTip(token);
-    },
-    staleTime: Infinity, // Never auto-refetch - user must manually refresh
-    gcTime: 1000 * 60 * 30, // Keep in cache for 30 minutes
-  });
-}
 
 // ============================================================================
 // MUTATION HOOKS
@@ -178,20 +154,3 @@ export function useRecipeGenerate() {
   });
 }
 
-
-
-// ============================================================================
-// UTILITY HOOKS
-// ============================================================================
-
-/**
- * Manually refresh the cooking tip.
- * Call this when user requests a new tip.
- */
-export function useRefreshCookingTip() {
-  const queryClient = useQueryClient();
-
-  return () => {
-    queryClient.invalidateQueries({ queryKey: aiQueryKeys.cookingTip() });
-  };
-}

@@ -86,6 +86,7 @@ class RecipeRepo:
             reference_image_path=recipe_dto.reference_image_path,
             banner_image_path=recipe_dto.banner_image_path,
             is_ai_generated=recipe_dto.is_ai_generated,
+            source_url=recipe_dto.source_url,
             user_id=user_id,
         )
         self.session.add(recipe)

@@ -61,6 +61,7 @@ class UserUsage(Base):
     ai_suggestions_requested: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     ai_assistant_messages: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     recipes_created: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    recipes_imported: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(

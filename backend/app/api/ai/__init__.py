@@ -6,6 +6,7 @@ from .image_generation import router as image_generation_router
 from .meal_suggestions import router as meal_suggestions_router
 from .nutrition_estimation import router as nutrition_estimation_router
 from .recipe_generation import router as recipe_generation_router
+from .recipe_import import router as recipe_import_router
 
 __all__ = [
     "cooking_tips_router",
@@ -14,4 +15,5 @@ __all__ = [
     "meal_suggestions_router",
     "nutrition_estimation_router",
     "recipe_generation_router",
+    "recipe_import_router",
 ]

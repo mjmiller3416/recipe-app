@@ -190,3 +190,18 @@ export interface RecipeGenerationResponseDTO {
   banner_image_data?: string;
   error?: string;
 }
+
+// ============================================================================
+// Recipe Import Types (import a recipe from a website URL)
+// ============================================================================
+
+export interface RecipeImportRequestDTO {
+  url: string;
+  include_source_image?: boolean;
+}
+
+// Shape-compatible with RecipeGenerationResponseDTO so the wizard prefill
+// path (populateFromGeneration) works for both flows.
+export interface RecipeImportResponseDTO extends RecipeGenerationResponseDTO {
+  source_url?: string;
+}
