@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { FavoriteButton } from "@/components/common/FavoriteButton";
+import { backOrFallback } from "@/lib/navigation";
 import type { RecipeResponseDTO, NutritionFactsResponseDTO } from "@/types/recipe";
 
 import { sortCategoryEntries } from "./recipe-utils";
@@ -167,7 +168,7 @@ export function FullRecipeView() {
                 variant="outline"
                 size="sm"
                 className="gap-2 bg-background/80 backdrop-blur-sm hover:bg-background"
-                onClick={() => router.back()}
+                onClick={() => backOrFallback(router, "/recipes")}
               >
                 <ArrowLeft className="w-4 h-4" />
                 Back

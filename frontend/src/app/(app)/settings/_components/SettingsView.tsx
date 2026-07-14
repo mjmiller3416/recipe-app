@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { SidebarPageSkeleton } from "@/components/layout/SidebarPageSkeleton";
 import { DataManagementSection } from "./sections/DataManagementSection";
 import { useSettings, DEFAULT_SETTINGS } from "@/hooks/persistence/useSettings";
 
@@ -118,16 +119,9 @@ export function SettingsView() {
     }
   };
 
-  // Show loading state
+  // Show loading state (skeleton matches the final sidebar+content layout)
   if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground">Loading settings...</p>
-        </div>
-      </div>
-    );
+    return <SidebarPageSkeleton />;
   }
 
   return (

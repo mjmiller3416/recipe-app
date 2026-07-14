@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { CalendarPlus, Check, Plus, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +38,8 @@ export function AddToMealPlanDialog({
   onOpenChange,
   onSuccess,
 }: AddToMealPlanDialogProps) {
+  const router = useRouter();
+
   // Mutation hooks
   const addSideToMealMutation = useAddSideToMeal();
   const createMealMutation = useCreateMeal();
@@ -72,6 +76,15 @@ export function AddToMealPlanDialog({
   const showSuccess = () => {
     setAdded(true);
     onSuccess?.();
+    toast.success(
+      mode === "create" ? "Meal added to your planner" : "Added as a side dish",
+      {
+        action: {
+          label: "View planner",
+          onClick: () => router.push("/meal-planner"),
+        },
+      }
+    );
     setTimeout(() => {
       handleOpenChange(false);
     }, 1500);
@@ -207,7 +220,7 @@ export function AddToMealPlanDialog({
                   <p className="font-medium text-primary">Create new meal</p>
                 </div>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  Add "{recipe.recipe_name}" as the main dish
+                  Add &quot;{recipe.recipe_name}&quot; as the main dish
                 </p>
               </button>
 

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { PageLayout } from "@/components/layout/PageLayout";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ShoppingCategory } from "./ShoppingCategory";
+import { ShoppingListSkeleton } from "./ShoppingListSkeleton";
 import {
   usePlannerEntries,
   useMeals,
@@ -14,7 +15,7 @@ import {
   useClearManualItems,
 } from "@/hooks/api";
 import type { ShoppingItemResponseDTO } from "@/types/shopping";
-import { ShoppingCart, Eye, EyeOff, Filter, X, Trash2, Clock, CheckCircle, Package } from "lucide-react";
+import { ShoppingCart, CalendarDays, Eye, EyeOff, Filter, X, Trash2, Clock, CheckCircle, Package } from "lucide-react";
 import { StatCard } from "@/components/common/StatCard";
 import {
   AlertDialog,
@@ -322,30 +323,17 @@ export function ShoppingListView() {
     </>
   );
 
-  // Loading skeleton
+  // Loading skeleton (matches final layout; same component as the route loading boundary)
   if (isLoading) {
-    return (
-      <PageLayout>
-        <div className="space-y-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="space-y-2">
-              <Skeleton className="w-24 h-4" />
-              <div className="space-y-1">
-                {[1, 2, 3].map((j) => (
-                  <Skeleton key={j} className="w-full h-12 rounded-xl" />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </PageLayout>
-    );
+    return <ShoppingListSkeleton />;
   }
 
   // Error state
   if (error) {
     return (
       <PageLayout
+        title="Shopping List"
+        description="Everything you need, consolidated and ready for the store."
         actions={headerActions}
       >
         <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -368,6 +356,8 @@ export function ShoppingListView() {
   if (!hasItems) {
     return (
       <PageLayout
+        title="Shopping List"
+        description="Everything you need, consolidated and ready for the store."
         actions={headerActions}
       >
         {/* Add manual item form - also available when list is empty */}
@@ -380,9 +370,15 @@ export function ShoppingListView() {
           <h3 className="mb-2 text-lg font-semibold text-foreground">
             Your shopping list is empty
           </h3>
-          <p className="max-w-sm text-sm text-muted-foreground">
+          <p className="max-w-sm mb-4 text-sm text-muted-foreground">
             Add meals to your planner or use the form above to add items manually.
           </p>
+          <Button asChild>
+            <Link href="/meal-planner">
+              <CalendarDays className="size-4" strokeWidth={1.5} />
+              Open meal planner
+            </Link>
+          </Button>
         </div>
       </PageLayout>
     );

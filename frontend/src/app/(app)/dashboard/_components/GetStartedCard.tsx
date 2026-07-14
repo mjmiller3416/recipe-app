@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import {
   CalendarDays,
   Check,
@@ -14,7 +15,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
-import { useMealCreationDialog } from "@/lib/providers/MealCreationProvider";
 import { useAssistantDialog } from "@/lib/providers/AssistantProvider";
 
 interface GetStartedCardProps {
@@ -28,8 +28,8 @@ interface GetStartedCardProps {
  * experience with one three-step path to a planned week.
  */
 export function GetStartedCard({ recipesDone, planDone }: GetStartedCardProps) {
+  const router = useRouter();
   const { openWizard } = useRecipeWizardDialog();
-  const { openMealCreation } = useMealCreationDialog();
   const { openAssistant } = useAssistantDialog();
 
   return (
@@ -63,7 +63,7 @@ export function GetStartedCard({ recipesDone, planDone }: GetStartedCardProps) {
           <div className="flex flex-wrap items-center gap-3">
             <Button
               variant="outline"
-              onClick={openMealCreation}
+              onClick={() => router.push("/meal-planner?addMeal=1")}
               disabled={!recipesDone}
             >
               <CalendarDays className="size-4" strokeWidth={1.5} />
@@ -129,7 +129,7 @@ function SetupStep({ number, done, title, children }: SetupStepProps) {
  * planner entry (persisted via useGetStartedComplete).
  */
 export function GetStartedBanner() {
-  const { openMealCreation } = useMealCreationDialog();
+  const router = useRouter();
 
   return (
     <Card className="flex-row items-center gap-3 p-4 shadow-raised">
@@ -140,7 +140,11 @@ export function GetStartedBanner() {
           Next: plan your first meal — your shopping list will build itself.
         </span>
       </p>
-      <Button size="sm" onClick={openMealCreation} className="shrink-0">
+      <Button
+        size="sm"
+        onClick={() => router.push("/meal-planner?addMeal=1")}
+        className="shrink-0"
+      >
         Plan a meal
       </Button>
     </Card>

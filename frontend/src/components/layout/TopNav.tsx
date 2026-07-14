@@ -55,7 +55,6 @@ import { cn } from "@/lib/utils";
 import { useShoppingList, useRefreshShoppingList, useCurrentUser } from "@/hooks/api";
 import { useNavActions } from "@/lib/providers/NavActionsProvider";
 import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
-import { useMealCreationDialog } from "@/lib/providers/MealCreationProvider";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TopNavLink — Inline navigation link for the top nav bar
@@ -200,8 +199,8 @@ function NavButton({
 // ─────────────────────────────────────────────────────────────────────────────
 
 function TopNavAddMenu() {
+  const router = useRouter();
   const { openWizard, isOpen: wizardOpen } = useRecipeWizardDialog();
-  const { openMealCreation } = useMealCreationDialog();
 
   return (
     <DropdownMenu>
@@ -226,7 +225,10 @@ function TopNavAddMenu() {
           <BookOpen className="h-4 w-4" strokeWidth={1.5} />
           Add Recipe
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => openMealCreation()} className="gap-2">
+        <DropdownMenuItem
+          onClick={() => router.push("/meal-planner?addMeal=1")}
+          className="gap-2"
+        >
           <UtensilsCrossed className="h-4 w-4" strokeWidth={1.5} />
           Add Meal
         </DropdownMenuItem>
@@ -389,7 +391,7 @@ function TopNavUserMenu({ onOpenAssistant, onOpenFeedback }: TopNavUserMenuProps
 const navigation = [
   { name: "Home", href: "/dashboard", icon: LayoutDashboard },
   { name: "Meal Planner", href: "/meal-planner", icon: CalendarDays },
-  { name: "Recipe Browser", href: "/recipes", icon: BookOpen },
+  { name: "Recipes", href: "/recipes", icon: BookOpen },
   { name: "Shopping List", href: "/shopping-list", icon: ShoppingCart, hasBadge: true },
 ];
 
@@ -399,9 +401,9 @@ interface TopNavProps {
 
 export function TopNav({ onOpenAssistant }: TopNavProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { actions: navActions, isPinned } = useNavActions();
   const { openWizard } = useRecipeWizardDialog();
-  const { openMealCreation } = useMealCreationDialog();
 
   // Sheet state (hamburger menu for md-to-lg)
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -674,7 +676,7 @@ export function TopNav({ onOpenAssistant }: TopNavProps) {
               variant="ghost"
               onClick={() => {
                 setSheetOpen(false);
-                openMealCreation();
+                router.push("/meal-planner?addMeal=1");
               }}
               className={cn(
                 "flex items-center justify-start gap-3 px-3 py-3 h-auto rounded-xl w-full",

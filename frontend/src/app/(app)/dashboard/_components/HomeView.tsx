@@ -116,9 +116,9 @@ export function HomeView() {
         headerContent={
           <PageHeaderContent>
             <div className="flex flex-1 flex-col gap-1.5">
-              <h2 className="text-2xl font-semibold text-foreground">
+              <h1 className="text-2xl font-semibold text-foreground">
                 {`${getGreeting()}, ${firstName} 👋`}
-              </h2>
+              </h1>
             </div>
           </PageHeaderContent>
         }
@@ -148,9 +148,9 @@ export function HomeView() {
       headerContent={
         <PageHeaderContent>
           <div className="flex flex-1 flex-col gap-1.5">
-            <h2 className="text-2xl font-semibold text-foreground">
+            <h1 className="text-2xl font-semibold text-foreground">
               {`${getGreeting()}, ${firstName} 👋`}
-            </h2>
+            </h1>
             {subtitle ? (
               <p className="text-md text-muted-foreground">{subtitle}</p>
             ) : (

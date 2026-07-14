@@ -5,6 +5,7 @@ import { Shield, MessageSquareMore, Database } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageLayout } from "@/components/layout/PageLayout";
+import { SidebarPageSkeleton } from "@/components/layout/SidebarPageSkeleton";
 import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/api";
 import { AdminUsersSection } from "./AdminUsersSection";
@@ -45,16 +46,9 @@ export function AdminView() {
   const [activeTab, setActiveTab] = useState<AdminTab>("users");
   const { isAdmin, isLoading } = useCurrentUser();
 
-  // Show loading state
+  // Show loading state (skeleton matches the final sidebar+content layout)
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground">Loading admin panel...</p>
-        </div>
-      </div>
-    );
+    return <SidebarPageSkeleton />;
   }
 
   // Block non-admin users

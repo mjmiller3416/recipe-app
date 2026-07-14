@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -38,8 +37,11 @@ import type { RecipeCardData } from "@/types/recipe";
 import type { ActiveFilter, FilterOption } from "@/lib/filterUtils";
 import { RecipeSortControls, SORT_OPTIONS, type SortOption, type SortDirection } from "./browser/FilterSortControls";
 import { useNavActions } from "@/lib/providers/NavActionsProvider";
+import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
+import { useAssistantDialog } from "@/lib/providers/AssistantProvider";
 import { cn } from "@/lib/utils";
 import { RecipeGrid } from "./browser/RecipeGrid";
+import { RecipeBrowserSkeleton } from "./browser/RecipeBrowserSkeleton";
 import { RecipeFilterSidebar } from "./browser/RecipeFilterSidebar";
 import { RecipeFilters } from "./RecipeFilters";
 
@@ -76,7 +78,10 @@ function HeroSection({
   title = "Find your next meal",
   description,
 }: HeroSectionProps) {
-  const defaultDescription = `Browse through your collection of ${recipeCount} saved recipes`;
+  const defaultDescription =
+    recipeCount === 0
+      ? "Build your personal cookbook — every recipe you save is ready to plan and shop from"
+      : `Browse through your collection of ${recipeCount} saved recipes`;
   const displayDescription = description ?? defaultDescription;
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -258,6 +263,8 @@ export function RecipeBrowserView({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { settings } = useSettings();
+  const { openWizard } = useRecipeWizardDialog();
+  const { openAssistant } = useAssistantDialog();
   const toggleFavoriteMutation = useToggleFavorite();
   const { saveFilterState, loadFilterState, clearFilterState } = useRecipeFilterPersistence();
   const restoredRef = useRef(false);
@@ -604,19 +611,7 @@ export function RecipeBrowserView({
   // --------------------------------------------------------------------------
 
   if (isLoading) {
-    return (
-      <PageLayout
-        hero={<Skeleton className="h-48 w-full" shape="none" />}
-      >
-        <div className="mb-6"><Skeleton className="h-12 w-full" /></div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} size="card" className="h-64" />
-          ))}
-        </div>
-        <span className="sr-only">Loading recipes...</span>
-      </PageLayout>
-    );
+    return <RecipeBrowserSkeleton />;
   }
 
   if (error) {
@@ -757,6 +752,8 @@ export function RecipeBrowserView({
         onRecipeClick={handleRecipeClick}
         onFavoriteToggle={handleFavoriteToggle}
         onClearFilters={clearAll}
+        onAddRecipe={isSelectMode ? undefined : () => openWizard()}
+        onGenerateRecipe={isSelectMode ? undefined : openAssistant}
         selectionMode={isSelectMode}
         selectedIds={selectedIds}
       />

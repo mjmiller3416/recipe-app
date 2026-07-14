@@ -1,25 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { PageLayout } from "@/components/layout/PageLayout";
 import { Button } from "@/components/ui/button";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   usePlannerEntries,
-  useCreateMeal,
-  useUpdateMeal,
-  useAddToPlanner,
+  useShoppingList,
   useRemoveEntry,
   useMarkComplete,
   useMarkIncomplete,
@@ -33,12 +23,11 @@ import type { PlannerEntryResponseDTO } from "@/types/planner";
 import type { RecipeCardData } from "@/types/recipe";
 import { MealGrid } from "./MealGrid";
 import { MealGridItem } from "./MealGridCard";
+import { MealGridSkeleton } from "./MealPlannerSkeleton";
 import { CompletedDropdown, CompletedMealItem } from "./CompletedDropdown";
 import { SelectedMealCard } from "./meal-display/SelectedMealCard";
-import { RecipePickerDialog } from "./RecipePickerDialog";
-import { MealPreviewDialog } from "./MealPreviewDialog";
-import { AlertTriangle } from "lucide-react";
-import { useUnsavedChanges, setNavigationBypass } from "@/hooks/ui/useUnsavedChanges";
+import { MealCreationOverlay } from "./MealCreationOverlay";
+import { ShoppingCart } from "lucide-react";
 
 // ============================================================================
 // MEAL PLANNER VIEW COMPONENT
@@ -46,14 +35,19 @@ import { useUnsavedChanges, setNavigationBypass } from "@/hooks/ui/useUnsavedCha
 
 export function MealPlannerView() {
   const { getToken } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Fetch planner entries via React Query
-  const { data: entries = [] } = usePlannerEntries();
+  const { data: entries = [], isLoading } = usePlannerEntries();
+
+  // Shopping list badge for the header action (same remaining-count logic as TopNav)
+  const { data: shoppingData } = useShoppingList();
+  const shoppingRemaining = shoppingData
+    ? shoppingData.total_items - shoppingData.checked_items
+    : 0;
 
   // Mutation hooks
-  const createMealMutation = useCreateMeal();
-  const updateMealMutation = useUpdateMeal();
-  const addToPlannerMutation = useAddToPlanner();
   const removeEntryMutation = useRemoveEntry();
   const markCompleteMutation = useMarkComplete();
   const markIncompleteMutation = useMarkIncomplete();
@@ -62,99 +56,70 @@ export function MealPlannerView() {
   const reorderEntriesMutation = useReorderEntries();
   const clearCompletedMutation = useClearCompleted();
 
-  // Local UI state
-  const [selectedEntryId, setSelectedEntryId] = useState<number | null>(null);
+  // Local UI state — selection falls back to the first uncompleted entry
+  // until the user explicitly picks one (replaces the old auto-select effect)
+  const [explicitSelectedEntryId, setSelectedEntryId] = useState<number | null>(null);
+  const selectedEntryId =
+    explicitSelectedEntryId ?? entries.find((e) => !e.is_completed)?.id ?? null;
   const [, setError] = useState<string | null>(null);
   const [mealRefreshKey, setMealRefreshKey] = useState(0);
 
-  // Dialog orchestration state for meal creation/edit flow
-  const [showRecipePicker, setShowRecipePicker] = useState(false);
-  const [showMealPreview, setShowMealPreview] = useState(false);
-  const [pickerMode, setPickerMode] = useState<"main" | "side">("main");
-  const [pendingMain, setPendingMain] = useState<RecipeCardData | null>(null);
-  const [pendingSides, setPendingSides] = useState<RecipeCardData[]>([]);
-  const [isCreatingMeal, setIsCreatingMeal] = useState(false);
-  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  // Meal builder overlay state (the overlay owns the in-progress meal itself)
+  const [overlayOpen, setOverlayOpen] = useState(false);
+  const [overlayMode, setOverlayMode] = useState<"create" | "edit">("create");
   const [editingMealId, setEditingMealId] = useState<number | null>(null);
   const [editingMealName, setEditingMealName] = useState<string | null>(null);
+  const [initialMain, setInitialMain] = useState<RecipeCardData | null>(null);
+  const [initialSides, setInitialSides] = useState<RecipeCardData[]>([]);
 
-  // NOTE: MealPreviewDialog and the discard AlertDialog are rendered in BOTH
-  // the recipe picker conditional return AND the main return. This is intentional —
-  // when showRecipePicker is true, the component returns early with a different
-  // layout, so the dialogs must be duplicated to remain accessible in both states.
-
-  // Track if user has started meal creation (selected a main dish)
-  const hasPendingMeal = !!pendingMain;
-
-  // Helper to reset meal creation/edit state
-  const resetMealCreation = useCallback(() => {
-    setPendingMain(null);
-    setPendingSides([]);
-    setShowMealPreview(false);
-    setShowRecipePicker(false);
+  // Open the meal builder in create mode (used by URL param handler and UI buttons)
+  const openMealCreation = useCallback(() => {
+    setOverlayMode("create");
     setEditingMealId(null);
     setEditingMealName(null);
-  }, []);
+    setInitialMain(null);
+    setInitialSides([]);
+    setOverlayOpen(true);
+  }, [
+    setOverlayMode,
+    setEditingMealId,
+    setEditingMealName,
+    setInitialMain,
+    setInitialSides,
+    setOverlayOpen,
+  ]);
 
-  // Open the meal creation dialog (used by URL param handler and UI buttons)
-  const openMealCreation = useCallback(() => {
-    setPendingMain(null);
-    setPendingSides([]);
-    setPickerMode("main");
-    setShowMealPreview(true);
-  }, []);
-
-  // Unsaved changes hook - handles browser nav and sidebar via SafeLink
-  // Include showRecipePicker so protection is active during recipe selection
-  const {
-    showLeaveDialog,
-    setShowLeaveDialog,
-    confirmLeave,
-    cancelLeave,
-  } = useUnsavedChanges({
-    isDirty: showRecipePicker || hasPendingMeal,
-    onConfirmLeave: resetMealCreation,
-  });
-
-  // Track picker state in a ref for the popstate handler
-  const showRecipePickerRef = useRef(showRecipePicker);
-  showRecipePickerRef.current = showRecipePicker;
-
-  // Handle browser back button when picker is open
-  // This intercepts back button and shows discard dialog instead of navigating away
+  // Global "Add Meal" entry points (TopNav, mobile More sheet, Home first-run
+  // flow) navigate to /meal-planner?addMeal=1 — open the flow and clean the URL
   useEffect(() => {
-    if (!showRecipePicker) return;
-
-    // Push a guard state when picker opens
-    window.history.pushState({ pickerGuard: true }, "", window.location.href);
-
-    const handlePopState = () => {
-      if (showRecipePickerRef.current) {
-        // Temporarily bypass the useUnsavedChanges handler
-        setNavigationBypass(true);
-        // Re-push guard to stay on page
-        window.history.pushState({ pickerGuard: true }, "", window.location.href);
-        // Show the discard dialog
-        setShowDiscardDialog(true);
-        // Reset bypass after a short delay
-        setTimeout(() => setNavigationBypass(false), 100);
-      }
-    };
-
-    // Use capture phase to run before other listeners
-    window.addEventListener("popstate", handlePopState, true);
-    return () => window.removeEventListener("popstate", handlePopState, true);
-  }, [showRecipePicker]);
-
-  // Auto-select first uncompleted entry when entries load
-  const hasAutoSelected = useRef(false);
-  useEffect(() => {
-    if (entries.length > 0 && selectedEntryId === null && !hasAutoSelected.current) {
-      hasAutoSelected.current = true;
-      const firstUncompleted = entries.find((e) => !e.is_completed);
-      setSelectedEntryId(firstUncompleted?.id ?? null);
+    if (searchParams.get("addMeal")) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing FROM the URL (external system) into dialog state
+      openMealCreation();
+      router.replace("/meal-planner", { scroll: false });
     }
-  }, [entries, selectedEntryId]);
+  }, [searchParams, openMealCreation, router]);
+
+  // Clear edit-mode prefill whenever the overlay closes
+  const handleOverlayOpenChange = useCallback(
+    (open: boolean) => {
+      setOverlayOpen(open);
+      if (!open) {
+        setOverlayMode("create");
+        setEditingMealId(null);
+        setEditingMealName(null);
+        setInitialMain(null);
+        setInitialSides([]);
+      }
+    },
+    [
+      setOverlayOpen,
+      setOverlayMode,
+      setEditingMealId,
+      setEditingMealName,
+      setInitialMain,
+      setInitialSides,
+    ]
+  );
 
   // Get the selected entry to derive meal_id for SelectedMealCard
   const selectedEntry = entries.find((e) => e.id === selectedEntryId);
@@ -195,159 +160,18 @@ export function MealPlannerView() {
     setSelectedEntryId(item.id);
   };
 
-  // Handle a saved meal being added to planner from the Saved Meals tab
-  const handleSavedMealAdded = useCallback(
+  // A meal was created (or a saved meal added) from the overlay — select it
+  const handleEntryCreated = useCallback(
     (entry: PlannerEntryResponseDTO) => {
       setSelectedEntryId(entry.id);
-      resetMealCreation();
     },
-    [resetMealCreation]
+    [setSelectedEntryId]
   );
 
-  // Handle Add Meal button click - opens the meal preview dialog first
-  const handleAddMealClick = openMealCreation;
-
-  // Handle selecting a main dish from the preview dialog
-  const handleSelectMainFromPreview = () => {
-    setPickerMode("main");
-    setShowMealPreview(false);
-    setShowRecipePicker(true);
-  };
-
-  // Handle recipe selection in the picker dialog
-  const handleRecipeSelect = (recipe: RecipeCardData) => {
-    if (pickerMode === "main") {
-      // Selected a main dish - go to preview
-      setPendingMain(recipe);
-      setShowRecipePicker(false);
-      setShowMealPreview(true);
-    } else {
-      // Selecting sides - toggle in the array (can select multiple)
-      setPendingSides((prev) => {
-        const isSelected = prev.some((s) => s.id === recipe.id);
-        if (isSelected) {
-          // Remove if already selected
-          return prev.filter((s) => s.id !== recipe.id);
-        }
-        // Add if not at max (3 sides)
-        if (prev.length >= 3) return prev;
-        return [...prev, recipe];
-      });
-    }
-  };
-
-  // Handle "Add Sides" button click from preview dialog
-  const handleAddSidesClick = () => {
-    setPickerMode("side");
-    setShowMealPreview(false);
-    setShowRecipePicker(true);
-  };
-
-  // Handle "Done" button click when finished selecting sides
-  const handleSidesDone = () => {
-    setShowRecipePicker(false);
-    setShowMealPreview(true);
-  };
-
-  // Handle picker dialog close - always return to preview dialog
-  const handlePickerClose = (open: boolean) => {
-    if (!open) {
-      setShowRecipePicker(false);
-      // Always go back to preview dialog (user can close from there)
-      setShowMealPreview(true);
-    }
-  };
-
-  // Handle meal preview dialog close - show confirmation if meal is in progress
-  const handleMealPreviewClose = (open: boolean) => {
-    if (!open && hasPendingMeal) {
-      // User trying to close with a meal in progress - show confirmation
-      setShowDiscardDialog(true);
-    } else {
-      setShowMealPreview(open);
-    }
-  };
-
-  // Confirm discarding meal creation
-  const handleConfirmDiscard = () => {
-    setShowDiscardDialog(false);
-    resetMealCreation();
-  };
-
-  // Cancel discarding - stay in meal creation
-  const handleCancelDiscard = () => {
-    setShowDiscardDialog(false);
-  };
-
-  // Handle removing main dish from preview
-  const handleRemovePendingMain = () => {
-    setPendingMain(null);
-    setPendingSides([]);
-    // Stay on preview dialog - user can click the empty slot to select a new main
-  };
-
-  // Handle removing a side dish from preview
-  const handleRemovePendingSide = (recipeId: number) => {
-    setPendingSides((prev) => prev.filter((s) => Number(s.id) !== recipeId));
-  };
-
-  // Handle confirming meal creation or update
-  const handleConfirmMeal = async () => {
-    if (!pendingMain) return;
-
-    setIsCreatingMeal(true);
-    try {
-      const sideRecipeIds = pendingSides.map((r) => Number(r.id));
-
-      if (editingMealId) {
-        // Update existing meal using mutation
-        await updateMealMutation.mutateAsync({
-          mealId: editingMealId,
-          data: {
-            meal_name: editingMealName || pendingMain.name,
-            main_recipe_id: Number(pendingMain.id),
-            side_recipe_ids: sideRecipeIds,
-          },
-        });
-
-        // Update local entries state
-        handleMealUpdated();
-
-        // Close dialogs and reset state
-        resetMealCreation();
-      } else {
-        // Create new meal using mutation
-        const meal = await createMealMutation.mutateAsync({
-          meal_name: pendingMain.name,
-          main_recipe_id: Number(pendingMain.id),
-          side_recipe_ids: sideRecipeIds,
-        });
-
-        // Add to planner using mutation
-        const newEntry = await addToPlannerMutation.mutateAsync(meal.id);
-
-        // Select the new entry (cache will be automatically updated by mutations)
-        setSelectedEntryId(newEntry.id);
-
-        // Close dialogs and reset state
-        resetMealCreation();
-      }
-    } catch (err) {
-      console.error("Failed to save meal:", err);
-      const message = err instanceof Error ? err.message : "Failed to save meal";
-
-      // Show user-friendly toast for capacity errors
-      if (message.includes("maximum capacity")) {
-        toast.error("Meal queue is full", {
-          description: "Remove or clear completed meals to add more.",
-        });
-      } else {
-        toast.error(message);
-      }
-    } finally {
-      setIsCreatingMeal(false);
-    }
-  };
+  // A meal edit was saved — refresh the selected meal card
+  const handleMealUpdated = useCallback(() => {
+    setMealRefreshKey((prev) => prev + 1);
+  }, [setMealRefreshKey]);
 
   // Handle marking a meal as complete/incomplete (toggle)
   const handleMarkComplete = () => {
@@ -393,7 +217,7 @@ export function MealPlannerView() {
     }
   };
 
-  // Handle Edit Meal button click - fetches meal data and opens preview dialog in edit mode
+  // Handle Edit Meal button click - fetches meal data and opens the builder in edit mode
   const handleEditMeal = async () => {
     if (!selectedMealId) return;
 
@@ -405,51 +229,42 @@ export function MealPlannerView() {
       setEditingMealName(meal.meal_name);
 
       // Convert main recipe to RecipeCardData format
-      if (meal.main_recipe) {
-        const mainDish: RecipeCardData = {
-          id: meal.main_recipe.id,
-          name: meal.main_recipe.recipe_name,
-          servings: meal.main_recipe.servings ?? 0,
-          totalTime: meal.main_recipe.total_time ?? 0,
-          imageUrl: meal.main_recipe.reference_image_path ?? undefined,
-        };
-        setPendingMain(mainDish);
-      }
+      setInitialMain(
+        meal.main_recipe
+          ? {
+              id: meal.main_recipe.id,
+              name: meal.main_recipe.recipe_name,
+              servings: meal.main_recipe.servings ?? 0,
+              totalTime: meal.main_recipe.total_time ?? 0,
+              imageUrl: meal.main_recipe.reference_image_path ?? undefined,
+            }
+          : null
+      );
 
       // Convert side recipes to RecipeCardData format
-      if (meal.side_recipes && meal.side_recipes.length > 0) {
-        const sides: RecipeCardData[] = meal.side_recipes.map((r) => ({
+      setInitialSides(
+        (meal.side_recipes ?? []).map((r) => ({
           id: r.id,
           name: r.recipe_name,
           servings: r.servings ?? 0,
           totalTime: r.total_time ?? 0,
           imageUrl: r.reference_image_path ?? undefined,
-        }));
-        setPendingSides(sides);
-      } else {
-        setPendingSides([]);
-      }
+        }))
+      );
 
-      // Set edit mode and open dialog
+      // Set edit mode and open the builder
       setEditingMealId(selectedMealId);
-      setShowMealPreview(true);
+      setOverlayMode("edit");
+      setOverlayOpen(true);
     } catch (err) {
       console.error("Failed to fetch meal for editing:", err);
       toast.error("Failed to load meal for editing");
     }
   };
 
-  // Handle Add Side click - opens edit dialog with side picker
+  // Handle Add Side click - opens the builder in edit mode (starts on side picking)
   const handleAddSide = async () => {
-    // Same as edit meal - opens the dialog with existing meal data
     await handleEditMeal();
-  };
-
-
-  // Handle meal updated - cache is automatically updated by mutation
-  const handleMealUpdated = () => {
-    // Trigger SelectedMealCard to re-fetch by changing its key
-    setMealRefreshKey((prev) => prev + 1);
   };
 
   const handleRemoveFromMenu = () => {
@@ -529,81 +344,23 @@ export function MealPlannerView() {
     });
   };
 
-  // When recipe picker is open, render it directly without PageLayout header
-  if (showRecipePicker) {
-    return (
-      <div className="min-h-screen bg-background">
-        <RecipePickerDialog
-          open={showRecipePicker}
-          onOpenChange={handlePickerClose}
-          onSelect={handleRecipeSelect}
-          selectedIds={
-            pickerMode === "side"
-              ? new Set(pendingSides.map((s) => s.id))
-              : pendingMain
-                ? new Set([pendingMain.id])
-                : new Set()
-          }
-          filterMealType={pickerMode === "side" ? "side" : null}
-          title={pickerMode === "side" ? "Add Side Dishes" : "Select Main Dish"}
-          description={
-            pickerMode === "side"
-              ? "Choose up to 3 side dishes for your meal"
-              : "Choose the main dish for your meal"
-          }
-          showDoneButton={pickerMode === "side"}
-          onDone={handleSidesDone}
-        />
-
-        {/* Overlay dialogs still need to render */}
-        <MealPreviewDialog
-          open={showMealPreview}
-          onOpenChange={handleMealPreviewClose}
-          mode={editingMealId ? "edit" : "create"}
-          mainDish={pendingMain}
-          sides={pendingSides}
-          onSelectMain={handleSelectMainFromPreview}
-          onRemoveMain={handleRemovePendingMain}
-          onRemoveSide={handleRemovePendingSide}
-          onAddSides={handleAddSidesClick}
-          onConfirm={handleConfirmMeal}
-          isSubmitting={isCreatingMeal}
-          onSavedMealAdded={handleSavedMealAdded}
-        />
-
-        {/* Discard Confirmation Dialog */}
-        <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-warning" strokeWidth={1.5} />
-                Discard Meal?
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                You have a meal in progress. Are you sure you want to discard it?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleCancelDiscard}>
-                Keep Editing
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleConfirmDiscard}
-                className="bg-destructive hover:bg-destructive/90"
-              >
-                Discard
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-    );
-  }
-
   return (
     <PageLayout
-      title="Plan the Week"
+      title="Meal Planner"
       description="Build your week in minutes. Balanced, realistic, repeatable."
+      actions={
+        <Button variant="outline" asChild>
+          <Link href="/shopping-list">
+            <ShoppingCart className="size-4" strokeWidth={1.5} />
+            Shopping list
+            {shoppingRemaining > 0 && (
+              <span className="min-w-5 h-5 px-1.5 flex items-center justify-center rounded-full text-xs font-semibold bg-error/20 border border-error/30 text-error">
+                {shoppingRemaining > 99 ? "99+" : shoppingRemaining}
+              </span>
+            )}
+          </Link>
+        </Button>
+      }
     >
       {/* STACKED VERTICAL LAYOUT */}
       <div className="space-y-8">
@@ -619,12 +376,14 @@ export function MealPlannerView() {
               onClearCompleted={handleClearCompleted}
             />
           </div>
-          {(gridItems.length > 0 || selectedMealId !== null) && (
+          {isLoading ? (
+            <MealGridSkeleton />
+          ) : (
             <MealGrid
               items={gridItems}
               selectedId={selectedEntryId}
               onItemClick={handleGridItemClick}
-              onAddMealClick={handleAddMealClick}
+              onAddMealClick={openMealCreation}
               onCycleShoppingMode={handleCycleShoppingMode}
               onReorder={handleReorder}
             />
@@ -645,89 +404,35 @@ export function MealPlannerView() {
             onAddSide={handleAddSide}
           />
         ) : (
-          /* Empty state when no meals in planner */
-          <div className="flex flex-col items-center justify-center text-center min-h-96 px-8">
-            <div className="text-muted-foreground mb-6">
-              <p className="text-lg font-medium mb-2">No meals planned yet</p>
-              <p className="text-sm">
-                Add a meal to your weekly menu to get started
-              </p>
+          !isLoading && (
+            /* Empty state when no meals in planner */
+            <div className="flex flex-col items-center justify-center text-center min-h-96 px-8">
+              <div className="text-muted-foreground mb-6">
+                <p className="text-lg font-medium mb-2">No meals planned yet</p>
+                <p className="text-sm">
+                  Add a meal to your weekly menu to get started
+                </p>
+              </div>
+              <Button onClick={openMealCreation} size="default">
+                + Add Meal
+              </Button>
             </div>
-            <Button onClick={handleAddMealClick} size="default">
-              + Add Meal
-            </Button>
-          </div>
+          )
         )}
       </div>
 
-      {/* Meal Preview Dialog - overlay for building/editing a meal */}
-      <MealPreviewDialog
-        open={showMealPreview}
-        onOpenChange={handleMealPreviewClose}
-        mode={editingMealId ? "edit" : "create"}
-        mainDish={pendingMain}
-        sides={pendingSides}
-        onSelectMain={handleSelectMainFromPreview}
-        onRemoveMain={handleRemovePendingMain}
-        onRemoveSide={handleRemovePendingSide}
-        onAddSides={handleAddSidesClick}
-        onConfirm={handleConfirmMeal}
-        isSubmitting={isCreatingMeal}
-        onSavedMealAdded={handleSavedMealAdded}
+      {/* Meal builder — two-panel overlay for creating and editing meals */}
+      <MealCreationOverlay
+        open={overlayOpen}
+        onOpenChange={handleOverlayOpenChange}
+        mode={overlayMode}
+        editingMealId={editingMealId}
+        editingMealName={editingMealName}
+        initialMain={initialMain}
+        initialSides={initialSides}
+        onEntryCreated={handleEntryCreated}
+        onMealUpdated={handleMealUpdated}
       />
-
-      {/* Discard Confirmation Dialog - for dialog close attempts */}
-      <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-warning" strokeWidth={1.5} />
-              Discard Meal?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              You have a meal in progress. Are you sure you want to discard it?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelDiscard}>
-              Keep Editing
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDiscard}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              Discard
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Leave Confirmation Dialog - for browser navigation */}
-      <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-warning" strokeWidth={1.5} />
-              Discard Meal?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              You have a meal in progress. Are you sure you want to leave? Your
-              selection will be lost.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={cancelLeave}>
-              Keep Editing
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmLeave}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              Discard
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </PageLayout>
   );
 }

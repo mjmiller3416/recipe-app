@@ -4,6 +4,7 @@ import {
   UtensilsCrossed,
   ChefHat,
   Salad,
+  Loader2,
   Plus,
   X,
   Clock,
@@ -258,7 +259,11 @@ export function MealPreviewPanel({
           disabled={!isComplete || isSubmitting}
           className="w-full"
         >
-          <Plus className="w-5 h-5" strokeWidth={1.5} />
+          {isSubmitting ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : (
+            <Plus className="w-5 h-5" strokeWidth={1.5} />
+          )}
           {isSubmitting ? submittingText : buttonText}
         </Button>
 

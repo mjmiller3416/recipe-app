@@ -2,8 +2,7 @@
 // Re-export all components for clean imports
 
 export { MealPlannerView } from "./MealPlannerView";
-export { RecipePickerDialog } from "./RecipePickerDialog";
-export { MealPreviewDialog } from "./MealPreviewDialog";
+export { MealCreationOverlay } from "./MealCreationOverlay";
 export { MealGrid } from "./MealGrid";
 export { MealGridCard } from "./MealGridCard";
 export { CompletedDropdown } from "./CompletedDropdown";

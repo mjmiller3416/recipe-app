@@ -38,10 +38,10 @@ interface PageHeaderTitleProps {
 export function PageHeaderTitle({ title, description, className }: PageHeaderTitleProps) {
   if (description) {
     return (
-      <div className={cn("flex flex-1 items-baseline gap-3", className)}>
-        <h2 className="text-2xl font-semibold text-foreground">
+      <div className={cn("flex flex-1 flex-col gap-1.5", className)}>
+        <h1 className="text-2xl font-semibold text-foreground">
           {title}
-        </h2>
+        </h1>
         <p className="text-md text-muted-foreground">
           {description}
         </p>
@@ -50,9 +50,9 @@ export function PageHeaderTitle({ title, description, className }: PageHeaderTit
   }
 
   return (
-    <h2 className={cn("flex-1 text-2xl leading-none font-semibold text-foreground", className)}>
+    <h1 className={cn("flex-1 text-2xl leading-none font-semibold text-foreground", className)}>
       {title}
-    </h2>
+    </h1>
   );
 }
 

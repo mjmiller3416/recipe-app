@@ -8,11 +8,13 @@ import {
   House,
   ShoppingCart,
   EllipsisVertical,
+  Plus,
   Settings,
   MessageSquarePlus,
   Sparkles,
   LogOut,
   Shield,
+  UtensilsCrossed,
   LucideIcon,
 } from "lucide-react";
 import { useUser, useClerk } from "@clerk/nextjs";
@@ -27,6 +29,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useShoppingList, useRefreshShoppingList, useCurrentUser } from "@/hooks/api";
+import { useRecipeWizardDialog } from "@/lib/providers/RecipeWizardProvider";
 
 interface NavItem {
   name: string;
@@ -52,6 +55,7 @@ export function MobileBottomNav({ onOpenAssistant }: MobileBottomNavProps) {
   const { user } = useUser();
   const { signOut } = useClerk();
   const { isAdmin } = useCurrentUser();
+  const { openWizard } = useRecipeWizardDialog();
 
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -227,6 +231,28 @@ export function MobileBottomNav({ onOpenAssistant }: MobileBottomNavProps) {
 
           {/* Menu items */}
           <div className="py-2 pb-[env(safe-area-inset-bottom,8px)]">
+            <Button
+              variant="ghost"
+              onClick={() => handleMenuAction(() => openWizard())}
+              className="flex items-center justify-start gap-3 px-5 py-3 w-full h-auto rounded-none text-sm text-foreground"
+            >
+              <Plus className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+              Add Recipe
+            </Button>
+
+            <Button
+              variant="ghost"
+              onClick={() =>
+                handleMenuAction(() => router.push("/meal-planner?addMeal=1"))
+              }
+              className="flex items-center justify-start gap-3 px-5 py-3 w-full h-auto rounded-none text-sm text-foreground"
+            >
+              <UtensilsCrossed className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+              Add Meal
+            </Button>
+
+            <div className="h-px bg-border mx-5 my-1" />
+
             <SafeLink
               href="/settings"
               onClick={() => setIsMoreOpen(false)}

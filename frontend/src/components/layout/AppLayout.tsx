@@ -12,12 +12,7 @@ import {
   RecipeWizardProvider,
   useRecipeWizardDialog,
 } from "@/lib/providers/RecipeWizardProvider";
-import {
-  MealCreationProvider,
-  useMealCreationDialog,
-} from "@/lib/providers/MealCreationProvider";
 import { RecipeWizardView } from "@/app/(app)/recipes/_components/wizard/RecipeWizardView";
-import { MealCreationOverlay } from "@/app/(app)/meal-planner/_components/MealCreationOverlay";
 import { ScrollToTopButton } from "@/components/common/ScrollToTopButton";
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
@@ -28,7 +23,6 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
   } = useAssistantDialog();
 
   const { isOpen, setOpen, mode, editRecipeId, generatedSeed, seedKey } = useRecipeWizardDialog();
-  const { isOpen: mealCreationOpen, setOpen: setMealCreationOpen } = useMealCreationDialog();
 
   return (
     <div className="flex flex-col min-h-screen print:block print:min-h-0">
@@ -52,7 +46,6 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
         recipeId={editRecipeId}
         initialGenerated={generatedSeed}
       />
-      <MealCreationOverlay open={mealCreationOpen} onOpenChange={setMealCreationOpen} />
       <ScrollToTopButton />
     </div>
   );
@@ -63,9 +56,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     <NavActionsProvider>
       <AssistantProvider>
         <RecipeWizardProvider>
-          <MealCreationProvider>
-            <AppLayoutInner>{children}</AppLayoutInner>
-          </MealCreationProvider>
+          <AppLayoutInner>{children}</AppLayoutInner>
         </RecipeWizardProvider>
       </AssistantProvider>
     </NavActionsProvider>
