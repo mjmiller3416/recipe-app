@@ -139,6 +139,14 @@ class ShoppingRepo:
         """Delete contributions for item."""
         return self.contribution_repo.delete_contributions_for_item(shopping_item_id)
 
+    def add_contributions(self, contributions):
+        """Add multiple contributions in a single flush."""
+        return self.contribution_repo.add_contributions(contributions)
+
+    def delete_contributions_for_items(self, shopping_item_ids):
+        """Delete contributions for multiple items in one statement."""
+        return self.contribution_repo.delete_contributions_for_items(shopping_item_ids)
+
     def get_contributions_by_entry(self, planner_entry_id):
         """Get contributions by entry."""
         return self.contribution_repo.get_contributions_by_entry(planner_entry_id)

@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from ..dtos.recipe_dtos import (
     RecipeCreateDTO,
@@ -387,8 +387,14 @@ class RecipeRepo:
         Returns:
             List[Recipe]: A list of recipes that match the specified criteria.
         """
-        # Start with a base query to select recipes and eager-load ingredients
-        stmt = select(Recipe).options(joinedload(Recipe.ingredients))
+        # Start with a base query to select recipes and eager-load everything the
+        # response DTO touches (groups and nutrition_facts would otherwise lazy-load
+        # per recipe — an N+1 that is painful over a networked database)
+        stmt = select(Recipe).options(
+            joinedload(Recipe.ingredients),
+            selectinload(Recipe.groups),
+            selectinload(Recipe.nutrition_facts),
+        )
 
         # Always filter by user - users only see their own recipes
         stmt = stmt.where(Recipe.user_id == user_id)

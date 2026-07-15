@@ -63,6 +63,24 @@ class ShoppingContributionRepo:
         self.session.flush()
         return contribution
 
+    def add_contributions(
+        self, contributions: List[ShoppingItemContribution]
+    ) -> List[ShoppingItemContribution]:
+        """
+        Add multiple contributions in a single flush.
+
+        Args:
+            contributions: ShoppingItemContribution instances to persist
+
+        Returns:
+            The persisted contributions
+        """
+        if not contributions:
+            return []
+        self.session.add_all(contributions)
+        self.session.flush()
+        return contributions
+
     def delete_contributions_for_entry(self, planner_entry_id: int) -> int:
         """
         Delete all contributions from a specific planner entry.
@@ -91,6 +109,24 @@ class ShoppingContributionRepo:
         """
         stmt = delete(ShoppingItemContribution).where(
             ShoppingItemContribution.shopping_item_id == shopping_item_id
+        )
+        result = self.session.execute(stmt)
+        return result.rowcount
+
+    def delete_contributions_for_items(self, shopping_item_ids: List[int]) -> int:
+        """
+        Delete all contributions for multiple shopping items in one statement.
+
+        Args:
+            shopping_item_ids: IDs of the shopping items to clear
+
+        Returns:
+            Number of contributions deleted
+        """
+        if not shopping_item_ids:
+            return 0
+        stmt = delete(ShoppingItemContribution).where(
+            ShoppingItemContribution.shopping_item_id.in_(shopping_item_ids)
         )
         result = self.session.execute(stmt)
         return result.rowcount
