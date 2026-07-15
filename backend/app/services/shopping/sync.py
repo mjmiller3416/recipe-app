@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from collections import defaultdict
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -20,6 +20,7 @@ from ...dtos.shopping_dtos import (
     ShoppingListGenerationResultDTO,
 )
 from ...models.shopping_item import ShoppingItem
+from ...models.shopping_item_contribution import ShoppingItemContribution
 from ...services.unit_conversion_service import UnitConversionService
 from ...utils.unit_conversion import to_display_unit
 
@@ -111,6 +112,11 @@ class SyncMixin:
                 "contributions_synced": 0,
             }
 
+            # Contribution rewrites are collected across the loop and applied in
+            # two bulk statements (delete + insert) instead of per-item round trips
+            items_to_clear: List[int] = []
+            pending_contributions: List[ShoppingItemContribution] = []
+
             # 4. Process each desired aggregation key
             for agg_key, contributions in desired_contributions.items():
                 # Calculate total base quantity
@@ -157,8 +163,8 @@ class SyncMixin:
                     if display_qty > old_qty + 0.01:
                         item.have = False
 
-                    # Sync contributions
-                    self._sync_item_contributions(item, contributions)
+                    # Existing contributions are cleared in bulk after the loop
+                    items_to_clear.append(item.id)
                     stats["items_updated"] += 1
                 else:
                     # Create new item
@@ -170,18 +176,23 @@ class SyncMixin:
                         aggregation_key=agg_key.lower().strip(),
                     )
                     self.shopping_repo.create_shopping_item(item)
-
-                    # Create contributions
-                    self._sync_item_contributions(item, contributions)
                     stats["items_created"] += 1
 
+                pending_contributions.extend(
+                    self._build_contributions(item, contributions)
+                )
                 stats["contributions_synced"] += len(contributions)
 
                 # Remove from all_recipe_items so we know it's not orphaned
                 if agg_key in all_recipe_items:
                     del all_recipe_items[agg_key]
 
-            # 5. Delete orphaned items (items no longer in desired state)
+            # 5. Apply collected contribution rewrites in bulk
+            # (delete must run before the inserts flush so replaced rows are gone first)
+            self.shopping_repo.delete_contributions_for_items(items_to_clear)
+            self.shopping_repo.add_contributions(pending_contributions)
+
+            # 6. Delete orphaned items (items no longer in desired state)
             for agg_key, item in all_recipe_items.items():
                 if agg_key not in desired_contributions:
                     self.shopping_repo.delete_item(item.id)
@@ -197,28 +208,30 @@ class SyncMixin:
             self.session.rollback()
             raise RuntimeError(f"Failed to sync shopping list: {e}") from e
 
-    def _sync_item_contributions(
+    def _build_contributions(
         self, item: ShoppingItem, desired_contributions: Dict[tuple, Dict[str, Any]]
-    ) -> None:
+    ) -> List[ShoppingItemContribution]:
         """
-        Sync contributions for a single shopping item.
+        Build the desired contribution rows for a single shopping item.
+        Rows are persisted in bulk by the caller.
 
         Args:
-            item: The shopping item to sync contributions for
+            item: The shopping item the contributions belong to
             desired_contributions: Dict of (entry_id, recipe_id) -> contribution data
-        """
-        # Delete all existing contributions for this item
-        self.shopping_repo.delete_contributions_for_item(item.id)
 
-        # Create new contributions
-        for (entry_id, recipe_id), data in desired_contributions.items():
-            self.shopping_repo.add_contribution(
+        Returns:
+            Unpersisted ShoppingItemContribution instances
+        """
+        return [
+            ShoppingItemContribution(
                 shopping_item_id=item.id,
                 recipe_id=recipe_id,
                 planner_entry_id=entry_id,
                 base_quantity=data["base_quantity"],
                 dimension=data["dimension"],
             )
+            for (entry_id, recipe_id), data in desired_contributions.items()
+        ]
 
     # -- Generate Methods (for API compatibility) ------------------------------------------------
     def generate_shopping_list(

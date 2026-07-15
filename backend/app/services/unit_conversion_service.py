@@ -5,7 +5,7 @@ Provides services for unit conversion rule management.
 
 # ── Imports ─────────────────────────────────────────────────────────────────────────────────────────────────
 import math
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -35,6 +35,10 @@ class UnitConversionService:
         self.session = session
         self.user_id = user_id
         self.repo = UnitConversionRepo(session, user_id)
+        # Lazily-built lookup of the user's rules, keyed by
+        # (ingredient_name, from_unit). Loaded once per service instance so
+        # bulk operations (e.g. shopping sync) don't query per item.
+        self._rule_map: Optional[Dict[Tuple[str, str], UnitConversionRule]] = None
 
     # ── CRUD Operations ─────────────────────────────────────────────────────────────────────────────────────
     def get_all(self) -> List[UnitConversionRule]:
@@ -58,6 +62,7 @@ class UnitConversionService:
             )
             self.repo.add(rule)
             self.session.commit()
+            self._invalidate_rule_map()
             return rule
         except SQLAlchemyError as e:
             self.session.rollback()
@@ -84,6 +89,7 @@ class UnitConversionService:
                 rule.round_up = dto.round_up
 
             self.session.commit()
+            self._invalidate_rule_map()
             return rule
         except SQLAlchemyError as e:
             self.session.rollback()
@@ -97,12 +103,26 @@ class UnitConversionService:
                 return False
             self.repo.delete(rule)
             self.session.commit()
+            self._invalidate_rule_map()
             return True
         except SQLAlchemyError as e:
             self.session.rollback()
             raise e
 
     # ── Conversion Logic ────────────────────────────────────────────────────────────────────────────────────
+    def _get_rule_map(self) -> Dict[Tuple[str, str], UnitConversionRule]:
+        """Load all of the user's rules once, keyed by (ingredient_name, from_unit)."""
+        if self._rule_map is None:
+            self._rule_map = {
+                (rule.ingredient_name.lower().strip(), rule.from_unit.lower().strip()): rule
+                for rule in self.repo.get_all()
+            }
+        return self._rule_map
+
+    def _invalidate_rule_map(self) -> None:
+        """Drop the cached rule lookup after a rule mutation."""
+        self._rule_map = None
+
     def apply_conversion(
         self, ingredient_name: str, quantity: float, unit: str
     ) -> Tuple[float, str]:
@@ -118,7 +138,9 @@ class UnitConversionService:
             Tuple of (converted_quantity, converted_unit).
             Returns original values if no matching rule exists.
         """
-        rule = self.repo.find_matching_rule(ingredient_name, unit)
+        rule = self._get_rule_map().get(
+            ((ingredient_name or "").lower().strip(), (unit or "").lower().strip())
+        )
         if not rule:
             return quantity, unit
 
