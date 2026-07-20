@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import Boolean, Enum, Float, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Boolean, Float, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database.base import Base
@@ -35,8 +35,10 @@ class ShoppingItem(Base):
     category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, index=True)
 
     # source and status
+    # "recipe" = planner sync, "manual" = in-app quick add, anything else = the slug of a
+    # trusted external app pushing via the API-key ingest endpoint (e.g. "tada")
     source: Mapped[str] = mapped_column(
-        Enum("recipe", "manual", name="shopping_source"),
+        String(20),
         nullable=False,
         default="manual",
         index=True
@@ -140,6 +142,50 @@ class ShoppingItem(Base):
             source="recipe",
             have=False,
             aggregation_key=aggregation_key
+        )
+
+    @staticmethod
+    def make_external_aggregation_key(source: str, ingredient_name: str) -> str:
+        """Create the dedupe key for an externally pushed item.
+
+        The "external::" prefix keeps these keys out of the recipe sync namespace
+        ("name::dimension"); the (aggregation_key, user_id) unique constraint then
+        enforces one row per (source, name) per user at the DB level.
+        """
+        # Truncate the name portion so the key always fits the 255-char column
+        name = ingredient_name.lower().strip()[:200]
+        return f"external::{source.lower().strip()}::{name}"
+
+    @classmethod
+    def create_external(
+        cls,
+        ingredient_name: str,
+        source: str,
+        quantity: float = 1.0,
+        unit: Optional[str] = None,
+        category: Optional[str] = None
+        ) -> "ShoppingItem":
+        """
+        Create a shopping item pushed by a trusted external app.
+
+        Args:
+            ingredient_name (str): The name of the item.
+            source (str): Slug of the pushing app (e.g. "tada").
+            quantity (float): The quantity of the item.
+            unit (Optional[str]): The unit of measurement, if any.
+            category (Optional[str]): The category for the item (e.g. "household").
+
+        Returns:
+            ShoppingItem: A new external shopping item instance.
+        """
+        return cls(
+            ingredient_name=ingredient_name,
+            quantity=quantity,
+            unit=unit,
+            category=category,
+            source=source,
+            have=False,
+            aggregation_key=cls.make_external_aggregation_key(source, ingredient_name)
         )
 
     @classmethod

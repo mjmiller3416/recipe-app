@@ -99,6 +99,8 @@ pytest tests/test_file.py -v
 - `AUTH_DISABLED` - Bypass JWT for local dev (`true`/`false`)
 - `DEV_USER_ID` - User ID when auth disabled (default: 1)
 - `CLERK_PUBLISHABLE_KEY` - Used to derive JWKS URL
+- `INTEGRATION_API_KEY` - Shared secret for trusted first-party app pushes (X-API-Key header on `/api/shopping/external/*`)
+- `INTEGRATION_USER_ID` - User account that integration pushes are written to
 - `GEMINI_ASSISTANT_API_KEY` - For Meal Genie chat
 - `GEMINI_TIP_API_KEY` - For cooking tips
 - `GEMINI_IMAGE_API_KEY` - For image generation

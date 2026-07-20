@@ -52,6 +52,44 @@ class ManualItemCreateDTO(BaseModel):
             return v.strip()
         return v
 
+class ExternalItemUpsertDTO(BaseModel):
+    """DTO for items pushed by a trusted first-party app via the API-key ingest endpoint.
+
+    Upserts are keyed on (name, source): repeated pushes of the same item update
+    the existing row instead of creating duplicates.
+    """
+
+    model_config = ConfigDict(from_attributes=True)
+
+    name: str = Field(..., min_length=1, max_length=255)
+    quantity: Optional[float] = Field(None, ge=0)
+    unit: Optional[str] = Field(None, max_length=50)
+    source: str = Field(..., min_length=1, max_length=20, pattern=r"^[a-z0-9][a-z0-9_-]*$")
+    category: Optional[str] = Field(None, min_length=1, max_length=100)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def strip_name(cls, v):
+        if isinstance(v, str):
+            return v.strip()
+        return v
+
+    @field_validator("source")
+    @classmethod
+    def reject_reserved_sources(cls, v: str) -> str:
+        if v in ("recipe", "manual"):
+            raise ValueError("source 'recipe' and 'manual' are reserved for in-app items")
+        return v
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def normalize_category(cls, v):
+        # Lowercase to match the app's category-slug convention ("produce", "household")
+        if isinstance(v, str):
+            return v.strip().lower()
+        return v
+
+
 # ── Update DTOs ─────────────────────────────────────────────────────────────────────────────────────────────
 class ShoppingItemUpdateDTO(BaseModel):
     """DTO for updating a shopping item."""
@@ -86,11 +124,20 @@ class ShoppingItemResponseDTO(ShoppingItemBaseDTO):
     """DTO for shopping item responses."""
 
     id: int
-    source: Literal["recipe", "manual"]
+    source: str  # "recipe", "manual", or an external app slug (e.g. "tada")
     have: bool = False
     flagged: bool = False
     state_key: Optional[str] = None
     recipe_sources: List[RecipeSourceDTO] = []  # Recipe sources with usage counts
+
+
+class ExternalItemUpsertResultDTO(BaseModel):
+    """DTO for the result of an external item upsert."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    created: bool  # True if a new row was inserted, False if an existing one was updated
+    item: ShoppingItemResponseDTO
 
 class ShoppingListResponseDTO(BaseModel):
     """DTO for complete shopping list response."""
@@ -110,7 +157,7 @@ class ShoppingListFilterDTO(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    source: Optional[Literal["recipe", "manual"]] = None
+    source: Optional[str] = None  # "recipe", "manual", or an external app slug
     category: Optional[str] = None
     have: Optional[bool] = None
     search_term: Optional[str] = None
