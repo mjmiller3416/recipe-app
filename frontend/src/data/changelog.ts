@@ -2,6 +2,9 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-07-20 - New Features
+- External shopping list integration — trusted apps can now push items directly to your Shopping List via a secure API
+
 ## 2026-07-14 - New Features
 - Redesigned Home — a new today-first view centered on today's planned meal, with your cooking streak now shown in the header and a guided setup flow for first-time users
 - Unified Meal Creation — one streamlined flow for building meals, now including recipe roulette for random picks, with a direct path from planning your week to generating your shopping list
