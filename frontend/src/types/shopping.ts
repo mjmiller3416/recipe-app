@@ -4,7 +4,11 @@
 // Shopping List Types
 // ============================================================================
 
-export type ShoppingSource = "recipe" | "manual";
+/**
+ * "recipe" and "manual" are in-app sources; any other string is the slug of a
+ * trusted external app that pushed the item (e.g. "tada").
+ */
+export type ShoppingSource = "recipe" | "manual" | (string & {});
 
 /** Shopping mode for planner entries - controls ingredient inclusion in shopping list */
 export type ShoppingMode = "all" | "produce_only" | "none";

@@ -48,6 +48,10 @@ export function ShoppingItem({ item, onToggle, onToggleFlagged }: ShoppingItemPr
     if (item.source === "manual") {
       return "added manually";
     }
+    if (item.source !== "recipe") {
+      // External app source slug, e.g. "tada" -> "from Tada"
+      return `from ${item.source.charAt(0).toUpperCase()}${item.source.slice(1)}`;
+    }
     if (!item.recipe_sources || item.recipe_sources.length === 0) {
       return "from recipe";
     }

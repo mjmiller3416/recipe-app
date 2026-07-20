@@ -5,13 +5,14 @@ Handles manual item creation, updates, deletions, and status toggles.
 """
 
 # -- Imports -------------------------------------------------------------------------------------
-from typing import Optional
+from typing import Optional, Tuple
 
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from ...dtos.shopping_dtos import (
     BulkOperationResultDTO,
     BulkStateUpdateDTO,
+    ExternalItemUpsertDTO,
     ManualItemCreateDTO,
     ShoppingItemResponseDTO,
     ShoppingItemUpdateDTO,
@@ -53,6 +54,79 @@ class ItemManagementMixin:
         except SQLAlchemyError:
             self.session.rollback()
             return None
+
+    # -- External Item Ingest --------------------------------------------------------------------
+    def upsert_external_item(
+        self, upsert_dto: ExternalItemUpsertDTO
+    ) -> Optional[Tuple[ShoppingItemResponseDTO, bool]]:
+        """
+        Upsert an item pushed by a trusted external app for the current user.
+
+        Deduped on (name, source) via the external aggregation key, so repeated
+        pushes of the same item update the existing row instead of duplicating it.
+
+        Args:
+            upsert_dto (ExternalItemUpsertDTO): Pushed item data.
+
+        Returns:
+            Optional[Tuple[ShoppingItemResponseDTO, bool]]: The upserted item and
+            a created flag (True = inserted, False = updated), or None if failed.
+        """
+        aggregation_key = ShoppingItem.make_external_aggregation_key(
+            upsert_dto.source, upsert_dto.name
+        )
+        try:
+            existing = self.shopping_repo.get_shopping_item_by_aggregation_key(
+                aggregation_key
+            )
+            if existing:
+                return self._apply_external_update(existing, upsert_dto), False
+
+            item = ShoppingItem.create_external(
+                ingredient_name=upsert_dto.name,
+                source=upsert_dto.source,
+                quantity=upsert_dto.quantity if upsert_dto.quantity is not None else 1.0,
+                unit=upsert_dto.unit,
+                category=upsert_dto.category,
+            )
+            created_item = self.shopping_repo.create_shopping_item(item, self.user_id)
+            self.session.commit()
+            return self._item_to_response_dto(created_item), True
+
+        except IntegrityError:
+            # Lost a create race against a concurrent push of the same item
+            # (unique constraint on aggregation_key + user_id); retry as update
+            self.session.rollback()
+            existing = self.shopping_repo.get_shopping_item_by_aggregation_key(
+                aggregation_key
+            )
+            if not existing:
+                return None
+            try:
+                return self._apply_external_update(existing, upsert_dto), False
+            except SQLAlchemyError:
+                self.session.rollback()
+                return None
+
+        except SQLAlchemyError:
+            self.session.rollback()
+            return None
+
+    def _apply_external_update(
+        self, item: ShoppingItem, upsert_dto: ExternalItemUpsertDTO
+    ) -> ShoppingItemResponseDTO:
+        """Apply a re-push to an existing external item and commit."""
+        if upsert_dto.quantity is not None:
+            item.quantity = upsert_dto.quantity
+        if upsert_dto.unit is not None:
+            item.unit = upsert_dto.unit
+        if upsert_dto.category is not None:
+            item.category = upsert_dto.category
+        # A re-push means the item is needed again, even if previously checked off
+        item.have = False
+        self.shopping_repo.update_item(item)
+        self.session.commit()
+        return self._item_to_response_dto(item)
 
     def update_item(
         self, item_id: int, update_dto: ShoppingItemUpdateDTO

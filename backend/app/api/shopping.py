@@ -5,14 +5,16 @@ FastAPI router for shopping list endpoints.
 
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
-from app.api.auth import get_current_user
+from app.api.auth import get_current_user, get_integration_user
 from app.database.db import get_session
 from app.dtos.shopping_dtos import (
     BulkOperationResultDTO,
     BulkStateUpdateDTO,
+    ExternalItemUpsertDTO,
+    ExternalItemUpsertResultDTO,
     ManualItemCreateDTO,
     ShoppingItemResponseDTO,
     ShoppingItemUpdateDTO,
@@ -29,7 +31,7 @@ router = APIRouter()
 
 @router.get("", response_model=ShoppingListResponseDTO)
 def get_shopping_list(
-    source: Optional[str] = Query(None, pattern="^(recipe|manual)$"),
+    source: Optional[str] = Query(None, pattern="^[a-z0-9][a-z0-9_-]{0,19}$"),
     category: Optional[str] = Query(None),
     have: Optional[bool] = Query(None),
     search_term: Optional[str] = Query(None),
@@ -84,6 +86,30 @@ def add_manual_item(
     if not item:
         raise HTTPException(status_code=500, detail="Failed to add item")
     return item
+
+
+@router.post("/external/items", response_model=ExternalItemUpsertResultDTO)
+def upsert_external_item(
+    item_data: ExternalItemUpsertDTO,
+    response: Response,
+    session: Session = Depends(get_session),
+    target_user: User = Depends(get_integration_user),
+):
+    """Upsert a shopping item pushed by a trusted first-party app (e.g. Tada).
+
+    Authenticated via the X-API-Key header (shared INTEGRATION_API_KEY secret)
+    instead of a Clerk user token; items land on the INTEGRATION_USER_ID account.
+    Idempotent: repeated pushes of the same (name, source) update the existing
+    item rather than creating duplicates. Returns 201 on insert, 200 on update.
+    """
+    service = ShoppingService(session, target_user.id)
+    result = service.upsert_external_item(item_data)
+    if result is None:
+        raise HTTPException(status_code=500, detail="Failed to upsert item")
+
+    item, created = result
+    response.status_code = 201 if created else 200
+    return ExternalItemUpsertResultDTO(created=created, item=item)
 
 
 @router.patch("/items/{item_id}", response_model=ShoppingItemResponseDTO)

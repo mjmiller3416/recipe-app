@@ -24,6 +24,9 @@ class AuthSettings(BaseSettings):
         clerk_jwks_url: Optional explicit JWKS URL override (derived from publishable key if not set)
         auth_disabled: When True, bypasses JWT validation (for local dev)
         dev_user_id: User ID to use when auth_disabled is True
+        integration_api_key: Shared secret for trusted first-party app-to-app calls
+            (checked against the X-API-Key header on integration endpoints)
+        integration_user_id: User whose data integration pushes are written to
     """
 
     model_config = SettingsConfigDict(
@@ -40,6 +43,10 @@ class AuthSettings(BaseSettings):
     # Development mode bypass
     auth_disabled: bool = False
     dev_user_id: int = 1
+
+    # First-party integration (app-to-app) auth
+    integration_api_key: Optional[str] = None
+    integration_user_id: Optional[int] = None
 
     @property
     def is_configured(self) -> bool:
