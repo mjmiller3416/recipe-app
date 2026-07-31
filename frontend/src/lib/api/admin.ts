@@ -4,9 +4,6 @@ import type {
   AdminUserDTO,
   AdminGrantProRequest,
   AdminToggleAdminRequest,
-  AdminFeedbackListResponse,
-  AdminFeedbackDetail,
-  AdminFeedbackUpdateRequest,
   AdminQueryRequest,
   AdminQueryResponse,
 } from "@/types/admin";
@@ -63,47 +60,6 @@ export const adminApi = {
     fetchApi<void>(
       `/api/admin/users/${userId}`,
       { method: "DELETE" },
-      token,
-    ),
-
-  // ── Feedback Management ───────────────────────────────────────────────────
-
-  listFeedback: (
-    params: {
-      skip?: number;
-      limit?: number;
-      category?: string;
-      status?: string;
-      user_id?: number;
-      date_from?: string;
-      date_to?: string;
-    } = {},
-    token?: string | null,
-  ): Promise<AdminFeedbackListResponse> =>
-    fetchApi<AdminFeedbackListResponse>(
-      `/api/admin/feedback${buildQueryString(params)}`,
-      undefined,
-      token,
-    ),
-
-  getFeedback: (
-    feedbackId: number,
-    token?: string | null,
-  ): Promise<AdminFeedbackDetail> =>
-    fetchApi<AdminFeedbackDetail>(
-      `/api/admin/feedback/${feedbackId}`,
-      undefined,
-      token,
-    ),
-
-  updateFeedback: (
-    feedbackId: number,
-    data: AdminFeedbackUpdateRequest,
-    token?: string | null,
-  ): Promise<AdminFeedbackDetail> =>
-    fetchApi<AdminFeedbackDetail>(
-      `/api/admin/feedback/${feedbackId}`,
-      { method: "PATCH", body: JSON.stringify(data) },
       token,
     ),
 

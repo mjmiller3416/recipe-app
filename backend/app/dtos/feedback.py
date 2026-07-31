@@ -1,14 +1,8 @@
-"""Feedback DTOs for user feedback submission."""
+"""Feedback DTOs for user feedback submission via GitHub Issues."""
 
-from __future__ import annotations
-
-from datetime import datetime
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import Dict, Optional
 
 from pydantic import BaseModel, Field
-
-if TYPE_CHECKING:
-    from app.models.feedback import Feedback
 
 
 class FeedbackCreateDTO(BaseModel):
@@ -27,15 +21,4 @@ class FeedbackResponseDTO(BaseModel):
 
     success: bool
     message: str
-    id: Optional[int] = None
-    created_at: Optional[datetime] = None
-
-    @classmethod
-    def from_model(cls, feedback: Feedback) -> FeedbackResponseDTO:
-        """Create a response DTO from a Feedback model instance."""
-        return cls(
-            success=True,
-            message="Thank you for your feedback! It has been submitted successfully.",
-            id=feedback.id,
-            created_at=feedback.created_at,
-        )
+    issue_url: Optional[str] = None

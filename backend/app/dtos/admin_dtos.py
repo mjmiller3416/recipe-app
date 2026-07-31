@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
 
 from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
-    from app.models.feedback import Feedback
     from app.models.user import User
 
 
@@ -98,88 +97,6 @@ class AdminToggleAdminDTO(BaseModel):
     """Request DTO for toggling admin flag on a user."""
 
     is_admin: bool
-
-
-# ── Admin Feedback DTOs ──────────────────────────────────────────────────────
-
-
-class AdminFeedbackListItemDTO(BaseModel):
-    """Response DTO for a single feedback item in admin listing."""
-
-    id: int
-    user_id: int
-    user_email: str
-    user_name: Optional[str] = None
-    category: str
-    message_preview: str
-    status: str
-    created_at: datetime
-
-    @classmethod
-    def from_model(cls, feedback: Feedback) -> AdminFeedbackListItemDTO:
-        message = feedback.message or ""
-        preview = message[:200] + "..." if len(message) > 200 else message
-        return cls(
-            id=feedback.id,
-            user_id=feedback.user_id,
-            user_email=feedback.user.email if feedback.user else "",
-            user_name=feedback.user.name if feedback.user else None,
-            category=feedback.category,
-            message_preview=preview,
-            status=feedback.status,
-            created_at=feedback.created_at,
-        )
-
-
-class AdminFeedbackDetailDTO(BaseModel):
-    """Response DTO for a single feedback detail view."""
-
-    id: int
-    user_id: int
-    user_email: str
-    user_name: Optional[str] = None
-    category: str
-    message: str
-    metadata_json: Optional[Dict[str, Any]] = None
-    status: str
-    admin_notes: Optional[str] = None
-    created_at: datetime
-
-    @classmethod
-    def from_model(cls, feedback: Feedback) -> AdminFeedbackDetailDTO:
-        return cls(
-            id=feedback.id,
-            user_id=feedback.user_id,
-            user_email=feedback.user.email if feedback.user else "",
-            user_name=feedback.user.name if feedback.user else None,
-            category=feedback.category,
-            message=feedback.message,
-            metadata_json=feedback.metadata_json,
-            status=feedback.status,
-            admin_notes=feedback.admin_notes,
-            created_at=feedback.created_at,
-        )
-
-
-class AdminFeedbackListResponseDTO(BaseModel):
-    """Paginated response for admin feedback listing."""
-
-    items: List[AdminFeedbackListItemDTO]
-    total: int
-
-
-class AdminFeedbackUpdateDTO(BaseModel):
-    """Request DTO for updating feedback status/notes."""
-
-    status: Optional[str] = Field(
-        default=None,
-        description="Feedback status: new, read, in_progress, resolved",
-    )
-    admin_notes: Optional[str] = Field(
-        default=None,
-        max_length=5000,
-        description="Internal admin notes",
-    )
 
 
 # ── Database Query DTOs ─────────────────────────────────────────────────────

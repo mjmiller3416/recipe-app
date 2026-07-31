@@ -1,6 +1,5 @@
 # app/core/models/__init__.py
 
-from .feedback import Feedback
 from .ingredient import Ingredient
 from .meal import Meal
 from .nutrition_facts import NutritionFacts
@@ -20,7 +19,6 @@ from .user_settings import UserSettings
 from .user_usage import UserUsage
 
 __all__ = [
-    "Feedback",
     "Recipe",
     "RecipeGroup",
     "RecipeIngredient",

@@ -168,10 +168,6 @@ export {
   useRevokePro,
   useToggleAdmin,
   useDeleteUser,
-  // Feedback Management
-  useAdminFeedback,
-  useAdminFeedbackDetail,
-  useUpdateFeedback,
   // Database Query
   useExecuteQuery,
 } from "./useAdmin";
