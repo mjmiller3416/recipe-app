@@ -4,6 +4,7 @@ Repository layer for admin operations. Handles direct database interactions
 for user management.
 """
 
+from datetime import datetime
 from typing import List, Optional, Tuple
 
 from sqlalchemy import func, select
