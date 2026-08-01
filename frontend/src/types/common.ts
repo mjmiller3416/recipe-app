@@ -199,8 +199,7 @@ export interface FeedbackSubmitDTO {
 export interface FeedbackResponseDTO {
   success: boolean;
   message: string;
-  id?: number;
-  created_at?: string;
+  issue_url?: string;
 }
 
 // ============================================================================

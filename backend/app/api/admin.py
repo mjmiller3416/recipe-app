@@ -1,11 +1,8 @@
 """app/api/admin.py
 
-Admin panel API routes for user management and feedback review.
+Admin panel API routes for user management.
 All routes require admin access.
 """
-
-from datetime import datetime
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
@@ -13,9 +10,6 @@ from sqlalchemy.orm import Session
 from app.api.auth import get_current_user, require_admin
 from app.database.db import get_session
 from app.dtos.admin_dtos import (
-    AdminFeedbackDetailDTO,
-    AdminFeedbackListResponseDTO,
-    AdminFeedbackUpdateDTO,
     AdminGrantProDTO,
     AdminQueryRequestDTO,
     AdminQueryResponseDTO,
@@ -25,7 +19,6 @@ from app.dtos.admin_dtos import (
 )
 from app.models.user import User
 from app.services.admin_service import (
-    AdminFeedbackNotFoundError,
     AdminQueryExecutionError,
     AdminQueryForbiddenError,
     AdminSaveError,
@@ -128,65 +121,6 @@ def delete_user(
         raise HTTPException(status_code=404, detail="User not found")
     except AdminSaveError:
         raise HTTPException(status_code=500, detail="Failed to delete user")
-
-
-# ── Feedback Management ──────────────────────────────────────────────────────
-
-
-@router.get("/feedback", response_model=AdminFeedbackListResponseDTO)
-def list_feedback(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
-    category: Optional[str] = Query(None),
-    feedback_status: Optional[str] = Query(None, alias="status"),
-    user_id: Optional[int] = Query(None),
-    date_from: Optional[datetime] = Query(None),
-    date_to: Optional[datetime] = Query(None),
-    session: Session = Depends(get_session),
-    current_admin: User = Depends(require_admin),
-) -> AdminFeedbackListResponseDTO:
-    """List all feedback with optional filters."""
-    service = AdminService(session, current_admin.id)
-    return service.list_feedback(
-        skip=skip,
-        limit=limit,
-        category=category,
-        status=feedback_status,
-        user_id=user_id,
-        date_from=date_from,
-        date_to=date_to,
-    )
-
-
-@router.get("/feedback/{feedback_id}", response_model=AdminFeedbackDetailDTO)
-def get_feedback(
-    feedback_id: int,
-    session: Session = Depends(get_session),
-    current_admin: User = Depends(require_admin),
-) -> AdminFeedbackDetailDTO:
-    """Get a single feedback detail."""
-    service = AdminService(session, current_admin.id)
-    try:
-        return service.get_feedback(feedback_id)
-    except AdminFeedbackNotFoundError:
-        raise HTTPException(status_code=404, detail="Feedback not found")
-
-
-@router.patch("/feedback/{feedback_id}", response_model=AdminFeedbackDetailDTO)
-def update_feedback(
-    feedback_id: int,
-    dto: AdminFeedbackUpdateDTO,
-    session: Session = Depends(get_session),
-    current_admin: User = Depends(require_admin),
-) -> AdminFeedbackDetailDTO:
-    """Update feedback status and/or admin notes."""
-    service = AdminService(session, current_admin.id)
-    try:
-        return service.update_feedback(feedback_id, dto)
-    except AdminFeedbackNotFoundError:
-        raise HTTPException(status_code=404, detail="Feedback not found")
-    except AdminSaveError:
-        raise HTTPException(status_code=500, detail="Failed to update feedback")
 
 
 # ── Database Query ──────────────────────────────────────────────────────────

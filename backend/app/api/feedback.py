@@ -1,13 +1,11 @@
-"""Feedback API endpoints for user feedback submission."""
+"""Feedback API endpoint — creates a GitHub issue from user feedback."""
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user
-from app.database.db import get_session
 from app.dtos.feedback import FeedbackCreateDTO, FeedbackResponseDTO
 from app.models.user import User
-from app.services.feedback_service import FeedbackSaveError, FeedbackService
+from app.services.github_service import GitHubIssueError, GitHubService
 
 router = APIRouter()
 
@@ -15,19 +13,24 @@ router = APIRouter()
 @router.post("", response_model=FeedbackResponseDTO)
 def submit_feedback(
     feedback: FeedbackCreateDTO,
-    session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ) -> FeedbackResponseDTO:
-    """Submit user feedback.
-
-    Persists feedback to the database for review.
-    Requires authentication.
-    """
-    service = FeedbackService(session, current_user.id)
+    """Submit user feedback as a GitHub issue."""
+    service = GitHubService()
     try:
-        return service.submit_feedback(feedback)
-    except FeedbackSaveError:
+        issue_url = service.create_issue(
+            category=feedback.category,
+            message=feedback.message,
+            user_email=current_user.email,
+            metadata=feedback.metadata,
+        )
+        return FeedbackResponseDTO(
+            success=True,
+            message="Thank you for your feedback! It has been submitted successfully.",
+            issue_url=issue_url,
+        )
+    except GitHubIssueError:
         raise HTTPException(
-            status_code=500,
+            status_code=502,
             detail="Failed to submit feedback. Please try again.",
         )

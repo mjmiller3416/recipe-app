@@ -41,42 +41,6 @@ export interface AdminToggleAdminRequest {
   is_admin: boolean;
 }
 
-export type FeedbackStatus = "new" | "read" | "in_progress" | "resolved";
-
-export interface AdminFeedbackListItem {
-  id: number;
-  user_id: number;
-  user_email: string;
-  user_name: string | null;
-  category: string;
-  message_preview: string;
-  status: FeedbackStatus;
-  created_at: string;
-}
-
-export interface AdminFeedbackDetail {
-  id: number;
-  user_id: number;
-  user_email: string;
-  user_name: string | null;
-  category: string;
-  message: string;
-  metadata_json: Record<string, unknown> | null;
-  status: FeedbackStatus;
-  admin_notes: string | null;
-  created_at: string;
-}
-
-export interface AdminFeedbackListResponse {
-  items: AdminFeedbackListItem[];
-  total: number;
-}
-
-export interface AdminFeedbackUpdateRequest {
-  status?: FeedbackStatus;
-  admin_notes?: string;
-}
-
 // Database query types
 
 export interface AdminQueryRequest {

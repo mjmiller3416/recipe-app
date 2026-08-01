@@ -1,23 +1,19 @@
 """app/services/admin_service.py
 
 Service layer for admin operations. Handles user management
-and feedback review business logic.
+and database query business logic.
 """
 
 import re
 import time
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, List
 
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from ..dtos.admin_dtos import (
-    AdminFeedbackDetailDTO,
-    AdminFeedbackListItemDTO,
-    AdminFeedbackListResponseDTO,
-    AdminFeedbackUpdateDTO,
     AdminGrantProDTO,
     AdminQueryResponseDTO,
     AdminUserListDTO,
@@ -31,11 +27,6 @@ from ..repositories.admin_repo import AdminRepo
 
 class AdminUserNotFoundError(Exception):
     """Raised when the target user is not found."""
-    pass
-
-
-class AdminFeedbackNotFoundError(Exception):
-    """Raised when the target feedback is not found."""
     pass
 
 
@@ -63,8 +54,6 @@ class AdminQueryExecutionError(Exception):
     """Raised when a SQL query fails to execute."""
     pass
 
-
-VALID_FEEDBACK_STATUSES = {"new", "read", "in_progress", "resolved"}
 
 _FORBIDDEN_PATTERN = re.compile(
     r"\b(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE|GRANT|REVOKE|EXEC|EXECUTE)\b",
@@ -204,56 +193,3 @@ class AdminService:
             return value.isoformat()
         return str(value)
 
-    # ── Feedback Management ──────────────────────────────────────────────────
-
-    def list_feedback(
-        self,
-        skip: int = 0,
-        limit: int = 50,
-        category: Optional[str] = None,
-        status: Optional[str] = None,
-        user_id: Optional[int] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-    ) -> AdminFeedbackListResponseDTO:
-        """List all feedback with optional filters."""
-        items, total = self.repo.list_feedback(
-            skip=skip,
-            limit=limit,
-            category=category,
-            status=status,
-            user_id=user_id,
-            date_from=date_from,
-            date_to=date_to,
-        )
-        return AdminFeedbackListResponseDTO(
-            items=[AdminFeedbackListItemDTO.from_model(f) for f in items],
-            total=total,
-        )
-
-    def get_feedback(self, feedback_id: int) -> AdminFeedbackDetailDTO:
-        """Get a single feedback detail."""
-        feedback = self.repo.get_feedback_by_id(feedback_id)
-        if not feedback:
-            raise AdminFeedbackNotFoundError(f"Feedback {feedback_id} not found")
-        return AdminFeedbackDetailDTO.from_model(feedback)
-
-    def update_feedback(
-        self, feedback_id: int, dto: AdminFeedbackUpdateDTO
-    ) -> AdminFeedbackDetailDTO:
-        """Update feedback status and/or admin notes."""
-        feedback = self.repo.get_feedback_by_id(feedback_id)
-        if not feedback:
-            raise AdminFeedbackNotFoundError(f"Feedback {feedback_id} not found")
-
-        try:
-            feedback = self.repo.update_feedback(
-                feedback,
-                status=dto.status,
-                admin_notes=dto.admin_notes,
-            )
-            self.session.commit()
-            return AdminFeedbackDetailDTO.from_model(feedback)
-        except SQLAlchemyError as e:
-            self.session.rollback()
-            raise AdminSaveError(f"Failed to update feedback: {e}") from e

@@ -7,9 +7,7 @@ import { adminQueryKeys, currentUserQueryKeys } from "./queryKeys";
 import type {
   AdminGrantProRequest,
   AdminToggleAdminRequest,
-  AdminFeedbackUpdateRequest,
   AdminQueryResponse,
-  FeedbackStatus,
 } from "@/types/admin";
 
 // ============================================================================
@@ -144,50 +142,6 @@ export function useDeleteUser() {
 }
 
 // ============================================================================
-// ADMIN FEEDBACK HOOKS
-// ============================================================================
-
-/**
- * Fetch paginated list of feedback with filters (admin only).
- */
-export function useAdminFeedback(
-  filters: {
-    skip?: number;
-    limit?: number;
-    category?: string;
-    status?: FeedbackStatus;
-  } = {},
-) {
-  const { getToken } = useAuth();
-
-  return useQuery({
-    queryKey: [...adminQueryKeys.feedback(), filters],
-    queryFn: async () => {
-      const token = await getToken();
-      return adminApi.listFeedback(filters, token);
-    },
-    staleTime: 30000,
-  });
-}
-
-/**
- * Fetch a single feedback detail (admin only).
- */
-export function useAdminFeedbackDetail(feedbackId: number | null) {
-  const { getToken } = useAuth();
-
-  return useQuery({
-    queryKey: adminQueryKeys.feedbackDetail(feedbackId!),
-    queryFn: async () => {
-      const token = await getToken();
-      return adminApi.getFeedback(feedbackId!, token);
-    },
-    enabled: feedbackId !== null,
-    staleTime: 60000,
-  });
-}
-
-// ============================================================================
 // ADMIN DATABASE QUERY HOOKS
 // ============================================================================
 
@@ -205,33 +159,3 @@ export function useExecuteQuery() {
   });
 }
 
-// ============================================================================
-// ADMIN FEEDBACK HOOKS (continued)
-// ============================================================================
-
-/**
- * Update feedback status and/or admin notes.
- */
-export function useUpdateFeedback() {
-  const { getToken } = useAuth();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      feedbackId,
-      data,
-    }: {
-      feedbackId: number;
-      data: AdminFeedbackUpdateRequest;
-    }) => {
-      const token = await getToken();
-      return adminApi.updateFeedback(feedbackId, data, token);
-    },
-    onSuccess: (_, { feedbackId }) => {
-      queryClient.invalidateQueries({ queryKey: adminQueryKeys.feedback() });
-      queryClient.invalidateQueries({
-        queryKey: adminQueryKeys.feedbackDetail(feedbackId),
-      });
-    },
-  });
-}

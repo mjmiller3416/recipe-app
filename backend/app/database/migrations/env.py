@@ -48,7 +48,6 @@ if database_url:
 
 # ── Import metadata ─────────────────────────────────────────────────────────────────────
 from app.database.base import Base
-from app.models.feedback import Feedback
 from app.models.ingredient import Ingredient
 # import all models to register them with metadata
 from app.models.meal import Meal

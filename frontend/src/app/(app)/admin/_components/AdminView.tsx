@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Shield, MessageSquareMore, Database } from "lucide-react";
+import { Shield, Database } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageLayout } from "@/components/layout/PageLayout";
@@ -9,10 +9,9 @@ import { SidebarPageSkeleton } from "@/components/layout/SidebarPageSkeleton";
 import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/api";
 import { AdminUsersSection } from "./AdminUsersSection";
-import { AdminFeedbackSection } from "./AdminFeedbackSection";
 import { AdminDatabaseSection } from "./AdminDatabaseSection";
 
-type AdminTab = "users" | "feedback" | "database";
+type AdminTab = "users" | "database";
 
 interface TabConfig {
   id: AdminTab;
@@ -27,12 +26,6 @@ const TABS: TabConfig[] = [
     label: "User Management",
     icon: Shield,
     description: "Manage users and access levels",
-  },
-  {
-    id: "feedback",
-    label: "Feedback Dashboard",
-    icon: MessageSquareMore,
-    description: "Review user feedback and reports",
   },
   {
     id: "database",
@@ -70,8 +63,6 @@ export function AdminView() {
     switch (activeTab) {
       case "users":
         return <AdminUsersSection />;
-      case "feedback":
-        return <AdminFeedbackSection />;
       case "database":
         return <AdminDatabaseSection />;
       default:
@@ -82,7 +73,7 @@ export function AdminView() {
   return (
     <PageLayout
       title="Admin Panel"
-      description="Manage users, access levels, and review feedback."
+      description="Manage users and access levels."
     >
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Left Sidebar - Tab Navigation */}
