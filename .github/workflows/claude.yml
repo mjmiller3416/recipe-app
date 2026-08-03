@@ -48,9 +48,12 @@ jobs:
           additional_permissions: |
             actions: read
 
-          # Git workflow conventions for commits and PRs
-          prompt: |
-            Follow these git conventions strictly:
+          # NOTE: do not set `prompt` here — on issue_comment/issues events, the
+          # action forces "agent" mode whenever `prompt` is non-empty, which skips
+          # automatic issue-context injection and reply-comment posting (tag mode).
+          # Use --append-system-prompt instead so @claude mentions keep full context.
+          claude_args: |
+            --append-system-prompt 'Follow these git conventions strictly for any commits or PRs you create:
 
             Commit messages: Use conventional commits format
               <type>: <description>
@@ -65,4 +68,4 @@ jobs:
             Always end commits with:
             Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 
-            Target all PRs to the staging branch, never to main directly.
+            Target all PRs to the staging branch, never to main directly.'
