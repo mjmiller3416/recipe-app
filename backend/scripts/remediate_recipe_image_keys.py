@@ -114,6 +114,10 @@ def remediate(session, user_id: int | None, apply: bool, limit: int | None) -> N
         import cloudinary.uploader  # noqa: F401
 
     stats = {"canonical": 0, "rekeyed": 0, "would_rekey": 0, "skipped": 0, "failed": 0}
+    # Off-path URL -> labels of recipes currently displaying it, so we can flag
+    # when two or more recipes are showing the SAME asset (the actual symptom
+    # reported as "wrong photo").
+    off_path_sources: dict[str, list[str]] = {}
 
     for row in rows:
         image_key = row["image_key"]
@@ -138,6 +142,7 @@ def remediate(session, user_id: int | None, apply: bool, limit: int | None) -> N
 
             label = f"recipe {row['id']} ({row['recipe_name']}) [{image_type}]"
             target = f"meal-genie/recipes/{image_key}/{image_type}_{image_key}"
+            off_path_sources.setdefault(url, []).append(label)
 
             if not apply:
                 stats["would_rekey"] += 1
@@ -166,6 +171,21 @@ def remediate(session, user_id: int | None, apply: bool, limit: int | None) -> N
 
     if apply:
         session.commit()
+
+    collisions = {url: labels for url, labels in off_path_sources.items() if len(labels) > 1}
+    if collisions:
+        print("\n" + "=" * 60)
+        print("COLLISIONS DETECTED (multiple recipes showing the same photo)")
+        print("=" * 60)
+        for url, labels in collisions.items():
+            print(f"  {url}")
+            for label in labels:
+                print(f"      -> {label}")
+        print(
+            "\n  Exactly one recipe in each group above may show its correct photo; "
+            "the rest were displaying a stray asset before re-keying and must have "
+            "their image regenerated/re-uploaded manually after this remediation runs."
+        )
 
     print("\n" + "=" * 60)
     print("Remediation summary")
