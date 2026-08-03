@@ -27,7 +27,7 @@ src/
 │   ├── meal-planner/         # Meal planner + create meal
 │   ├── shopping-list/        # Shopping list with categories
 │   ├── settings/             # User settings (appearance, data, AI, etc.)
-│   ├── admin/                # Admin dashboard (users, feedback)
+│   ├── admin/                # Admin dashboard (users, database)
 │   ├── sign-in/              # Clerk sign-in
 │   ├── sign-up/              # Clerk sign-up
 │   ├── sso-callback/         # OAuth callback handler

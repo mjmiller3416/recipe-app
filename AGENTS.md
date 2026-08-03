@@ -207,7 +207,7 @@ This project has an extensive design system. **Always follow these rules**:
 
 ## Key Domain Models
 
-### Backend Models (19 model files)
+### Backend Models (17 model files)
 - **User** - Clerk-integrated user with subscription management (`has_pro_access` property), admin flag, cascade relationships to all data
 - **Recipe** - Full recipe with ingredients, directions, dual images (reference + banner), `total_time` hybrid property (prep + cook)
 - **RecipeIngredient** - Junction table (recipe <-> ingredient)
@@ -220,7 +220,6 @@ This project has an extensive design system. **Always follow these rules**:
 - **ShoppingItem** - Shopping list item with aggregation_key for diff-based sync
 - **ShoppingItemContribution** - Source tracking (which recipes contribute to each shopping item)
 - **UnitConversionRule** - Conversion rules (from_unit, to_unit, factor)
-- **Feedback** - User feedback (status: open/reviewed/closed)
 - **UserSettings**, **UserCategory**, **UserIngredientCategory**, **UserIngredientUnit** - User customization models
 - **UserUsage** - AI feature usage tracking per user
 

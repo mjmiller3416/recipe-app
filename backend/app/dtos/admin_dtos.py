@@ -1,4 +1,4 @@
-"""Admin panel DTOs for user management and feedback review."""
+"""Admin panel DTOs for user management."""
 
 from __future__ import annotations
 
