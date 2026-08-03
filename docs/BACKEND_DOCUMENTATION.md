@@ -199,7 +199,6 @@ See `.env.example` for full list. Key ones:
 | ShoppingItem | Shopping list item | ingredient_name, quantity, unit, aggregation_key, have, flagged |
 | ShoppingItemContribution | Source tracking | shopping_item_id, planner_entry_id |
 | UnitConversionRule | Unit conversion | from_unit, to_unit, conversion_factor |
-| Feedback | User feedback | message, status (open/reviewed/closed), admin_notes |
 | UserSettings | User preferences | Various preference fields |
 | UserCategory | Custom recipe categories | name, user_id |
 | UserIngredientCategory | Custom ingredient categories | name, user_id |

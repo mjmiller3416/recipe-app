@@ -122,6 +122,6 @@ class MealService(SideRecipeMixin, QueryMixin, MealServiceCore):
 - `services/shopping/` — ShoppingServiceCore + SyncMixin + ItemManagementMixin + AggregationMixin
 - `services/data_management/` — backup.py, export_ops.py, import_ops.py, restore.py
 
-**Simple services remain as flat files:** `recipe_service.py`, `ingredient_service.py`, `feedback_service.py`, `recipe_group_service.py`, `unit_conversion_service.py`, `usage_service.py`, `user_service.py`
+**Simple services remain as flat files:** `recipe_service.py`, `ingredient_service.py`, `github_service.py`, `recipe_group_service.py`, `unit_conversion_service.py`, `usage_service.py`, `user_service.py`
 
 **See:** [app/services/recipe_service.py](../../backend/app/services/recipe_service.py) for flat service reference, and [app/services/meal/](../../backend/app/services/meal/) for modular package reference.

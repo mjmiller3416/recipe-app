@@ -25,7 +25,7 @@ You are responsible for all code within the `backend/` directory:
 ## Service Organization
 
 Services follow two patterns:
-- **Flat files** for simple services: `recipe_service.py`, `ingredient_service.py`, `feedback_service.py`, `recipe_group_service.py`, `unit_conversion_service.py`, `usage_service.py`, `user_category_service.py`, `user_service.py`
+- **Flat files** for simple services: `recipe_service.py`, `ingredient_service.py`, `github_service.py`, `recipe_group_service.py`, `unit_conversion_service.py`, `usage_service.py`, `user_category_service.py`, `user_service.py`
 - **Modular packages** for complex services (Core + Mixins composed in `__init__.py`):
   - `services/meal/` — MealServiceCore + SideRecipeMixin + QueryMixin
   - `services/planner/` — PlannerServiceCore + EntryManagementMixin + StatusManagementMixin + BatchOperationsMixin
