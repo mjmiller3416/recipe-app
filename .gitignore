@@ -59,7 +59,6 @@ backend/app/scripts/copy_prod_to_local.py
 
 # Local task files
 tasks/
-.github/
 
 # Generated outputs
 audits/
