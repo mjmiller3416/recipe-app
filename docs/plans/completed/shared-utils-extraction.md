@@ -1,5 +1,10 @@
 # Parallel Execution Plan: Extract Shared Frontend Utilities
 
+> **Archived — fully shipped.** All 8 tasks below are implemented and verified against the
+> current codebase (verified 2026-08-03: `formatTime`, `useLocalStorageState`, `useChatScroll`,
+> `ChatMessageList` all exist as described). Kept as a reference for the extraction pattern —
+> not actionable.
+
 **Branch:** `refactor/extract-shared-utilities`
 
 ---

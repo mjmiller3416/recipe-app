@@ -3,6 +3,12 @@
 Reference notes, August 2026. Not a build prompt — this is the reasoning to work from
 while making changes.
 
+> **Status (2026-08-03):** Recommendation 1 shipped in simplified form — `POST /api/feedback`
+> creates a GitHub issue directly (`app/api/feedback.py`, `app/services/github_service.py`).
+> No admin panel, no stored `feedback_reports` table (not even the join table proposed below —
+> there's currently no server-side record of who filed what). Recommendation 2 (Sentry/GlitchTip)
+> is **not started** — this is still the largest open gap from the "Now (pre-launch)" list.
+
 ---
 
 ## The core principle

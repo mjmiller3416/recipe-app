@@ -26,19 +26,19 @@ def list_things(
 ```
 backend/app/
 ├── main.py                 # FastAPI app initialization, CORS, health endpoints
-├── router.py               # Centralized route registration (28 routers, 14 tags)
-├── api/                    # Route handlers (28 endpoint files)
-│   ├── ai/                 # AI endpoints (assistant, recipe gen, image gen, tips, suggestions, nutrition)
+├── router.py               # Centralized route registration (24 routers)
+├── api/                    # Route handlers (17 files + 7 in ai/)
+│   ├── ai/                 # AI endpoints (assistant, recipe generation, recipe import, image gen, tips, suggestions, nutrition)
 │   └── auth/               # Auth dependencies (get_current_user, require_pro, require_admin) + JWKS
 ├── services/               # Business logic layer
-│   ├── ai/                 # AI services (Gemini client, assistant/, recipe_generation/, image_generation/, etc.)
+│   ├── ai/                 # AI services (Gemini client, assistant/, recipe_generation/, recipe_import/, image_generation/, etc.)
 │   ├── meal/               # Modular: Core + SideRecipeMixin + QueryMixin
 │   ├── planner/            # Modular: Core + EntryMgmt + StatusMgmt + BatchOps
 │   ├── shopping/           # Modular: Core + ItemMgmt + Aggregation + Sync
 │   ├── data_management/    # Modular: Core + Import + Export + Backup + Restore
-│   └── *.py                # Flat services (recipe, ingredient, user, admin, feedback, etc.)
-├── repositories/           # Data access layer (21 files, including planner/ and shopping/ sub-packages)
-├── models/                 # SQLAlchemy ORM models (19 files)
+│   └── *.py                # Flat services (recipe, ingredient, user, admin, github_service, etc.)
+├── repositories/           # Data access layer (17 files, including planner/ and shopping/ sub-packages)
+├── models/                 # SQLAlchemy ORM models (17 files)
 ├── dtos/                   # Pydantic validation models (21 files, including AI DTOs)
 ├── core/auth_config.py     # Clerk auth settings (JWKS URL derivation, dev mode bypass)
 ├── utils/                  # Unit conversion, dimension detection
@@ -113,11 +113,17 @@ All AI features use Google Gemini (`google-genai>=1.0.0`). Services live in `app
 
 **Recipe Generation** (`services/ai/recipe_generation/`):
 - Async operation with schema-driven JSON validation
-- Input: prompt, preferences (diet, servings, cook_time), feature flags (estimate_nutrition, generate_images)
+- Input: prompt, preferences (diet, servings, cook_time), feature flags (estimate_nutrition, generate_image)
 - Pro-only feature (`@require_pro` decorator)
+- Mounted at `/api/ai/wizard-generation` (URL prefix predates the feature's current name — rename pending a frontend change, see `router.py`)
+
+**Recipe Import** (`services/ai/recipe_import/`):
+- Imports a recipe from an arbitrary URL — fetches the page, has Gemini extract structured recipe data
+- Pro-only feature; endpoint at `/api/ai/recipe-import`
 
 **Image Generation** (`services/ai/image_generation/`):
 - Generates dual images (reference square + ultrawide banner) via Gemini Vision
+- Pro-only feature. Full detail (Cloudinary keying, transformation pipeline, entry points): [`RECIPE_IMAGE.md`](RECIPE_IMAGE.md)
 
 **Cooking Tips** (`services/ai/cooking_tips.py`): Context-aware cooking advice.
 
@@ -183,7 +189,7 @@ See `.env.example` for full list. Key ones:
 - `CLERK_PUBLISHABLE_KEY` — used to derive JWKS URL
 - `GEMINI_*_API_KEY` — separate keys for different AI features (rate limiting)
 
-## Models Overview (19 files)
+## Models Overview (17 files)
 
 | Model | Purpose | Key Fields |
 |-------|---------|------------|
