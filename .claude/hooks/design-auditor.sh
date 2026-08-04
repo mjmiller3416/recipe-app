@@ -33,7 +33,11 @@ esac
 IS_FRONTEND=false
 IS_BACKEND=false
 
-if [[ "$FILE_PATH" == *"frontend/src"* ]] || [[ "$FILE_PATH" == *"frontend\\src"* ]]; then
+if [[ "$FILE_PATH" == *"components/ui/"* ]] || [[ "$FILE_PATH" == *"components\\ui\\"* ]]; then
+    # shadcn/ui primitives are allowed to use raw elements and precise
+    # pixel values internally — that's the implementation, not a violation.
+    exit 0
+elif [[ "$FILE_PATH" == *"frontend/src"* ]] || [[ "$FILE_PATH" == *"frontend\\src"* ]]; then
     IS_FRONTEND=true
 elif [[ "$FILE_PATH" == *"backend/app"* ]] || [[ "$FILE_PATH" == *"backend\\app"* ]]; then
     IS_BACKEND=true

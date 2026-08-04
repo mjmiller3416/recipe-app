@@ -42,10 +42,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Enforcement
 
-- **PreToolUse Hook** (`context-router.sh`) loads relevant patterns before edits
-- **PostToolUse Hook** (`design-auditor.sh`) blocks frontend violations automatically
-- **Session Hook** (`session-init.sh`) re-injects rules after compaction
-- **Periodic Hook** (`memory-refresh.sh`) reminds every 10 edits
+- **PreToolUse Hook** (`context-router.sh`) loads relevant context modules before edits
+- **PostToolUse Hook** (`design-auditor.sh`) flags deterministic, grep-able violations (hardcoded colors, raw `<button>`, repo `.commit()`, etc.) via a system message — it's a fast backstop, not a full audit
+- **Session Hook** (`session-init.sh`) reloads context modules after compaction
 
 **If context feels lost during long sessions, STOP and re-read this section.**
 
@@ -272,10 +271,10 @@ This project has an extensive design system. **Always follow these rules**:
 The project uses **command-based hooks** (fast shell scripts, not agents) to load context automatically:
 
 **Hook Lifecycle:**
-1. **SessionStart** (on compaction) → Re-inject critical reminders
+1. **SessionStart** (on compaction) → Reload context modules
 2. **PreToolUse** (before Edit/Write) → Load relevant context modules
-3. **PostToolUse** (after Edit/Write) → Audit design system compliance
-4. **Stop** → Verify work completion
+3. **PostToolUse** (after Edit/Write) → Flag deterministic design-system violations
+4. **Stop** → Run ESLint on changed files, block stop on errors
 
 **Context Modules** (`.claude/context/`):
 - **Frontend** (9): frontend-core, design-tokens, shadcn-patterns, component-patterns, component-inventory, form-patterns, layout-patterns, accessibility, data-fetching, structure
@@ -289,7 +288,9 @@ For detailed troubleshooting and configuration, see [.claude/HOOKS.md](.claude/H
 
 ### Specialized Agents
 
-- `recipe-app-explorer` - Search agent optimized for this codebase (knows domain models, architecture patterns, common files)
+- `frontend-designer` - React/Next.js component and layout work, design system compliance
+- `backend-architect` - FastAPI layered architecture (DTOs → Services → Repositories → Models)
+- `auditor` - Single-file compliance audit against criteria checklists (invoked by `/audit`)
 
 ### Commands
 

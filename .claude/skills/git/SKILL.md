@@ -1,6 +1,7 @@
 ---
 name: git
 description: Follow strict branch naming and commit message conventions for consistent version control
+disable-model-invocation: true
 ---
 
 # Git Workflow Conventions
