@@ -132,14 +132,14 @@ Models (app/models/)    # SQLAlchemy ORM
 
 ### Frontend Structure
 
-- `app/` - Next.js App Router (dashboard, recipes, meal-planner, shopping-list, settings, admin, auth)
+- `app/` - Next.js App Router, split into route groups: `(marketing)` (public landing/privacy/terms, no app chrome), `(auth)` (bare sign-in/sign-up/sso-callback), `(app)` (dashboard, recipes, meal-planner, shopping-list, settings, admin — wrapped in AppLayout)
 - `components/` - UI components organized by domain:
   - `ui/` - 32 shadcn/ui primitives (Radix-based)
   - `common/` - Shared components (StatCard, FavoriteButton, FilterBar, ChangelogDialog, etc.)
-  - `layout/` - App structure (AppLayout, ConditionalAppLayout, TopNav, MobileBottomNav, PageLayout, PageHeader)
+  - `layout/` - App structure (AppLayout, TopNav, MobileBottomNav, PageLayout, PageHeader)
   - `recipe/` - Recipe domain (RecipeCard, RecipeImage, RecipeBannerImage, RecipeBadge, browser/)
   - `assistant/` - AI assistant chat (Assistant, AssistantPopup, ChatMessageList)
-  - `auth/` - Authentication (SignInForm, SignUpForm, UserMenu)
+  - `auth/` - Authentication (SignInForm, SignUpForm — the user menu lives inline in TopNav)
   - `forms/` - Form inputs (IngredientAutocomplete, QuantityInput, QuickAddForm)
 - `hooks/` - Custom React hooks organized by domain:
   - `hooks/api/` - React Query hooks for all API calls (14 files + queryKeys factory)

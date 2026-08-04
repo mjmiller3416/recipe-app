@@ -21,18 +21,19 @@ Architecture decisions and patterns for the Next.js frontend. For component APIs
 
 ```
 src/
-├── app/                      # Next.js App Router pages
-│   ├── dashboard/            # Desktop dashboard (widgets, stats)
-│   ├── recipes/              # Recipe browser, detail, add (wizard)
-│   ├── meal-planner/         # Meal planner + create meal
-│   ├── shopping-list/        # Shopping list with categories
-│   ├── settings/             # User settings (appearance, data, AI, etc.)
-│   ├── admin/                # Admin dashboard (users, database)
-│   ├── sign-in/              # Clerk sign-in
-│   ├── sign-up/              # Clerk sign-up
-│   ├── sso-callback/         # OAuth callback handler
+├── app/                      # Next.js App Router pages, split into route groups
+│   ├── (marketing)/          # Public landing page, privacy/terms, /whats-new — no app chrome
+│   ├── (auth)/               # Clerk sign-in/sign-up/sso-callback — bare, centered, no app chrome
+│   ├── (app)/                # Everything behind auth, wrapped in AppLayout:
+│   │   ├── dashboard/        #   Home — today-first (Tonight card), single surface for all viewports
+│   │   ├── recipes/          #   Recipe browser, detail, add (wizard)
+│   │   ├── meal-planner/     #   Meal planner (MealCreationOverlay is the one meal-creation surface)
+│   │   ├── shopping-list/    #   Shopping list with categories
+│   │   ├── settings/         #   User settings (appearance, data, AI, etc.)
+│   │   └── admin/            #   Admin dashboard (users, database)
 │   ├── api/upload/           # File upload API route
-│   ├── layout.tsx            # Root layout (ClerkProvider, QueryProvider, Toaster)
+│   ├── not-found.tsx / error.tsx / global-error.tsx   # Branded route boundaries
+│   ├── layout.tsx            # Root layout (ClerkProvider, QueryProvider, Toaster, blocking theme script)
 │   └── globals.css           # Design tokens & global styles (dark theme)
 ├── components/
 │   ├── ui/                   # shadcn/ui primitives (32 components — don't modify)
@@ -40,7 +41,7 @@ src/
 │   ├── layout/               # App structure (AppLayout, TopNav, MobileBottomNav, PageLayout, PageHeader)
 │   ├── recipe/               # Recipe domain (RecipeCard, RecipeImage, RecipeBadge, browser/)
 │   ├── assistant/            # AI assistant chat (Assistant, AssistantPopup, ChatMessageList)
-│   ├── auth/                 # Authentication (SignInForm, SignUpForm, UserMenu)
+│   ├── auth/                 # Authentication (SignInForm, SignUpForm — the user menu lives inline in TopNav)
 │   └── forms/                # Form inputs (IngredientAutocomplete, QuantityInput, QuickAddForm)
 ├── hooks/
 │   ├── api/                  # React Query hooks (14 files + queryKeys factory)
@@ -49,7 +50,7 @@ src/
 │   └── ui/                   # UI behavior hooks (drag-and-drop, chat scroll, unsaved changes)
 ├── lib/
 │   ├── api/                  # Domain-split API modules (18 modules with barrel re-export)
-│   ├── providers/            # React Context (QueryProvider, NavActionsProvider, RecipeWizardProvider, MealCreationProvider)
+│   ├── providers/            # React Context (QueryProvider, NavActionsProvider, RecipeWizardProvider, AssistantProvider)
 │   ├── api-client.ts         # Client-side authenticated fetch (Clerk token injection)
 │   ├── api-server.ts         # Server-side authenticated fetch (RSC)
 │   ├── config.ts             # App configuration
@@ -79,15 +80,15 @@ src/
 
 ### Page Structure
 
-Pages live in `app/[page]/page.tsx`. Page-specific components go in `app/[page]/_components/`. Shared components go in `components/`.
+Pages live in `app/(app)/[page]/page.tsx` (or `(marketing)`/`(auth)` for public routes). Page-specific components go in `app/(app)/[page]/_components/`. Shared components go in `components/`.
 
 ```typescript
-// app/recipes/page.tsx
+// app/(app)/recipes/page.tsx
 export default function RecipesPage() {
   return <RecipeBrowser />;
 }
 
-// app/recipes/_components/RecipeBrowser.tsx
+// app/(app)/recipes/_components/RecipeBrowser.tsx
 // Complex page-specific component
 ```
 
@@ -100,7 +101,7 @@ export default function RecipesPage() {
 | `recipe/` | Recipe domain components | RecipeCard, RecipeBadge, RecipeImage, RecipeBannerImage |
 | `layout/` | App structure | AppLayout, TopNav, MobileBottomNav, PageHeader, PageLayout |
 | `assistant/` | AI chat interface | Assistant, AssistantPopup, ChatMessageList |
-| `auth/` | Authentication UI | SignInForm, SignUpForm, UserMenu |
+| `auth/` | Authentication UI | SignInForm, SignUpForm |
 | `forms/` | Specialized inputs | IngredientAutocomplete, QuantityInput, QuickAddForm |
 
 ### API Layer
@@ -232,15 +233,15 @@ For code patterns, look at existing implementations:
 
 | Pattern | Reference |
 |---------|-----------|
-| Page with filters | `app/recipes/page.tsx` |
-| Recipe browser | `app/recipes/_components/browser/RecipeBrowserView.tsx` |
-| Multi-step wizard | `app/recipes/_components/wizard/RecipeWizardView.tsx` |
+| Page with filters | `app/(app)/recipes/page.tsx` |
+| Recipe browser | `components/recipe/RecipeBrowserView.tsx` |
+| Multi-step wizard | `app/(app)/recipes/_components/wizard/RecipeWizardView.tsx` |
 | API hooks | `hooks/api/useRecipes.ts` |
-| Form with validation | `app/recipes/_components/wizard/wizardSchema.ts` |
-| Drag-and-drop | `app/meal-planner/_components/` |
+| Form with validation | `app/(app)/recipes/_components/wizard/wizardSchema.ts` |
+| Drag-and-drop | `app/(app)/meal-planner/_components/` |
 | AI integration | `components/assistant/` |
-| Admin panel | `app/admin/_components/AdminView.tsx` |
-| Print layout | `app/recipes/[id]/_components/print/` |
+| Admin panel | `app/(app)/admin/_components/AdminView.tsx` |
+| Print layout | `app/(app)/recipes/[id]/_components/print/` |
 
 ## Gotchas
 
@@ -254,6 +255,6 @@ For code patterns, look at existing implementations:
 
 **React Query keys:** Use the `queryKeys` factory in `hooks/api/queryKeys.ts`. Always include filter params for proper cache invalidation.
 
-**Mobile vs Desktop:** Root page redirects to `/meal-planner` on mobile, `/dashboard` on desktop. Layout uses `ConditionalAppLayout` to adapt.
+**Mobile vs Desktop:** No device fork anymore. `/` server-redirects signed-in users to `/dashboard` (Home) regardless of viewport — Home is responsive, not device-forked. `(marketing)`/`(auth)`/`(app)` route groups control chrome: only `(app)` renders `AppLayout` (TopNav + MobileBottomNav); marketing and auth pages render bare.
 
 **Card component:** The `<Card>` component has `flex-col` as a base style. When you need horizontal layout inside a Card, explicitly add `flex-row`.
