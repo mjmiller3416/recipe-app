@@ -32,11 +32,14 @@ bash --version        # Should show bash version
 Located in `.claude/hooks/`:
 
 - `context-router.sh` - Loads context modules based on file path (PreToolUse)
-- `memory-refresh.sh` - Periodic critical rules reminder every 10 edits (PreToolUse)
-- `design-auditor.sh` - Deterministic violation checks with line numbers (PostToolUse)
-- `session-init.sh` - Refreshes context after compaction (SessionStart)
+- `design-auditor.sh` - Deterministic violation checks with line numbers (PostToolUse); skips `components/ui/**` since shadcn primitives legitimately use raw elements and precise pixel values
+- `session-init.sh` - Reloads context modules after compaction (SessionStart)
 - `lint-on-stop.sh` - ESLint on changed files, blocks stopping if errors found (Stop)
 - `hooks.log` - Execution log showing what hooks ran and results
+
+Hooks only load context and flag deterministic patterns via `systemMessage` —
+they don't re-state CLAUDE.md's rules (the harness already keeps CLAUDE.md in
+context every turn, so repeating it would just be noise).
 
 ## Monitoring Hook Execution
 
