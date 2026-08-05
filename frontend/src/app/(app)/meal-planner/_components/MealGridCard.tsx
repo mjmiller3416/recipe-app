@@ -122,7 +122,10 @@ export function MealGridCard({
       aria-label={`${item.name} — Enter or click to view, Space or hold to reorder`}
       className={cn(
         // Base styles
-        "group cursor-pointer overflow-hidden touch-none",
+        // touch-pan-y (not touch-none) so native vertical scroll still works when a
+        // swipe starts over a card — PointerSensor's 250ms delay + 5px tolerance
+        // (see MealGrid.tsx) is enough to distinguish an intentional drag from a scroll.
+        "group cursor-pointer overflow-hidden touch-pan-y",
         "pb-0 pt-0 gap-0",
         // Liftable hover effect (disabled while dragging to prevent transform conflicts)
         !isDragging && "liftable hover:bg-hover",
