@@ -283,7 +283,6 @@ export function RecipeBrowserView({
   const { openAssistant } = useAssistantDialog();
   const toggleFavoriteMutation = useToggleFavorite();
   const { saveFilterState, loadFilterState, clearFilterState } = useRecipeFilterPersistence();
-  const restoredRef = useRef(false);
 
   // Load saved filter state (for back navigation restoration)
   const savedState = useMemo(() => {
@@ -505,14 +504,18 @@ export function RecipeBrowserView({
     }
   }, [mode, searchParams, filters.favoritesOnly, setFilters, setActiveQuickFilters]);
 
-  // Clear saved filter state after restoration
+  // Persist filter state on every change so it survives any navigation path,
+  // not just the back-navigation restore this hook originally supported.
   useEffect(() => {
     if (mode === "select") return;
-    if (savedState && !restoredRef.current) {
-      restoredRef.current = true;
-      clearFilterState();
-    }
-  }, [savedState, clearFilterState, mode]);
+    saveFilterState({
+      filters,
+      searchTerm: filters.searchTerm,
+      activeQuickFilters: Array.from(activeQuickFilters),
+      sortBy,
+      sortDirection,
+    });
+  }, [mode, filters, activeQuickFilters, sortBy, sortDirection, saveFilterState]);
 
   // Scroll position restore on back navigation
   useEffect(() => {
@@ -573,13 +576,6 @@ export function RecipeBrowserView({
       onSelect?.(recipe);
     } else {
       sessionStorage.setItem(SCROLL_POSITION_KEY, String(window.scrollY));
-      saveFilterState({
-        filters,
-        searchTerm: filters.searchTerm,
-        activeQuickFilters: Array.from(activeQuickFilters),
-        sortBy,
-        sortDirection,
-      });
       router.push(`/recipes/${recipe.id}`);
     }
   };
