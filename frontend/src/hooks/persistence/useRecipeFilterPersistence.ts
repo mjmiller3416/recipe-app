@@ -47,24 +47,25 @@ interface UseRecipeFilterPersistenceReturn {
 }
 
 /**
- * Hook for persisting recipe filter state across back navigation.
+ * Hook for persisting recipe filter state across navigation.
  *
  * Uses sessionStorage so state persists within a browser tab session
- * but resets when the tab is closed or on fresh navigation.
+ * but resets when the tab is closed. Callers should save on every
+ * filter/search/sort change (not just before navigating away) so state
+ * survives any navigation path, not only back-navigation.
  *
  * @example
  * ```tsx
  * const { saveFilterState, loadFilterState, clearFilterState } = useRecipeFilterPersistence();
  *
- * // On click recipe
- * saveFilterState({ filters, searchTerm, activeQuickFilters, sortBy, sortDirection });
- *
  * // On mount - restore if available
  * const saved = loadFilterState();
- * if (saved) {
- *   setFilters(saved.filters);
- *   clearFilterState(); // Prevent stale restoration
- * }
+ *
+ * // Whenever filters/search/quickFilters/sort change
+ * saveFilterState({ filters, searchTerm, activeQuickFilters, sortBy, sortDirection });
+ *
+ * // On explicit "Clear All"
+ * clearFilterState();
  * ```
  */
 export function useRecipeFilterPersistence(): UseRecipeFilterPersistenceReturn {
