@@ -45,6 +45,18 @@ class GeneratorsMixin:
         elif tool_name == "create_recipe":
             # Generate a full recipe with structured JSON
             recipe = await self._generate_recipe_from_args(args, context_data)
+            if recipe is None:
+                # Generation failed or came back hollow (no ingredients) — tell the
+                # user instead of silently handing them an empty recipe draft.
+                return {
+                    "type": "chat",
+                    "response": (
+                        f"Hmm, I had trouble putting together a full recipe for "
+                        f"{args.get('recipe_name', 'that')} — mind asking again, "
+                        f"maybe with a bit more detail?"
+                    ),
+                    "tool_args": args,
+                }
             return {
                 "type": "recipe",
                 "response": f"Here's your {args.get('recipe_name', 'recipe')}! 🎉",
@@ -237,29 +249,30 @@ Use your friendly Meal Genie personality."""
             context_data.get("allowed_categories", []) if context_data else []
         )
 
-        request = RecipeGenerationRequestDTO(
-            prompt="\n".join(prompt_parts),
-            allowed_categories=allowed_categories,
-            preferences=None,
-            generate_image=False,
-            estimate_nutrition=False,
-        )
-        # Override servings in the prompt via preferences if non-default
-        if servings and servings != 4:
-            request.preferences = RecipeGenerationPreferencesDTO(servings=servings)
-
         try:
+            request = RecipeGenerationRequestDTO(
+                prompt="\n".join(prompt_parts),
+                allowed_categories=allowed_categories,
+                preferences=None,
+                generate_image=False,
+                estimate_nutrition=False,
+            )
+            # Override servings in the prompt via preferences if non-default
+            if servings and servings != 4:
+                request.preferences = RecipeGenerationPreferencesDTO(servings=servings)
+
             service = get_recipe_generation_service()
             result = await service.generate(request)
-            if result.success and result.recipe:
+            if result.success and result.recipe and result.recipe.ingredients:
                 return result.recipe
+            logger.warning(
+                f"[Assistant] Recipe generation for '{recipe_name}' produced no "
+                f"usable recipe (success={result.success}, ingredients="
+                f"{len(result.recipe.ingredients) if result.recipe else 0})"
+            )
         except Exception as e:
             logger.warning(f"[Assistant] Recipe generation via service failed: {e}")
 
-        # Fallback: return minimal recipe with just the name
-        return RecipeGeneratedDTO(
-            recipe_name=recipe_name,
-            recipe_category="other",
-            meal_type="dinner",
-            ingredients=[],
-        )
+        # Let the caller know generation failed instead of handing back a
+        # recipe that looks complete but has no ingredients/directions.
+        return None
