@@ -154,7 +154,7 @@ export function ShoppingCategory({
         <div className="flex-1 text-left">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-semibold text-foreground capitalize">
-              {category || "Other"}
+              {category || "other"}
             </h2>
             {isComplete && (
               <Badge variant="success" size="sm" className="text-success font-semibold" >

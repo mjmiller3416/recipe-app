@@ -120,7 +120,9 @@ export function ShoppingListView() {
 
   const groupedItems = itemsToShow.reduce<Record<string, ShoppingItemResponseDTO[]>>(
     (acc, item) => {
-      const category = item.category || "Other";
+      // Normalize to lowercase so pre-existing rows stored with mismatched casing
+      // (e.g. "Other" vs "other") group together instead of splitting into two sections.
+      const category = (item.category || "other").trim().toLowerCase();
       if (!acc[category]) {
         acc[category] = [];
       }
@@ -264,9 +266,9 @@ export function ShoppingListView() {
 
   // Sort categories based on user preference
   const sortedCategories = Object.keys(groupedItems).sort((a, b) => {
-    // "Other" always goes to the end
-    if (a === "Other") return 1;
-    if (b === "Other") return -1;
+    // "other" always goes to the end
+    if (a === "other") return 1;
+    if (b === "other") return -1;
 
     if (categorySortOrder === "custom" && customCategoryOrder.length > 0) {
       // Use custom order with normalized matching
