@@ -52,6 +52,16 @@ class ManualItemCreateDTO(BaseModel):
             return v.strip()
         return v
 
+    @field_validator("category", mode="before")
+    @classmethod
+    def normalize_category(cls, v):
+        # Lowercase to match the app's category-slug convention ("produce", "household");
+        # prevents "Other" vs "other" from splitting into two shopping-list groups.
+        if isinstance(v, str):
+            normalized = v.strip().lower()
+            return normalized or None
+        return v
+
 class ExternalItemUpsertDTO(BaseModel):
     """DTO for items pushed by a trusted first-party app via the API-key ingest endpoint.
 
@@ -108,6 +118,16 @@ class ShoppingItemUpdateDTO(BaseModel):
     def strip_ingredient_name(cls, v):
         if isinstance(v, str) and v:
             return v.strip()
+        return v
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def normalize_category(cls, v):
+        # Lowercase to match the app's category-slug convention ("produce", "household");
+        # prevents "Other" vs "other" from splitting into two shopping-list groups.
+        if isinstance(v, str):
+            normalized = v.strip().lower()
+            return normalized or None
         return v
 
 # ── Response DTOs ───────────────────────────────────────────────────────────────────────────────────────────

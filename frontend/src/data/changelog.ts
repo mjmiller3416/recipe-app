@@ -2,6 +2,12 @@
 // CHANGELOG - Edit the markdown below
 // ============================================
 const CHANGELOG_MD = `
+## 2026-08-05 - Bug Fixes
+- Recipe Browser filters, search, and sort now stay applied when you navigate away and come back — not just when opening a recipe
+- Fixed a Shopping List bug where manually added items could land in a duplicate "Other" category instead of joining the existing one
+- Meal Genie chat now lets you know if it couldn't put together a full recipe, instead of handing you one with no ingredients or directions
+- Fixed Meal Planner scrolling on mobile — swiping over a meal card now scrolls the page instead of getting stuck
+
 ## 2026-07-20 - New Features
 - External shopping list integration — trusted apps can now push items directly to your Shopping List via a secure API
 

@@ -212,7 +212,7 @@ class ShoppingItem(Base):
             ingredient_name=ingredient_name,
             quantity=quantity,
             unit=unit,
-            category=category,
+            category=category or "other",
             source="manual",
             have=False
         )
